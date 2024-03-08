@@ -18,12 +18,12 @@ const Emails = require('../Emails/index.js');
 var braintree = require('braintree');
 // console.log(braintree,"----------------braintree");
 
-var gateway = new braintree.BraintreeGateway({
-    environment: braintree.Environment.Sandbox, // Use 'Production' for live environment
-    merchantId: "9z8qb444sqn4qpzh",
-    publicKey: "rzgv99j7cjfncz6c",
-    privateKey: "d60651d59cc2feddc91550ce5ecafc09",
-});
+// var gateway = new braintree.BraintreeGateway({
+//     environment: braintree.Environment.Sandbox, // Use 'Production' for live environment
+//     merchantId: "9z8qb444sqn4qpzh",
+//     publicKey: "rzgv99j7cjfncz6c",
+//     privateKey: "d60651d59cc2feddc91550ce5ecafc09",
+// });
 
 exports.addCard = async (req, res) => {
     try {
