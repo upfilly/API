@@ -1,0 +1,64 @@
+{
+  "name": "api_upfilly",
+  "private": true,
+  "version": "0.0.0",
+  "description": "a Sails application",
+  "keywords": [],
+  "dependencies": {
+    "@sailshq/connect-redis": "^3.2.1",
+    "@sailshq/lodash": "^3.10.3",
+    "@sailshq/socket.io-redis": "^5.2.0",
+    "apify-client": "^2.7.1",
+    "axios": "^1.5.1",
+    "bcrypt-nodejs": "^0.0.3",
+    "braintree": "^3.18.0",
+    "country-code-info": "^0.3.0",
+    "country-state-city": "^3.1.4",
+    "crypto-js": "^4.1.1",
+    "csv": "^6.2.5",
+    "csvtojson": "^2.0.10",
+    "exceljs": "^4.3.0",
+    "fcm-node": "^1.6.1",
+    "form-data": "^4.0.0",
+    "fs": "^0.0.1-security",
+    "googleapis": "^118.0.0",
+    "grunt": "1.0.4",
+    "html-pdf": "^3.0.1",
+    "html-pdf-phantomjs-included": "^1.0.2",
+    "joi": "^17.11.0",
+    "jsonwebtoken": "^8.5.1",
+    "moment": "^2.29.4",
+    "node-cron": "^3.0.2",
+    "node-html-parser": "^6.1.5",
+    "nodemailer": "^6.7.0",
+    "nodemailer-smtp-transport": "^2.7.4",
+    "nodemon": "^2.0.22",
+    "paypal-rest-sdk": "^1.8.1",
+    "read-excel-file": "^5.6.1",
+    "sails": "^1.4.2",
+    "sails-hook-grunt": "^4.0.0",
+    "sails-hook-orm": "^3.0.2",
+    "sails-hook-sockets": "^2.0.0",
+    "sails-mongo": "^2.0.0",
+    "stripe": "^11.6.0"
+  },
+  "devDependencies": {
+    "eslint": "5.16.0"
+  },
+  "scripts": {
+    "start": "nodemon app.js",
+    "test": "npm run lint && npm run custom-tests && echo 'Done.'",
+    "lint": "./node_modules/eslint/bin/eslint.js . --max-warnings=0 --report-unused-disable-directives && echo '✔  Your .js files look good.'",
+    "custom-tests": "echo \"(No other custom tests yet.)\" && echo"
+  },
+  "main": "app.js",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/user/sails-1-4-2.git"
+  },
+  "author": "Amit Kumar",
+  "license": "",
+  "engines": {
+    "node": "^16.9"
+  }
+}
