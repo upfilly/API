@@ -180,15 +180,20 @@ exports.getAllAffiliateGroup = async (req, res) => {
                     as: "affiliate_group_details"
                 }
             },
-            // {
-            //     $lookup: {
-            //         from: "users",
-            //         localField: "_id",
-            //         foreignField: "affiliate_group",
-            //         as: "affiliate_group_details"
-            //     },
-            // },
-
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "addedBy",
+                    foreignField: "_id",
+                    as: "addedBy_details"
+                }
+            },
+            {
+                $unwind: {
+                    path: '$addedBy_details',
+                    preserveNullAndEmptyArrays: true
+                }
+            },
         ];
 
         let projection = {
@@ -204,6 +209,7 @@ exports.getAllAffiliateGroup = async (req, res) => {
                 affiliate_group_details: "$affiliate_group_details._id",
                 number_of_affiliate_added: { $size: "$affiliate_group_details" },
                 addedBy: "$addedBy",
+                addedBy_name: "$addedBy_details.fullName",
                 updatedBy: "$updatedBy",
                 isDeleted: "$isDeleted",
                 createdAt: "$createdAt",
