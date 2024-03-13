@@ -2090,7 +2090,7 @@ exports.send_invite = async (options) => {
 
     let get_brand = await Users.findOne({ id: options.brand_id });
 
-    let my_code = get_brand.my_code
+    var my_code = get_brand.my_code
     let email = options.email;
     let fullName = options.fullName;
 
