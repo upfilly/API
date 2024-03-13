@@ -447,7 +447,7 @@ module.exports.constants = {
         ID_REQUIRED: "Id required.",
         INVALID_ID: "Invalid Id.",
         ALL: "All Groups fetch successfully.",
-        LINK: "Tracking link generated successfully"
+        LINK: "Link generated successfully"
     },
 
     PRODUCT: {

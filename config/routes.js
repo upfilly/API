@@ -383,7 +383,9 @@ module.exports.routes = {
   'get /invite': 'InviteController.getById',
 
 
-
-
+  /**
+   * @affiliateLink
+   */
+  'post /get-link': 'AffiliateLinkController.generateLink'
 
 };
