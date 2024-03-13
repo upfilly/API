@@ -21,6 +21,7 @@ module.exports = {
     price_type: { type: 'string' },
     opportunity_type: { type: "json", columnType: "array", defaultsTo: [] },
     placement: { type: "json", columnType: "array", defaultsTo: [] },
+    payment_model: { type: "json" },
 
     start_date: { type: 'ref', columnType: 'datetime' },
     end_date: { type: 'ref', columnType: 'datetime' },

@@ -293,6 +293,7 @@ module.exports = {
                     price_type: "$price_type",
                     opportunity_type: "$opportunity_type",
                     placement: "$placement",
+                    payment_model:"$payment_model",
                     start_date: "$start_date",
                     end_date: "$end_date",
 
