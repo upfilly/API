@@ -386,6 +386,8 @@ module.exports.routes = {
   /**
    * @affiliateLink
    */
-  'post /get-link': 'AffiliateLinkController.generateLink'
+  'post /get-link': 'AffiliateLinkController.generateLink',
+  'get /get-affilaite-link': 'AffiliateLinkController.generateLinkOfAffiliate',
+
 
 };
