@@ -395,5 +395,11 @@ module.exports.routes = {
    */
   'post /saved-cookies': 'CookiesController.savedCookies',
 
+  /**
+   * @trackingCustomers
+   */
+  'get /tracking-customers': 'TrackCustomerController.getAllTrackingCustomer',
+
+
 
 };
