@@ -390,4 +390,10 @@ module.exports.routes = {
   'get /get-affilaite-link': 'AffiliateLinkController.generateLinkOfAffiliate',
 
 
+  /**
+   * @Cookies
+   */
+  'post /saved-cookies': 'CookiesController.savedCookies',
+
+
 };

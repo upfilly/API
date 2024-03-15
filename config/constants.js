@@ -493,5 +493,9 @@ module.exports.constants = {
         ADDED: "Invite sent successfully",
         FETCHED: "Invite fetched successfully",
         ID_REQUIRED: "Id is required",
+    },
+
+    TRACK_CUSTOMER: {
+        SAVED: "Tracking data saved successfully"
     }
 }

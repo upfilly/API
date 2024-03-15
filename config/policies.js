@@ -84,5 +84,8 @@ module.exports.policies = {
   },
   TrackingManagementController: {
     addTracking: true
+  },
+  CookiesController: {
+    savedCookies: true
   }
 };
