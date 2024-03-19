@@ -26,6 +26,7 @@ exports.savedCookies = async (req, res) => {
                 affiliate_link: affiliate_link,
                 isDeleted: false,
                 ip_address: ip_address,
+                isSet: true,
             }
             let alraedy_exist_cookies = await Cookies.findOne(query);
             if (alraedy_exist_cookies) {

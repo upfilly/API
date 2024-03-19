@@ -6,7 +6,7 @@
  */
 
 module.exports = {
-
+  schema: true,
   attributes: {
 
     affiliate_id: { model: "users" },
@@ -24,6 +24,7 @@ module.exports = {
     lng: { type: 'string' },
     os: { type: 'string' },         // Operating system
     timezone: { type: 'string' },
+    isSet:{ type: 'Boolean', defaultsTo: false },
 
     addedBy: { model: 'users' },
     updatedBy: { model: 'users' },
