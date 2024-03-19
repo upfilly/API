@@ -2121,7 +2121,7 @@ exports.send_invite = async (options) => {
  <a style="font-size: 12px;    background: #0260A5;
  border: none;
  color: #fff;
- padding: 10px 20px;border-radius: 30px;cursor: pointer;  "href=`+ credentials.FRONT_WEB_URL + "/signup/affiliate?referral_code=" + my_code + "&b_id=" + options.brand_id + "&b_email=" + get_brand.email + `>Go to our website</a>
+ padding: 10px 20px;border-radius: 30px;cursor: pointer;  "href=`+ credentials.FRONT_WEB_URL + "/signup/affiliate?referral_code=" + my_code + "&b_id=" + options.brand_id + "&invite_email=" + email + `>Go to our website</a>
  </div>
  
  <div style="margin-bottom: 2rem;">
