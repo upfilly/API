@@ -15,7 +15,7 @@ exports.getAllTrackingCustomer = async (req, res) => {
         let query = {};
         let count = req.param('count') || 10;
         let page = req.param('page') || 1;
-        let { search, isDeleted, status, sortBy, brand_id, affiliate_id } = req.query;
+        let { search, isDeleted, status, sortBy, type, affiliate_id } = req.query;
         let skipNo = (Number(page) - 1) * Number(count);
 
         if (search) {
@@ -33,6 +33,10 @@ exports.getAllTrackingCustomer = async (req, res) => {
 
         if (affiliate_id) {
             query.affiliate_id = ObjectId(affiliate_id);
+        }
+
+        if (type) {
+            query.type = type
         }
 
         let sortquery = {};
