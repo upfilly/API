@@ -399,6 +399,8 @@ module.exports.routes = {
    * @trackingCustomers
    */
   'get /tracking-customers': 'TrackCustomerController.getAllTrackingCustomer',
+  'get /tracking-customer': 'TrackCustomerController.getByIdTrackingCustomer',
+
 
 
 

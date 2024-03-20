@@ -496,6 +496,9 @@ module.exports.constants = {
     },
 
     TRACK_CUSTOMER: {
-        SAVED: "Tracking data saved successfully"
+        ID_REQUIRED:"Id Required",
+        SAVED: "Tracking data saved successfully",
+        VIEW: "Tracking data fetch successfully",
+        INVALID_ID:"Invalid id"
     }
 }

@@ -114,3 +114,20 @@ exports.getAllTrackingCustomer = async (req, res) => {
     }
 }
 
+exports.getByIdTrackingCustomer = async (req, res) => {
+    try {
+        let id = req.param("id")
+        if (!id) {
+            throw constants.TRACK_CUSTOMER.ID_REQUIRED;
+        }
+        let get_track = await TrackCustomer.findOne({ id: id, isDeleted: false })
+        if (get_track) {
+            return response.success(get_track, constants.TRACK_CUSTOMER.VIEW, req, res);
+        }
+        throw constants.TRACK_CUSTOMER.INVALID_ID;
+
+    } catch (error) {
+        return response.failed(null, `${error}`, req, res);
+    }
+}
+
