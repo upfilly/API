@@ -33,7 +33,7 @@ exports.savedCookies = async (req, res) => {
                 // console.log("in if condition------------------------");
 
                 let clicks = 0;
-                let already_exist = await TrackCustomer.findOne({ affiliate_id: affiliate_id, type: { $in: ["returning_customer", "new_customer"] }, isDeleted: false });
+                let already_exist = await TrackCustomer.findOne({ affiliate_id: affiliate_id, type: { in: ["returning_customer", "new_customer"] }, isDeleted: false });
                 if (already_exist) {
                     let add_track_customer = await TrackCustomer.updateOne({ id: already_exist.id }, { clicks: Number(already_exist.clicks) + 1 });
                 } else {
