@@ -47,29 +47,41 @@ exports.savedCookies = async (req, res) => {
                 }
 
 
-                let already_exist_customer = await TrackCustomer.findOne({ affiliate_id: affiliate_id, affiliate_link: affiliate_link, type: "new_customer", isDeleted: false });
-                if (already_exist_customer) {
-                    let add_track_customer = await TrackCustomer.updateOne({ id: already_exist_customer.id }, { clicks: Number(already_exist_customer.clicks) + 1 });
-                } else {
-                    trackQuery.affiliate_id = affiliate_id;
-                    trackQuery.affiliate_link = affiliate_link;
-                    trackQuery.clicks = clicks + 1;
-                    trackQuery.track_to = "customer"
-                    trackQuery.type = "new_customer";
-                    let add_track_customer = await TrackCustomer.create(trackQuery);
-                }
+                // let already_exist_customer = await TrackCustomer.findOne({ affiliate_id: affiliate_id, affiliate_link: affiliate_link, type: "new_customer", isDeleted: false });
+                // if (already_exist_customer) {
+                //     let add_track_customer = await TrackCustomer.updateOne({ id: already_exist_customer.id }, { clicks: Number(already_exist_customer.clicks) + 1 });
+                // } else {
+                //     trackQuery.affiliate_id = affiliate_id;
+                //     trackQuery.affiliate_link = affiliate_link;
+                //     trackQuery.clicks = clicks + 1;
+                //     trackQuery.track_to = "customer"
+                //     trackQuery.type = "new_customer";
+                //     let add_track_customer = await TrackCustomer.create(trackQuery);
+                // }
 
             } else {
                 var save_cookies = await Cookies.create(req.body).fetch();
                 if (save_cookies) {
-                    // console.log("in eklse condition------------------------");
                     let clicks = 0;
-                    trackQuery.affiliate_id = affiliate_id;
-                    trackQuery.affiliate_link = affiliate_link;
-                    trackQuery.clicks = clicks + 1;
-                    trackQuery.track_to = "customer"
-                    trackQuery.type = "new_customer";
-                    let add_track_customer = await TrackCustomer.create(trackQuery);
+                    let already_exist_customer = await TrackCustomer.findOne({ affiliate_id: affiliate_id, affiliate_link: affiliate_link, type: "new_customer", isDeleted: false });
+                    if (already_exist_customer) {
+                        let add_track_customer = await TrackCustomer.updateOne({ id: already_exist_customer.id }, { clicks: Number(already_exist_customer.clicks) + 1 });
+                    } else {
+                        trackQuery.affiliate_id = affiliate_id;
+                        trackQuery.affiliate_link = affiliate_link;
+                        trackQuery.clicks = clicks + 1;
+                        trackQuery.track_to = "customer"
+                        trackQuery.type = "new_customer";
+                        let add_track_customer = await TrackCustomer.create(trackQuery);
+                    }
+                    // console.log("in eklse condition------------------------");
+
+                    // trackQuery.affiliate_id = affiliate_id;
+                    // trackQuery.affiliate_link = affiliate_link;
+                    // trackQuery.clicks = clicks + 1;
+                    // trackQuery.track_to = "customer"
+                    // trackQuery.type = "new_customer";
+                    // let add_track_customer = await TrackCustomer.create(trackQuery);
                 }
             }
         }
