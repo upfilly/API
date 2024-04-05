@@ -180,8 +180,7 @@ module.exports = {
     account_number: { type: "string" },
     dob: { type: "json" },
     front_image: { type: "string" },
-    back_image: { type: "string" },
-
+    back_image: { type: "string" }
 
   },
 

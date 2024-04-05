@@ -1193,7 +1193,7 @@ module.exports = {
 
       let date = new Date();
 
-      let { email, role, referral_code, password, permissions, createdByBrand, affiliate_group } = req.body;
+      let { email, role, referral_code, password, permissions, createdByBrand, affiliate_group, social_security_number, tax_classification, tax_name, federal_text_classification, ein, consent_agreed, trade_name, is_us_citizen, signature } = req.body;
       if (req.body.email) {
         req.body.email = req.body.email.toLowerCase();
       }
@@ -1270,8 +1270,23 @@ module.exports = {
       if (role == "affiliate") {
         req.body.affilaite_unique_id = generateRandom8DigitNumber();
       }
+
+      var tax_payload = {
+        "social_security_number": social_security_number,
+        "tax_classification": tax_classification,
+        "tax_name": tax_name,
+        "ein": ein,
+        "federal_text_classification": federal_text_classification,
+        "trade_name": trade_name,
+        "consent_agreed": consent_agreed,
+        "is_us_citizen": is_us_citizen,
+        "signature": signature
+      }
       var newUser = await Users.create(req.body).fetch();
       if (newUser) {
+        tax_payload.user_id = newUser.id
+        let create_tax = await Tax.create(tax_payload);
+
         // let affiliate_link = credentials.FRONT_WEB_URL + "/affiliate/status/" + newUser.id + "?" + newUser.affilaite_unique_id
         // let update_user = await Users.updateOne({ id: newUser.id }, { affiliate_link: affiliate_link });
         // -------------- Create Permissions -------------//
