@@ -500,5 +500,16 @@ module.exports.constants = {
         SAVED: "Tracking data saved successfully",
         VIEW: "Tracking data fetch successfully",
         INVALID_ID:"Invalid id"
-    }
+    },
+
+    UNTRACKSALES: {
+        INVALID_ID: "Invalid id",
+        ALREADY_EXIST: "Already exist",
+        ADDED: "untrack sales added successfully",
+        FETCHED: "Fetched successfully",
+        UPDATED: "untrack sales updated successfully",
+        DELETED : "untrack sales deleted successfully"
+    },
+
+    
 }

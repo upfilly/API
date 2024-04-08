@@ -401,6 +401,14 @@ module.exports.routes = {
   'get /tracking-customers': 'TrackCustomerController.getAllTrackingCustomer',
   'get /tracking-customer': 'TrackCustomerController.getByIdTrackingCustomer',
 
+  /**@unTrackSales */
+
+  'post /addsales':'UntrackSalesController.addsales',
+  'get /getTrackingById':'UntrackSalesController.getTrackingById',
+  'put /updateSales':'UntracksaleSController.updateSales',
+  'delete /removeSales':'UntrackSalesController.removeSales',
+  'get /getallSalesDetails':'UntrackSalesController.getallSalesDetails',
+
 
 
 
