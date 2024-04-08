@@ -160,7 +160,7 @@ exports.addUser = async (req, res, next) => {
         federal_text_classification: Joi.string().optional().valid("individual", "s_corporation", "c_corporation", "patnership", "limited_liability",),
         social_security_number: Joi.string().optional(),
         tax_classification: Joi.string().optional(),
-        tax_name: Joi.string().required(),
+        tax_name: Joi.string().optional(),
         is_us_citizen: Joi.boolean().optional(),
         trade_name: Joi.string().optional().allow(""),
         ein: Joi.string().optional().allow(""),
