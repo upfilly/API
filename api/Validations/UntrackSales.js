@@ -6,7 +6,9 @@ exports.addsales= async (req, res) => {
     const schema = Joi.object({
         title: Joi.string().required(),
         description: Joi.string().optional(),
-        brand_id:Joi.string().required().allow(null),
+        brand_id: Joi.string().required().allow(null),
+        image: Joi.string().required(),
+
     })
     return await Validate(schema, req, res);
     
@@ -23,6 +25,10 @@ exports.updatesales = async (req, res) => {
     const schema = Joi.object({
         id: Joi.string().required(),
         title: Joi.string().optional(),
+        image: Joi.string().optional(),
+        description: Joi.string().optional(),
+        brand_id: Joi.string().required().allow(null)
+
     })
     return await Validate(schema, req, res);
     
