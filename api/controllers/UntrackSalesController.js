@@ -81,10 +81,6 @@ module.exports = {
             let result = await UntrackSales.updateOne({ id: id }, (req.body));
             if (result) {
                 return response.success(result,constants.UNTRACKSALES.UPDATED,req, res);
-                // return res.status(200).json({
-                //     success: true,
-                //     message: constants.UNTRACKSALES.UPDATED
-                // })
             }
             else {
                 throw constants.UNTRACKSALES.INVALID_ID
@@ -102,10 +98,6 @@ module.exports = {
             let result = await UntrackSales.updateOne({ id: id }, { isDeleted: true })
             if (result) {
                 return response.success(result,constants.UNTRACKSALES.DELETED,req, res);
-                // return res.status(200).json({
-                //     success: true,
-                //     message: constants.UNTRACKSALES.DELETED
-                // })
             }
             else {
                 throw constants.UNTRACKSALES.INVALID_ID
@@ -214,12 +206,6 @@ module.exports = {
         catch (error) {
             return response.failed(null, `${error}`, req, res)
         }
-        // catch (error) {
-        //     return res.status(500).json({
-        //         success: false,
-        //         error: { code: 500, message: '' + error },
-        //     });
-        // }
     },
 
 

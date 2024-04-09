@@ -179,6 +179,7 @@ exports.editProfile = async (req, res, next) => {
         lastName: Joi.string().optional().allow("").max(50),
         fullName: Joi.string().optional().allow("").min(3).max(50),
         email: Joi.string().optional(),
+        affiliate_type: Joi.string().optional(),
         password: Joi.string().optional(),
         description: Joi.string().optional().allow(""),
         website: Joi.string().optional().allow(""),
