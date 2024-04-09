@@ -51,8 +51,8 @@ module.exports = {
                     // })
                     //   }
 
-                    return response.success(result1, constants.UNTRACKSALES.ADDED, req, res);
                 }
+                return response.success(result1, constants.UNTRACKSALES.ADDED, req, res);
             }
             else {
                 throw constants.UNTRACKSALES.ALREADY_EXIST
