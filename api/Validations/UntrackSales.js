@@ -7,7 +7,7 @@ exports.addsales= async (req, res) => {
         title: Joi.string().required(),
         description: Joi.string().optional(),
         brand_id: Joi.string().required().allow(null),
-        image: Joi.string().optional(),
+        image: Joi.string().optional().allow(""),
 
     })
     return await Validate(schema, req, res);
