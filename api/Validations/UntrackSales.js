@@ -6,6 +6,7 @@ exports.addsales= async (req, res) => {
     const schema = Joi.object({
         title: Joi.string().required(),
         description: Joi.string().optional(),
+        brand_id:Joi.string().optional().allow(null),
     })
     return await Validate(schema, req, res);
     

@@ -25,8 +25,8 @@ module.exports = {
             req.body.addedBy = req.identity.id;
             req.body.title = req.body.title.toLowerCase();
 
-            let data = await Users.findOne({ id: req.identity.id, isDeleted: false })
-            req.body.brand_id = data.createdByBrand;
+            // let data = await Users.findOne({ id: req.identity.id, isDeleted: false })
+            // req.body.brand_id = data.createdByBrand;
 
 
             let result = await UntrackSales.findOne({ title: req.body.title, addedBy: req.identity.id,isDeleted: false })
