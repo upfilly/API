@@ -408,6 +408,7 @@ module.exports.routes = {
   'put /updateSales':'UntracksaleSController.updateSales',
   'delete /removeSales':'UntrackSalesController.removeSales',
   'get /getallSalesDetails':'UntrackSalesController.getallSalesDetails',
+  'put /update/status': 'UntrackSalesController.changeStatus',
 
 
 

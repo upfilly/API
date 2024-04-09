@@ -11,6 +11,7 @@ const Services = require('../services/index');
 const Joi = require('joi');
 const Validations = require("../Validations/UntrackSales");
 const response = require("../services/Response")
+const Emails = require('../Emails/index');
 
 module.exports = {
 
@@ -25,13 +26,23 @@ module.exports = {
             req.body.addedBy = req.identity.id;
             req.body.title = req.body.title.toLowerCase();
 
-            // let data = await Users.findOne({ id: req.identity.id, isDeleted: false })
-            // req.body.brand_id = data.createdByBrand;
-
-
             let result = await UntrackSales.findOne({ title: req.body.title, addedBy: req.identity.id,isDeleted: false })
+
             if (!result) {
                 let result1 = await UntrackSales.create(req.body);
+                if( result1 ){
+                    const emailpayload = {
+                      email:result1.email,
+                      name:result1.fullName
+                    }
+                    await Emails.OnboardingEmails.send_mail_to_brand(emailpayload)
+                    return res.json({
+                      success:true,
+                      message:"Mail sent successfully",
+                      seller:seller
+                    })
+                  }
+                
                 return response.success(result1, constants.UNTRACKSALES.ADDED,req,res);
             }
             else {
@@ -207,6 +218,49 @@ module.exports = {
             return response.failed(null, `${error}`, req, res)
         }
     },
+
+    changeStatus: async(req,res)=>{
+        try {
+
+            let validation_result = await Validations.changeStatus(req, res);
+            if (validation_result && !validation_result.success) {
+                throw validation_result.message
+            }
+
+            let { id } = req.body;
+
+            let data = await UntrackSales.findOne({ id: id, isDeleted: false });
+
+            if (!data) {
+                throw constants.UNTRACKSALES.INVALID_ID;
+            }
+
+            if (req.body.status == "accepted" && ['accepted'].includes(data.status)) {
+                throw constants.UNTRACKSALES.CANNOT_ACCEPT;
+            }
+
+         
+
+            req.body.updatedBy = req.identity.id;
+            let update_status = await UntrackSales.updateOne({ id: req.body.id }, req.body);
+
+            if (update_status) {
+                let email_payload = {
+                    id: data.addedBy,
+                    status: update_status.status,
+                    reason: update_status.reason,
+                    email: update_status.email
+                };
+                await Emails.OnboardingEmails.change_status(email_payload)
+                return response.success(null, constants.UNTRACKSALES.STATUS_UPDATE, req, res)
+            }
+            throw constants.COMMON.SERVER_ERROR
+
+        } catch (error) {
+            console.log(error);
+            return response.failed(null, `${error}`, req, res)
+        }
+    }
 
 
 };
