@@ -515,7 +515,7 @@ module.exports = {
     try {
       let page = req.param('page') || 1;
       let count = req.param('count') || 10;
-      let { search, role, isDeleted, status, sortBy, lat, lng, isTrusted, isFeatured, createBybrand_id, start_date, end_date, affiliate_group_id, three_role } = req.query;
+      let { search, role, isDeleted, status, sortBy, lat, lng, isTrusted, isFeatured, createBybrand_id, start_date, end_date, affiliate_group_id, three_role, affiliate_type } = req.query;
       let skipNo = (Number(page) - 1) * Number(count);
       let query = { isDeleted: false };
 
@@ -558,6 +558,10 @@ module.exports = {
 
 
       if (status) { query.status = status; };
+      
+      if (affiliate_type) { 
+        query.affiliate_type = affiliate_type 
+      }
 
       if (isDeleted) {
         query.isDeleted = isDeleted ? isDeleted === 'true' : true ? isDeleted : false;
@@ -629,6 +633,7 @@ module.exports = {
           mobileNo: "$mobileNo",
           work_phone: "$work_phone",
           affiliate_code: "$affiliate_code",
+          affiliate_type: "$affiliate_type",
           social_media_platforms: "$social_media_platforms",
           createdByBrand: "$createdByBrand",
           affiliate_group: "$affiliate_group",

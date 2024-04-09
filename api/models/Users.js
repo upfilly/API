@@ -38,6 +38,7 @@ module.exports = {
       type: 'string'
     },
     affiliate_group: { model: 'affiliatemanagement' },
+    affiliate_type: {type: "string", isIn: ["individual", "business"] },
     social_media_platforms: { type: "json", defaultsTo: [] },
     tags: { type: "json", defaultsTo: [] },
 
