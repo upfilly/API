@@ -33,20 +33,16 @@ exports.updatesales = async (req, res) => {
     return await Validate(schema, req, res);
     
 }
+exports.changeStatus = async (req, res) => {
 
-// exports.deletesales= async (req, res) => {
-//     const schema = Joi.object({
-//         id: Joi.string().required()
-//     })
-//     return await Validate(schema, req, res);
-    
-// }
-
-// exports.getallsales= async (req, res) => {
-//     const schema = Joi.object({
-//         title: Joi.string().required(),
-//         description: Joi.string().required(),
-//     })
-//     return await Validate(schema, req, res);
-    
-// }
+    const schema = Joi.object({
+        id: Joi.string().required(),
+        status: Joi.string().required().valid('accepted', 'rejected'),
+        reason: Joi.string().when('status', {
+            is: "rejected",
+            then: Joi.string().required(),
+            otherwise: Joi.string().optional(),
+        })
+    });
+    return await Validate(schema, req, res);
+}

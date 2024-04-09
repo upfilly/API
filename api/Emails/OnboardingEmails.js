@@ -1770,6 +1770,7 @@ exports.subscription_transaction_email = async (options) => {
 
 
 exports.upcomming_invoice_email_old = async (options) => {
+    
     let email = options.email;
     let heading;
     let content;
@@ -2141,4 +2142,234 @@ exports.send_invite = async (options) => {
 
     SmtpController.sendEmail(email, 'Invite Request', message)
 };
+
+exports.send_mail_to_brand = async (options) =>{
+    let email = options.email
+    let name = options.fullName
+    
+    message = '';
+
+    message += `
+    <!DOCTYPE html>
+    <html
+      lang="en"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:o="urn:schemas-microsoft-com:office:office"
+    >
+      <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <meta name="x-apple-disable-message-reformatting" />
+        <title></title>
+    
+        <style>
+          table,
+          td,
+          div,
+          h1,
+          p {
+            font-family: Arial, sans-serif;
+          }
+        </style>
+      </head>
+      <body style="margin: 0; padding: 0">
+        <table
+          role="presentation"
+          style="
+            width: 100%;
+            border-collapse: collapse;
+            border: 0;
+            border-spacing: 0;
+            background: #ffffff;
+            margin: 20px 0px;
+          "
+        >
+          <tr>
+            <td align="center" style="padding: 0">
+              <table
+                role="presentation"
+                style="
+                  width: 800px;
+                  border-collapse: collapse;
+                  border: 1px solid #cccccc;
+                  border-spacing: 0;
+                  text-align: left;
+                "
+              >
+                <tr>
+                  <td
+                    align="center"
+                    style="padding: 40px 0 30px 0; background: #946038; color: #fff"
+                  >
+                    <img
+                      src="/images/ship.png"
+                      style="width: 125px; margin-bottom: 10px"
+                    />
+                    <h3 style="margin-top: 0; font-size: 30px; margin-bottom: 5px">
+                      Order Alert!
+                    </h3>
+                    <p style="    font-size: 20px;
+                    margin-top: 5px;
+                    width: 80%;
+                    line-height: 30px;">
+                      Hello,${name} This email you've received regarding an untracksale.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 36px 30px 42px 30px">
+                    <table
+                      role="presentation"
+                      style="
+                        width: 100%;
+                        border-collapse: collapse;
+                        border: 0;
+                        border-spacing: 0;
+                      "
+                    >
+                      <tr>
+                        <td>
+                       <div style="margin-top: 20px;">   <div style=" border: 1px solid #80808070;
+                        border-radius: 5px;     width: 80%;
+      margin: auto;">
+             
+                          <div
+                            style="
+                              display: flex;
+                              justify-content: space-between;
+                              padding: 0px 20px;
+                            "
+                          >
+                            <p style="font-size: 18px;
+                            font-weight: 600; margin-bottom: 0;">Order ID:</p>
+                            <p style="font-size: 17px; margin-bottom: 0;">${id}</p>
+                          </div>
+                          <div
+                            style="
+                           
+                              padding: 0px 20px;
+                            "
+                          >
+                            <p style="font-size: 18px;
+                            font-weight: 600; margin-bottom: 0;" >Description:</p>
+                            <p style="    font-size: 17px;
+                            margin-top: 8px;" > ${dic}</p>
+                          </div>
+                          <!-- <hr /> -->
+                    
+                          <!-- <hr /> -->
+                        </div></div>
+                        </td>
+                      </tr>
+    
+                      <tr>
+                        <td
+                          style="display: flex; justify-content: center; gap: 10px;margin-top: 40px;"
+                        >
+                          <button
+                            style="
+                              font-size: 21px;
+                              padding: 18px 40px;
+                              border-radius: 5px;
+                              background: #fff;
+                              cursor: pointer;
+                              border: none;
+                              color: #946038;
+                              border: 1px solid #946038;
+                            "
+                          >
+                            Reject
+                          </button>
+                          <button
+                            style="
+                              font-size: 21px;
+                              padding: 18px 40px;
+                              border-radius: 5px;
+                              background: #946038;
+                              cursor: pointer;
+                              border: none;
+                              color: #fff;
+                            "
+                          >
+                            Accept
+                          </button>
+                        </td>
+                      </tr>
+              
+                    </table>
+                  </td>
+                </tr>
+           
+      
+              </table>
+            </td>
+          </tr>
+        </table>
+      </body>
+    </html>
+`
+
+SmtpController.sendEmail(email, 'Email to brand', message)
+};
+
+exports.change_status = async (options)=>{
+
+   let status = options.status;
+   let reason = options.reason;
+   let get_id = await Users.findOne({ id: options.id })
+   let email = get_id.email;
+
+   let matter;
+   if (status == 'rejected') {
+      matter = `Regret to inform you that the request you have sent to ${get_id.fullName} is rejected.
+        <br><br>
+        <b> Reason : </b>${reason} <br><br>Better luck for the next time. Thanks for the business.`
+   } else {
+      matter = `Congratulations,<br> The request you have sent to ${get_id.fullName} has been accepted. We wish good luck for the future venture. Thanks for your business.`
+   }
+   message = '';
+   message += `
+
+   <body style="font-family: sans-serif;">
+
+   <div style="width:600px;margin: auto;margin-top: 2rem;box-shadow: 0px 0px 20px -15px #000;position: relative;">
+       <div style="text-align: center;">
+           <div style=" background: url('${credentials.BACK_WEB_URL}/images/banner.png');  background-size: 100% !important;width: 100% !important; height: 260px; ">
+           </div>
+           <div style="margin-top:-190px !important;">
+           <div style=" width: 225px; height: 225px;  box-shadow: 10px 4px 3px 0px #0000000d; padding: 1rem;
+           text-align: center;  display: -webkit-flex; border: 5px solid #00BAFF; background: #fff; margin: auto;  border-radius: 50%; display: flex; justify-content: center;align-items: center;">
+               <div>
+                        <img src="${credentials.BACK_WEB_URL}/images/upfilly.png"style="width:115px; height: 40px; object-fit: contain;">
+                <h1 style="  margin-bottom: 0px;  margin-top: 10px; font-size: 18px;"><span style="font-weight: 400;color:#373737;">Hi </span>${get_id.fullName},</h1>
+                <p style="margin-top: 0px;    font-size: 14px; color:#373737; margin-bottom: 0;">This is an notification email to let you know about your untracksale status.
+                </p>
+                </div>
+                </div>
+                </div>
+                <div style="max-width: 308px; margin: auto; padding-bottom: 2rem;">
+    <img src="${credentials.BACK_WEB_URL}/images/Daco.png" style="width: 60px;margin-top: 2rem;">
+   <p style="margin-bottom: 8px;color: #747474;font-size: 13px;    line-height: 18px; ">${matter}</p>
+<div style="margin: 2rem 0px;">
+</div>
+
+<div style="margin-bottom: 2rem;">
+  <span  > <img src="${credentials.BACK_WEB_URL}/images/Image1.png"style="width: 40px;"></span>
+   <span ><img src="${credentials.BACK_WEB_URL}/images/Image2.png"style="width: 40px;"></span>
+       <span ><img src="${credentials.BACK_WEB_URL}/images/Image3.png"style="width: 40px;"></span>
+           <span ><img src="${credentials.BACK_WEB_URL}/images/Image4.png"style="width: 40px;"></span>
+</div>
+
+           <p style="color: #626262;font-size: 11px;margin-bottom: 0px;">Copyright © 2023</p>
+       </div>
+       </div>
+     
+   </div>
+</body>
+
+`
+
+   SmtpController.sendEmail(email, 'Untracksale request', message)
+};
+
 

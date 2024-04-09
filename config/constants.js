@@ -508,7 +508,9 @@ module.exports.constants = {
         ADDED: "untrack sales added successfully",
         FETCHED: "Fetched successfully",
         UPDATED: "untrack sales updated successfully",
-        DELETED : "untrack sales deleted successfully"
+        DELETED : "untrack sales deleted successfully",
+        CANNOT_ACCEPT:  "This request is already accepted",
+        STATUS_UPDATE: "Status updated successfully",
     },
 
     

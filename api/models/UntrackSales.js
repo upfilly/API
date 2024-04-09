@@ -11,6 +11,7 @@ module.exports = {
     image: { type: "string" },
     description: { type: "string" },
     title: { type: "string" },
+    email: {type: "string" },
     brand_id: { model: 'users' },
     status: { type: 'string', isIn: ['accepted', 'rejected'], defaultsTo: 'pending', },
 
@@ -19,9 +20,8 @@ module.exports = {
     isDeleted: { type: 'Boolean', defaultsTo: false },
     createdAt: { type: 'ref', autoCreatedAt: true },
     updatedAt: { type: 'ref', autoUpdatedAt: true },
-
-
-  },
+    status: {type: 'string', isIn: ['accepted', 'rejected'], defaultsTo: "pending",}
+},
 
 };
 
