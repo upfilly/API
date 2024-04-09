@@ -2230,8 +2230,7 @@ exports.send_mail_to_brand = async (options) =>{
                       <tr>
                         <td>
                        <div style="margin-top: 20px;">   <div style=" border: 1px solid #80808070;
-                        border-radius: 5px;     width: 80%;
-      margin: auto;">
+                        border-radius: 5px;width: 80%;margin: auto;">
              
                           <div
                             style="
@@ -2240,9 +2239,6 @@ exports.send_mail_to_brand = async (options) =>{
                               padding: 0px 20px;
                             "
                           >
-                            <p style="font-size: 18px;
-                            font-weight: 600; margin-bottom: 0;">Order ID:</p>
-                            <p style="font-size: 17px; margin-bottom: 0;">${id}</p>
                           </div>
                           <div
                             style="
@@ -2252,8 +2248,6 @@ exports.send_mail_to_brand = async (options) =>{
                           >
                             <p style="font-size: 18px;
                             font-weight: 600; margin-bottom: 0;" >Description:</p>
-                            <p style="    font-size: 17px;
-                            margin-top: 8px;" > ${dic}</p>
                           </div>
                           <!-- <hr /> -->
                     

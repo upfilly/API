@@ -31,28 +31,19 @@ module.exports = {
 
 
             let result = await UntrackSales.findOne({ title: req.body.title, addedBy: req.identity.id, isDeleted: false })
-            if (!result) {
-                //     let result1 = await UntrackSales.create(req.body);
-                //     return response.success(result1, constants.UNTRACKSALES.ADDED, req, res);
-                // let result = await UntrackSales.findOne({ title: req.body.title, addedBy: req.identity.id,isDeleted: false })
 
-                // if (!result) {
-                let result1 = await UntrackSales.create(req.body);
+            if (!result) {
+                let result1 = await UntrackSales.create(req.body).fetch();
+                
                 if (result1) {
+                    let data = await Users.findOne({id: result1.brand_id});
                     const emailpayload = {
-                        email: result1.email,
-                        name: result1.fullName
+                        email: data.email,
+                        name: data.fullName
                     }
                     await Emails.OnboardingEmails.send_mail_to_brand(emailpayload)
-                    // return res.json({
-                    //     success: true,
-                    //     message: "Mail sent successfully",
-                    //     seller: seller
-                    // })
-                    //   }
-
+                    return response.success(result1, constants.UNTRACKSALES.ADDED, req, res);
                 }
-                return response.success(result1, constants.UNTRACKSALES.ADDED, req, res);
             }
             else {
                 throw constants.UNTRACKSALES.ALREADY_EXIST
