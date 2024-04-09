@@ -53,6 +53,20 @@ module.exports = {
 
             let result = await UntrackSales.findOne({ id: req.query.id, isDeleted: false })
             if (result) {
+                if (result.brand_id) {
+                    let get_brand = await Users.findOne({ id: result.brand_id });
+                    if (get_brand) {
+                        result.brand_fullName = get_brand.fullName
+                        result.brand_email = get_brand.email
+                    }
+                }
+                if (result.addedBy) {
+                    let get_affiliate = await Users.findOne({ id: result.addedBy });
+                    if (get_affiliate) {
+                        result.affiliate_fullName = get_affiliate.fullName
+                        result.affiliate_email = get_affiliate.email
+                    }
+                }
                 return response.success(result, constants.UNTRACKSALES.FETCHED, req, res);
                 // return res.status(200).json({
                 //     success: true,
