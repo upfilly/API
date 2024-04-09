@@ -21,7 +21,7 @@ module.exports = {
             if (validation_result && !validation_result.success) {
                 throw validation_result.message;
             }
-            
+
             req.body.addedBy = req.identity.id;
             req.body.title = req.body.title.toLowerCase();
 
@@ -29,10 +29,10 @@ module.exports = {
             // req.body.brand_id = data.createdByBrand;
 
 
-            let result = await UntrackSales.findOne({ title: req.body.title, addedBy: req.identity.id,isDeleted: false })
+            let result = await UntrackSales.findOne({ title: req.body.title, addedBy: req.identity.id, isDeleted: false })
             if (!result) {
                 let result1 = await UntrackSales.create(req.body);
-                return response.success(result1, constants.UNTRACKSALES.ADDED,req,res);
+                return response.success(result1, constants.UNTRACKSALES.ADDED, req, res);
             }
             else {
                 throw constants.UNTRACKSALES.ALREADY_EXIST
@@ -53,7 +53,7 @@ module.exports = {
 
             let result = await UntrackSales.findOne({ id: req.query.id, isDeleted: false })
             if (result) {
-                return response.success(result,constants.UNTRACKSALES.FETCHED,req, res);
+                return response.success(result, constants.UNTRACKSALES.FETCHED, req, res);
                 // return res.status(200).json({
                 //     success: true,
                 //     data: result
@@ -80,7 +80,7 @@ module.exports = {
             let { id } = req.body;
             let result = await UntrackSales.updateOne({ id: id }, (req.body));
             if (result) {
-                return response.success(result,constants.UNTRACKSALES.UPDATED,req, res);
+                return response.success(result, constants.UNTRACKSALES.UPDATED, req, res);
             }
             else {
                 throw constants.UNTRACKSALES.INVALID_ID
@@ -97,7 +97,7 @@ module.exports = {
             let { id } = req.query;
             let result = await UntrackSales.updateOne({ id: id }, { isDeleted: true })
             if (result) {
-                return response.success(result,constants.UNTRACKSALES.DELETED,req, res);
+                return response.success(result, constants.UNTRACKSALES.DELETED, req, res);
             }
             else {
                 throw constants.UNTRACKSALES.INVALID_ID
@@ -143,18 +143,32 @@ module.exports = {
             const pipeline = [
                 {
                     $lookup: {
-                      from: "users",
-                      localField: "addedBy",
-                      foreignField: "_id",
-                      as: "addedBy_details"
+                        from: "users",
+                        localField: "addedBy",
+                        foreignField: "_id",
+                        as: "addedBy_details"
                     }
-                  },
-                  {
+                },
+                {
                     $unwind: {
-                      path: '$addedBy_details',
-                      preserveNullAndEmptyArrays: true
+                        path: '$addedBy_details',
+                        preserveNullAndEmptyArrays: true
                     }
-                  },
+                },
+                {
+                    $lookup: {
+                        from: "users",
+                        localField: "brand_id",
+                        foreignField: "_id",
+                        as: "brand_details"
+                    }
+                },
+                {
+                    $unwind: {
+                        path: '$brand_details',
+                        preserveNullAndEmptyArrays: true
+                    }
+                },
                 {
                     $project: {
                         image: "$image",
@@ -162,8 +176,9 @@ module.exports = {
                         title: "$title",
                         brand_id: "$brand_id",
                         addedBy: "$addedBy",
-                        fullName:"$addedBy_details.fullName",
-                        email:"$addedBy_details.email",
+                        affiliate_fullName: "$addedBy_details.fullName",
+                        affiliate_email: "$addedBy_details.email",
+                        brand_fullName: "$brand_details.fullName",
                         updatedBy: "$updatedBy",
                         isDeleted: '$isDeleted',
                         status: '$status',

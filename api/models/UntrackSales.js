@@ -12,6 +12,8 @@ module.exports = {
     description: { type: "string" },
     title: { type: "string" },
     brand_id: { model: 'users' },
+    status: { type: 'string', isIn: ['accepted', 'rejected'], defaultsTo: 'pending', },
+
     addedBy: { model: 'users' },
     updatedBy: { model: 'users' },
     isDeleted: { type: 'Boolean', defaultsTo: false },
