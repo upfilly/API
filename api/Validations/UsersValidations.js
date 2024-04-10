@@ -294,7 +294,16 @@ exports.editProfile = async (req, res, next) => {
 
         // frontdoc: Joi.string().optional(),
         // backdoc: Joi.string().optional(),
-        company_name: Joi.string().optional()
+        company_name: Joi.string().optional(),
+        federal_text_classification: Joi.string().optional().valid("individual", "s_corporation", "c_corporation", "patnership", "limited_liability",),
+        social_security_number: Joi.string().optional(),
+        tax_classification: Joi.string().optional(),
+        tax_name: Joi.string().optional(),
+        is_us_citizen: Joi.boolean().optional(),
+        trade_name: Joi.string().optional().allow(""),
+        ein: Joi.string().optional().allow(""),
+        consent_agreed: Joi.boolean().optional(),
+        signature: Joi.string().optional().allow("")
     });
     return await Validate(schema, req, res);
 
