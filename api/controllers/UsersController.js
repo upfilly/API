@@ -558,9 +558,9 @@ module.exports = {
 
 
       if (status) { query.status = status; };
-      
-      if (affiliate_type) { 
-        query.affiliate_type = affiliate_type 
+
+      if (affiliate_type) {
+        query.affiliate_type = affiliate_type
       }
 
       if (isDeleted) {
@@ -787,6 +787,13 @@ module.exports = {
           if (get_brand) {
             get_user.brand_name = get_brand.fullName;
           }
+        }
+
+
+        let get_tax = await Tax.findOne({ user_id: get_user.id });
+        if (get_tax) {
+          get_user.tax_detail = get_tax;
+
         }
 
         // if (get_user) {
@@ -1289,8 +1296,10 @@ module.exports = {
       }
       var newUser = await Users.create(req.body).fetch();
       if (newUser) {
+        console.log(tax_payload, "====tax_payload");
         tax_payload.user_id = newUser.id
-        let create_tax = await Tax.create(tax_payload);
+        let create_tax = await Tax.create(tax_payload).fetch();
+        console.log(create_tax, "====create_tax");
 
         // let affiliate_link = credentials.FRONT_WEB_URL + "/affiliate/status/" + newUser.id + "?" + newUser.affilaite_unique_id
         // let update_user = await Users.updateOne({ id: newUser.id }, { affiliate_link: affiliate_link });

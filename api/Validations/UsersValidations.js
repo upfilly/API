@@ -165,7 +165,9 @@ exports.addUser = async (req, res, next) => {
         trade_name: Joi.string().optional().allow(""),
         ein: Joi.string().optional().allow(""),
         consent_agreed: Joi.boolean().optional(),
-        signature: Joi.string().optional().allow("")
+        signature: Joi.string().optional().allow(""),
+        signature_date: Joi.date().optional().allow(""),
+
     });
     return await Validate(schema, req, res);
 
@@ -303,7 +305,8 @@ exports.editProfile = async (req, res, next) => {
         trade_name: Joi.string().optional().allow(""),
         ein: Joi.string().optional().allow(""),
         consent_agreed: Joi.boolean().optional(),
-        signature: Joi.string().optional().allow("")
+        signature: Joi.string().optional().allow(""),
+        signature_date: Joi.date().optional().allow(""),
     });
     return await Validate(schema, req, res);
 

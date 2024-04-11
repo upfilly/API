@@ -17,6 +17,7 @@ module.exports = {
     signature: { type: "string" },
     ein: { type: "string" },
     trade_name: { type: "string" },
+    signature_date: { type: 'ref', columnType: 'datetime' },
 
 
     user_id: { model: 'users' },
