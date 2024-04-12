@@ -4,6 +4,7 @@ const Validate = require('./Validate').validate;
 exports.addTax = async (req, res, next) => {
     const schema = Joi.object({
         user_id: Joi.string().required(),
+        social_security_number: Joi.string().optional(),
         tax_classification: Joi.string().optional(),
         tax_name: Joi.string().optional(),
         is_us_citizen: Joi.boolean().optional(),
