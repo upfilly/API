@@ -34,6 +34,11 @@ module.exports = {
 
             if (!result) {
                 let result1 = await UntrackSales.create(req.body).fetch();
+                if(req.body.order_date){
+                    const date = new Date(req.body.order_date);
+                    const order_date = date.toISOString();
+        
+                }
                 
                 if (result1) {
                     let data = await Users.findOne({id: result1.brand_id});
