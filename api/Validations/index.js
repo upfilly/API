@@ -37,7 +37,8 @@ module.exports = {
     StripeValidation: require("./StripeValidation"),
     Product: require("./ProductValidations"),
     MakeOfferValidations: require("./MakeOfferValidations"),
-    InviteValidation: require("./InviteValidation")
+    InviteValidation: require("./InviteValidation"),
+    tax:require('./NewTaxVAlidations')
 
     // DiscountBraintreeValidation: require("./DiscountBraintreeValidations")
 }

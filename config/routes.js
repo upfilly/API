@@ -409,7 +409,9 @@ module.exports.routes = {
   'delete /removeSales':'UntrackSalesController.removeSales',
   'get /getallSalesDetails':'UntrackSalesController.getallSalesDetails',
   'put /update/status': 'UntrackSalesController.changeStatus',
-
+ 
+  /**@NewTax */
+  'post /addTax':'NewTaxController.addTax',
 
 
 

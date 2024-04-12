@@ -513,5 +513,12 @@ module.exports.constants = {
         STATUS_UPDATE: "Status updated successfully",
     },
 
+    NEWTAX: {
+        ALREADY_EXIST: "Tax Details already exist",
+        ADDED: "Tax Details added sucessfully",
+        INVALID_ID: "Invaild Id",
+     
+    },
+
     
 }
