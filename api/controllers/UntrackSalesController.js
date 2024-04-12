@@ -25,29 +25,20 @@ module.exports = {
 
             req.body.addedBy = req.identity.id;
             req.body.title = req.body.title.toLowerCase();
-
-            // let data = await Users.findOne({ id: req.identity.id, isDeleted: false })
-            // req.body.brand_id = data.createdByBrand;
-
+            req.body.order_date = new Date(req.body.order_date);
 
             let result = await UntrackSales.findOne({ title: req.body.title, addedBy: req.identity.id, isDeleted: false })
 
             if (!result) {
-                let result1 = await UntrackSales.create(req.body).fetch();
-                if(req.body.order_date){
-                    const date = new Date(req.body.order_date);
-                    const order_date = date.toISOString();
-        
-                }
-                
+                let result1 = await UntrackSales.create(req.body)
                 if (result1) {
-                    let data = await Users.findOne({id: result1.brand_id});
+                    let data = await Users.findOne({ id: result1.brand_id });
                     const emailpayload = {
                         email: data.email,
                         name: data.fullName
                     }
                     await Emails.OnboardingEmails.send_mail_to_brand(emailpayload)
-                    return response.success(result1, constants.UNTRACKSALES.ADDED, req, res);
+                    return response.success(null, constants.UNTRACKSALES.ADDED, req, res);
                 }
             }
             else {
@@ -214,8 +205,18 @@ module.exports = {
                         isDeleted: '$isDeleted',
                         status: '$status',
                         createdAt: '$createdAt',
-                        updatedAt: '$updatedAt'
+                        updatedAt: '$updatedAt',
+                        type:"$type",
+                        click_ref:"$click_ref",
+                        order_date:"$order_date",
+                        amount:"$amount",
+                        commission:"$commission",
+                        order_reference:"$order_reference",
+                        customer_reference:"$customer_reference",
+                        currency:"$currency",
+                        timeZone:"$timeZone"
                     }
+                       
                 },
                 {
                     $match: query,
