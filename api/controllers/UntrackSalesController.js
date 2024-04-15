@@ -28,9 +28,10 @@ module.exports = {
             req.body.order_date = new Date(req.body.order_date);
 
             let result = await UntrackSales.findOne({ title: req.body.title, addedBy: req.identity.id, isDeleted: false })
+          
 
             if (!result) {
-                let result1 = await UntrackSales.create(req.body)
+                let result1 = await UntrackSales.create(req.body).fetch()
                 if (result1) {
                     let data = await Users.findOne({ id: result1.brand_id });
                     const emailpayload = {
