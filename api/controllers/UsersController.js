@@ -971,7 +971,7 @@ module.exports = {
       } else if (get_user.isVerified == 'Y' && get_user.role == "affiliate") {
         return res.redirect(`${credentials.FRONT_WEB_URL}`);
       } else if (get_user.isVerified == 'Y' && get_user.role == "team") {
-        return res.redirect(`${credentials.ADMIN_WEB_URL}`);
+        return res.redirect(`${credentials.FRONT_WEB_URL}`);
       } else if (get_user.isVerified == 'Y' && get_user.role == "customer") {
         return res.redirect(`${credentials.FRONT_WEB_URL}`);
       }
@@ -986,7 +986,7 @@ module.exports = {
         } else if (update_user && update_user.role == "affiliate") {
           return res.redirect(`${credentials.FRONT_WEB_URL}/dashboard?id=${get_user.id}`);
         } else if (update_user && update_user.role == "team") {
-          return res.redirect(`${credentials.ADMIN_WEB_URL}?id=${get_user.id}`);
+          return res.redirect(`${credentials.FRONT_WEB_URL}?id=${get_user.id}`);
         } else if (update_user && update_user.role == "customer") {
           return res.redirect(`${credentials.FRONT_WEB_URL}/marketplace`);
         }
