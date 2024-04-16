@@ -1047,7 +1047,8 @@ module.exports = {
         throw validation_result.message;
       }
 
-      let { id, email, permissions } = req.body;
+      let { id, email, permissions, social_security_number, tax_classification, tax_name, federal_text_classification, ein, consent_agreed, trade_name, is_us_citizen, signature } = req.body;
+      
       let get_user = await Users.findOne({ id: id, isDeleted: false });
 
       if (!get_user) {
@@ -1157,36 +1158,27 @@ module.exports = {
       // }
 
 
-      let update_user = await Users.updateOne({ id: id }, req.body);
+      let update_user = await Users.updateOne({ id: id }, (req.body));
       if (update_user) {
         var tax_payload = {
-          "social_security_number": "social_security_number",
-          "tax_classification": "tax_classification",
-          "tax_name": "tax_name",
-          "ein": "ein",
-          "federal_text_classification": "federal_text_classification",
-          "trade_name": "trade_name",
-          "consent_agreed": "consent_agreed",
-          "is_us_citizen": "is_us_citizen",
-          "signature": "signature"
+          "social_security_number": social_security_number,
+          "tax_classification": tax_classification,
+          "tax_name": tax_name,
+          "ein": ein,
+          "federal_text_classification": federal_text_classification,
+          "trade_name": trade_name,
+          "consent_agreed": consent_agreed,
+          "is_us_citizen": is_us_citizen,
+          "signature": signature
         }
-        console.log("==========", tax_payload);
         
-        let update_tax = await Tax.update({ id: id }, tax_payload);
-        console.log("+++++++++++++++++++", update_tax);
-
-
-
-
-
-    
-        
-        
+        let update_tax = await Tax.updateOne({ user_id: id }, tax_payload);
+      
         if (req.body.updated_password) {
-          // console.log("password updated");
+          
           await Emails.OnboardingEmails.update_password_by_admin({ email: get_user.email, updated_password: req.body.updated_password, fullName: get_user.fullName });
         }
-        // console.log(req.identity.role,"-----------role");
+  
         if (['team'].includes(req.identity.role)) {
           await Services.AuditTrial.create_audit_trial(req.identity.id, 'users', 'updated', update_user, get_user)
         }
@@ -1211,14 +1203,13 @@ module.exports = {
 
       throw constants.COMMON.SERVER_ERROR;
     } catch (error) {
-      // console.log(error, "-----------err");
       return response.failed(null, `${error}`, req, res);
     }
   },
 
   addUser: async (req, res) => {
     try {
-      // console.log("in add user api");
+     
       let validation_result = await Validations.UserValidations.addUser(req, res);
 
       if (validation_result && !validation_result.success) {
@@ -1231,6 +1222,7 @@ module.exports = {
       if (req.body.email) {
         req.body.email = req.body.email.toLowerCase();
       }
+
       let query = {};
       query.isDeleted = false;
       query.email = email;
@@ -1261,7 +1253,7 @@ module.exports = {
       if (!req.body.password) {
         password = await generatePassword();
         req.body.password = password
-        // console.log(req.body.password,"------------------req.body.password");
+
       }
 
       delete req.body.confirmpassword;
@@ -1317,11 +1309,11 @@ module.exports = {
         "signature": signature
       }
       var newUser = await Users.create(req.body).fetch();
+      
       if (newUser) {
-        console.log(tax_payload, "====tax_payload");
         tax_payload.user_id = newUser.id
         let create_tax = await Tax.create(tax_payload).fetch();
-        console.log(create_tax, "====create_tax");
+       
 
         // let affiliate_link = credentials.FRONT_WEB_URL + "/affiliate/status/" + newUser.id + "?" + newUser.affilaite_unique_id
         // let update_user = await Users.updateOne({ id: newUser.id }, { affiliate_link: affiliate_link });
@@ -1397,7 +1389,6 @@ module.exports = {
 
       throw constants.COMMON.SERVER_ERROR;
     } catch (error) {
-      console.log(error, "---errrr");
       return response.failed(null, `${error}`, req, res);
     }
   },
@@ -1727,7 +1718,6 @@ module.exports = {
 
 
     } catch (error) {
-      console.log(error)
       return res.status(400).json({
         "success": false,
         error: { "code": 400, message: "" + error, }
