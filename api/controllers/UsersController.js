@@ -329,7 +329,7 @@ module.exports = {
         where: {
           email: req.body.email.toLowerCase(),
           isDeleted: false,
-          role: { in: ["brand", "affiliate"] }
+          role: { in: ["brand", "affiliate", "team"] }
         },
       });
 
