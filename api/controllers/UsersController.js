@@ -1169,7 +1169,7 @@ module.exports = {
           "trade_name": trade_name,
           "consent_agreed": consent_agreed,
           "is_us_citizen": is_us_citizen,
-          "signature": signature
+          "signature": signature,
         }
         
         let update_tax = await Tax.updateOne({ user_id: id }, tax_payload);
