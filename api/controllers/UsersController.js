@@ -1159,7 +1159,29 @@ module.exports = {
 
       let update_user = await Users.updateOne({ id: id }, req.body);
       if (update_user) {
+        var tax_payload = {
+          "social_security_number": "social_security_number",
+          "tax_classification": "tax_classification",
+          "tax_name": "tax_name",
+          "ein": "ein",
+          "federal_text_classification": "federal_text_classification",
+          "trade_name": "trade_name",
+          "consent_agreed": "consent_agreed",
+          "is_us_citizen": "is_us_citizen",
+          "signature": "signature"
+        }
+        console.log("==========", tax_payload);
+        
+        let update_tax = await Tax.update({ id: id }, tax_payload);
+        console.log("+++++++++++++++++++", update_tax);
 
+
+
+
+
+    
+        
+        
         if (req.body.updated_password) {
           // console.log("password updated");
           await Emails.OnboardingEmails.update_password_by_admin({ email: get_user.email, updated_password: req.body.updated_password, fullName: get_user.fullName });
