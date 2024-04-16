@@ -1047,8 +1047,8 @@ module.exports = {
         throw validation_result.message;
       }
 
-      let { id, email, permissions, social_security_number, tax_classification, tax_name, federal_text_classification, ein, consent_agreed, trade_name, is_us_citizen, signature } = req.body;
-      
+      let { id, email, permissions, social_security_number, tax_classification, tax_name, federal_text_classification, ein, consent_agreed, trade_name, is_us_citizen, signature, signature_date } = req.body;
+
       let get_user = await Users.findOne({ id: id, isDeleted: false });
 
       if (!get_user) {
@@ -1169,16 +1169,17 @@ module.exports = {
           "trade_name": trade_name,
           "consent_agreed": consent_agreed,
           "is_us_citizen": is_us_citizen,
-          "signature": signature
+          "signature": signature,
+          signature_date: new Date(signature_date)
         }
-        
+
         let update_tax = await Tax.updateOne({ user_id: id }, tax_payload);
-      
+
         if (req.body.updated_password) {
-          
+
           await Emails.OnboardingEmails.update_password_by_admin({ email: get_user.email, updated_password: req.body.updated_password, fullName: get_user.fullName });
         }
-  
+
         if (['team'].includes(req.identity.role)) {
           await Services.AuditTrial.create_audit_trial(req.identity.id, 'users', 'updated', update_user, get_user)
         }
@@ -1209,7 +1210,7 @@ module.exports = {
 
   addUser: async (req, res) => {
     try {
-     
+
       let validation_result = await Validations.UserValidations.addUser(req, res);
 
       if (validation_result && !validation_result.success) {
@@ -1218,7 +1219,7 @@ module.exports = {
 
       let date = new Date();
 
-      let { email, role, referral_code, password, permissions, createdByBrand, affiliate_group, social_security_number, tax_classification, tax_name, federal_text_classification, ein, consent_agreed, trade_name, is_us_citizen, signature } = req.body;
+      let { email, role, referral_code, password, permissions, createdByBrand, affiliate_group, social_security_number, tax_classification, tax_name, federal_text_classification, ein, consent_agreed, trade_name, is_us_citizen, signature, signature_date } = req.body;
       if (req.body.email) {
         req.body.email = req.body.email.toLowerCase();
       }
@@ -1306,14 +1307,15 @@ module.exports = {
         "trade_name": trade_name,
         "consent_agreed": consent_agreed,
         "is_us_citizen": is_us_citizen,
-        "signature": signature
+        "signature": signature,
+        "signature_date": new Date(signature_date)
       }
       var newUser = await Users.create(req.body).fetch();
-      
+
       if (newUser) {
         tax_payload.user_id = newUser.id
         let create_tax = await Tax.create(tax_payload).fetch();
-       
+
 
         // let affiliate_link = credentials.FRONT_WEB_URL + "/affiliate/status/" + newUser.id + "?" + newUser.affilaite_unique_id
         // let update_user = await Users.updateOne({ id: newUser.id }, { affiliate_link: affiliate_link });
