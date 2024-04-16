@@ -28,7 +28,7 @@ module.exports = {
             req.body.order_date = new Date(req.body.order_date);
 
             let result = await UntrackSales.findOne({ title: req.body.title, addedBy: req.identity.id, isDeleted: false })
-          
+
 
             if (!result) {
                 let result1 = await UntrackSales.create(req.body).fetch()
@@ -135,14 +135,14 @@ module.exports = {
     getallSalesDetails: async (req, res) => {
         try {
 
-            let { search, sortBy, status } = req.query;
+            let { search, sortBy, status, addedBy } = req.query;
             let page = req.param('page') || 1;
             let count = req.param('count') || 10;
 
             var query = {}
             if (search) {
-                search = await services.Utils.remove_special_char_exept_underscores(search);
-                query.$or = [{ brand_name: { $regex: search, '$options': 'i' } }];
+                search = await Services.Utils.remove_special_char_exept_underscores(search);
+                query.$or = [{ brand_fullName: { $regex: search, '$options': 'i' } }];
             }
             query.isDeleted = false;
 
@@ -162,6 +162,11 @@ module.exports = {
             if (status) {
                 query.status = status;
             }
+
+            if (addedBy) {
+                query.addedBy = ObjectId(addedBy);
+            }
+
 
             const pipeline = [
                 {
@@ -207,17 +212,17 @@ module.exports = {
                         status: '$status',
                         createdAt: '$createdAt',
                         updatedAt: '$updatedAt',
-                        type:"$type",
-                        click_ref:"$click_ref",
-                        order_date:"$order_date",
-                        amount:"$amount",
-                        commission:"$commission",
-                        order_reference:"$order_reference",
-                        customer_reference:"$customer_reference",
-                        currency:"$currency",
-                        timeZone:"$timeZone"
+                        type: "$type",
+                        click_ref: "$click_ref",
+                        order_date: "$order_date",
+                        amount: "$amount",
+                        commission: "$commission",
+                        order_reference: "$order_reference",
+                        customer_reference: "$customer_reference",
+                        currency: "$currency",
+                        timeZone: "$timeZone"
                     }
-                       
+
                 },
                 {
                     $match: query,
