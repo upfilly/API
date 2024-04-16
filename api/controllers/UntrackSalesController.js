@@ -135,7 +135,7 @@ module.exports = {
     getallSalesDetails: async (req, res) => {
         try {
 
-            let { search, sortBy, status, addedBy } = req.query;
+            let { search, sortBy, status, addedBy, brand_id } = req.query;
             let page = req.param('page') || 1;
             let count = req.param('count') || 10;
 
@@ -165,6 +165,10 @@ module.exports = {
 
             if (addedBy) {
                 query.addedBy = ObjectId(addedBy);
+            }
+
+            if (brand_id) {
+                query.brand_id = ObjectId(brand_id);
             }
 
 
