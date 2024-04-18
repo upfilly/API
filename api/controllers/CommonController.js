@@ -27,6 +27,27 @@ module.exports = {
   uploadImage: async (req, res) => {
     var modelName = req.param('modelName');
 
+    // define folders path
+    var rootpath = process.cwd();
+    var fullpath = rootpath + "/assets/images/" + modelName;
+    var fullpaththumbnail =
+      rootpath + "/assets/images/" + modelName + "/thumbnail";
+    var fullpath200 =
+      rootpath + "/assets/images/" + modelName + "/thumbnail/200";
+    var fullpath300 =
+      rootpath + "/assets/images/" + modelName + "/thumbnail/300";
+    var fullpath500 =
+      rootpath + "/assets/images/" + modelName + "/thumbnail/500";
+
+    //Check image upload folder is exists or not. If not create all folders
+    if (fs.existsSync(fullpath) == false) {
+      fs.mkdirSync(fullpath);
+      fs.mkdirSync(fullpaththumbnail);
+      fs.mkdirSync(fullpath200);
+      fs.mkdirSync(fullpath300);
+      fs.mkdirSync(fullpath500);
+    }
+
     try {
       req
         .file('file')
@@ -49,7 +70,7 @@ module.exports = {
             var responseData = {};
 
             file.forEach(async (element, index) => {
-              
+
               var name = generateName();
               //(element.fd);
               typeArr = element.type.split('/');
@@ -165,7 +186,7 @@ module.exports = {
           }
         );
     } catch (err) {
-      //(err);
+      console.log(err, "===eerrr");
       return res
         .status(500)
         .json({ success: false, error: { code: 500, message: '' + err } });
