@@ -73,25 +73,25 @@ exports.makeOfferToAffiliate = async (req, res) => {
             await Emails.MakeOfferEmails.offerSent(email_payload)
 
             //-------------------- Send Notification ------------------//
-            // let notification_payload = {};
-            // notification_payload.send_to = sent_offer.affiliate_id;
-            // notification_payload.title = `Offer | ${await Services.Utils.title_case(sent_offer.name)} | ${await Services.Utils.title_case(req.identity.fullName)}`;
-            // notification_payload.message = `You have a new opportunity request from ${await Services.Utils.title_case(req.identity.fullName)}`;
-            // notification_payload.type = "product_assign"
-            // notification_payload.addedBy = req.identity.id;
-            // notification_payload.product_id = sent_offer.id;
-            // let create_notification = await Notifications.create(notification_payload).fetch();
+            let notification_payload = {};
+            notification_payload.send_to = sent_offer.affiliate_id;
+            notification_payload.title = `Offer | ${await Services.Utils.title_case(sent_offer.name)} | ${await Services.Utils.title_case(req.identity.fullName)}`;
+            notification_payload.message = `You have a new opportunity request from ${await Services.Utils.title_case(req.identity.fullName)}`;
+            notification_payload.type = "product_assign"
+            notification_payload.addedBy = req.identity.id;
+            notification_payload.product_id = sent_offer.id;
+            let create_notification = await Notifications.create(notification_payload).fetch();
 
-            // let affiliate_detail = await Users.findOne({ id: sent_offer.affiliate_id })
-            // if (create_notification && affiliate_detail.device_token) {
-            //     let fcm_payload = {
-            //         device_token: affiliate_detail.device_token,
-            //         title: req.identity.fullName,
-            //         message: create_notification.message,
-            //     }
+            let affiliate_detail = await Users.findOne({ id: sent_offer.affiliate_id })
+            if (create_notification && affiliate_detail.device_token) {
+                let fcm_payload = {
+                    device_token: affiliate_detail.device_token,
+                    title: req.identity.fullName,
+                    message: create_notification.message,
+                }
 
-            //     await Services.FCM.send_fcm_push_notification(fcm_payload)
-            // }
+                await Services.FCM.send_fcm_push_notification(fcm_payload)
+            }
 
             //-------------------- Send Notification ------------------//
 
