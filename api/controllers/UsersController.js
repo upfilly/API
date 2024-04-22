@@ -1422,6 +1422,7 @@ module.exports = {
   },
 
   userAutoLogin: async function (req, res) {
+    
     try {
       let validation_result = await Validations.UserValidations.userAutoLogin(req, res);
 
