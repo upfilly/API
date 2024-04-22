@@ -7,7 +7,7 @@ exports.addsales= async (req, res) => {
         title: Joi.string().required(),
         image: Joi.string().optional().allow(""),
         type:Joi.string().required(),
-        click_ref:Joi.string().required(),
+        click_ref:Joi.string().optional(),
         brand_id: Joi.string().required(),
         order_date: Joi.string().required(),
         amount: Joi.string().required(),
