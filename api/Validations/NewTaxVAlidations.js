@@ -6,6 +6,7 @@ exports.addTax = async (req, res, next) => {
         user_id: Joi.string().required(),
         social_security_number: Joi.string().optional(),
         tax_classification: Joi.string().optional(),
+        federal_text_classification: Joi.string().optional(),
         tax_name: Joi.string().optional(),
         is_us_citizen: Joi.boolean().optional(),
         trade_name: Joi.string().optional().allow(""),
