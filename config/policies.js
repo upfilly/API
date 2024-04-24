@@ -87,5 +87,11 @@ module.exports.policies = {
   },
   CookiesController: {
     savedCookies: true
+  },
+  
+  AffiliateLinkController: {
+    shorturl: true,
+    getOriginalUrl: true
+
   }
 };

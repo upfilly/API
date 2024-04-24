@@ -384,10 +384,12 @@ module.exports.routes = {
 
 
   /**
-   * @affiliateLink
+   * @AffiliateLink
    */
   'post /get-link': 'AffiliateLinkController.generateLink',
   'get /get-affilaite-link': 'AffiliateLinkController.generateLinkOfAffiliate',
+  'put /shorturl': 'AffiliateLinkController.shorturl',
+  'get /:shortUrl': 'AffiliateLinkController.getOriginalUrl',
 
 
   /**
@@ -414,5 +416,6 @@ module.exports.routes = {
   'post /addTax':'NewTaxController.addTax',
 
 
-
 };
+
+
