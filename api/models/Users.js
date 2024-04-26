@@ -24,7 +24,7 @@ module.exports = {
     password: { type: 'string', columnName: 'encryptedPassword', minLength: 8 },
     gender: { type: 'string', isIn: ["male", "female", "transgender", "others"] },
     isVerified: { type: 'string', isIn: ['Y', 'N'], defaultsTo: 'N', },
-    role: { type: 'string', isIn: ['brand', 'admin', 'affiliate', 'team', 'accountExecutive', 'parterManager', 'customer'], },
+    role: { type: 'string', isIn: ['brand', 'admin', 'affiliate', 'team', 'accountExecutive', 'parterManager', 'customer', 'users'], },
     address: { type: "string" },
     country: { type: 'string' },
     state: { type: 'string' },
@@ -38,7 +38,7 @@ module.exports = {
       type: 'string'
     },
     affiliate_group: { model: 'affiliatemanagement' },
-    affiliate_type: {type: "string", isIn: ["individual", "business"] },
+    affiliate_type: { type: "string", isIn: ["individual", "business"] },
     social_media_platforms: { type: "json", defaultsTo: [] },
     tags: { type: "json", defaultsTo: [] },
 
