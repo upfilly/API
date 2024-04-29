@@ -415,6 +415,19 @@ module.exports.routes = {
   /**@NewTax */
   'post /addTax':'NewTaxController.addTax',
 
+  /**@AffiliateInvite */
+
+  'post /addInvite':'AffiliateInviteController.addInvite',
+  'get /getInviteById':'AffiliateInviteController.getInviteById',
+  'put /updateInvite':'AffiliateInviteController.updateInvite',
+  'delete /deleteInvite':'AffiliateInviteController.deleteInvite',
+  'get /getAllInviteDetails':'AffiliateInviteController.getAllInviteDetails',
+  'put /update/status': 'AffiliateInviteController.changeStatus',
+
+
+  
+
+
 
 };
 

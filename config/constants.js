@@ -520,5 +520,17 @@ module.exports.constants = {
      
     },
 
-    
+    AFFILIATEINVITE: {
+        INVALID_ID: "Invalid id",
+        ALREADY_EXIST: "Already exist",
+        ADDED: "affiliate added successfully",
+        FETCHED: "Data Fetched successfully",
+        UPDATED: "data updated successfully",
+        DELETED : "data deleted successfully",
+        CANNOT_ACCEPT:  "This request is already accepted",
+        STATUS_UPDATE: "Status updated successfully",
+
+    }
+
+
 }
