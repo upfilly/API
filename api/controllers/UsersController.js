@@ -515,7 +515,7 @@ module.exports = {
     try {
       let page = req.param('page') || 1;
       let count = req.param('count') || 10;
-      let { search, role, isDeleted, status, sortBy, lat, lng, isTrusted, isFeatured, createBybrand_id, start_date, end_date, affiliate_group_id, three_role, affiliate_type } = req.query;
+      let { search, role, isDeleted, status, sortBy, lat, lng, isTrusted, isFeatured, createBybrand_id, start_date, end_date, affiliate_group_id, three_role, affiliate_type, invite_status } = req.query;
       let skipNo = (Number(page) - 1) * Number(count);
       let query = { isDeleted: false };
 
@@ -558,6 +558,7 @@ module.exports = {
 
 
       if (status) { query.status = status; };
+      if (invite_status) { query.invite_status = invite_status; };
 
       if (affiliate_type) {
         query.affiliate_type = affiliate_type
@@ -616,6 +617,38 @@ module.exports = {
             preserveNullAndEmptyArrays: true
           }
         },
+        {
+          $lookup:
+          {
+            from: "affiliateinvite",
+            let: { affiliate_id: "$_id", isDeleted: false, addedBy: ObjectId(req.identity.id) },
+            // let: { user_id: "$req.identity.id", fav_user_id: ObjectId("64d076e86ecebee01af09d8c") },
+            pipeline: [
+              {
+                $match:
+                {
+                  $expr:
+                  {
+                    $and:
+                      [
+                        { $eq: ["$affiliate_id", "$$affiliate_id"] },
+                        { $eq: ["$isDeleted", "$$isDeleted"] },
+                        { $eq: ["$addedBy", "$$addedBy"] }
+
+                      ]
+                  }
+                }
+              }
+            ],
+            as: "invite_affiliate_details"
+          }
+        },
+        {
+          $unwind: {
+            path: '$invite_affiliate_details',
+            preserveNullAndEmptyArrays: true
+          }
+        },
       ];
 
       let projection = {
@@ -638,6 +671,9 @@ module.exports = {
           createdByBrand: "$createdByBrand",
           affiliate_group: "$affiliate_group",
           affiliate_group_name: "$affiliate_group_details.group_name",
+          invite_status: {
+            $cond: [{ $ifNull: ['$invite_affiliate_details.status', false] }, "$invite_affiliate_details.status", "not_invited"]
+          },
           status: "$status",
           createdAt: "$createdAt",
           updatedAt: "$updatedAt",
@@ -1422,7 +1458,7 @@ module.exports = {
   },
 
   userAutoLogin: async function (req, res) {
-    
+
     try {
       let validation_result = await Validations.UserValidations.userAutoLogin(req, res);
 
