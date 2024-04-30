@@ -10,7 +10,7 @@ module.exports = {
   attributes: {
     affiliate_id:{ model: "users" },
     message:{ type:"string" },
-    commission:{type:"number"},
+    commission:{type:"string"},
     tags:{ type: "json" },
     status: { type: 'string', isIn: ['accepted', 'rejected'], defaultsTo: 'pending', },
     addedBy: {model: "users"},
