@@ -179,7 +179,7 @@ module.exports = {
                 },
                 {
                     $unwind: {
-                        path: '$brand_details',
+                        path: '$affiliate_details',
                         preserveNullAndEmptyArrays: true
                     }
                 },
