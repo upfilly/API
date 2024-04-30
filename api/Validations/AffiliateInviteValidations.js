@@ -7,7 +7,7 @@ exports.addinvite = async (req, res) => {
         affiliate_id: Joi.string().required(),
         message: Joi.string().optional().allow(""),
         commission:Joi.string().optional(),
-        tags:Joi.string().optional()
+        tags:Joi.array().default([]),
 
     })
     return await Validate(schema, req, res);
