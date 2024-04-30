@@ -9,9 +9,9 @@ const constants = require('../../config/constants').constants;
 const response = require("../services/Response");
 const db = sails.getDatastore().manager;
 const ObjectId = require('mongodb').ObjectId;
-const {customAlphabet} = require('nanoid');
-const nanoid = customAlphabet('1234567890abcdef', 6);
-const baseUrl = 'https://upfilly.com';
+// const {customAlphabet} = require('nanoid');
+// const nanoid = customAlphabet('1234567890abcdef', 6);
+// const baseUrl = 'https://upfilly.com';
 
 
 exports.generateLink = async (req, res) => {
@@ -56,53 +56,53 @@ exports.generateLinkOfAffiliate = async (req, res) => {
     } catch (err) {
         return response.failed(null, `${err}`, req, res);
     }
-},
+}
 
-exports.shorturl = async(req,res)=>{
-    try {
-      const shortCode = nanoid()
-      const id = req.body.id;
+// exports.shorturl = async(req,res)=>{
+//     try {
+//       const shortCode = nanoid()
+//       const id = req.body.id;
   
-      const updateResult = await AffiliateLink.updateOne({id:id, isDeleted:false},{shortUrl:`${baseUrl}/${shortCode}`})
-      if(updateResult){
-        return res.status(200).json({
-          success: true,
-          data: `${baseUrl}/${shortCode}`
-        });
-      }  
-      else { 
-        return res.status(404).json({
-            success: false,
-            message: "Invalid Id"
-          });
-      }
-    }
-    catch (error) {
-        return res.status(500).json({
-            success: false,
-            err: { message:""+ error }
-        });
-    }
-}
+//       const updateResult = await AffiliateLink.updateOne({id:id, isDeleted:false},{shortUrl:`${baseUrl}/${shortCode}`})
+//       if(updateResult){
+//         return res.status(200).json({
+//           success: true,
+//           data: `${baseUrl}/${shortCode}`
+//         });
+//       }  
+//       else { 
+//         return res.status(404).json({
+//             success: false,
+//             message: "Invalid Id"
+//           });
+//       }
+//     }
+//     catch (error) {
+//         return res.status(500).json({
+//             success: false,
+//             err: { message:""+ error }
+//         });
+//     }
+// }
 
-exports.getOriginalUrl = async (req, res)=> {
-    try {
-      const shortUrl = req.params.shortUrl;
-      const longUrlResult = await AffiliateLink.findOne({ shortUrl:shortUrl })
-      if(longUrlResult){
-        res.redirect(longUrlResult.link);
-      } 
-      else {
-        res.status(404).send("Not found");
-      }
-    } 
-    catch (error) {
-        return res.status(400).json({
-            success: false,
-            err: { message:""+ error }
-        });
-    }
-}
+// exports.getOriginalUrl = async (req, res)=> {
+//     try {
+//       const shortUrl = req.params.shortUrl;
+//       const longUrlResult = await AffiliateLink.findOne({ shortUrl:shortUrl })
+//       if(longUrlResult){
+//         res.redirect(longUrlResult.link);
+//       } 
+//       else {
+//         res.status(404).send("Not found");
+//       }
+//     } 
+//     catch (error) {
+//         return res.status(400).json({
+//             success: false,
+//             err: { message:""+ error }
+//         });
+//     }
+// }
 
 
 

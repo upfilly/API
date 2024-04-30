@@ -388,8 +388,8 @@ module.exports.routes = {
    */
   'post /get-link': 'AffiliateLinkController.generateLink',
   'get /get-affilaite-link': 'AffiliateLinkController.generateLinkOfAffiliate',
-  'put /shorturl': 'AffiliateLinkController.shorturl',
-  'get /:shortUrl': 'AffiliateLinkController.getOriginalUrl',
+  // 'put /shorturl': 'AffiliateLinkController.shorturl',
+  // 'get /:shortUrl': 'AffiliateLinkController.getOriginalUrl',
 
 
   /**
