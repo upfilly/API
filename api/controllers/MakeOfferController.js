@@ -56,6 +56,7 @@ exports.makeOfferToAffiliate = async (req, res) => {
             req.body.affiliate_id = get_product.addedBy;
         }
 
+        console.log(req.body);
         let get_campaign = await MakeOffer.findOne({ product_id: product_id, brand_id: brand_id, affiliate_id: req.body.affiliate_id, isDeleted: false });
         if (get_campaign) {
             throw constants.MAKE_OFFER.ALREADY_EXIST
@@ -100,7 +101,7 @@ exports.makeOfferToAffiliate = async (req, res) => {
         throw constants.COMMON.SERVER_ERROR;
 
     } catch (error) {
-
+        console.log(error, "err");
         return response.failed(null, `${error}`, req, res);
     }
 };

@@ -8,7 +8,7 @@
 module.exports = {
   schema: true,
   attributes: {
-    type: { type: 'string', isIn: ["subscription", "contract", "campaign", "hiring", "profile_claim", "message", "campaign_result", "referral", "points", "product_assign"] },
+    type: { type: 'string', isIn: ["subscription", "contract", "campaign", "hiring", "profile_claim", "message", "campaign_result", "referral", "points", "product_assign", "make_offer"] },
     addedBy: { model: 'users' },
     send_to: { model: 'users' },
     title: { type: 'string' },
