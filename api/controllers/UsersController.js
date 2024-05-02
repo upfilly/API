@@ -832,7 +832,7 @@ module.exports = {
 
         }
 
-        let get_permission= await Permissions.findOne({ role: get_user.role });
+        let get_permission = await Permissions.findOne({ role: get_user.role });
         if (get_permission) {
           get_user.permission_detail = get_permission;
 
@@ -1016,8 +1016,13 @@ module.exports = {
         return res.redirect(`${credentials.FRONT_WEB_URL}`);
       } else if (get_user.isVerified == 'Y' && get_user.role == "customer") {
         return res.redirect(`${credentials.FRONT_WEB_URL}`);
-      }
-      let update_user = await Users.updateOne({ id: id }, { isVerified: 'Y' });
+      } else if (get_user.isVerified == 'Y' && get_user.role == "operator") {
+        return res.redirect(`${credentials.FRONT_WEB_URL}`);
+      } else if (get_user.isVerified == 'Y' && get_user.role == "analyzer") {
+        return res.redirect(`${credentials.FRONT_WEB_URL}`);
+      } else if (get_user.isVerified == 'Y' && get_user.role == "publisher") {
+        return res.redirect(`${credentials.FRONT_WEB_URL}`);
+      } update_user = await Users.updateOne({ id: id }, { isVerified: 'Y' });
       if (update_user) {
         if (update_user && update_user.role == "brand") {
           if (update_user.subscription_id != "") {
@@ -1031,6 +1036,12 @@ module.exports = {
           return res.redirect(`${credentials.FRONT_WEB_URL}?id=${get_user.id}`);
         } else if (update_user && update_user.role == "customer") {
           return res.redirect(`${credentials.FRONT_WEB_URL}/marketplace`);
+        } else if (update_user && update_user.role == "operator") {
+          return res.redirect(`${credentials.FRONT_WEB_URL}/dashboard?id=${get_user.id}`);
+        } else if (update_user && update_user.role == "analyzer") {
+          return res.redirect(`${credentials.FRONT_WEB_URL}/dashboard?id=${get_user.id}`);
+        } else if (update_user && update_user.role == "publisher") {
+          return res.redirect(`${credentials.FRONT_WEB_URL}/dashboard?id=${get_user.id}`);
         }
       }
       throw constants.COMMON.SERVER_ERROR;
@@ -1353,12 +1364,13 @@ module.exports = {
         "signature_date": new Date(signature_date)
       }
       var newUser = await Users.create(req.body).fetch();
-
       if (newUser) {
-        tax_payload.user_id = newUser.id
-        let create_tax = await Tax.create(tax_payload).fetch();
 
+        if (newUser.role == "affiliate") {
+          tax_payload.user_id = newUser.id
+          let create_tax = await Tax.create(tax_payload).fetch();
 
+        }
         // let affiliate_link = credentials.FRONT_WEB_URL + "/affiliate/status/" + newUser.id + "?" + newUser.affilaite_unique_id
         // let update_user = await Users.updateOne({ id: newUser.id }, { affiliate_link: affiliate_link });
         // -------------- Create Permissions -------------//
@@ -1401,33 +1413,7 @@ module.exports = {
           await Emails.OnboardingEmails.add_user_email(email_payload_new);
         }
 
-        // let find_partner_manager = await Users.findOne({ id: newUser.parter_manager_id, isDeleted: false, status: "active" });
-        // if (find_partner_manager) {
-        //   if (newUser && newUser.parter_manager_id && newUser.parter_manager_id != null && newUser.allow_notification == true) {
-        //     let partner_manager_payload = {
-        //       email: find_partner_manager.email,
-        //       affiliate_firstName: newUser.firstName,
-        //       affiliate_fullName: newUser.fullName,
-        //       partner_firstName: find_partner_manager.firstName,
-        //       partner_fullName: find_partner_manager.fullName,
-        //       createdBy_brand: find_brand.fullName
-        //     };
-        //     await Emails.OnboardingEmails.notification_to_partnerManager(partner_manager_payload);
-        //   }
-        // }
 
-        // --------------- Creating Points ----------//
-        // let create_points = await Points.create({
-        //   user_id: newUser.id,
-        //   isTemplate: false
-        // })
-        // --------------- Creating Points ----------//
-        // }
-        // if (["influencers"].includes(newUser.role)) {
-        //   //------------------- Fetching data from creator db --------------//
-        //   Services.UserServices.updating_influencer_social_media_data(newUser.id);
-        //   //------------------- Fetching data from creator db --------------//
-        // }
         return response.success(newUser, constants.user.USER_ADD, req, res);
       }
 
