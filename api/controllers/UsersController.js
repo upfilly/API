@@ -803,20 +803,20 @@ module.exports = {
           }
         }
 
-        if (get_user && get_user.parter_manager_id && get_user.parter_manager_id != "") {
-          let get_parter_manager = await Users.findOne({ id: get_user.parter_manager_id });
-          if (get_parter_manager) {
-            // console.log(get_affiliate_group,"get_affiliate_group");
-            get_user.parter_manager_name = get_parter_manager.fullName;
-          }
-        }
-        if (get_user && get_user.account_executive_id && get_user.account_executive_id != "") {
-          let get_account_executive = await Users.findOne({ id: get_user.account_executive_id });
-          if (get_account_executive) {
-            // console.log(get_affiliate_group,"get_affiliate_group");
-            get_user.account_executive_name = get_account_executive.fullName;
-          }
-        }
+        // if (get_user && get_user.parter_manager_id && get_user.parter_manager_id != "") {
+        //   let get_parter_manager = await Users.findOne({ id: get_user.parter_manager_id });
+        //   if (get_parter_manager) {
+        //     // console.log(get_affiliate_group,"get_affiliate_group");
+        //     get_user.parter_manager_name = get_parter_manager.fullName;
+        //   }
+        // }
+        // if (get_user && get_user.account_executive_id && get_user.account_executive_id != "") {
+        //   let get_account_executive = await Users.findOne({ id: get_user.account_executive_id });
+        //   if (get_account_executive) {
+        //     // console.log(get_affiliate_group,"get_affiliate_group");
+        //     get_user.account_executive_name = get_account_executive.fullName;
+        //   }
+        // }
 
         if (get_user && get_user.createdByBrand && get_user.createdByBrand != "") {
           let get_brand = await Users.findOne({ id: get_user.createdByBrand });
@@ -829,6 +829,12 @@ module.exports = {
         let get_tax = await Tax.findOne({ user_id: get_user.id });
         if (get_tax) {
           get_user.tax_detail = get_tax;
+
+        }
+
+        let get_permission= await Permissions.findOne({ role: get_user.role });
+        if (get_permission) {
+          get_user.permission_detail = get_permission;
 
         }
 
