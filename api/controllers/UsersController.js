@@ -329,7 +329,7 @@ module.exports = {
         where: {
           email: req.body.email.toLowerCase(),
           isDeleted: false,
-          role: { in: ["brand", "affiliate", "team"] }
+          role: { in: ["brand", "affiliate", "team", 'operator', 'analyzer', 'publisher'] }
         },
       });
 
@@ -551,8 +551,6 @@ module.exports = {
 
       if (role) {
         query.role = role;
-      } else {
-        query.role = { $in: ['team', 'accountExecutive', 'parterManager'] };
       }
 
 
@@ -728,6 +726,216 @@ module.exports = {
       return response.failed(null, `${error}`, req, res)
     }
   },
+
+  /**
+   * Api for Invited users
+   */
+
+
+  getAllInvitedUsers: async (req, res) => {
+    try {
+      let page = req.param('page') || 1;
+      let count = req.param('count') || 10;
+      let { search, role, isDeleted, status, sortBy, lat, lng, start_date, end_date, affiliate_group_id, three_role, affiliate_type, invite_status } = req.query;
+      let skipNo = (Number(page) - 1) * Number(count);
+      let query = { isDeleted: false };
+
+      if (search) {
+        search = await Services.Utils.remove_special_char_exept_underscores(search);
+        query.$or = [
+          { fullName: { $regex: search, '$options': 'i' } },
+          { email: { $regex: search, '$options': 'i' } },
+          { affiliate_code: { $regex: search, '$options': 'i' } },
+          { firstName: { $regex: search, '$options': 'i' } },
+          { lastName: { $regex: search, '$options': 'i' } },
+          { mobileNo: { $regex: search, '$options': 'i' } },
+          { work_phone: { $regex: search, '$options': 'i' } }
+        ];
+      };
+
+      let sortquery = {};
+      if (sortBy) {
+        let typeArr = [];
+        typeArr = sortBy.split(" ");
+        let sortType = typeArr[1];
+        let field = typeArr[0];
+        sortquery[field ? field : 'createdAt'] = sortType ? (sortType == 'desc' ? -1 : 1) : -1;
+      } else {
+        sortquery = { updatedAt: -1 };
+      };
+
+      if (role) {
+        query.role = role;
+      } else {
+        query.role = { $nin: ['users', 'brand'] };
+      }
+
+
+
+      if (status) { query.status = status; };
+      if (invite_status) { query.invite_status = invite_status; };
+
+      if (affiliate_type) {
+        query.affiliate_type = affiliate_type
+      }
+
+      if (isDeleted) {
+        query.isDeleted = isDeleted ? isDeleted === 'true' : true ? isDeleted : false;
+      }
+
+
+
+
+      query.addedBy = ObjectId(req.identity.id);
+
+
+      // if (start_date && end_date) {
+      //   query.createdAt = {
+      //     $gte: new Date(start_date),
+      //     $lte: new Date(end_date)
+      //   }
+      // }
+
+      if (start_date && end_date) {
+        var date = new Date(start_date);
+        date.setDate(date.getDate());
+        var Enddate = new Date(end_date);
+        Enddate.setDate(Enddate.getDate() + 1);
+        query.$and = [
+          { createdAt: { $gte: date } },
+          { createdAt: { $lte: Enddate } },
+        ];
+      }
+
+      if (affiliate_group_id) {
+        query.affiliate_group = { $in: await string_ids_toObjectIds_array(affiliate_group_id) }
+      }
+  
+      let pipeline = [
+        // {
+        //   $lookup: {
+        //     from: "affiliatemanagement",
+        //     localField: "affiliate_group",
+        //     foreignField: "_id",
+        //     as: "affiliate_group_details"
+        //   }
+        // },
+        // {
+        //   $unwind: {
+        //     path: '$affiliate_group_details',
+        //     preserveNullAndEmptyArrays: true
+        //   }
+        // },
+        // {
+        //   $lookup:
+        //   {
+        //     from: "affiliateinvite",
+        //     let: { affiliate_id: "$_id", isDeleted: false, addedBy: ObjectId(req.identity.id) },
+        //     // let: { user_id: "$req.identity.id", fav_user_id: ObjectId("64d076e86ecebee01af09d8c") },
+        //     pipeline: [
+        //       {
+        //         $match:
+        //         {
+        //           $expr:
+        //           {
+        //             $and:
+        //               [
+        //                 { $eq: ["$affiliate_id", "$$affiliate_id"] },
+        //                 { $eq: ["$isDeleted", "$$isDeleted"] },
+        //                 { $eq: ["$addedBy", "$$addedBy"] }
+
+        //               ]
+        //           }
+        //         }
+        //       }
+        //     ],
+        //     as: "invite_affiliate_details"
+        //   }
+        // },
+        // {
+        //   $unwind: {
+        //     path: '$invite_affiliate_details',
+        //     preserveNullAndEmptyArrays: true
+        //   }
+        // },
+      ];
+
+      let projection = {
+        $project: {
+          id: "$_id",
+          firstName: "$firstName",
+          lastName: "$lastName",
+          fullName: "$fullName",
+          email: "$email",
+          role: "$role",
+          image: "$image",
+          logo: "$logo",
+          address: "$address",
+          country: "$country",
+          mobileNo: "$mobileNo",
+          work_phone: "$work_phone",
+          affiliate_code: "$affiliate_code",
+          affiliate_type: "$affiliate_type",
+          social_media_platforms: "$social_media_platforms",
+          createdByBrand: "$createdByBrand",
+          affiliate_group: "$affiliate_group",
+          affiliate_group_name: "$affiliate_group_details.group_name",
+          invite_status: {
+            $cond: [{ $ifNull: ['$invite_affiliate_details.status', false] }, "$invite_affiliate_details.status", "not_invited"]
+          },
+          status: "$status",
+          createdAt: "$createdAt",
+          updatedAt: "$updatedAt",
+          isDeleted: "$isDeleted",
+          addedBy: "$addedBy",
+          location: "$location"
+        }
+      };
+      pipeline.push(projection);
+      pipeline.push({
+        $match: query
+      });
+      pipeline.push({
+        $sort: sortquery
+      });
+      if (lat && lng) {
+        pipeline.unshift({
+          $geoNear: {
+            near: { type: "Point", coordinates: [Number(lng), Number(lat)] },
+            distanceField: "dist.calculated",
+            maxDistance: 200 * 1000,                // in km to meter
+            distanceMultiplier: 1 / 1000,           // in km
+            query: { isDeleted: false },
+            spherical: true
+          }
+        })
+      }
+      db.collection('users').aggregate(pipeline).toArray((err, totalResult) => {
+        pipeline.push({
+          $skip: Number(skipNo)
+        });
+        pipeline.push({
+          $limit: Number(count)
+        });
+
+        db.collection('users').aggregate(pipeline).toArray(async (err, result) => {
+          let resData = {
+            total: totalResult ? totalResult.length : 0,
+            data: result ? result : []
+          }
+          if (!req.param('page') && !req.param('count')) {
+            resData.data = totalResult ? totalResult : []
+          }
+          return response.success(resData, constants.user.FETCHED_ALL, req, res);
+        })
+      })
+
+    } catch (error) {
+      // console.log(error, "---err");
+      return response.failed(null, `${error}`, req, res)
+    }
+  },
+
 
   /*
    *For Check Email Address Exit or not
@@ -1272,7 +1480,7 @@ module.exports = {
 
       let date = new Date();
 
-      let { email, role, referral_code, password, permissions, createdByBrand, affiliate_group, social_security_number, tax_classification, tax_name, federal_text_classification, ein, consent_agreed, trade_name, is_us_citizen, signature, signature_date } = req.body;
+      let { email, role, password, permissions, createdByBrand, affiliate_group, social_security_number, tax_classification, tax_name, federal_text_classification, ein, consent_agreed, trade_name, is_us_citizen, signature, signature_date } = req.body;
       if (req.body.email) {
         req.body.email = req.body.email.toLowerCase();
       }

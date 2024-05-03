@@ -46,6 +46,7 @@ module.exports.routes = {
   'put /reset/password': 'UsersController.resetPassword',
   'post /add/user': 'UsersController.addUser',
   'get /users/list': 'UsersController.getAllUsers',
+  'get /invite/users-list': 'UsersController.getAllInvitedUsers',
   'delete /remove/user': 'UsersController.deleteUser',
   'get /profile': 'UsersController.userProfileData',
   'get /user/detail': 'UsersController.userDetail',
