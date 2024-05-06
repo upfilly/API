@@ -546,7 +546,7 @@ module.exports = {
       if (req.identity.role == 'admin') {
         query.role = { $nin: ['admin',] };
       } else {
-        query.role = { $nin: ['admin', 'team'] };
+        query.role = { $nin: ['admin', 'team', ''] };
       }
 
       if (role) {
@@ -599,6 +599,8 @@ module.exports = {
       if (affiliate_group_id) {
         query.affiliate_group = { $in: await string_ids_toObjectIds_array(affiliate_group_id) }
       }
+
+      query.addedBy = { $eq: null };
       // console.log(JSON.stringify(query), '===========query');
       let pipeline = [
         {
@@ -810,7 +812,7 @@ module.exports = {
       if (affiliate_group_id) {
         query.affiliate_group = { $in: await string_ids_toObjectIds_array(affiliate_group_id) }
       }
-  
+
       let pipeline = [
         // {
         //   $lookup: {
