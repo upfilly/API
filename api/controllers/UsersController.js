@@ -1468,6 +1468,7 @@ module.exports = {
 
       throw constants.COMMON.SERVER_ERROR;
     } catch (error) {
+      console.log(error, "==err");
       return response.failed(null, `${error}`, req, res);
     }
   },

@@ -143,15 +143,7 @@ module.exports.constants = {
         FETCHED_ALL: "Fetched successfully",
         ALREADY_EXIST: "Same name already exists",
     },
-    INFLUENCERS: {
-        FETCHED: "Influencer Fetched Successfully",
-        FETCHED_ALL: "Influencers Fetched Successfully",
-        ID_REQUIRED: "Id is Required",
-        INVALID_ID: "Invalid Id",
-        NEED_TO_UPGRADE: "Please upgrade your plan to view more profiles.",
-        HANDLE_NAME_REQUIRED: "Handle Name is Required",
-
-    },
+    
     TRANSACTION: {
         INVALID_ID: "Invaild Id",
         FETCHED: "Transaction Fetched successfully",
@@ -530,7 +522,16 @@ module.exports.constants = {
         CANNOT_ACCEPT:  "This request is already accepted",
         STATUS_UPDATE: "Status updated successfully",
 
-    }
-
+    },
+    COMMON_SUB_CHILD_CATEGORIES: {
+        ADDED: "Child Sub Category Added successfully",
+        UPDATED: "Updated successfully",
+        INVALID_ID: "Invaild Id",
+        FETCHED: "Fetched successfully",
+        ID_REQUIRED: "Id is required",
+        DELETED: "Deleted successfully",
+        FETCHED_ALL: "Fetched successfully",
+        ALREADY_EXIST: "Already exists",
+    },
 
 }

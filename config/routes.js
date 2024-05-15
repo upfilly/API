@@ -425,6 +425,11 @@ module.exports.routes = {
   'get /getAllInviteDetails':'AffiliateInviteController.getAllInviteDetails',
   'put /update/status': 'AffiliateInviteController.changeStatus',
 
+ /**
+  * @CommonCategory
+  */
+ 'post /sub-child-category': "SubChildCategoryController.addSubChildCategory",
+ 'get /sub-child-category':'SubChildCategoryController.getAllSubChildCommonCategory',
 
   
 

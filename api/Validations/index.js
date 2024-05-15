@@ -38,8 +38,9 @@ module.exports = {
     Product: require("./ProductValidations"),
     MakeOfferValidations: require("./MakeOfferValidations"),
     InviteValidation: require("./InviteValidation"),
-    tax:require('./NewTaxVAlidations'),
-    AffiliateInviteValidations:require('./AffiliateInviteValidations'),
+    tax: require('./NewTaxVAlidations'),
+    AffiliateInviteValidations: require('./AffiliateInviteValidations'),
+    SubChildCategory: require('./SubChildCategoryValidations')
 
 
     // DiscountBraintreeValidation: require("./DiscountBraintreeValidations")
