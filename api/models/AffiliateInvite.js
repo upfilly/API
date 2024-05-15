@@ -8,12 +8,13 @@
 module.exports = {
 
   attributes: {
-    affiliate_id:{ model: "users" },
-    message:{ type:"string" },
-    commission:{type:"string"},
-    tags:{ type: "json" },
+    affiliate_id: { model: "users" },
+    message: { type: "string" },
+    // commission:{type:"string"},
+    campaign_id: { model: "campaign" },
+    tags: { type: "json" },
     status: { type: 'string', isIn: ['accepted', 'rejected'], defaultsTo: 'pending', },
-    addedBy: {model: "users"},
+    addedBy: { model: "users" },
     updatedBy: { model: "users" },
     createdAt: { type: "ref", autoCreatedAt: true },
     updatedAt: { type: "ref", autoUpdatedAt: true },

@@ -166,12 +166,12 @@ module.exports = {
       // }
       //----------saving location------------//
       req.body.my_code = Services.Referral.generate_referal_code();
-      if (["affiliate"].includes(role)) {
-        let default_affiliate_group = await AffiliateManagement.findOne({ isDefaultAffiliateGroup: true, isDeleted: false, status: "active" });
-        if (default_affiliate_group) {
-          req.body.affiliate_group = default_affiliate_group.id;
-        }
-      }
+      // if (["affiliate"].includes(role)) {
+      //   let default_affiliate_group = await AffiliateManagement.findOne({ isDefaultAffiliateGroup: true, isDeleted: false, status: "active" });
+      //   if (default_affiliate_group) {
+      //     req.body.affiliate_group = default_affiliate_group.id;
+      //   }
+      // }
 
 
       let add_user = await Users.create(req.body).fetch();

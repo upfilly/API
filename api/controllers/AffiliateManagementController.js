@@ -38,7 +38,8 @@ exports.addAffiliateGroup = async (req, res) => {
 
         let query = {
             group_name: group_name,
-            isDeleted: false
+            isDeleted: false,
+            addedBy: req.identity.id
         }
         let existed_group = await AffiliateManagement.findOne(query);
         if (existed_group) {
@@ -50,22 +51,21 @@ exports.addAffiliateGroup = async (req, res) => {
         }
         let add_group = await AffiliateManagement.create(req.body).fetch();
         if (add_group) {
-            if (isDefaultAffiliateGroup && isDefaultAffiliateGroup == true) {
-                let update_Group = await AffiliateManagement.update({
-                    isDefaultAffiliateGroup: true,
-                    status: 'active',
-                    isDeleted: false,
-                    id: { "!=": add_group.id },
-                },
-                    {
-                        isDefaultAffiliateGroup: false,
-                    }).fetch();
-            }
+            // if (isDefaultAffiliateGroup && isDefaultAffiliateGroup == true) {
+            //     let update_Group = await AffiliateManagement.update({
+            //         isDefaultAffiliateGroup: true,
+            //         status: 'active',
+            //         isDeleted: false,
+            //         id: { "!=": add_group.id },
+            //     },
+            //         {
+            //             isDefaultAffiliateGroup: false,
+            //         }).fetch();
+            // }
             return response.success(null, constants.AFFLIATE_GROUP.SAVED, req, res);
         }
     }
     catch (err) {
-        console.log(err, "===err");
         return res.status(400).json({
             success: false,
             error: { message: err },
@@ -88,26 +88,32 @@ exports.editAffiliateGroup = async (req, res) => {
             throw constants.AFFLIATE_GROUP.INVALID_ID;
         }
 
+        let affiliate_group = await AffiliateManagement.findOne({
+            addeBy: req.identity.id,
+            name: req.body.name,
+            isDeleted: false,
+            id: { "!=": id }
+        });
+
         req.body.updatedBy = req.identity.id;
         let edit_affiliate_group = await AffiliateManagement.updateOne({ id: id }, req.body);
         if (edit_affiliate_group) {
-            if (isDefaultAffiliateGroup && isDefaultAffiliateGroup == true) {
-                let update_Group = await AffiliateManagement.update({
-                    isDefaultAffiliateGroup: true,
-                    status: 'active',
-                    isDeleted: false,
-                    id: { "!=": edit_affiliate_group.id },
-                },
-                    {
-                        isDefaultAffiliateGroup: false,
-                    }).fetch();
-            }
+
+            // if (isDefaultAffiliateGroup && isDefaultAffiliateGroup == true) {
+            //     let update_Group = await AffiliateManagement.update({
+            //         isDefaultAffiliateGroup: true,
+            //         status: 'active',
+            //         isDeleted: false,
+            //         id: { "!=": edit_affiliate_group.id },
+            //     },
+            //         {
+            //             isDefaultAffiliateGroup: false,
+            //         }).fetch();
+            // }
             return response.success(null, constants.AFFLIATE_GROUP.UPDATED, req, res);
         }
         throw constants.COMMON.SERVER_ERROR;
     } catch (error) {
-        console.log(error, '==error');
-
         return response.failed(null, `${error}`, req, res);
     }
 }

@@ -26,12 +26,12 @@ module.exports = {
 
             req.body.addedBy = req.identity.id;
 
-            let result = await AffiliateInvite.findOne({ affiliate_id:req.body.affiliate_id, addedBy: req.identity.id, isDeleted: false });
+            let result = await AffiliateInvite.findOne({ affiliate_id: req.body.affiliate_id, campaign_id: req.body.campaign_id, addedBy: req.identity.id, isDeleted: false });
 
             if (!result) {
                 let result1 = await AffiliateInvite.create(req.body).fetch()
                 if (result1) {
-                    let data = await Users.findOne({ id: result1.affiliate_id ,isDeleted:false});
+                    let data = await Users.findOne({ id: result1.affiliate_id, isDeleted: false });
                     const emailpayload = {
                         email: data.email,
                     }
@@ -57,7 +57,7 @@ module.exports = {
                 throw validation_result.message;
             }
 
-            let result = await AffiliateInvite.findOne({ id: req.query.id, isDeleted: false }).populate('affiliate_id').populate('addedBy');
+            let result = await AffiliateInvite.findOne({ id: req.query.id, isDeleted: false }).populate('affiliate_id').populate('addedBy').populate('campaign_id');
             if (result) {
                 return response.success(result, constants.AFFILIATEINVITE.FETCHED, req, res);
             }
@@ -122,9 +122,9 @@ module.exports = {
             if (search) {
                 search = await Services.Utils.remove_special_char_exept_underscores(search);
                 query.$or = [
-                                { affiliate_id: { $regex: search, '$options': 'i' }},
-                                { addedBy: { $regex: search, '$options': 'i' }}
-                            ];
+                    { affiliate_id: { $regex: search, '$options': 'i' } },
+                    { addedBy: { $regex: search, '$options': 'i' } }
+                ];
             }
             query.isDeleted = false;
 
@@ -184,20 +184,36 @@ module.exports = {
                     }
                 },
                 {
+                    $lookup: {
+                        from: "campaign",
+                        localField: "campaign_id",
+                        foreignField: "_id",
+                        as: "campaign_details"
+                    }
+                },
+                {
+                    $unwind: {
+                        path: '$campaign_details',
+                        preserveNullAndEmptyArrays: true
+                    }
+                },
+                {
                     $project: {
                         affiliate_id: "$affiliate_id",
+                        campaign_id: "$campaign_id",
                         message: "$message",
-                        commission: "$commission",
-                        tags:"$tags",
-                        affiliate_details:"$affiliate_details",
+                        // commission: "$commission",
+                        tags: "$tags",
+                        affiliate_details: "$affiliate_details",
                         addedBy: "$addedBy_details",
+                        campaign_detail: "$campaign_details",
                         updatedBy: "$updatedBy",
                         isDeleted: '$isDeleted',
                         status: '$status',
                         createdAt: '$createdAt',
                         updatedAt: '$updatedAt',
                         commission: "$commission",
-                        
+
                     }
 
                 },
@@ -258,9 +274,9 @@ module.exports = {
             }
 
             req.body.updatedBy = req.identity.id;
-            
+
             let update_status = await AffiliateInvite.updateOne({ id: req.body.id }, req.body);
-            if(update_status.addedBy){
+            if (update_status.addedBy) {
                 let data1 = await Users.findOne({ id: update_status.addedBy, isDeleted: false });
                 if (update_status) {
                     let email_payload = {
