@@ -54,48 +54,77 @@ exports.addCampaign = async (req, res) => {
         req.body.brand_id = req.identity.id;
 
         req.body.campaign_unique_id = generateRandom8DigitNumber();
-        var campaign_link;
-        if (event_type == "lead") {
-            campaign_link = credentials.FRONT_WEB_URL + "/signup/affiliate" + "?event_type=" + event_type + "&campaign_code=" + req.body.campaign_unique_id;
-        } else if (event_type == "visitor") {
-            campaign_link = credentials.FRONT_WEB_URL + "?event_type=" + event_type + "&campaign_code=" + req.body.campaign_unique_id;
-        } else if (event_type == "line-item") {
-            campaign_link = credentials.FRONT_WEB_URL + "?event_type=" + event_type + "&campaign_code=" + req.body.campaign_unique_id;
-        } else if (event_type == "purchase") {
-            campaign_link = credentials.FRONT_WEB_URL + "?event_type=" + event_type + "&campaign_code=" + req.body.campaign_unique_id;
-        }
+        var campaign_linkArr = [];
 
-        req.body.campaign_link = campaign_link;
+        for await (let event_typeObj of event_type) {
+            
+            if (event_typeObj == "lead") {
+                console.log("in lead");
+                let campaignObj = {}
+
+                let campaign_link = credentials.FRONT_WEB_URL + "/signup/affiliate" + "?event_type=" + event_typeObj + "&campaign_code=" + req.body.campaign_unique_id;
+                campaignObj.event_type = event_typeObj;
+                campaignObj.event_link = campaign_link;
+                campaign_linkArr.push(campaignObj);
+               
+            } else if (event_typeObj == "visitor") {
+                let campaignObj = {}
+
+                let campaign_link = credentials.FRONT_WEB_URL + "?event_type=" + event_typeObj + "&campaign_code=" + req.body.campaign_unique_id;
+                campaignObj.event_type = event_typeObj;
+                campaignObj.event_link = campaign_link;
+                campaign_linkArr.push(campaignObj);
+            } else if (event_typeObj == "line-item") {
+                let campaignObj = {}
+
+                let campaign_link = credentials.FRONT_WEB_URL + "?event_type=" + event_typeObj + "&campaign_code=" + req.body.campaign_unique_id;
+                campaignObj.event_type = event_typeObj;
+                campaignObj.event_link = campaign_link;
+                campaign_linkArr.push(campaignObj);
+            } else if (event_typeObj == "purchase") {
+                let campaignObj = {}
+
+                let campaign_link = credentials.FRONT_WEB_URL + "?event_type=" + event_typeObj + "&campaign_code=" + req.body.campaign_unique_id;
+                campaignObj.event_type = event_typeObj;
+                campaignObj.event_link = campaign_link;
+                campaign_linkArr.push(campaignObj);
+            }
+        }
+    
+        req.body.campaign_link = campaign_linkArr;
+        
         let add_campaign = await Campaign.create(req.body).fetch();
         if (add_campaign) {
-            let get_brand = await Users.findOne({ id: add_campaign.brand_id });
-            let email_payload = {
-                affiliate_id: add_campaign.affiliate_id,
-                brand_id: req.body.brand_id,
-                campaign_link: req.body.campaign_link
-            };
-            await Emails.CampaignEmails.AddCampaign(email_payload)
+            if (add_campaign.access_type == "private") {
+                let get_brand = await Users.findOne({ id: add_campaign.brand_id });
+                let email_payload = {
+                    affiliate_id: add_campaign.affiliate_id,
+                    brand_id: req.body.brand_id,
+                    campaign_link: req.body.campaign_link
+                };
+                await Emails.CampaignEmails.AddCampaign(email_payload)
 
 
-            //-------------------- Send Notification ------------------//
-            let notification_payload = {};
-            notification_payload.send_to = add_campaign.affiliate_id;
-            notification_payload.title = `Campaign | ${await Services.Utils.title_case(add_campaign.name)} | ${await Services.Utils.title_case(req.identity.fullName)}`;
-            notification_payload.message = `You have a new campaign request from ${await Services.Utils.title_case(req.identity.fullName)}`;
-            notification_payload.type = "campaign"
-            notification_payload.addedBy = req.identity.id;
-            notification_payload.campaign_id = add_campaign.id;
-            let create_notification = await Notifications.create(notification_payload).fetch();
+                //-------------------- Send Notification ------------------//
+                let notification_payload = {};
+                notification_payload.send_to = add_campaign.affiliate_id;
+                notification_payload.title = `Campaign | ${await Services.Utils.title_case(add_campaign.name)} | ${await Services.Utils.title_case(req.identity.fullName)}`;
+                notification_payload.message = `You have a new campaign request from ${await Services.Utils.title_case(req.identity.fullName)}`;
+                notification_payload.type = "campaign"
+                notification_payload.addedBy = req.identity.id;
+                notification_payload.campaign_id = add_campaign.id;
+                let create_notification = await Notifications.create(notification_payload).fetch();
 
-            let affiliate_detail = await Users.findOne({ id: add_campaign.affiliate_id })
-            if (create_notification && affiliate_detail.device_token) {
-                let fcm_payload = {
-                    device_token: affiliate_detail.device_token,
-                    title: req.identity.fullName,
-                    message: create_notification.message,
+                let affiliate_detail = await Users.findOne({ id: add_campaign.affiliate_id })
+                if (create_notification && affiliate_detail.device_token) {
+                    let fcm_payload = {
+                        device_token: affiliate_detail.device_token,
+                        title: req.identity.fullName,
+                        message: create_notification.message,
+                    }
+
+                    await Services.FCM.send_fcm_push_notification(fcm_payload)
                 }
-
-                await Services.FCM.send_fcm_push_notification(fcm_payload)
             }
 
             //-------------------- Send Notification ------------------//

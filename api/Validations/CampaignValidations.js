@@ -5,8 +5,8 @@ exports.addCampaign = async (req, res, next) => {
 
     const schema = Joi.object({
         name: Joi.string().required(),
-        affiliate_id: Joi.string().required(),
-        event_type: Joi.string().required().valid("lead", "visitor", "purchase", "line-item"),
+        affiliate_id: Joi.string().optional(),
+        event_type: Joi.array().optional().items(Joi.string().optional()),
         description: Joi.string().optional().allow(""),
         amount: Joi.number().required().min(0),
         images: Joi.array().optional().items(
@@ -26,7 +26,8 @@ exports.addCampaign = async (req, res, next) => {
                 name: Joi.string().optional().allow(""),
                 url: Joi.string().required(),
             }).optional()
-        )
+        ),
+        access_type: Joi.string().required().valid('public', 'private')
     });
     return await Validate(schema, req, res);
 }
@@ -35,7 +36,8 @@ exports.editCampaign = async (req, res, next) => {
 
     const schema = Joi.object({
         id: Joi.string().required(),
-        affiliate_id: Joi.string().required(),
+        affiliate_id: Joi.string().optional(),
+        event_type: Joi.array().optional().items(Joi.string().optional()),
         name: Joi.string().required(),
         description: Joi.string().optional().allow(""),
         images: Joi.array().optional().items(
@@ -55,7 +57,8 @@ exports.editCampaign = async (req, res, next) => {
                 name: Joi.string().optional().allow(""),
                 url: Joi.string().required(),
             }).optional()
-        )
+        ),
+        access_type: Joi.string().required().valid('public', 'private')
     });
     return await Validate(schema, req, res);
 }
