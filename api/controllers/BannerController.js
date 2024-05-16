@@ -20,16 +20,21 @@ exports.addBanner = async (req, res) => {
             throw validation_result.message;
         }
 
-        let { title, activation_date, availability_date, expiration_date } = req.body;
+        let { title, activation_date, availability_date, expiration_date, category_id } = req.body;
 
         let query = {};
         query.title = title.toLowerCase();
         query.isDeleted = false;
 
 
-        let get_category = await Banner.findOne(query);
-        if (get_category) {
+        let get_banner = await Banner.findOne(query);
+        if (get_banner) {
             throw constants.BANNER.ALREADY_EXIST
+        }
+
+        let get_category = await CommonCategories.findOne({ id: category_id });
+        if (!get_category) {
+            throw constants.BANNER.INVALID_CATEGORY
         }
 
         req.body.addedBy = req.identity.id;
@@ -162,6 +167,20 @@ exports.getAllBanner = async (req, res) => {
                     preserveNullAndEmptyArrays: true
                 }
             },
+            {
+                $lookup: {
+                    from: 'commoncategories',
+                    localField: 'category_id',
+                    foreignField: '_id',
+                    as: "categories_details"
+                }
+            },
+            {
+                $unwind: {
+                    path: '$categories_details',
+                    preserveNullAndEmptyArrays: true
+                }
+            },
         ];
 
         let projection = {
@@ -179,6 +198,8 @@ exports.getAllBanner = async (req, res) => {
                 is_deep_linking: "$is_deep_linking",
                 mobile_creative: "$mobile_creative",
                 seo_attributes: "$seo_attributes",
+                category_id: "$category_id",
+                categories_details: "$categories_details",
 
                 status: "$status",
                 addedBy: "$addedBy",
@@ -231,9 +252,9 @@ exports.getById = async (req, res) => {
         if (!id) {
             throw constants.BANNER.ID_REQUIRED;
         }
-        let get_detail = await Banner.findOne({ id: id });
+        let get_detail = await Banner.findOne({ id: id }).populate('category_id');;
         if (get_detail) {
-            return response.success(get_detail, constants.BANNER.FETCHED, req, res);
+            return response.success(get_detail, constants.BANNER.FETCHED, req, res)
         }
         throw constants.BANNER.INVALID_ID;
 

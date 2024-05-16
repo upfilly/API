@@ -143,7 +143,7 @@ module.exports.constants = {
         FETCHED_ALL: "Fetched successfully",
         ALREADY_EXIST: "Same name already exists",
     },
-    
+
     TRANSACTION: {
         INVALID_ID: "Invaild Id",
         FETCHED: "Transaction Fetched successfully",
@@ -488,10 +488,10 @@ module.exports.constants = {
     },
 
     TRACK_CUSTOMER: {
-        ID_REQUIRED:"Id Required",
+        ID_REQUIRED: "Id Required",
         SAVED: "Tracking data saved successfully",
         VIEW: "Tracking data fetch successfully",
-        INVALID_ID:"Invalid id"
+        INVALID_ID: "Invalid id"
     },
 
     UNTRACKSALES: {
@@ -500,8 +500,8 @@ module.exports.constants = {
         ADDED: "untrack sales added successfully",
         FETCHED: "Fetched successfully",
         UPDATED: "untrack sales updated successfully",
-        DELETED : "untrack sales deleted successfully",
-        CANNOT_ACCEPT:  "This request is already accepted",
+        DELETED: "untrack sales deleted successfully",
+        CANNOT_ACCEPT: "This request is already accepted",
         STATUS_UPDATE: "Status updated successfully",
     },
 
@@ -509,7 +509,7 @@ module.exports.constants = {
         ALREADY_EXIST: "Tax Details already exist",
         ADDED: "Tax Details added sucessfully",
         INVALID_ID: "Invaild Id",
-     
+
     },
 
     AFFILIATEINVITE: {
@@ -518,8 +518,8 @@ module.exports.constants = {
         ADDED: "affiliate added successfully",
         FETCHED: "Data Fetched successfully",
         UPDATED: "data updated successfully",
-        DELETED : "data deleted successfully",
-        CANNOT_ACCEPT:  "This request is already accepted",
+        DELETED: "data deleted successfully",
+        CANNOT_ACCEPT: "This request is already accepted",
         STATUS_UPDATE: "Status updated successfully",
 
     },
@@ -543,6 +543,8 @@ module.exports.constants = {
         DELETED: "Banner Deleted successfully",
         FETCHED_ALL: "All Banner Fetched successfully",
         ALREADY_EXIST: "Already exists",
+        INVALID_CATEGORY: "Invalid category",
+
     },
 
 }

@@ -14,7 +14,8 @@ exports.addBanner = async (req, res, next) => {
         expiration_date: Joi.date().optional().allow(""),
         is_animation: Joi.boolean().optional(),
         is_deep_linking: Joi.boolean().optional(),
-        mobile_creative: Joi.boolean().optional()
+        mobile_creative: Joi.boolean().optional(),
+        category_id: Joi.string().optional().allow(null),
 
     });
     return await Validate(schema, req, res);
@@ -34,7 +35,8 @@ exports.editBanner = async (req, res, next) => {
         expiration_date: Joi.date().optional().allow(""),
         is_animation: Joi.boolean().optional(),
         is_deep_linking: Joi.boolean().optional(),
-        mobile_creative: Joi.boolean().optional()
+        mobile_creative: Joi.boolean().optional(),
+        category_id: Joi.string().optional().allow(null)
 
     });
     return await Validate(schema, req, res);
