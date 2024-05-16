@@ -442,7 +442,15 @@ module.exports.routes = {
   'get /banners': 'Banner.getAllBanner',
   'get /banner': 'Banner.getById',
   'put /banner': 'Banner.editBanner',
-  'delete /banner': 'Banner.deleteBanner'
+  'delete /banner': 'Banner.deleteBanner',
+
+  /**
+* @CommissionsController
+*/
+  "post /add-commission": "Commission.addCommission",
+  "get /get-commission": "Commission.getCommissionById",
+  "get /get-commissions": "Commission.getAllCommission",
+  'put /edit-commission': 'Commission.editCommission',
 
 
 

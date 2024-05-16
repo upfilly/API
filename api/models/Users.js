@@ -43,6 +43,8 @@ module.exports = {
     tags: { type: "json", defaultsTo: [] },
 
     category_id: { model: "commoncategories" },
+    sub_category_id: { model: "commoncategories" },
+    sub_child_category_id: { model: "subchildcategory" },
     updated_password: { type: 'string' },
 
     // youtube_email: { type: 'string' },

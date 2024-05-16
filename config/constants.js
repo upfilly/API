@@ -545,6 +545,6 @@ module.exports.constants = {
         ALREADY_EXIST: "Already exists",
         INVALID_CATEGORY: "Invalid category",
 
-    },
+    }
 
 }

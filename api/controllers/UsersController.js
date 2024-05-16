@@ -515,7 +515,7 @@ module.exports = {
     try {
       let page = req.param('page') || 1;
       let count = req.param('count') || 10;
-      let { search, role, isDeleted, status, sortBy, lat, lng, isTrusted, isFeatured, createBybrand_id, start_date, end_date, affiliate_group_id, three_role, affiliate_type, invite_status } = req.query;
+      let { search, role, isDeleted, status, sortBy, lat, lng, isTrusted, isFeatured, createBybrand_id, start_date, end_date, affiliate_group_id, three_role, affiliate_type, invite_status, sub_category_id, category_id, sub_child_category_id } = req.query;
       let skipNo = (Number(page) - 1) * Number(count);
       let query = { isDeleted: false };
 
@@ -576,6 +576,16 @@ module.exports = {
 
       if (createBybrand_id) {
         query.createdByBrand = ObjectId(createBybrand_id);
+      }
+
+      if (category_id) {
+        query.category_id = ObjectId(category_id);
+      }
+      if (sub_child_category_id) {
+        query.sub_child_category_id = ObjectId(sub_child_category_id);
+      }
+      if (sub_category_id) {
+        query.sub_category_id = ObjectId(sub_category_id);
       }
 
       // if (start_date && end_date) {

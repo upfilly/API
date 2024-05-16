@@ -41,7 +41,8 @@ module.exports = {
     tax: require('./NewTaxVAlidations'),
     AffiliateInviteValidations: require('./AffiliateInviteValidations'),
     SubChildCategory: require('./SubChildCategoryValidations'),
-    Banner:require('./BannerValidations')
+    Banner: require('./BannerValidations'),
+    CommissionNew: require('./CommissionNewValidations')
 
 
     // DiscountBraintreeValidation: require("./DiscountBraintreeValidations")
