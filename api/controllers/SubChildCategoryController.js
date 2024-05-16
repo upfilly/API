@@ -80,7 +80,7 @@ exports.editSubChildCategory = async (req, res) => {
         if (edit_category) {
             return response.success(null, constants.COMMON_SUB_CHILD_CATEGORIES.UPDATED, req, res);
         }
-        throw constants.COMMON_CATEGORIES.INVALID_ID;
+        throw constants.COMMON_SUB_CHILD_CATEGORIES.INVALID_ID;
     } catch (err) {
         return response.failed(null, `${err}`, req, res);
     }
@@ -218,27 +218,27 @@ exports.getById = async (req, res) => {
         if (!id) {
             throw constants.COMMON_SUB_CHILD_CATEGORIES.ID_REQUIRED;
         }
-        let get_category = await SubChildCategory.findOne({ id: id });
+        let get_category = await SubChildCategory.findOne({ id: id }).populate('category_id').populate('sub_category_id');
         if (get_category) {
             return response.success(get_category, constants.COMMON_SUB_CHILD_CATEGORIES.FETCHED, req, res);
         }
-        throw constants.COMMON_CATEGORIES.INVALID_ID;
+        throw constants.COMMON_SUB_CHILD_CATEGORIES.INVALID_ID;
 
     } catch (err) {
         return response.failed(null, `${err}`, req, res);
     }
 }
 
-exports.deleteCommonCategory = async (req, res) => {
+exports.deleteSubChildCommonCategory = async (req, res) => {
     try {
         let id = req.param("id");
         if (!id) {
             throw constants.COMMON_CATEGORIES.ID_REQUIRED;
         }
 
-        const update_category = await CommonCategories.updateOne({ id: id }, { isDeleted: true, updatedBy: req.identity.id });
+        const update_category = await SubChildCategory.updateOne({ id: id }, { isDeleted: true, updatedBy: req.identity.id });
         if (update_category) {
-            return response.success(null, constants.COMMON_CATEGORIES.DELETED, req, res);
+            return response.success(null, constants.COMMON_SUB_CHILD_CATEGORIES.DELETED, req, res);
         }
         throw constants.COMMON_CATEGORIES.INVALID_ID;
     } catch (err) {

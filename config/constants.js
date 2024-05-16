@@ -525,12 +525,12 @@ module.exports.constants = {
     },
     COMMON_SUB_CHILD_CATEGORIES: {
         ADDED: "Child Sub Category Added successfully",
-        UPDATED: "Updated successfully",
+        UPDATED: "Child Sub Category Updated successfully",
         INVALID_ID: "Invaild Id",
-        FETCHED: "Fetched successfully",
+        FETCHED: "Child Sub Category Fetched successfully",
         ID_REQUIRED: "Id is required",
-        DELETED: "Deleted successfully",
-        FETCHED_ALL: "Fetched successfully",
+        DELETED: "Child Sub Category Deleted successfully",
+        FETCHED_ALL: "All Child Sub Category Fetched successfully",
         ALREADY_EXIST: "Already exists",
     },
 

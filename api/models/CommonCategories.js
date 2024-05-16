@@ -13,7 +13,7 @@ module.exports = {
         },
         cat_type: {
             type: 'string',
-            isIn: ["faq", "blog", "product"]
+            isIn: ["faq", "blog", "product","promotional_models","property_types","advertiser_categories"]
         },
         type: {
             type: 'string',

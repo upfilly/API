@@ -430,6 +430,12 @@ module.exports.routes = {
   */
  'post /sub-child-category': "SubChildCategoryController.addSubChildCategory",
  'get /sub-child-category':'SubChildCategoryController.getAllSubChildCommonCategory',
+ 'get /view/sub-child-category':'SubChildCategoryController.getById',
+ 'put /sub-child-category': 'SubChildCategoryController.editSubChildCategory',
+ 'delete /sub-child-category':'SubChildCategoryController.deleteSubChildCommonCategory'
+
+
+
 
   
 

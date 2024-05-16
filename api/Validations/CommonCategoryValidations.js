@@ -5,7 +5,7 @@ exports.addCommonCategory = async (req, res, next) => {
 
     const schema = Joi.object({
         type: Joi.string().required().valid("sub", "main"),
-        cat_type: Joi.string().optional().valid("faq", "blog", "product"),
+        cat_type: Joi.string().optional().valid("faq", "blog", "product", "promotional_models", "property_types", "advertiser_categories"),
         parent_id: Joi.string().when('type', {
             is: "sub",
             then: Joi.string().required(),
@@ -21,7 +21,7 @@ exports.editCommonCategory = async (req, res, next) => {
 
     const schema = Joi.object({
         id: Joi.string().required(),
-        type: Joi.string().required().valid("sub", "main", "product"),
+        type: Joi.string().required().valid("sub", "main"),
         // cat_type: Joi.string().required().valid("faq"),
         parent_id: Joi.string().when('type', {
             is: "sub",
