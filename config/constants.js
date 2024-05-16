@@ -534,4 +534,15 @@ module.exports.constants = {
         ALREADY_EXIST: "Already exists",
     },
 
+    BANNER: {
+        ADDED: "Banner Added successfully",
+        UPDATED: "Banner Updated successfully",
+        INVALID_ID: "Invaild Id",
+        FETCHED: "Banner Fetched successfully",
+        ID_REQUIRED: "Id is required",
+        DELETED: "Banner Deleted successfully",
+        FETCHED_ALL: "All Banner Fetched successfully",
+        ALREADY_EXIST: "Already exists",
+    },
+
 }

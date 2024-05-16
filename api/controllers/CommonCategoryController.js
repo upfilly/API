@@ -496,6 +496,31 @@ exports.getCategoryWithSub = async (req, res) => {
                     preserveNullAndEmptyArrays: true
                 }
             },
+            {
+                $lookup:
+                {
+                    from: "subchildcategory",
+                    let: { category_id: "$parent_id", sub_category_id: "$_id", isDeleted: false },
+                    pipeline: [
+                        {
+                            $match:
+                            {
+                                $expr:
+                                {
+                                    $and:
+                                        [
+                                            { $eq: ["$category_id", "$$category_id"] },
+                                            { $eq: ["$sub_category_id", "$$sub_category_id"] },
+                                            { $eq: ["$isDeleted", "$$isDeleted"] }
+
+                                        ]
+                                }
+                            }
+                        }
+                    ],
+                    as: "subchildcategory"
+                }
+            }
         ];
 
         let projection = {
@@ -506,6 +531,8 @@ exports.getCategoryWithSub = async (req, res) => {
                 name: { $toLower: "$name" },
                 parent_cat_name: "$categories_details.name",
                 cat_type: "$cat_type",
+                subchildcategory: "$subchildcategory",
+
                 status: "$status",
                 addedBy: "$addedBy",
                 updatedBy: "$updatedBy",
@@ -529,6 +556,7 @@ exports.getCategoryWithSub = async (req, res) => {
                     $push: {
                         id: "$id",
                         name: "$name",
+                        subchildcategory: "$subchildcategory"
                     }
                 }
             },
@@ -561,6 +589,7 @@ exports.getCategoryWithSub = async (req, res) => {
             })
         })
     } catch (err) {
+        console.log(err, "==err");
         return response.failed(null, `${err}`, req, res);
     }
 }

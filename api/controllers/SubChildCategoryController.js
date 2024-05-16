@@ -69,7 +69,7 @@ exports.editSubChildCategory = async (req, res) => {
 
         req.body.updatedBy = req.identity.id;
         req.body.name = req.body.name.toLowerCase();
-    
+
 
         let get_category = await SubChildCategory.findOne({ id: id, isDeleted: false });
         if (!get_category) {
@@ -91,7 +91,7 @@ exports.getAllSubChildCommonCategory = async (req, res) => {
         let query = {};
         let count = req.param('count') || 10;
         let page = req.param('page') || 1;
-        let { search, isDeleted, status, sortBy, type, cat_type, isPopular } = req.query;
+        let { search, isDeleted, status, sortBy, category_id, sub_category_id } = req.query;
         let skipNo = (Number(page) - 1) * Number(count);
 
         if (search) {
@@ -126,6 +126,9 @@ exports.getAllSubChildCommonCategory = async (req, res) => {
         } else {
             sortquery = { updatedAt: -1 }
         }
+
+        if (category_id) { query.category_id = ObjectId(category_id); }
+        if (sub_category_id) { query.sub_category_id = ObjectId(sub_category_id); }
 
 
         // Pipeline Stages
@@ -164,11 +167,11 @@ exports.getAllSubChildCommonCategory = async (req, res) => {
         let projection = {
             $project: {
                 id: "$_id",
-                name:  "$name" ,
+                name: "$name",
                 category_id: "$category_id",
                 sub_category_id: "$sub_category_id",
-                categories_details:"$categories_details",
-                sub_categories_details:"$sub_categories_details",
+                categories_details: "$categories_details",
+                sub_categories_details: "$sub_categories_details",
                 status: "$status",
                 addedBy: "$addedBy",
                 updatedBy: "$updatedBy",

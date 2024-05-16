@@ -406,38 +406,45 @@ module.exports.routes = {
 
   /**@unTrackSales */
 
-  'post /addsales':'UntrackSalesController.addsales',
-  'get /getTrackingById':'UntrackSalesController.getTrackingById',
-  'put /updateSales':'UntracksaleSController.updateSales',
-  'delete /removeSales':'UntrackSalesController.removeSales',
-  'get /getallSalesDetails':'UntrackSalesController.getallSalesDetails',
+  'post /addsales': 'UntrackSalesController.addsales',
+  'get /getTrackingById': 'UntrackSalesController.getTrackingById',
+  'put /updateSales': 'UntracksaleSController.updateSales',
+  'delete /removeSales': 'UntrackSalesController.removeSales',
+  'get /getallSalesDetails': 'UntrackSalesController.getallSalesDetails',
   'put /update/status': 'UntrackSalesController.changeStatus',
- 
+
   /**@NewTax */
-  'post /addTax':'NewTaxController.addTax',
+  'post /addTax': 'NewTaxController.addTax',
 
   /**@AffiliateInvite */
 
-  'post /addInvite':'AffiliateInviteController.addInvite',
-  'get /getInviteById':'AffiliateInviteController.getInviteById',
-  'put /updateInvite':'AffiliateInviteController.updateInvite',
-  'delete /deleteInvite':'AffiliateInviteController.deleteInvite',
-  'get /getAllInviteDetails':'AffiliateInviteController.getAllInviteDetails',
+  'post /addInvite': 'AffiliateInviteController.addInvite',
+  'get /getInviteById': 'AffiliateInviteController.getInviteById',
+  'put /updateInvite': 'AffiliateInviteController.updateInvite',
+  'delete /deleteInvite': 'AffiliateInviteController.deleteInvite',
+  'get /getAllInviteDetails': 'AffiliateInviteController.getAllInviteDetails',
   'put /update/status': 'AffiliateInviteController.changeStatus',
 
- /**
-  * @CommonCategory
-  */
- 'post /sub-child-category': "SubChildCategoryController.addSubChildCategory",
- 'get /sub-child-category':'SubChildCategoryController.getAllSubChildCommonCategory',
- 'get /view/sub-child-category':'SubChildCategoryController.getById',
- 'put /sub-child-category': 'SubChildCategoryController.editSubChildCategory',
- 'delete /sub-child-category':'SubChildCategoryController.deleteSubChildCommonCategory'
+  /**
+   * @ChildSubCategory
+   */
+  'post /sub-child-category': "SubChildCategoryController.addSubChildCategory",
+  'get /sub-child-category': 'SubChildCategoryController.getAllSubChildCommonCategory',
+  'get /view/sub-child-category': 'SubChildCategoryController.getById',
+  'put /sub-child-category': 'SubChildCategoryController.editSubChildCategory',
+  'delete /sub-child-category': 'SubChildCategoryController.deleteSubChildCommonCategory',
 
 
+  /**
+   * @Banner
+   */
+  'post /banner': "Banner.addBanner",
+  'get /banners': 'Banner.getAllBanner',
+  'get /banner': 'Banner.getById',
+  'put /banner': 'Banner.editBanner',
+  'delete /banner': 'Banner.deleteBanner'
 
 
-  
 
 
 
