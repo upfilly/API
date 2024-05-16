@@ -19,6 +19,9 @@ module.exports = {
     click_ref: { type: "string" },
     affiliate_id: { model: 'users' },                                     //publisher only
     is_send_email_to_publisher: { type: 'Boolean', defaultsTo: false },
+    batch_file: { type: "string" },
+    locality: { type: "string" },
+    isContain_headers: { type: "string", isIn: ["yes", "no"], defaultsTo: "no" },
     status: { type: "string", isIn: ["confirmed", "pending"], defaultsTo: "pending" },
 
     //Common keys

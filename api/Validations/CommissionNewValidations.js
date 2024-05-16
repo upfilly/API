@@ -11,7 +11,10 @@ exports.addCommission = async (req, res, next) => {
         order_reference: Joi.string().optional(),
         click_ref: Joi.string().optional(),
         affiliate_id: Joi.string().required().allow(null),
-        is_send_email_to_publisher: Joi.boolean().optional()
+        is_send_email_to_publisher: Joi.boolean().optional(),
+        batch_file: Joi.string().optional(),
+        locality: Joi.string().optional(),
+        isContain_headers: Joi.string().optional()
     });
     return await Validate(schema, req, res);
 

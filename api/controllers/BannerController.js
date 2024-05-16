@@ -32,9 +32,11 @@ exports.addBanner = async (req, res) => {
             throw constants.BANNER.ALREADY_EXIST
         }
 
-        let get_category = await CommonCategories.findOne({ id: category_id });
-        if (!get_category) {
-            throw constants.BANNER.INVALID_CATEGORY
+        if(category_id){
+            let get_category = await CommonCategories.findOne({ id: category_id });
+            if (!get_category) {
+                throw constants.BANNER.INVALID_CATEGORY
+            }
         }
 
         req.body.addedBy = req.identity.id;
@@ -59,6 +61,7 @@ exports.addBanner = async (req, res) => {
         throw constants.COMMON.SERVER_ERROR;
 
     } catch (err) {
+        console.log(err, "err");
         return response.failed(null, `${err}`, req, res);
     }
 };

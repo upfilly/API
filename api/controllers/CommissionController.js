@@ -53,6 +53,7 @@ exports.addCommission = async (req, res) => {
         throw constants.COMMON.SERVER_ERROR;
 
     } catch (err) {
+        console.log(err, "err");
         return response.failed(null, `${err}`, req, res);
     }
 };
@@ -114,7 +115,7 @@ exports.getAllCommission = async (req, res) => {
         }
 
         if (isDeleted) { if (isDeleted === 'true') { isDeleted = true; } else { isDeleted = false; } query.isDeleted = isDeleted; } else { query.isDeleted = false; }
-       
+
         if (status) { query.status = status; }
 
         if (status) { query.status = status; }
