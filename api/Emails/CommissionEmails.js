@@ -37,7 +37,7 @@ exports.AddCommission = async (options) => {
                         </tr>
                         <tr>
                             <td style="text-align:center;padding-bottom: 10px;height: 28px;">
-                                <img src="${credentials.BACK_WEB_URL}/images/upfilly.png" style="width: 150px;object-fit: contain;margin: 0 auto;" />
+                                <img src="${credentials.BACK_WEB_URL}/images/logo.png" style="width: 150px;object-fit: contain;margin: 0 auto;" />
                             </td>
                         </tr>
                         <tr>
@@ -60,7 +60,7 @@ exports.AddCommission = async (options) => {
                         </tr>
                         <tr>
                             <td style="text-align:center; padding-bottom: 10px; height: 50px;">
-                                <img src="${credentials.BACK_WEB_URL}/images/message.png" style="width: 55px;object-fit: contain;margin: 0 auto;" />
+                                <img src="${credentials.BACK_WEB_URL}/images/Daco.png" style="width: 55px;object-fit: contain;margin: 0 auto;" />
                             </td>
                         </tr>
                         <tr>

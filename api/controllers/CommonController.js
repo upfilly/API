@@ -820,7 +820,7 @@ module.exports = {
         var name = generateName()
         typeArr = element.fd.split(".");
         fileExt = typeArr.pop()
-        let valid_file_extensions = ["doc", "docx", "html", "htm", "odt", "pdf", "xls", "xlsx", "ods", "ppt", "pptx", "txt"]
+        let valid_file_extensions = ["doc", "docx", "html", "htm", "odt", "pdf", "xls", "xlsx", "ods", "ppt", "pptx", "txt","csv"]
         if (!valid_file_extensions.includes(fileExt)) {
           return res.status(404).json({
             success: false,
