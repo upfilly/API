@@ -10,7 +10,7 @@ exports.addCommission = async (req, res, next) => {
         amount_of_commission: Joi.number().optional(),
         order_reference: Joi.string().optional(),
         click_ref: Joi.string().optional(),
-        affiliate_id: Joi.string().required().allow(null),
+        affiliate_id: Joi.string().optional().allow(null),
         is_send_email_to_publisher: Joi.boolean().optional(),
         batch_file: Joi.string().optional(),
         locality: Joi.string().optional(),
