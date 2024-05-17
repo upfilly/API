@@ -515,7 +515,7 @@ module.exports = {
     try {
       let page = req.param('page') || 1;
       let count = req.param('count') || 10;
-      let { search, role, isDeleted, status, sortBy, lat, lng, isTrusted, isFeatured, createBybrand_id, start_date, end_date, affiliate_group_id, three_role, affiliate_type, invite_status, sub_category_id, category_id, sub_child_category_id } = req.query;
+      let { search, role, isDeleted, status, sortBy, lat, lng, isTrusted, isFeatured, createBybrand_id, start_date, end_date, affiliate_group_id, cat_type, affiliate_type, invite_status, sub_category_id, category_id, sub_child_category_id } = req.query;
       let skipNo = (Number(page) - 1) * Number(count);
       let query = { isDeleted: false };
 
@@ -587,6 +587,8 @@ module.exports = {
       if (sub_category_id) {
         query.sub_category_id = ObjectId(sub_category_id);
       }
+
+      if (cat_type) { query.cat_type = cat_type }
 
       // if (start_date && end_date) {
       //   query.createdAt = {
@@ -660,6 +662,20 @@ module.exports = {
             preserveNullAndEmptyArrays: true
           }
         },
+        {
+          $lookup: {
+            from: 'commoncategories',
+            localField: 'category_id',
+            foreignField: '_id',
+            as: "categories_details"
+          }
+        },
+        {
+          $unwind: {
+            path: '$categories_details',
+            preserveNullAndEmptyArrays: true
+          }
+        },
       ];
 
       let projection = {
@@ -693,6 +709,10 @@ module.exports = {
           location: "$location",
           isFeatured: "$isFeatured",
           isTrusted: "$isTrusted",
+          category_id: "$category_id",
+          cat_type: "$categories_details.cat_type",
+          sub_category_id: "$sub_category_id",
+          sub_child_category_id: "$sub_child_category_id"
         }
       };
       pipeline.push(projection);
