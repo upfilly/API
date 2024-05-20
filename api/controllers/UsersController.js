@@ -1582,12 +1582,12 @@ module.exports = {
         req.body.reffering_affiliate = find_brand.email;
       }
 
-      if (!affiliate_group && ["affiliate"].includes(role)) {
-        let default_affiliate_group = await AffiliateManagement.findOne({ isDefaultAffiliateGroup: true, isDeleted: false });
-        if (default_affiliate_group) {
-          req.body.affiliate_group = default_affiliate_group.id;
-        }
-      }
+      // if (!affiliate_group && ["affiliate"].includes(role)) {
+      //   let default_affiliate_group = await AffiliateManagement.findOne({ isDefaultAffiliateGroup: true, isDeleted: false });
+      //   if (default_affiliate_group) {
+      //     req.body.affiliate_group = default_affiliate_group.id;
+      //   }
+      // }
 
       if (role == "affiliate") {
         req.body.affilaite_unique_id = generateRandom8DigitNumber();

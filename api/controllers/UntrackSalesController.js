@@ -34,9 +34,11 @@ module.exports = {
                 let result1 = await UntrackSales.create(req.body).fetch()
                 if (result1) {
                     let data = await Users.findOne({ id: result1.brand_id });
+                    let get_afiliate = await Users.findOne({ id: result1.addedBy, isDeleted: false })
                     const emailpayload = {
                         email: data.email,
-                        name: data.fullName
+                        name: data.fullName,
+                        affiliate_name: get_afiliate.fullName
                     }
                     await Emails.OnboardingEmails.send_mail_to_brand(emailpayload)
                     return response.success(null, constants.UNTRACKSALES.ADDED, req, res);
@@ -48,6 +50,7 @@ module.exports = {
         }
 
         catch (error) {
+            console.log(error, "========err");
             return response.failed(null, `${error}`, req, res)
         }
     },
