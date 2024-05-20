@@ -31,9 +31,12 @@ module.exports = {
             if (!result) {
                 let result1 = await AffiliateInvite.create(req.body).fetch()
                 if (result1) {
+                    let brand_detail = await Users.findOne({ id: result1.addedBy, isDeleted: false });
                     let data = await Users.findOne({ id: result1.affiliate_id, isDeleted: false });
                     const emailpayload = {
                         email: data.email,
+                        brand_name: brand_detail.fullName,
+                        affiliate_name: brand_detail.fullName
                     }
                     await Emails.OnboardingEmails.send_mail_to_affiliate(emailpayload)
                     return response.success(null, constants.AFFILIATEINVITE.ADDED, req, res);
