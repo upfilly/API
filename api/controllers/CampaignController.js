@@ -57,7 +57,7 @@ exports.addCampaign = async (req, res) => {
         var campaign_linkArr = [];
 
         for await (let event_typeObj of event_type) {
-            
+
             if (event_typeObj == "lead") {
                 console.log("in lead");
                 let campaignObj = {}
@@ -66,7 +66,7 @@ exports.addCampaign = async (req, res) => {
                 campaignObj.event_type = event_typeObj;
                 campaignObj.event_link = campaign_link;
                 campaign_linkArr.push(campaignObj);
-               
+
             } else if (event_typeObj == "visitor") {
                 let campaignObj = {}
 
@@ -90,9 +90,9 @@ exports.addCampaign = async (req, res) => {
                 campaign_linkArr.push(campaignObj);
             }
         }
-    
+
         req.body.campaign_link = campaign_linkArr;
-        
+
         let add_campaign = await Campaign.create(req.body).fetch();
         if (add_campaign) {
             if (add_campaign.access_type == "private") {
@@ -201,8 +201,14 @@ exports.getAllCampaigns = async (req, res) => {
         }
 
         if (affiliate_id) {
-            query.affiliate_id = ObjectId(affiliate_id);
+            // query.affiliate_id = ObjectId(affiliate_id);
+            query.$or = [
+                { affiliate_id: ObjectId(affiliate_id) },
+                { affiliate_id: null },
+            ];
         }
+
+        // console.log(query, "==query");
 
         let sortquery = {};
         if (sortBy) {
@@ -244,20 +250,6 @@ exports.getAllCampaigns = async (req, res) => {
                     path: '$brand_id_details',
                     preserveNullAndEmptyArrays: true
                 }
-            },
-            {
-                $lookup: {
-                    from: "contracts",
-                    localField: "contract_id",
-                    foreignField: "_id",
-                    as: "contract_id_details"
-                }
-            },
-            {
-                $unwind: {
-                    path: '$contract_id_details',
-                    preserveNullAndEmptyArrays: true
-                }
             }
 
         ];
@@ -265,6 +257,7 @@ exports.getAllCampaigns = async (req, res) => {
         let projection = {
             $project: {
                 id: "$_id",
+                access_type: "$access_type",
                 affiliate_id: "$affiliate_id",
                 affiliate_name: "$affiliate_id_details.fullName",
                 brand_id: "$brand_id",
