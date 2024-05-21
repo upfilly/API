@@ -515,7 +515,7 @@ module.exports = {
     try {
       let page = req.param('page') || 1;
       let count = req.param('count') || 10;
-      let { search, role, isDeleted, status, sortBy, lat, lng, isTrusted, isFeatured, createBybrand_id, start_date, end_date, affiliate_group_id, cat_type, affiliate_type, invite_status, sub_category_id, category_id, sub_child_category_id } = req.query;
+      let { search, role, isDeleted, status, sortBy, lat, lng, isTrusted, isFeatured, createBybrand_id, start_date, end_date, affiliate_group_id, cat_type, affiliate_type, invite_status, sub_category_id, category_id, sub_child_category_id,addedBy } = req.query;
       let skipNo = (Number(page) - 1) * Number(count);
       let query = { isDeleted: false };
 
@@ -553,8 +553,6 @@ module.exports = {
         query.role = role;
       }
 
-
-
       if (status) { query.status = status; };
       if (invite_status) { query.invite_status = invite_status; };
 
@@ -576,6 +574,11 @@ module.exports = {
 
       if (createBybrand_id) {
         query.createdByBrand = ObjectId(createBybrand_id);
+      }
+
+
+      if (addedBy) {
+        query.addedBy = ObjectId(addedBy);
       }
 
       if (category_id) {
@@ -816,18 +819,7 @@ module.exports = {
         query.isDeleted = isDeleted ? isDeleted === 'true' : true ? isDeleted : false;
       }
 
-
-
-
       query.addedBy = ObjectId(req.identity.id);
-
-
-      // if (start_date && end_date) {
-      //   query.createdAt = {
-      //     $gte: new Date(start_date),
-      //     $lte: new Date(end_date)
-      //   }
-      // }
 
       if (start_date && end_date) {
         var date = new Date(start_date);
