@@ -15,7 +15,7 @@ const response = require("../services/Response")
 const Emails = require('../Emails/index');
 
 module.exports = {
-
+   
     addInvite: async (req, res) => {
         try {
           let validation_result = await Validations.addinvite(req, res);
