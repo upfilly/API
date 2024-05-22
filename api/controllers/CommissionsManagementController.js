@@ -19,7 +19,7 @@ exports.addCommission = async (req, res) => {
         if (validation_result && !validation_result.success) {
             throw validation_result.message;
         }
-        let { plan_id, event_type, affiliate_group, affiliate_id, time_frame_type, time_frame } = req.body;
+        let { plan_id, event_type, affiliate_group, campaign, time_frame_type, time_frame } = req.body;
 
         req.body.addedBy = req.identity.id;
         req.body.updatedBy = req.identity.id;
@@ -51,11 +51,11 @@ exports.addCommission = async (req, res) => {
                 throw constants.COMMISSION.ALREADY_EXIST;
             }
         } else {
-            var get_affiliate = await Users.findOne({ id: affiliate_id, isDeleted: false });
-            if (!get_affiliate) {
-                throw constants.COMMISSION.INVALID_AFFILIATE
+            var get_campaign = await Campaign.findOne({ id: campaign, isDeleted: false });
+            if (!get_campaign) {
+                throw constants.COMMISSION.INVALID_campaign
             }
-            const existedCommission = await CommissionsManagement.findOne({ affiliate_id: get_affiliate.id, event_type: event_type, isDeleted: false });
+            const existedCommission = await CommissionsManagement.findOne({ campaign: get_campaign.id, event_type: event_type, isDeleted: false });
 
             if (existedCommission) {
                 throw constants.COMMISSION.ALREADY_EXIST;
