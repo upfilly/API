@@ -15,6 +15,7 @@ module.exports = {
           audience: "Client_Identity" // this should be provided by client
          }
         */  // Token signing options
+        
         var signOptions = {
             issuer: $Options.issuer,
             subject: $Options.subject,

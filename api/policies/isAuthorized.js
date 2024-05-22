@@ -47,6 +47,7 @@ module.exports = async function (req, res, next) {
     }
 
     jwt.verify(token, jwtObj, async function (err, token) {
+        console.log(token,"---------------")
         if (err) {
             console.log("err token", err)
             return res.status(401).json({
@@ -56,6 +57,7 @@ module.exports = async function (req, res, next) {
             });
         } else if (token && token.user_id) {
             var user = await Users.findOne({ id: token.user_id });
+            console.log(user,"user------------");
             req.identity = user;
 
         }

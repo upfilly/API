@@ -13,7 +13,7 @@ module.exports = {
     amount_type: { type: "string", isIn: ["percentage", "amount"] },
     amount: { type: 'number', defaultsTo: 0 },
     affiliate_group: { model: 'affiliatemanagement' },
-    affiliate_id: { model: 'users' },
+    campaign: { model: 'campaign' },
     time_frame_type: { type: "string", isIn: ["day", "month"] },
     time_frame: { type: 'number', defaultsTo: 0 },
     status: { type: "string", isIn: ["completed", "pending",], defaultsTo: "pending" },
