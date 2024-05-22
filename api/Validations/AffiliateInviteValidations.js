@@ -4,7 +4,7 @@ const Validate = require('./Validate').validate;
 
 exports.addinvite = async (req, res) => {
     const schema = Joi.object({
-        affiliate_id: Joi.string().required(),
+        affiliate_id: Joi.array().required(),
         message: Joi.string().optional().allow(""),
         commission: Joi.string().optional(),
         tags: Joi.array().default([]),
@@ -24,7 +24,7 @@ exports.addinvite = async (req, res) => {
 
     exports.updateinvite = async (req, res) => {
         const schema = Joi.object({
-            id: Joi.string().required(),
+            id: Joi.array().required(),
             message: Joi.string().optional(),
             commission: Joi.string().optional(),
             tags: Joi.string().optional(),
