@@ -8,6 +8,7 @@ module.exports = {
     HiringValidations: require('./HiringValidations'),
     FavouritesValidations: require('./FavouritesValidations'),
     FaqValidations: require("../Validations/FaqValidation"),
+    AffiliateUserValidations: require("./InviteUserValidations"),
     AssignedContractValidations: require('./AssignedContractValidations'),
     ProfileClaimValidations: require('./ProfileClaimValidations'),
     ProfileViewValidations: require('./ProfileViewsValidations'),

@@ -9,8 +9,8 @@ exports.addCommssion = async (req, res, next) => {
         event_type: Joi.string().required().valid("lead", "visitor", "purchase", "line-item"),
         amount_type: Joi.string().required().valid("percentage", "amount"),
         amount: Joi.number().required(),
-        time_frame_type: Joi.string().required().valid("day", "month"),
-        time_frame: Joi.number().required(),
+        time_frame_type: Joi.string().optional().valid("day", "month"),
+        time_frame: Joi.number().optional(),
     });
     return await Validate(schema, req, res);
 }
