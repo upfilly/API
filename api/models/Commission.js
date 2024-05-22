@@ -23,7 +23,8 @@ module.exports = {
     locality: { type: "string" },
     isContain_headers: { type: "string", isIn: ["yes", "no"], defaultsTo: "no" },
     status: { type: "string", isIn: ["confirmed", "pending"], defaultsTo: "pending" },
-
+    date:{type:"ref",columnType:"dateTime"},
+    campaign:{model:"Campaign"},
     //Common keys
     isDeleted: { type: 'Boolean', defaultsTo: false },
     deletedBy: { model: 'users' },

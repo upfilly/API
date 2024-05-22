@@ -13,6 +13,8 @@ exports.addCommission = async (req, res, next) => {
         affiliate_id: Joi.string().optional().allow(null),
         is_send_email_to_publisher: Joi.boolean().optional(),
         batch_file: Joi.string().optional(),
+        date:Joi.string().optional().allow(""),
+        campaign:Joi.string().required(),
         locality: Joi.string().optional(),
         isContain_headers: Joi.string().optional()
     });
@@ -30,6 +32,8 @@ exports.editCommission = async (req, res, next) => {
         image: Joi.string().optional(),
         activation_date: Joi.date().optional().allow(""),
         availability_date: Joi.date().optional().allow(""),
+        date:Joi.string.optional().allow(""),
+        campaign:Joi.string().required(),
         expiration_date: Joi.date().optional().allow(""),
         is_animation: Joi.boolean().optional(),
         is_deep_linking: Joi.boolean().optional(),

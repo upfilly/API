@@ -83,7 +83,7 @@ exports.editCommission = async (req, res) => {
         req.body.updatedBy = req.identity.id;
 
 
-        let get_COMMISSION = await Commission.findOne({ id: id, isDeleted: false });
+        let get_COMMISSION = await Commission.findOne({ id: id, isDeleted: false }).populate("campaign");
         if (!get_COMMISSION) {
             throw constants.COMMISSION.INVALID_ID;
         }
@@ -155,6 +155,20 @@ exports.getAllCommission = async (req, res) => {
             },
             {
                 $lookup: {
+                    from: 'Campaign',
+                    localField: 'campaign',
+                    foreignField: '_id',
+                    as: "campaign_details"
+                }
+            },
+            {
+                $unwind: {
+                    path: '$campaign_details',
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
+                $lookup: {
                     from: 'users',
                     localField: 'affiliate_id',
                     foreignField: '_id',
@@ -187,7 +201,7 @@ exports.getAllCommission = async (req, res) => {
                 addedBy: "$addedBy",
                 addedBy_name: "$addedBy_details.fullName",
                 affiliate_name: "$affiliate_details.fullName",
-
+                campaign_details:"$campaign_details",
                 updatedBy: "$updatedBy",
                 updatedAt: "$updatedAt",
                 isDeleted: "$isDeleted",
