@@ -35,7 +35,6 @@ module.exports = {
             isDeleted: false,
           });
     
-          console.log(result,"================");
           if (result.length === 0) {
     
             for await (let affiliate_id of data.affiliate_id) {
