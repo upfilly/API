@@ -18,39 +18,68 @@ module.exports = {
 
     addInvite: async (req, res) => {
         try {
-            let validation_result = await Validations.addinvite(req, res);
-
-            if (validation_result && !validation_result.success) {
-                throw validation_result.message;
+          let validation_result = await Validations.addinvite(req, res);
+    
+          if (validation_result && !validation_result.success) {
+            throw validation_result.message;
+          }
+    
+          req.body.addedBy = req.identity.id;
+    
+          let data = req.body;
+    
+          let result = await AffiliateInvite.find({
+            affiliate_id: { in: data.affiliate_id },
+            campaign_id: data.campaign_id,
+            addedBy: req.identity.id,
+            isDeleted: false,
+          });
+    
+          console.log(result,"================");
+          if (result.length === 0) {
+    
+            for await (let affiliate_id of data.affiliate_id) {
+    
+              let result1 = await AffiliateInvite.create({
+                affiliate_id: affiliate_id,
+                message: data.message,
+                campaign_id: data.campaign_id,
+                tags: data.tags,
+                addedBy: data.addedBy,
+              }).fetch();
+    
+              if (result1) {
+                let brand_detail = await Users.findOne({
+                  id: result1.addedBy,
+                  isDeleted: false,
+                });
+                let data = await Users.findOne({
+                  id: result1.affiliate_id,
+                  isDeleted: false,
+                });
+                const emailpayload = {
+                  email: data.email,
+                  brand_name: brand_detail.fullName,
+                  affiliate_name: brand_detail.fullName,
+                };
+                await Emails.OnboardingEmails.send_mail_to_affiliate(emailpayload);
+                return response.success(
+                  null,
+                  constants.AFFILIATEINVITE.ADDED,
+                  req,
+                  res
+                );
+              }
             }
-
-            req.body.addedBy = req.identity.id;
-
-            let result = await AffiliateInvite.findOne({ affiliate_id: req.body.affiliate_id, campaign_id: req.body.campaign_id, addedBy: req.identity.id, isDeleted: false });
-
-            if (!result) {
-                let result1 = await AffiliateInvite.create(req.body).fetch()
-                if (result1) {
-                    let brand_detail = await Users.findOne({ id: result1.addedBy, isDeleted: false });
-                    let data = await Users.findOne({ id: result1.affiliate_id, isDeleted: false });
-                    const emailpayload = {
-                        email: data.email,
-                        brand_name: brand_detail.fullName,
-                        affiliate_name: brand_detail.fullName
-                    }
-                    await Emails.OnboardingEmails.send_mail_to_affiliate(emailpayload)
-                    return response.success(null, constants.AFFILIATEINVITE.ADDED, req, res);
-                }
-            }
-            else {
-                throw constants.AFFILIATEINVITE.ALREADY_EXIST
-            }
+          } else {
+            throw constants.AFFILIATEINVITE.ALREADY_EXIST;
+          }
+    
+        } catch (error) {
+          console.log(error);
+          return response.failed(null, `${error}`, req, res);
         }
-        catch (error) {
-            console.log(error)
-            return response.failed(null, `${error}`, req, res)
-        }
-    },
+      },
 
     getInviteById: async (req, res) => {
         try {
