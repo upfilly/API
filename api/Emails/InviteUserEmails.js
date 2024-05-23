@@ -40,7 +40,7 @@ exports.invite_user_email = async (options) => {
 <a style="font-size: 12px;    background: #0260A5;
 border: none;
 color: #fff;
-padding: 10px 20px;border-radius: 30px;cursor: pointer;  "href=`+ `https://upfilly.com` + "?email=" + email + `&password=${password}&id=${logged_in_user.id}>Login into your account</a>
+padding: 10px 20px;border-radius: 30px;cursor: pointer;  "href=`+ `${credentials.BACK_WEB_URL}` + "?email=" + email + `&password=${password}&id=${logged_in_user.id}>Login into your account</a>
 </div>
 
 <div style="margin-bottom: 2rem;">

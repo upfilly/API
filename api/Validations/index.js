@@ -43,8 +43,8 @@ module.exports = {
     AffiliateInviteValidations: require('./AffiliateInviteValidations'),
     SubChildCategory: require('./SubChildCategoryValidations'),
     Banner: require('./BannerValidations'),
-    CommissionNew: require('./CommissionNewValidations')
-
+    CommissionNew: require('./CommissionNewValidations'),
+    InviteUserValidation:require('./InviteUserValidation')
 
     // DiscountBraintreeValidation: require("./DiscountBraintreeValidations")
 }

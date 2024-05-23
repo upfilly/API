@@ -21,6 +21,10 @@ const { generatePassword } = require("../services/CommonServices.js");
 module.exports = {
   addInviteUser: async (req, res) => {
     try {
+      let validation_result = await Validations.InviteUserValidation.addInvite(req, res);
+      if (validation_result && !validation_result.success) {
+        throw validation_result.message;
+    }
       const { firstName, lastName, email, role, description, language } =
         req.body;
 
@@ -28,16 +32,16 @@ module.exports = {
       const existingInvite = await InviteUsers.findOne({
         email:email,
         isDeleted: false,
-        invitationAccepted:true
       });
+
       if (existingInvite) {
-        throw "An invite has already been sent to this email.";
+        throw constants.USERINVITE.INVITE_ALREADY_EXISTS;
       }
 
       // Check if user already exists
       const existingUser = await Users.findOne({ email, isDeleted: false });
       if (existingUser) {
-        throw "A user with this email already exists.";
+        throw constants.user.EMAIL_EXIST;
       }
       let password = await generatePassword()
       // Create new user

@@ -549,5 +549,6 @@ module.exports.constants = {
     },
     USERINVITE:{
         USERINVITED:"User invited successfully",
+        INVITE_ALREADY_EXISTS:"User invite already exits",
     }
 }
