@@ -54,7 +54,7 @@ module.exports = {
         isVerified:"Y",
         addedBy:req.identity.id
       }).fetch();
-
+// console.log(password,"------------- password")
       // Store invite details in InviteUser model
       const newInvite = await InviteUsers.create({
         firstName:firstName,
@@ -91,9 +91,9 @@ module.exports = {
     }
   },
 
-  changeInviteUserStatus: async (req, res) => {
+  changeActiveUser: async (req, res) => {
     try {
-      const id = req.param("id");
+      const id = req.body.id;
 
       if (!id || id == undefined) {
         return res.status(400).json({
@@ -102,13 +102,29 @@ module.exports = {
         });
       }
 
-      const deletedUSer = await Users.update({ id: id }, { isDeleted: true });
+      let userExists = await Users.findOne({id:id,isDeleted:false});
+      // const deletedUSer = await Users.update({ id: id }, { isDeleted: true });
+      
+      if(!userExists){
+        throw constants.user.USER_NOT_FOUND;
+      }
+
+      let superUser = await Users.findOne({id:userExists.addedBy,isDeleted:false});
+      
+      if(!superUser){
+        throw constants.user.BRAND_NOT_EXISTS;
+      }
+
+      let activeUser = await Users.updateOne({id:superUser.id},{activeUser:userExists.id});
 
       return res.status(200).json({
         success: true,
-        message: constants.user.USER_DELETED,
+        message: constants.user.ACTIVE_USER_CHANGED,
+        data:activeUser
       });
+
     } catch (err) {
+      console.log(err)
       return res.status(400).json({
         success: false,
         error: { code: 400, message: "" + err },

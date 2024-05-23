@@ -457,7 +457,7 @@ module.exports.routes = {
 */
 
   "post /addinviteuser":"InviteUserController.addInviteUser",
-  "put /changeinviteuserstatus":"InviteUserController.changeInviteUserStatus",
+  "put /changeactiveuser":"InviteUserController.changeActiveUser",
 
 
 

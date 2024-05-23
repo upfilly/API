@@ -13,7 +13,7 @@ module.exports = {
     lastName: { type: 'string' },
     fullName: { type: 'string' },
     brand_name: { type: 'string' },
-
+    activeUser:{model:"Users"},
     email: { type: 'string' },
     dialCode: { type: 'string' },
     cellDialCode: { type: 'string' },

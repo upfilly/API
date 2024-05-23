@@ -329,7 +329,7 @@ module.exports = {
         where: {
           email: req.body.email.toLowerCase(),
           isDeleted: false,
-          role: { in: ["brand", "affiliate", "team", 'operator', 'analyzer', 'publisher'] }
+          role: { in: ["brand", "affiliate", "team", 'operator', 'analyzer', 'publisher','users'] }
         },
       });
 
@@ -371,6 +371,16 @@ module.exports = {
         { user_id: user.id },
         { issuer: 'refresh', subject: 'user', audience: 'upfilly' }
       );
+
+      if(user.role === "users"){
+        let active_user = user;
+        user = await Users.findOne({id:user.addedBy,isDeleted:false});
+        //throw msg here if not exists then throw brand not exists
+        await Users.updateOne({id:user.id},{activeUser:active_user.id})
+        listOfOtherUsers = await InviteUsers.find({addedBy:user.id,isDeleted:false});
+        user.listOfOtherUsers = listOfOtherUsers;
+        user.active_user = active_user;
+      }
 
       user.access_token = token;
       user.refresh_token = refreshToken;
@@ -1020,6 +1030,16 @@ module.exports = {
       let get_user = await Users.findOne({ id: id });
       if (get_user) {
 
+        if(get_user.role === "users"){
+          let active_user = get_user;
+          get_user = await Users.findOne({id:get_user.addedBy,isDeleted:false});
+          //throw msg here if not exists then throw brand not exists
+          await Users.updateOne({id:get_user.id},{activeUser:id})
+          listOfOtherUsers = await InviteUsers.find({addedBy:get_user.id,isDeleted:false});
+          get_user.listOfOtherUsers = listOfOtherUsers;
+          get_user.active_user = active_user;
+        }
+
         if (get_user && get_user.category_id && get_user.category_id != "") {
           // console.log(get_user.category_id, "---------get_user.category_id");
           let get_category = await CommonCategories.findOne({ id: get_user.category_id });
@@ -1028,6 +1048,7 @@ module.exports = {
             get_user.category_name = get_category.name;
           }
         }
+
         if (get_user && get_user.affiliate_group && get_user.affiliate_group != "") {
           let get_affiliate_group = await AffiliateManagement.findOne({ id: get_user.affiliate_group });
           if (get_affiliate_group) {
@@ -1060,12 +1081,14 @@ module.exports = {
 
 
         let get_tax = await Tax.findOne({ user_id: get_user.id });
+
         if (get_tax) {
           get_user.tax_detail = get_tax;
 
         }
 
         let get_permission = await Permissions.findOne({ role: get_user.role });
+
         if (get_permission) {
           get_user.permission_detail = get_permission;
 
