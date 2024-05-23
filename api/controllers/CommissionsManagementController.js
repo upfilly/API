@@ -223,15 +223,15 @@ exports.getAllCommission = async (req, res) => {
             },
             {
                 $lookup: {
-                    from: "Campaign",
+                    from: "campaign",
                     localField: "campaign",
                     foreignField: "_id",
-                    as: "affiliate_details"
+                    as: "campaign_details"
                 },
             },
             {
                 $unwind: {
-                    path: '$affiliate_details',
+                    path: '$campaign_details',
                     preserveNullAndEmptyArrays: true
                 }
             },
@@ -338,6 +338,8 @@ exports.getAllCommission = async (req, res) => {
                 due_date: "$due_date",
                 date:"$date",
                 campaign:"$campaign",
+                campaign_details:"$campaign_details",
+                campaign_name:"$campaign_details.name",
                 // affiliate_details_name: "$groupDetails.fullName",
                 // affiliate_details_email: "$groupDetails.email",
                 status: "$status",
