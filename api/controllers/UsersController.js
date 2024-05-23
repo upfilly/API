@@ -380,6 +380,9 @@ module.exports = {
         listOfOtherUsers = await InviteUsers.find({addedBy:user.id,isDeleted:false});
         user.listOfOtherUsers = listOfOtherUsers;
         user.active_user = active_user;
+      }else{
+        listOfOtherUsers = await InviteUsers.find({addedBy:user.id,isDeleted:false});
+        user.listOfOtherUsers = listOfOtherUsers;
       }
 
       user.access_token = token;
@@ -1027,7 +1030,7 @@ module.exports = {
   userDetail: async (req, res, next) => {
     try {
       let id = req.param('id');
-      let get_user = await Users.findOne({ id: id });
+      let get_user = await Users.findOne({ id: id }).populate("activeUser");
       if (get_user) {
 
         if(get_user.role === "users"){
@@ -1038,6 +1041,9 @@ module.exports = {
           listOfOtherUsers = await InviteUsers.find({addedBy:get_user.id,isDeleted:false});
           get_user.listOfOtherUsers = listOfOtherUsers;
           get_user.active_user = active_user;
+        }else{
+          listOfOtherUsers = await InviteUsers.find({addedBy:user.id,isDeleted:false});
+          user.listOfOtherUsers = listOfOtherUsers;
         }
 
         if (get_user && get_user.category_id && get_user.category_id != "") {

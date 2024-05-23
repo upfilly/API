@@ -62,6 +62,7 @@ module.exports = {
         email:email,
         role:role,
         description:description,
+        user_id:newUser.id,
         language:language,
         addedBy:req.identity.id,
         updatedBy:req.identity.id

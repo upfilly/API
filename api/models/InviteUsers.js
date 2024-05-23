@@ -30,6 +30,9 @@ module.exports = {
       type:"boolean",
       defaultsTo:false
     },
+    user_id:{
+      model:"users"
+    },
       // Common Keys
       addedBy: { model: 'users' },
       updatedBy: { model: 'users' },
