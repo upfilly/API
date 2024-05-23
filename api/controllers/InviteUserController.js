@@ -21,9 +21,6 @@ const { generatePassword } = require("../services/CommonServices.js");
 module.exports = {
   addInviteUser: async (req, res) => {
     try {
-      // console.log(req.identity.id);
-      console.log("in invite");
-      console.log(req.identity,"=========identity");
       const { firstName, lastName, email, role, description, language } =
         req.body;
 
@@ -43,13 +40,15 @@ module.exports = {
         throw "A user with this email already exists.";
       }
       let password = await generatePassword()
-      // // Create new user
+      // Create new user
       const newUser = await Users.create({
         firstName,
         lastName,
         email,
         role: role,
-        password:password
+        password:password,
+        isVerified:"Y",
+        addedBy:req.identity.id
       }).fetch();
 
       // Store invite details in InviteUser model
@@ -76,10 +75,10 @@ module.exports = {
         email: email,
         full_name: firstName+" "+lastName,
         password:password,
-        logged_in_user: loggedInUser,
+        logged_in_user: newUser,
       };
 
-      await Emails.send_mail_to_invite_user.invite_user_email(emailpayload);
+      await Emails.InviteUser.invite_user_email(emailpayload);
 
       return response.success(newInvite, constants.USERINVITE.USERINVITED, req, res);
     } catch (error) {

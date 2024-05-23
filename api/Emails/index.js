@@ -4,5 +4,5 @@ module.exports = {
     ProposalEmails: require("./ProposalEmails"),
     MakeOfferEmails: require("./MakeOfferEmails"),
     Commission:require('./CommissionEmails'),
-    send_mail_to_invite_user:require("./InviteUserEmails")
+    InviteUser:require("./InviteUserEmails")
 }

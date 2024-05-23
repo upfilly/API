@@ -447,11 +447,17 @@ module.exports.routes = {
   /**
 * @CommissionsController
 */
-  "post /add-commission": "Commission.addCommission",
-  "get /get-commission": "Commission.getCommissionById",
-  "get /get-commissions": "Commission.getAllCommission",
-  'put /edit-commission': 'Commission.editCommission',
+"post /add-commission": "Commission.addCommission",
+"get /get-commission": "Commission.getCommissionById",
+"get /get-commissions": "Commission.getAllCommission",
+'put /edit-commission': 'Commission.editCommission',
 
+/**
+* @InviteUserController
+*/
+
+  "post /addinviteuser":"InviteUserController.addInviteUser",
+  "put /changeinviteuserstatus":"InviteUserController.changeInviteUserStatus",
 
 
 

@@ -1718,6 +1718,27 @@ module.exports = {
         throw constants.user.USERNAME_INACTIVE;
       }
 
+      if(get_user.role === "users"){
+        let superUser = await Users.findOne({id:get_user.addedBy,isDeleted:false});
+        if(!superUser){
+          throw constants.user.BRAND_NOT_EXISTS;
+        }
+
+        let listOfUserExceptActive = await Users.find({id: { '!=': get_user.id },addedBy:get_user.addedBy,isDeleted:false,role:"users"});
+      
+        console.log(listOfUserExceptActive,"------------------- listOfUserExceptActive");
+      
+        let active_user = get_user;
+
+        get_user = await Users.findOne({id:get_user.addedBy});
+
+        get_user.listOfUserExceptActive = listOfUserExceptActive;
+
+        get_user.active_user = active_user;
+
+        console.log(get_user,'-------------- [get_user]');
+      }
+
       const new_date = new Date();
       const token = jwt.sign(
         { user_id: get_user.id, firstName: get_user.firstName },
@@ -1733,6 +1754,10 @@ module.exports = {
       }
 
       let update_user = await Users.updateOne({ id: get_user.id }).set(updated_payload);
+
+      update_user.listOfUserExceptActive = get_user.listOfUserExceptActive;
+      
+      update_user.active_user = get_user.active_user;
 
       update_user.access_token = token;
 

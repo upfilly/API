@@ -52,7 +52,8 @@ module.exports.constants = {
         USERNAME_DEACTIVE: "Account is not active. Please contact to admin.",
         OPT_SENT: "Verification code sent successfully",
         CHECK_EMAIL: "Verify your email we’ve sent you.",
-        USER_ADD: "User added successfully."
+        USER_ADD: "User added successfully.",
+        BRAND_NOT_EXISTS:"Brnad not exists"
     },
     COMMON: {
         COUNTRY_CODE_REQUIRED: "Country  code is required",
@@ -427,7 +428,7 @@ module.exports.constants = {
         ID_REQUIRED: "Id is Required",
         INVALID_PLAN: "Invalid plan",
         INVALID_AFFILIATE_GROUP: "Invalid affiliate group",
-        INVALID_AFFILIATE: "Invalid affiliate"
+        INVALID_campaign: "Invalid campaign"
 
     },
 
@@ -545,6 +546,8 @@ module.exports.constants = {
         ALREADY_EXIST: "Already exists",
         INVALID_CATEGORY: "Invalid category",
 
+    },
+    USERINVITE:{
+        USERINVITED:"User invited successfully",
     }
-
 }
