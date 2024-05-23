@@ -374,15 +374,54 @@ module.exports = {
 
       if(user.role === "users"){
         let active_user = user;
-        user = await Users.findOne({id:user.addedBy,isDeleted:false});
+        user = await Users.findOne({id:user.addedBy,isDeleted:false}).populate("activeUser");
         //throw msg here if not exists then throw brand not exists
         await Users.updateOne({id:user.id},{activeUser:active_user.id})
         listOfOtherUsers = await InviteUsers.find({addedBy:user.id,isDeleted:false});
+        
+        let current_user  = {}
+
+        current_user.createdAt=user.createdAt
+        current_user.updatedAt=user.updatedAt
+        current_user.id=user.id
+        current_user.firstName=user.firstName
+        current_user.lastName=user.lastName
+        current_user.email=user.email
+        current_user.role=user.role
+        current_user.isDeleted=user.isDeleted
+        current_user.user_id=user.id
+        current_user.addedBy=user.addedBy
+        current_user.updatedBy=user.updatedBy
+
         user.listOfOtherUsers = listOfOtherUsers;
-        user.active_user = active_user;
+        
+        user.listOfOtherUsers.push(current_user);
+        user.activeUser = active_user;
+        
+        // user.listOfOtherUsers = listOfOtherUsers;
+        // user.active_user = active_user;
+        
       }else{
         listOfOtherUsers = await InviteUsers.find({addedBy:user.id,isDeleted:false});
-        user.listOfOtherUsers = listOfOtherUsers;
+        // user.listOfOtherUsers = listOfOtherUsers;
+
+        let current_user  = {}
+
+        current_user.createdAt=user.createdAt
+        current_user.updatedAt=user.updatedAt
+        current_user.id=user.id
+        current_user.firstName=user.firstName
+        current_user.lastName=user.lastName
+        current_user.email=user.email
+        current_user.role=user.role
+        current_user.isDeleted=user.isDeleted
+        current_user.user_id=user.id
+        current_user.addedBy=user.addedBy
+        current_user.updatedBy=user.updatedBy
+
+        user.listOfOtherUsers = listOfOtherUsers?listOfOtherUsers:[];
+        
+        user.listOfOtherUsers.push(current_user);
       }
 
       user.access_token = token;
@@ -1039,11 +1078,44 @@ module.exports = {
           //throw msg here if not exists then throw brand not exists
           await Users.updateOne({id:get_user.id},{activeUser:id})
           listOfOtherUsers = await InviteUsers.find({addedBy:get_user.id,isDeleted:false});
+          let current_user  = {}
+
+          current_user.createdAt=get_user.createdAt
+          current_user.updatedAt=get_user.updatedAt
+          current_user.id=get_user.id
+          current_user.firstName=get_user.firstName
+          current_user.lastName=get_user.lastName
+          current_user.email=get_user.email
+          current_user.role=get_user.role
+          current_user.isDeleted=get_user.isDeleted
+          current_user.user_id=get_user.id
+          current_user.addedBy=get_user.addedBy
+          current_user.updatedBy=get_user.updatedBy
+
           get_user.listOfOtherUsers = listOfOtherUsers;
-          get_user.active_user = active_user;
+          
+          get_user.listOfOtherUsers.push(current_user);
+          get_user.activeUser = active_user;
+
         }else{
           listOfOtherUsers = await InviteUsers.find({addedBy:get_user.id,isDeleted:false});
+          let current_user  = {}
+
+          current_user.createdAt=get_user.createdAt
+          current_user.updatedAt=get_user.updatedAt
+          current_user.id=get_user.id
+          current_user.firstName=get_user.firstName
+          current_user.lastName=get_user.lastName
+          current_user.email=get_user.email
+          current_user.role=get_user.role
+          current_user.isDeleted=get_user.isDeleted
+          current_user.user_id=get_user.id
+          current_user.addedBy=get_user.addedBy
+          current_user.updatedBy=get_user.updatedBy
+
           get_user.listOfOtherUsers = listOfOtherUsers?listOfOtherUsers:[];
+          
+          get_user.listOfOtherUsers.push(current_user);
         }
 
         if (get_user && get_user.category_id && get_user.category_id != "") {
