@@ -109,6 +109,10 @@ module.exports = {
       if(!userExists){
         throw constants.user.USER_NOT_FOUND;
       }
+      let activeUser = {};
+      if(userExists.role === "brand"){
+        activeUser = await Users.updateOne({id:id},{activeUser:id});
+      }else{
 
       let superUser = await Users.findOne({id:userExists.addedBy,isDeleted:false});
       
@@ -116,8 +120,8 @@ module.exports = {
         throw constants.user.BRAND_NOT_EXISTS;
       }
 
-      let activeUser = await Users.updateOne({id:superUser.id},{activeUser:userExists.id});
-
+      activeUser = await Users.updateOne({id:superUser.id},{activeUser:userExists.id});
+    }
       return res.status(200).json({
         success: true,
         message: constants.user.ACTIVE_USER_CHANGED,
