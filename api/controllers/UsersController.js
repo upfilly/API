@@ -1042,8 +1042,8 @@ module.exports = {
           get_user.listOfOtherUsers = listOfOtherUsers;
           get_user.active_user = active_user;
         }else{
-          listOfOtherUsers = await InviteUsers.find({addedBy:user.id,isDeleted:false});
-          user.listOfOtherUsers = listOfOtherUsers;
+          listOfOtherUsers = await InviteUsers.find({addedBy:get_user.id,isDeleted:false});
+          get_user.listOfOtherUsers = listOfOtherUsers?listOfOtherUsers:[];
         }
 
         if (get_user && get_user.category_id && get_user.category_id != "") {
