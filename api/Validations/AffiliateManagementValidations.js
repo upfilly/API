@@ -5,6 +5,7 @@ exports.addAffiliateGroup = async (req, res, next) => {
 
     const schema = Joi.object({
         group_name: Joi.string().required(),
+        group_type:Joi.string().required().valid("affiliate","banner"),
         commision: Joi.string().optional(),
         // isDefaultAffiliateGroup: Joi.boolean().optional(),
         isArchive: Joi.boolean().optional(),

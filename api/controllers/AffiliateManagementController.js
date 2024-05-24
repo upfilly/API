@@ -22,7 +22,7 @@ exports.addAffiliateGroup = async (req, res) => {
             throw validation_result.message;
         }
 
-        let { group_name, group_code, isDefaultAffiliateGroup } = req.body;
+        let { group_name, group_code,group_type, isDefaultAffiliateGroup } = req.body;
 
         if (!['admin', 'brand'].includes(req.identity.role)) {
             throw constants.COMMON.UNAUTHORIZED;
@@ -32,16 +32,22 @@ exports.addAffiliateGroup = async (req, res) => {
             req.body.group_name = req.body.group_name.toLowerCase();
         }
 
+        if (req.body.group_type) {
+            req.body.group_type = req.body.group_type.toLowerCase();
+        }
+
         req.body.addedBy = req.identity.id;
         req.body.updatedBy = req.identity.id;
 
 
         let query = {
-            group_name: group_name,
+            group_name: req.body.group_name,
+            group_type: req.body.group_type,
             isDeleted: false,
             addedBy: req.identity.id
         }
         let existed_group = await AffiliateManagement.findOne(query);
+
         if (existed_group) {
             throw constants.AFFLIATE_GROUP.ALREADY_EXIST;
         }
