@@ -31,6 +31,7 @@ module.exports = {
       // Check if an invite already exists
       const existingInvite = await InviteUsers.findOne({
         email:email,
+        addedBy:req.identity.id,
         isDeleted: false,
       });
 
@@ -41,8 +42,19 @@ module.exports = {
       // Check if user already exists
       const existingUser = await Users.findOne({ email, isDeleted: false });
       if (existingUser) {
-        throw constants.user.EMAIL_EXIST;
-      }
+        // throw constants.user.EMAIL_EXIST;
+        const oldUserInvite = await InviteUsers.create({
+          firstName:firstName,
+          lastName:lastName,
+          email:email,
+          role:role,
+          description:description,
+          user_id:newUser.id,
+          language:language,
+          addedBy:req.identity.id,
+          updatedBy:req.identity.id
+        }).fetch();
+      }else{
       let password = await generatePassword()
       // Create new user
       const newUser = await Users.create({
@@ -52,10 +64,10 @@ module.exports = {
         role: role,
         password:password,
         isVerified:"Y",
-        addedBy:req.identity.id
+        addedBy:req.identity.id,
+        updatedBy:req.identity.id
       }).fetch();
-// console.log(password,"------------- password")
-      // Store invite details in InviteUser model
+
       const newInvite = await InviteUsers.create({
         firstName:firstName,
         lastName:lastName,
@@ -67,14 +79,6 @@ module.exports = {
         addedBy:req.identity.id,
         updatedBy:req.identity.id
       }).fetch();
-      
-      // console.log(req.identity); 
-      let loggedInUser = await Users.findOne({ id: req.identity.id });
-      
-      var token = jwt.sign(
-        { user_id: req.identity.id, firstName: loggedInUser.firstName },
-        { issuer: "upfilly", subject: loggedInUser.email, audience: "public" }
-      );
 
       const emailpayload = {
         email: email,
@@ -86,6 +90,7 @@ module.exports = {
       await Emails.InviteUser.invite_user_email(emailpayload);
 
       return response.success(newInvite, constants.USERINVITE.USERINVITED, req, res);
+      }
     } catch (error) {
       console.log(error)
       return response.failed(null, `${error}`, req, res);
@@ -136,4 +141,40 @@ module.exports = {
       });
     }
   },
+
+  deleteInviteUser: async (req,res)=>{
+    try{
+    const id = req.query.id;
+
+      if (!id || id == undefined) {
+        return res.status(400).json({
+          success: false,
+          error: { code: 400, message: constants.user.INVALID_ID },
+        });
+      }
+      // console.log(id);
+      let userExists = await Users.findOne({id:id,isDeleted:false});
+      
+      if(!userExists){
+        throw constants.user.USER_NOT_FOUND;
+      }
+      let deletedUser = {};
+
+      deletedUser = await InviteUsers.updateOne({user_id:id,addedBy:req.identity.id},{isDeleted:true});
+    
+      await Users.update({activeUser:id},{activeUser:null}); //here we are removing that active user from every other brand where it is active
+
+      return res.status(200).json({
+        success: true,
+        message: constants.user.INVITED_USER_DELETED,
+      });
+
+    } catch (err) {
+      console.log(err)
+      return res.status(400).json({
+        success: false,
+        error: { code: 400, message: "" + err },
+      });
+  }
+  }
 };

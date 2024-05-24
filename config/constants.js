@@ -54,7 +54,8 @@ module.exports.constants = {
         CHECK_EMAIL: "Verify your email we’ve sent you.",
         USER_ADD: "User added successfully.",
         BRAND_NOT_EXISTS:"Brand not exists",
-        ACTIVE_USER_CHANGED:"Active user status changes"
+        ACTIVE_USER_CHANGED:"Active user status changes",
+        INVITED_USER_DELETED:"Invited user deleted"
     },
     COMMON: {
         COUNTRY_CODE_REQUIRED: "Country  code is required",
