@@ -552,5 +552,8 @@ module.exports.constants = {
     USERINVITE:{
         USERINVITED:"User invited successfully",
         INVITE_ALREADY_EXISTS:"User invite already exits",
+    },
+    ACTIVITY_LOGS:{
+        FETCHED_ALL:"Fetched successfully"
     }
 }
