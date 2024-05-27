@@ -377,9 +377,9 @@ module.exports = {
         user = await Users.findOne({id:user.id,isDeleted:false}).populate("activeUser").populate("addedBy");
         
         if(user.role === "operator" ||user.role === "analyzer" ){
-          await Users.updateOne({id:user.id},{activeUser:req.identity})
+          await Users.updateOne({id:user.id},{activeUser:user.id})
           user.activeUser = req.identity;
-          let listOfUsers = await InviteUsers.find({user_id:user.id,isDeleted:false});
+          let listOfUsers = await InviteUsers.find({email:user.email,isDeleted:false});
           // console.log(listOfUsers)
           for(let otherUsers of listOfUsers){
             // console.log("=============>",otherUsers);
@@ -389,7 +389,7 @@ module.exports = {
         }else{
 
         //throw msg here if not exists then throw brand not exists
-        await Users.updateOne({id:user.id},{activeUser:req.identity})
+        await Users.updateOne({id:user.id},{activeUser:user.id})
         
         listOfOtherUsers = await InviteUsers.find({addedBy:user.id,isDeleted:false});
         }
@@ -1058,14 +1058,16 @@ module.exports = {
   userDetail: async (req, res, next) => {
     try {
       let id = req.param('id');
+      let listOfOtherUsers=[];
       let get_user = await Users.findOne({ id: id }).populate("activeUser");
       if (get_user) {
-        console.log(get_user.role);
+        // console.log(get_user.role);
         if(get_user.role === "brand" ||get_user.role === "affiliate"){
           let active_user = get_user;
           // get_user = await Users.findOne({id:get_user.addedBy,isDeleted:false});
           //throw msg here if not exists then throw brand not exists
           await Users.updateOne({id:get_user.id},{activeUser:id})
+          console.log(get_user.id);
           listOfOtherUsers = await InviteUsers.find({addedBy:get_user.id,isDeleted:false});
           let current_user  = {}
 
@@ -1080,32 +1082,46 @@ module.exports = {
           current_user.user_id=get_user.id
           current_user.addedBy=get_user.addedBy
           current_user.updatedBy=get_user.updatedBy
-          listOfOtherUsers.push(current_user);
-          console.log("===========>",listOfOtherUsers);
+          // listOfOtherUsers.push(current_user);
+          // console.log("===========>",listOfOtherUsers);
           get_user.listOfOtherUsers = listOfOtherUsers;
           
           get_user.listOfOtherUsers.push(current_user);
           // get_user.activeUser = active_user;
 
         }else{
-          // listOfOtherUsers = await InviteUsers.find({user_id:get_user.id,isDeleted:false});
-          // let current_user  = {}
 
-          // current_user.createdAt=get_user.createdAt
-          // current_user.updatedAt=get_user.updatedAt
-          // current_user.id=get_user.id
-          // current_user.firstName=get_user.firstName
-          // current_user.lastName=get_user.lastName
-          // current_user.email=get_user.email
-          // current_user.role=get_user.role
-          // current_user.isDeleted=get_user.isDeleted
-          // current_user.user_id=get_user.id
-          // current_user.addedBy=get_user.addedBy
-          // current_user.updatedBy=get_user.updatedBy
-
-          // get_user.listOfOtherUsers = listOfOtherUsers?listOfOtherUsers:[];
           
-          // get_user.listOfOtherUsers.push(current_user);
+
+
+
+          // listOfOtherUsers = await InviteUsers.find({addedBy:get_user.addedBy,isDeleted:false});
+          let listOfUsers = await InviteUsers.find({email:get_user.email,isDeleted:false});
+          // console.log(listOfUsers)
+          for(let otherUsers of listOfUsers){
+            // console.log("=============>",otherUsers);
+            let parentUser = await Users.findOne({id:otherUsers.addedBy,isDeleted:false})
+            listOfOtherUsers.push(parentUser);
+          }
+          
+          let current_user  = {}
+
+          current_user.createdAt=get_user.createdAt
+          current_user.updatedAt=get_user.updatedAt
+          current_user.id=get_user.id
+          current_user.firstName=get_user.firstName
+          current_user.lastName=get_user.lastName
+          current_user.email=get_user.email
+          current_user.role=get_user.role
+          current_user.isDeleted=get_user.isDeleted
+          current_user.user_id=get_user.id
+          current_user.addedBy=get_user.addedBy
+          current_user.updatedBy=get_user.updatedBy
+
+          get_user.listOfOtherUsers = listOfOtherUsers?listOfOtherUsers:[];
+          // get_user.activeUser = req.identity;
+          
+          get_user.listOfOtherUsers.push(current_user);
         }
 
         if (get_user && get_user.category_id && get_user.category_id != "") {
