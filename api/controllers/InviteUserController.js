@@ -473,6 +473,20 @@ module.exports = {
 
           listOfOtherUsers.push(currentparentUser);
         }
+        let current_user  = {}
+          current_user.createdAt=req.identity.createdAt
+          current_user.updatedAt=req.identity.updatedAt
+          current_user.id=req.identity.id
+          current_user.firstName=req.identity.firstName
+          current_user.lastName=req.identity.lastName
+          current_user.email=req.identity.email
+          current_user.role=req.identity.role
+          current_user.isDeleted=req.identity.isDeleted
+          current_user.user_id=req.identity.id
+          current_user.addedBy=req.identity.addedBy
+          current_user.updatedBy=req.identity.updatedBy
+
+        listOfOtherUsers.push(current_user);
         return response.success(listOfOtherUsers, constants.user.ALL_OTHER_USERS_FETCHED, req, res);
         
       }
