@@ -376,7 +376,7 @@ module.exports = {
         // let active_user = user;
         user = await Users.findOne({id:user.id,isDeleted:false}).populate("activeUser");
         //throw msg here if not exists then throw brand not exists
-        await Users.updateOne({id:user.id},{activeUser:user.id})
+        await Users.updateOne({id:user.id},{activeUser:req.identity})
         listOfOtherUsers = await InviteUsers.find({addedBy:user.id,isDeleted:false});
         
         let current_user  = {}
