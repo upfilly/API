@@ -429,6 +429,12 @@ module.exports = {
       delete user.stripe_customer_id;
       delete user.status;
 
+      let get_permission = await Permissions.findOne({ role: user.role });
+
+      if (get_permission) {
+        user.permission_detail = get_permission;
+      }
+
       return response.success(user, constants.user.SUCCESSFULLY_LOGGEDIN, req, res);
 
     } catch (error) {
@@ -1101,7 +1107,21 @@ module.exports = {
           for(let otherUsers of listOfUsers){
             // console.log("=============>",otherUsers);
             let parentUser = await Users.findOne({id:otherUsers.addedBy,isDeleted:false})
-            listOfOtherUsers.push(parentUser);
+           let currentparentUser={};
+            currentparentUser.createdAt=parentUser.createdAt
+            currentparentUser.updatedAt=parentUser.updatedAt
+            currentparentUser.id=parentUser.id
+            currentparentUser.firstName=parentUser.firstName
+            currentparentUser.lastName=parentUser.lastName
+            currentparentUser.email=parentUser.email
+            currentparentUser.role=parentUser.role
+            currentparentUser.isDeleted=parentUser.isDeleted
+            currentparentUser.user_id=parentUser.id
+            currentparentUser.addedBy=parentUser.addedBy
+            currentparentUser.updatedBy=parentUser.updatedBy
+
+            
+            listOfOtherUsers.push(currentparentUser);
           }
           
           let current_user  = {}
@@ -1171,12 +1191,12 @@ module.exports = {
 
         }
 
-        let get_permission = await Permissions.findOne({ role: get_user.role });
+        // let get_permission = await Permissions.findOne({ role: get_user.role });
 
-        if (get_permission) {
-          get_user.permission_detail = get_permission;
+        // if (get_permission) {
+        //   get_user.permission_detail = get_permission;
 
-        }
+        // }
 
         // if (get_user) {
         //   let get_campaign = await Campaign.find({ affiliate_id: id });
@@ -1880,6 +1900,12 @@ module.exports = {
       delete update_user.stripe_customer_id;
       delete update_user.isVerified;
       delete update_user.status;
+
+      let get_permission = await Permissions.findOne({ role: update_user.role });
+
+      if (get_permission) {
+        update_user.permission_detail = get_permission;
+      }
 
       return response.success(update_user, constants.user.SUCCESSFULLY_LOGGEDIN, req, res
       );
