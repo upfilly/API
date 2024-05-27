@@ -318,7 +318,7 @@ module.exports = {
   userSignin: async (req, res) => {
     try {
       let validation_result = await Validations.UserValidations.userSignin(req, res);
-
+      let listOfOtherUsers=[];
       if (validation_result && !validation_result.success) {
         throw validation_result.message;
       }
@@ -374,11 +374,25 @@ module.exports = {
 
       // if(user.role === "users"){
         // let active_user = user;
-        user = await Users.findOne({id:user.id,isDeleted:false}).populate("activeUser");
+        user = await Users.findOne({id:user.id,isDeleted:false}).populate("activeUser").populate("addedBy");
+        
+        if(user.role === "operator" ||user.role === "analyzer" ){
+          await Users.updateOne({id:user.id},{activeUser:req.identity})
+          user.activeUser = req.identity;
+          let listOfUsers = await InviteUsers.find({user_id:user.id,isDeleted:false});
+          console.log(listOfUsers)
+          for(let otherUsers of listOfUsers){
+            // console.log("=============>",otherUsers);
+            let parentUser = await Users.findOne({id:otherUsers.addedBy,isDeleted:false})
+            listOfOtherUsers.push(parentUser);
+          }
+        }else{
+
         //throw msg here if not exists then throw brand not exists
         await Users.updateOne({id:user.id},{activeUser:req.identity})
-        listOfOtherUsers = await InviteUsers.find({addedBy:user.id,isDeleted:false});
         
+        listOfOtherUsers = await InviteUsers.find({addedBy:user.id,isDeleted:false});
+        }
         let current_user  = {}
 
         current_user.createdAt=user.createdAt
