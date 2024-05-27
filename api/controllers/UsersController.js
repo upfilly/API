@@ -318,7 +318,7 @@ module.exports = {
   userSignin: async (req, res) => {
     try {
       let validation_result = await Validations.UserValidations.userSignin(req, res);
-
+      let listOfOtherUsers=[];
       if (validation_result && !validation_result.success) {
         throw validation_result.message;
       }
@@ -372,13 +372,27 @@ module.exports = {
         { issuer: 'refresh', subject: 'user', audience: 'upfilly' }
       );
 
-      if(user.role === "users"){
-        let active_user = user;
-        user = await Users.findOne({id:user.addedBy,isDeleted:false}).populate("activeUser");
-        //throw msg here if not exists then throw brand not exists
-        await Users.updateOne({id:user.id},{activeUser:active_user.id})
-        listOfOtherUsers = await InviteUsers.find({addedBy:user.id,isDeleted:false});
+      // if(user.role === "users"){
+        // let active_user = user;
+        user = await Users.findOne({id:user.id,isDeleted:false}).populate("activeUser").populate("addedBy");
         
+        if(user.role === "operator" ||user.role === "analyzer" ){
+          await Users.updateOne({id:user.id},{activeUser:req.identity})
+          user.activeUser = req.identity;
+          let listOfUsers = await InviteUsers.find({user_id:user.id,isDeleted:false});
+          // console.log(listOfUsers)
+          for(let otherUsers of listOfUsers){
+            // console.log("=============>",otherUsers);
+            let parentUser = await Users.findOne({id:otherUsers.addedBy,isDeleted:false})
+            listOfOtherUsers.push(parentUser);
+          }
+        }else{
+
+        //throw msg here if not exists then throw brand not exists
+        await Users.updateOne({id:user.id},{activeUser:req.identity})
+        
+        listOfOtherUsers = await InviteUsers.find({addedBy:user.id,isDeleted:false});
+        }
         let current_user  = {}
 
         current_user.createdAt=user.createdAt
@@ -396,34 +410,8 @@ module.exports = {
         user.listOfOtherUsers = listOfOtherUsers;
         
         user.listOfOtherUsers.push(current_user);
-        user.activeUser = active_user;
-        
-        // user.listOfOtherUsers = listOfOtherUsers;
-        // user.active_user = active_user;
-        
-      }else{
-        listOfOtherUsers = await InviteUsers.find({addedBy:user.id,isDeleted:false});
-        // user.listOfOtherUsers = listOfOtherUsers;
 
-        let current_user  = {}
-
-        current_user.createdAt=user.createdAt
-        current_user.updatedAt=user.updatedAt
-        current_user.id=user.id
-        current_user.firstName=user.firstName
-        current_user.lastName=user.lastName
-        current_user.email=user.email
-        current_user.role=user.role
-        current_user.isDeleted=user.isDeleted
-        current_user.user_id=user.id
-        current_user.addedBy=user.addedBy
-        current_user.updatedBy=user.updatedBy
-
-        user.listOfOtherUsers = listOfOtherUsers?listOfOtherUsers:[];
-        
-        user.listOfOtherUsers.push(current_user);
-      }
-
+        // user.activeUser = user;
       user.access_token = token;
       user.refresh_token = refreshToken;
 
@@ -436,7 +424,7 @@ module.exports = {
         updated_payload.device_token = device_token;
       }
 
-      await Users.updateOne({ id: user.id }).set(updated_payload);
+      let currentUser = await Users.updateOne({ id: user.id }).set(updated_payload);
 
       delete user.stripe_customer_id;
       delete user.status;
@@ -444,6 +432,7 @@ module.exports = {
       return response.success(user, constants.user.SUCCESSFULLY_LOGGEDIN, req, res);
 
     } catch (error) {
+
       return response.failed(null, `${error}`, req, res);
     }
   },
@@ -1072,7 +1061,7 @@ module.exports = {
       let get_user = await Users.findOne({ id: id }).populate("activeUser");
       if (get_user) {
 
-        if(get_user.role === "users"){
+        if(get_user.role === "brand" ||get_user.role === "affiliate"){
           let active_user = get_user;
           get_user = await Users.findOne({id:get_user.addedBy,isDeleted:false});
           //throw msg here if not exists then throw brand not exists

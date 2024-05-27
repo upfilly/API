@@ -29,6 +29,80 @@ module.exports = {
     generate_link_get: { type: "Boolean", defaultsTo: false },
 
     transactions_get: { type: "Boolean", defaultsTo: false },
+    affiliate_invite: {
+      type: 'boolean',
+      defaultsTo: false
+    },
+
+    affiliate_group: {
+      type: 'boolean',
+      defaultsTo: false
+    },
+
+    group_add: {
+      type: 'boolean',
+      defaultsTo: false
+    },
+
+    group_edit: {
+      type: 'boolean',
+      defaultsTo: false
+    },
+
+    group_get: {
+      type: 'boolean',
+      defaultsTo: false
+    },
+
+    group_delete: {
+      type: 'boolean',
+      defaultsTo: false
+    },
+
+    banner_add: {
+      type: 'boolean',
+      defaultsTo: false
+    },
+
+    banner_edit: {
+      type: 'boolean',
+      defaultsTo: false
+    },
+
+    banner_get: {
+      type: 'boolean',
+      defaultsTo: false
+    },
+
+    banner_delete: {
+      type: 'boolean',
+      defaultsTo: false
+    },
+
+    offer_invite: {
+      type: 'boolean',
+      defaultsTo: false
+    },
+
+    commission_add: {
+      type: 'boolean',
+      defaultsTo: false
+    },
+
+    commission_edit: {
+      type: 'boolean',
+      defaultsTo: false
+    },
+
+    commission_get: {
+      type: 'boolean',
+      defaultsTo: false
+    },
+
+    commission_delete: {
+      type: 'boolean',
+      defaultsTo: false
+    },
 
     addedBy: { model: "Users", },
     updatedBy: { model: "Users", },

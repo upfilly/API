@@ -22,6 +22,7 @@ module.exports = {
   addInviteUser: async (req, res) => {
     try {
       let validation_result = await Validations.InviteUserValidation.addInvite(req, res);
+      let user={};
       if (validation_result && !validation_result.success) {
         throw validation_result.message;
     }
@@ -43,7 +44,7 @@ module.exports = {
       const existingUser = await Users.findOne({ email, isDeleted: false });
       if (existingUser) {
         // throw constants.user.EMAIL_EXIST;
-        const oldUserInvite = await InviteUsers.create({
+         user = await InviteUsers.create({
           firstName:firstName,
           lastName:lastName,
           email:email,
@@ -57,7 +58,7 @@ module.exports = {
       }else{
       let password = await generatePassword()
       // Create new user
-      const newUser = await Users.create({
+      let newUser = await Users.create({
         firstName,
         lastName,
         email,
@@ -68,7 +69,7 @@ module.exports = {
         updatedBy:req.identity.id
       }).fetch();
 
-      const newInvite = await InviteUsers.create({
+      user = await InviteUsers.create({
         firstName:firstName,
         lastName:lastName,
         email:email,
@@ -79,18 +80,19 @@ module.exports = {
         addedBy:req.identity.id,
         updatedBy:req.identity.id
       }).fetch();
-
       const emailpayload = {
         email: email,
         full_name: firstName+" "+lastName,
         password:password,
-        logged_in_user: newUser,
+        logged_in_user: user,
       };
 
       await Emails.InviteUser.invite_user_email(emailpayload);
+    }
+      
 
-      return response.success(newInvite, constants.USERINVITE.USERINVITED, req, res);
-      }
+      return response.success(user, constants.USERINVITE.USERINVITED, req, res);
+      
     } catch (error) {
       console.log(error)
       return response.failed(null, `${error}`, req, res);
@@ -176,5 +178,135 @@ module.exports = {
         error: { code: 400, message: "" + err },
       });
   }
-  }
+  },
+  getAllActivities : async(req, res) => {
+    try {
+        let query = {};
+        let count = req.param('count') || 10;
+        let page = req.param('page') || 1;
+        let { search, isDeleted, status, sortBy, addedBy,parentUserId } = req.query;
+        let skipNo = (Number(page) - 1) * Number(count);
+
+        if (search) {
+            search = await Services.Utils.remove_special_char_exept_underscores(search);
+            query.$or = [
+                { name: { $regex: search, '$options': 'i' } },
+            ]
+        }
+
+        if (isDeleted) {
+            if (isDeleted === 'true') {
+                isDeleted = true;
+            } else {
+                isDeleted = false;
+            }
+            query.isDeleted = isDeleted;
+        } else {
+            query.isDeleted = false;
+        }
+
+        if (status) {
+            query.status = status;
+        }
+
+        let sortquery = {};
+        if (sortBy) {
+            let typeArr = [];
+            typeArr = sortBy.split(" ");
+            let sortType = typeArr[1];
+            let field = typeArr[0];
+            sortquery[field ? field : 'createdAt'] = sortType ? (sortType == 'desc' ? -1 : 1) : -1;
+        } else {
+            sortquery = { updatedAt: -1 }
+        }
+
+        if (addedBy) {
+            query.addedBy = ObjectId(addedBy);
+        }
+
+        if(parentUserId){
+          query.parentUserId = parentUserId;
+        }
+        // Pipeline Stages
+        let pipeline = [
+          {
+            $lookup: {
+                from: "users",
+                localField: "parentUserId",
+                foreignField: "_id",
+                as: "parent_details"
+            }
+        },
+        {
+            $unwind: {
+                path: '$parent_details',
+                preserveNullAndEmptyArrays: true
+            }
+        },
+          {
+            $lookup: {
+                from: "users",
+                localField: "user_id",
+                foreignField: "_id",
+                as: "user_details"
+            }
+        },
+        {
+            $unwind: {
+                path: '$user_details',
+                preserveNullAndEmptyArrays: true
+            }
+        },
+        ];
+
+        let projection = {
+            $project: {
+                id: "$_id",
+                user_id: "$user_id",
+                message:"$message",
+                method:"$method",
+                parentUserId:"$parentUserId",
+                response_data:"$data",
+                status: "$status",
+                addedBy: "$addedBy",
+                user_details:"$user_details",
+                parent_details:"$parent_details",
+                isDeleted: "$isDeleted",
+                createdAt: "$createdAt",
+                updatedAt: "$updatedAt",
+            }
+        };
+
+        pipeline.push(projection);
+        pipeline.push({
+            $match: query
+        });
+        pipeline.push({
+            $sort: sortquery
+        });
+        // Pipeline Stages
+        db.collection('activitylogs').aggregate(pipeline).toArray((err, totalresult) => {
+            pipeline.push({
+                $skip: Number(skipNo)
+            });
+            pipeline.push({
+                $limit: Number(count)
+            });
+            db.collection("activitylogs").aggregate(pipeline).toArray((err, result) => {
+                let resData = {
+                    total_count: totalresult ? totalresult.length : 0,
+                    data: result ? result : [],
+                }
+                if (!req.param('page') && !req.param('count')) {
+                    resData.data = totalresult ? totalresult : [];
+                }
+                return response.success(resData, constants.ACTIVITY_LOGS.FETCHED_ALL, req, res);
+
+            })
+        })
+
+    } catch (error) {
+        return response.failed(null, `${error}`, req, res);
+    }
+}
 };
