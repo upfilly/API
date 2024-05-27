@@ -380,7 +380,7 @@ module.exports = {
           await Users.updateOne({id:user.id},{activeUser:req.identity})
           user.activeUser = req.identity;
           let listOfUsers = await InviteUsers.find({user_id:user.id,isDeleted:false});
-          console.log(listOfUsers)
+          // console.log(listOfUsers)
           for(let otherUsers of listOfUsers){
             // console.log("=============>",otherUsers);
             let parentUser = await Users.findOne({id:otherUsers.addedBy,isDeleted:false})
