@@ -460,6 +460,7 @@ module.exports.routes = {
   "put /changeactiveuser":"InviteUserController.changeActiveUser",
   "delete /deleteinviteuser":"InviteUserController.deleteInviteUser",
   "get /getallactivities":"InviteUserController.getAllActivities",
+  "get /getallassociatedusers":"InviteUserController.getAllAssociatedUsers",
 
 
 
