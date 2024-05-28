@@ -16,7 +16,7 @@ module.exports.http = {
       res.on("finish", async function () {
 
         responseBody = JSON.parse(responseBody);
-        if(req.url.split("?")[0] !== "/getallactivities"){
+        if(req.url.split("?")[0] !== "/getallactivities" && req.method !== "GET"){
         if (responseBody.code >= 200 && responseBody.code < 300) {
 
          if(req.identity) {
