@@ -390,6 +390,21 @@ exports.getCampaignById = async (req, res) => {
 exports.changeCampaignStatus = async (req, res) => {
     try {
 
+        let user_id = req.identity.id;
+
+        let loggedInUser = await Users.findOne({ id: user_id, isDeleted: false });
+
+        let isPermissionExists = await Permissions.findOne({role:loggedInUser.role});
+
+        if(!isPermissionExists){
+            throw "Permission not exists";
+        }   
+
+        if(!isPermissionExists.edit_campaign){
+            throw "User not allowed to edit campaign status";
+        }
+
+
         let validation_result = await Validations.CampaignValidations.changeCampaignStatus(req, res);
         if (validation_result && !validation_result.success) {
             throw validation_result.message
@@ -465,6 +480,22 @@ exports.changeCampaignStatus = async (req, res) => {
 
 exports.deleteCampaign = async (req, res) => {
     try {
+
+        let user_id = req.identity.id;
+
+        let loggedInUser = await Users.findOne({ id: user_id, isDeleted: false });
+
+        let isPermissionExists = await Permissions.findOne({role:loggedInUser.role});
+
+        if(!isPermissionExists){
+            throw "Permission not exists";
+        }   
+
+        if(!isPermissionExists.campaign_delete){
+            throw "User not allowed to delete campaign";
+        }
+
+
         let id = req.param("id");
         if (!id) {
             throw constants.CAMPAIGN.ID_REQUIRED;
