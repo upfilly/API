@@ -233,11 +233,11 @@ module.exports = {
       }
 
       if (addedBy) {
-        query.addedBy = ObjectId(addedBy);
+        query.user_id = ObjectId(addedBy);
       }
 
       if (parentUserId) {
-        query.parentUserId = parentUserId;
+        query.parentUserId = ObjectId(parentUserId);
       }
       // Pipeline Stages
       let pipeline = [
@@ -330,107 +330,6 @@ module.exports = {
   },
 
   getAllAssociatedUsers: async (req, res) => {
-    // try {
-      // let query = { _id: { $ne: null } };
-    //   let count = req.param("count") || 10;
-    //   let page = req.param("page") || 1;
-    //   let { search, sortBy, isDeleted, type, user_id } = req.query;
-    //   skipNo = Number(page - 1) * Number(count);
-    //   if (search) {
-    //     query.$or = [
-    //       { review: { $regex: search, $options: "i" } },
-    //       { type: { $regex: search, $options: "i" } },
-    //     ];
-    //   }
-
-    //   if (isDeleted) {
-    //     query.isDeleted = isDeleted
-    //       ? isDeleted === "true"
-    //       : true
-    //       ? isDeleted
-    //       : false;
-    //   } else {
-    //     query.isDeleted = false;
-    //   }
-
-    //   let sortquery = {};
-    //   if (sortBy) {
-    //     let typeArr = [];
-    //     typeArr = sortBy.split(" ");
-    //     let sortType = typeArr[1];
-    //     let field = typeArr[0];
-    //     sortquery[field ? field : "createdAt"] = sortType
-    //       ? sortType == "desc"
-    //         ? -1
-    //         : 1
-    //       : -1;
-    //   } else {
-    //     sortquery = { updatedAt: -1 };
-    //   }
-
-    //   if (type) {
-    //     query.type = type;
-    //   }
-
-    //   if (user_id) {
-    //     query.user_id = ObjectId(user_id);
-    //   }
-
-    //   let pipeline = [];
-    //   let projection = {
-    //     $project: {
-    //       firstName: "$firstName",
-    //       lastName: "$lastName",
-    //       email: "$email",
-    //       role: "$role",
-    //       user_id: "$user_id",
-    //       addedBy: "$addedBy",
-    //       updatedBy: "$updatedBy",
-    //       createdAt: "$createdAt",
-    //       updatedAt: "$updatedAt",
-    //       description: "$description",
-    //       language: "$language",
-    //       invitationAccepted: "$invitationAccepted",
-    //       isDeleted: "$isDeleted",
-    //     },
-    //   };
-    //   pipeline.push(projection);
-    //   pipeline.push({
-    //     $match: query,
-    //   });
-    //   pipeline.push({
-    //     $sort: sortquery,
-    //   });
-    //   db.collection("inviteusers")
-    //     .aggregate(pipeline)
-    //     .toArray((err, totalresult) => {
-    //       pipeline.push({
-    //         $skip: Number(skipNo),
-    //       });
-    //       pipeline.push({
-    //         $limit: Number(count),
-    //       });
-    //       db.collection("inviteusers")
-    //         .aggregate(pipeline)
-    //         .toArray((err, result) => {
-    //           let resData = {
-    //             data: result ? result : [],
-    //             total_count: totalresult ? totalresult.length : 0,
-    //           };
-    //           if (!req.param("page") && !req.param("count")) {
-    //             resData.data = totalresult ? totalresult : [];
-    //           }
-    //           return response.success(
-    //             resData,
-    //             constants.REVIEWS.FETCHED,
-    //             req,
-    //             res
-    //           );
-    //         });
-    //     });
-    // } catch (error) {
-    //   return response.failed(null, `${error}`, req, res);
-    // }
     try {
       let id  = req.identity.id;
       let listOfOtherUsers=[];
@@ -456,7 +355,7 @@ module.exports = {
         let listOfUsers = await InviteUsers.find({email:req.identity.email,isDeleted:false});
         console.log(listOfUsers.length)
         for(let otherUsers of listOfUsers){
-          console.log("=============>",otherUsers.addedBy);
+          // console.log("=============>",otherUsers.addedBy);
           let parentUser = await Users.findOne({id:otherUsers.addedBy,isDeleted:false})
           let currentparentUser={};
           currentparentUser.createdAt=parentUser.createdAt
