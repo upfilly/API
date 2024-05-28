@@ -143,7 +143,7 @@ exports.addCampaign = async (req, res) => {
 
             //-------------------- Send Notification ------------------//
 
-            return response.success(null, constants.CAMPAIGN.ADDED, req, res);
+            return response.success(add_campaign, constants.CAMPAIGN.ADDED, req, res);
         }
         throw constants.COMMON.SERVER_ERROR;
 
