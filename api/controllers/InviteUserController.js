@@ -21,6 +21,20 @@ const { generatePassword } = require("../services/CommonServices.js");
 module.exports = {
   addInviteUser: async (req, res) => {
     try {
+
+      let id = req.identity.id;
+
+      let loggedInUser = await Users.findOne({ id: id, isDeleted: false });
+
+      let isPermissionExists = await Permissions.findOne({role:loggedInUser.role});
+
+      if(!isPermissionExists){
+          throw "Permission not exists";
+      }   
+
+      if(!isPermissionExists.user_add){
+          throw "User not allowed to invite user";
+      }
       let validation_result = await Validations.InviteUserValidation.addInvite(
         req,
         res
@@ -29,7 +43,7 @@ module.exports = {
       if (validation_result && !validation_result.success) {
         throw validation_result.message;
       }
-      const { firstName, lastName, email, role, description, language } =
+      const { firstName, lastName, email, role, description, language,brand_id } =
         req.body;
 
       // Check if an invite already exists
@@ -54,6 +68,7 @@ module.exports = {
           role: role,
           description: description,
           user_id: newUser.id,
+          brand_id:brand_id,
           language: language,
           addedBy: req.identity.id,
           updatedBy: req.identity.id,
@@ -80,6 +95,7 @@ module.exports = {
           description: description,
           user_id: newUser.id,
           language: language,
+          brand_id:brand_id,
           addedBy: req.identity.id,
           updatedBy: req.identity.id,
         }).fetch();
@@ -102,6 +118,20 @@ module.exports = {
 
   changeActiveUser: async (req, res) => {
     try {
+      let user_id = req.identity.id;
+
+      let loggedInUser = await Users.findOne({ id: user_id, isDeleted: false });
+
+      let isPermissionExists = await Permissions.findOne({role:loggedInUser.role});
+
+      if(!isPermissionExists){
+          throw "Permission not exists";
+      }   
+
+      if(!isPermissionExists.user_edit){
+          throw "User not allowed to change active user";
+      }
+
       const id = req.body.id;
 
       if (!id || id == undefined) {
@@ -118,7 +148,7 @@ module.exports = {
         throw constants.user.USER_NOT_FOUND;
       }
       let activeUser = {};
-      if (userExists.role === "brand") {
+      if (userExists.role === "brand" ||userExists.role === "affiliate") {
         activeUser = await Users.updateOne({ id: id }, { activeUser: id });
       } else {
         let superUser = await Users.findOne({
@@ -151,6 +181,20 @@ module.exports = {
 
   deleteInviteUser: async (req, res) => {
     try {
+      let user_id = req.identity.id;
+
+      let loggedInUser = await Users.findOne({ id: user_id, isDeleted: false });
+
+      let isPermissionExists = await Permissions.findOne({role:loggedInUser.role});
+
+      if(!isPermissionExists){
+          throw "Permission not exists";
+      }   
+
+      if(!isPermissionExists.user_delete){
+          throw "User not allowed to delete invite user";
+      }
+      
       const id = req.query.id;
 
       if (!id || id == undefined) {
@@ -186,8 +230,23 @@ module.exports = {
       });
     }
   },
+
   getAllActivities: async (req, res) => {
     try {
+      let user_id = req.identity.id;
+
+      let loggedInUser = await Users.findOne({ id: user_id, isDeleted: false });
+
+      let isPermissionExists = await Permissions.findOne({role:loggedInUser.role});
+
+      if(!isPermissionExists){
+          throw "Permission not exists";
+      }   
+
+      if(!isPermissionExists.user_get){
+          throw "User not allowed to view invite user";
+      }
+
       let query = {};
       let count = req.param("count") || 10;
       let page = req.param("page") || 1;
@@ -353,7 +412,7 @@ module.exports = {
         return response.success(listOfOtherUsers, constants.user.ALL_OTHER_USERS_FETCHED, req, res);
       }else{
         let listOfUsers = await InviteUsers.find({email:req.identity.email,isDeleted:false});
-        console.log(listOfUsers.length)
+        // console.log(listOfUsers.length)
         for(let otherUsers of listOfUsers){
           // console.log("=============>",otherUsers.addedBy);
           let parentUser = await Users.findOne({id:otherUsers.addedBy,isDeleted:false})
@@ -394,4 +453,5 @@ module.exports = {
       return response.failed(null, `${error}`, req, res);
   }
   },
+
 };

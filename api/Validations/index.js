@@ -44,7 +44,8 @@ module.exports = {
     SubChildCategory: require('./SubChildCategoryValidations'),
     Banner: require('./BannerValidations'),
     CommissionNew: require('./CommissionNewValidations'),
-    InviteUserValidation:require('./InviteUserValidation')
+    InviteUserValidation:require('./InviteUserValidation'),
+    CouponValidations:require('./CouponValidations')
 
     // DiscountBraintreeValidation: require("./DiscountBraintreeValidations")
 }

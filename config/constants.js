@@ -561,5 +561,18 @@ module.exports.constants = {
         ALL_FETCHED_SUCCESS:"All records are fetched successfully",
         REQUEST_NOT_FOUND:"Request not found",
         STATUS_UPDATE:"Request status changed"
+    },
+
+    COUPON:{
+
+        ADDED: "Coupon Added successfully",
+        UPDATED: "Coupon Updated successfully",
+        INVALID_ID: "Invaild Id",
+        FETCHED: "Coupon Fetched successfully",
+        ID_REQUIRED: "Id is required",
+        DELETED: "Coupon Deleted successfully",
+        FETCHED_ALL: "All Coupon Fetched successfully",
+        ALREADY_EXISTS:"Coupon code already exists",
+        NOT_EXISTS:"Coupon not exists"
     }
 }

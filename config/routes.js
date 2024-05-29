@@ -464,12 +464,22 @@ module.exports.routes = {
 
 /**
  * @AffiliateBrandInviteController
+ * 
 */
 
 "post /brand/applyrequest":"AffiliateBrandInviteController.sendApplyRequest",
 "get /brand/getallrequests":"AffiliateBrandInviteController.getAllRequests",
 "put /brand/changerequeststatus":"AffiliateBrandInviteController.changeRequestStatus",
 
+/**
+ * @CouponController
+ * 
+*/
+'post /coupon/add': "CouponController.addCoupon",
+'get /coupon/get': 'CouponController.getByIdCoupon',
+'get /coupon/getAll': 'CouponController.getAllCoupon',
+'put /coupon/edit': 'CouponController.editCoupon',
+'delete /coupon/delete': 'CouponController.deleteCoupon',
 
 
 };
