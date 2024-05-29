@@ -6,61 +6,131 @@ const ObjectId = require("mongodb").ObjectId;
 const Services = require("../services/index");
 const Emails = require("../Emails/index");
 
+// exports.sendApplyRequest = async (req, res) => {
+//   try {
+//     let inviteCreated = {};
+//     let find_brand = await Users.findOne({ id: req.body.brand_id });
+//     if (find_brand) {
+//       let isRequestExists = await AffiliateBrandInvite.findOne({
+//         brand_id: find_brand.id,
+//         affiliate_id: req.identity.id,
+//       });
+//       if (isRequestExists) {
+//         if (
+//           isRequestExists.status === "accepted" ||
+//           isRequestExists.status === "pending"
+//         ) {
+//           throw "Invitation is already there for this brand";
+//         } else {
+//           req.body.affiliate_id = req.identity.id;
+//           req.body.addedBy = req.identity.id;
+//           req.body.updatedBy = req.identity.id;
+//           inviteCreated = await AffiliateBrandInvite.create(req.body).fetch();
+//         }
+//       } else {
+//         req.body.affiliate_id = req.identity.id;
+//         req.body.addedBy = req.identity.id;
+//         req.body.updatedBy = req.identity.id;
+//         inviteCreated = await AffiliateBrandInvite.create(req.body).fetch();
+//       }
+
+//       if (inviteCreated) {
+//         let data = await Users.findOne({ id: req.body.brand_id });
+//         let get_afiliate = await Users.findOne({
+//           id: req.identity.id,
+//           isDeleted: false,
+//         });
+//         const emailpayload = {
+//           email: data.email,
+//           name: data.fullName,
+//           affiliate_name: get_afiliate.fullName,
+//         };
+//         await Emails.OnboardingEmails.send_request_mail_to_brand(emailpayload);
+//         return response.success(
+//           inviteCreated,
+//           constants.AFFILIATE_BRAND_INVITE.REQUEST_SEND,
+//           req,
+//           res
+//         );
+//       }
+//     }
+//     throw constants.user.BRAND_NOT_EXISTS;
+//   } catch (error) {
+//     console.log(error);
+//     return response.failed(null, `${error}`, req, res);
+//   }
+// };
 exports.sendApplyRequest = async (req, res) => {
   try {
-    let inviteCreated = {};
-    let find_brand = await Users.findOne({ id: req.body.brand_id });
-    if (find_brand) {
-      let isRequestExists = await AffiliateBrandInvite.findOne({
-        brand_id: find_brand.id,
-        affiliate_id: req.identity.id,
-      });
-      if (isRequestExists) {
-        if (
-          isRequestExists.status === "accepted" ||
-          isRequestExists.status === "pending"
-        ) {
-          throw "Invitation is already there for this brand";
+    let { brand_ids } = req.body;
+    let affiliate_id = req.identity.id;
+    let invitations = [];
+    delete req.body.brand_ids;
+    for (let brand_id of brand_ids) {
+      let inviteCreated = {};
+      let find_brand = await Users.findOne({ id: brand_id });
+
+      if (find_brand) {
+        let isRequestExists = await AffiliateBrandInvite.findOne({
+          brand_id: find_brand.id,
+          affiliate_id,
+        });
+
+        if (isRequestExists) {
+          if (
+            isRequestExists.status === "accepted" ||
+            isRequestExists.status === "pending"
+          ) {
+            throw `Invitation is already there for the brand: ${find_brand.fullName}`;
+          } else {
+            affiliate_id = affiliate_id;
+            addedBy = affiliate_id;
+            updatedBy = affiliate_id;
+            brand_id = brand_id;
+            inviteCreated = await AffiliateBrandInvite.create({affiliate_id,addedBy,updatedBy,brand_id}).fetch();
+          }
         } else {
-          req.body.affiliate_id = req.identity.id;
-          req.body.addedBy = req.identity.id;
-          req.body.updatedBy = req.identity.id;
-          inviteCreated = await AffiliateBrandInvite.create(req.body).fetch();
+          affiliate_id = affiliate_id;
+          addedBy = affiliate_id;
+          updatedBy = affiliate_id;
+          brand_id = brand_id;
+          inviteCreated = await AffiliateBrandInvite.create({affiliate_id,addedBy,updatedBy,brand_id}).fetch();
+        }
+
+        if (inviteCreated) {
+          let data = await Users.findOne({ id: brand_id });
+          let get_afiliate = await Users.findOne({
+            id: affiliate_id,
+            isDeleted: false,
+          });
+
+          const emailpayload = {
+            email: data.email,
+            name: data.fullName,
+            affiliate_name: get_afiliate.fullName,
+          };
+
+          await Emails.OnboardingEmails.send_request_mail_to_brand(
+            emailpayload
+          );
+          invitations.push(inviteCreated);
         }
       } else {
-        req.body.affiliate_id = req.identity.id;
-        req.body.addedBy = req.identity.id;
-        req.body.updatedBy = req.identity.id;
-        inviteCreated = await AffiliateBrandInvite.create(req.body).fetch();
-      }
-
-      if (inviteCreated) {
-        let data = await Users.findOne({ id: req.body.brand_id });
-        let get_afiliate = await Users.findOne({
-          id: req.identity.id,
-          isDeleted: false,
-        });
-        const emailpayload = {
-          email: data.email,
-          name: data.fullName,
-          affiliate_name: get_afiliate.fullName,
-        };
-        await Emails.OnboardingEmails.send_request_mail_to_brand(emailpayload);
-        return response.success(
-          inviteCreated,
-          constants.AFFILIATE_BRAND_INVITE.REQUEST_SEND,
-          req,
-          res
-        );
+        throw `Brand with ID: ${brand_id} does not exist.`;
       }
     }
-    throw constants.user.BRAND_NOT_EXISTS;
+
+    return response.success(
+      invitations,
+      constants.AFFILIATE_BRAND_INVITE.REQUEST_SEND,
+      req,
+      res
+    );
   } catch (error) {
     console.log(error);
     return response.failed(null, `${error}`, req, res);
   }
 };
-
 exports.getAllRequests = async (req, res) => {
   try {
     let query = { isDeleted: false };
@@ -219,9 +289,6 @@ exports.changeRequestStatus = async (req, res) => {
     // }
     let { affiliate_id, status, message } = req.body;
 
-
-
-
     let get_request = await AffiliateBrandInvite.findOne({
       brand_id: req.identity.id,
       affiliate_id: affiliate_id,
@@ -233,24 +300,22 @@ exports.changeRequestStatus = async (req, res) => {
     }
 
     let update_status = await AffiliateBrandInvite.updateOne(
-      { affiliate_id: req.body.affiliate_id , brand_id: req.identity.id },
-      {status:status,message:message,updatedBy:req.identity.id}
+      { affiliate_id: req.body.affiliate_id, brand_id: req.identity.id },
+      { status: status, message: message, updatedBy: req.identity.id }
     );
 
-
     if (update_status) {
-    
-        let get_afiliate = await Users.findOne({
-          id: req.body.affiliate_id,
-          isDeleted: false,
-        });
+      let get_afiliate = await Users.findOne({
+        id: req.body.affiliate_id,
+        isDeleted: false,
+      });
 
-        const emailpayload = {
-             status : status,
-             reason : message,
-            email : get_afiliate.email
-        };
-        await Emails.OnboardingEmails.change_status_affiliateInvite(emailpayload);
+      const emailpayload = {
+        status: status,
+        reason: message,
+        email: get_afiliate.email,
+      };
+      await Emails.OnboardingEmails.change_status_affiliateInvite(emailpayload);
     }
 
     if (update_status) {
