@@ -456,12 +456,19 @@ module.exports.routes = {
 * @InviteUserController
 */
 
-  "post /addinviteuser":"InviteUserController.addInviteUser",
-  "put /changeactiveuser":"InviteUserController.changeActiveUser",
-  "delete /deleteinviteuser":"InviteUserController.deleteInviteUser",
-  "get /getallactivities":"InviteUserController.getAllActivities",
-  "get /getallassociatedusers":"InviteUserController.getAllAssociatedUsers",
+"post /addinviteuser":"InviteUserController.addInviteUser",
+"put /changeactiveuser":"InviteUserController.changeActiveUser",
+"delete /deleteinviteuser":"InviteUserController.deleteInviteUser",
+"get /getallactivities":"InviteUserController.getAllActivities",
+"get /getallassociatedusers":"InviteUserController.getAllAssociatedUsers",
 
+/**
+ * @AffiliateBrandInviteController
+*/
+
+"post /brand/applyrequest":"AffiliateBrandInviteController.sendApplyRequest",
+"get /brand/getallrequests":"AffiliateBrandInviteController.getAllRequests",
+"put /brand/changerequeststatus":"AffiliateBrandInviteController.changeRequestStatus",
 
 
 

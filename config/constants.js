@@ -555,5 +555,11 @@ module.exports.constants = {
     },
     ACTIVITY_LOGS:{
         FETCHED_ALL:"Fetched successfully"
+    },
+    AFFILIATE_BRAND_INVITE:{
+        REQUEST_SEND:"Request to brand send successfully",
+        ALL_FETCHED_SUCCESS:"All records are fetched successfully",
+        REQUEST_NOT_FOUND:"Request not found",
+        STATUS_UPDATE:"Request status changed"
     }
 }
