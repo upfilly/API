@@ -683,8 +683,8 @@ module.exports = {
         {
           $lookup:
           {
-            from: "affiliateinvite",
-            let: { affiliate_id: "$_id", isDeleted: false, addedBy: ObjectId(req.identity.id) },
+            from: "affiliatebrandinvite",
+            let: { brand_id: "$_id", isDeleted: false, addedBy: ObjectId(req.identity.id) },
             // let: { user_id: "$req.identity.id", fav_user_id: ObjectId("64d076e86ecebee01af09d8c") },
             pipeline: [
               {
@@ -694,7 +694,7 @@ module.exports = {
                   {
                     $and:
                       [
-                        { $eq: ["$affiliate_id", "$$affiliate_id"] },
+                        { $eq: ["$brand_id", "$$brand_id"] },
                         { $eq: ["$isDeleted", "$$isDeleted"] },
                         { $eq: ["$addedBy", "$$addedBy"] }
 
