@@ -5,7 +5,6 @@ module.exports = {
     // Media to assign to user
     media: { // here media refers to affiliate 
       model: "users",
-      required: true,
     },
 
     // Unique Coupon Code

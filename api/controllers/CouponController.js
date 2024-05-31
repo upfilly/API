@@ -28,17 +28,19 @@ exports.addCoupon = async (req, res) => {
     if(couponExists){
         throw constants.COUPON.ALREADY_EXISTS;
     }
-
-    let user = await Users.findOne({id:req.body.media,isDeleted:false}) //here media refers to affiliate 
-
-    if(!user){
-        throw constants.user.USER_NOT_FOUND;
+    let user;
+    if(req.body.visibility!="Public"){
+        user = await Users.findOne({id:req.body.media,isDeleted:false}) //here media refers to affiliate 
+        if(!user){
+            throw constants.user.USER_NOT_FOUND;
+        }
     }
+    
 
     if(new Date(startDate)> new Date(expirationDate)){
         throw constants.COUPON.START_DATE_OVERLAPED;
     }
-
+    
     const coupon = await Coupon.create(req.body).fetch();
 
     if (coupon) {
@@ -47,6 +49,7 @@ exports.addCoupon = async (req, res) => {
 
     throw constants.COMMON.SERVER_ERROR;
   } catch (error) {
+    console.log(error)
     return response.failed(null, `${error}`, req, res);
   }
 };
