@@ -382,7 +382,7 @@ module.exports.routes = {
   'post /invite': 'InviteController.addInvite',
   'get /invites': 'InviteController.getAllInvite',
   'get /invite': 'InviteController.getById',
-
+  'get /getallaffiliatelisting': 'InviteController.getAllAffiliateListing',
 
   /**
    * @AffiliateLink
@@ -424,6 +424,7 @@ module.exports.routes = {
   'delete /deleteInvite': 'AffiliateInviteController.deleteInvite',
   'get /getAllInviteDetails': 'AffiliateInviteController.getAllInviteDetails',
   'put /update/status': 'AffiliateInviteController.changeStatus',
+ 
 
   /**
    * @ChildSubCategory
