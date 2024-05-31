@@ -3,7 +3,12 @@ const Validate = require("./Validate").validate;
 
 exports.addCoupon = async (req, res, next) => {
   const schema = Joi.object({
-    media: Joi.string().required(), // Assuming media is a user ID and is a string
+    media: Joi.string()
+      .when('visibility', {
+        is: "Exclusive to specific affiliate",
+        then: Joi.required(),
+        otherwise: Joi.optional()
+      }),
 
     couponCode: Joi.string().alphanum().required(),
 
@@ -39,34 +44,42 @@ exports.addCoupon = async (req, res, next) => {
 };
 exports.editCoupon = async (req, res, next) => {
   const schema = Joi.object({
-    id: Joi.string().required(),
-    media: Joi.string().required(),  // Assuming media is a user ID and is a string
+    media: Joi.string()
+      .when('visibility', {
+        is: "Exclusive to specific affiliate",
+        then: Joi.required(),
+        otherwise: Joi.optional()
+      }),
 
     couponCode: Joi.string().alphanum().required(),
-  
+
     couponType: Joi.string().required(),
-  
+
     startDate: Joi.date().required(),
-  
+
     expirationDate: Joi.date().required(),
-  
-    commissionType: Joi.string().valid('Percentage Commission', 'Fixed amount').required(),
-  
+
+    commissionType: Joi.string()
+      .valid("Percentage Commission", "Fixed amount")
+      .required(),
+
     applicable: Joi.array().items(Joi.string()), // Adjust the type of items if necessary
-  
-    visibility: Joi.string().valid(
-      'Public',
-      'Exclusive to specific affiliate',
-      'Exclusive to group of affiliates',
-      'Excluded from a specific affiliate',
-      'Excluded from a group of affiliates'
-    ).required(),
-  
-    status: Joi.string().valid('Enabled', 'Disabled').required(),
-  
+
+    visibility: Joi.string()
+      .valid(
+        "Public",
+        "Exclusive to specific affiliate",
+        "Exclusive to group of affiliates",
+        "Excluded from a specific affiliate",
+        "Excluded from a group of affiliates"
+      )
+      .required(),
+
+    status: Joi.string().valid("Enabled", "Disabled").required(),
+
     url: Joi.string().uri().required(),
-  
-    couponCommission: Joi.number().required()
+
+    couponCommission: Joi.number().required(),
   });
   return await Validate(schema, req, res);
 };
