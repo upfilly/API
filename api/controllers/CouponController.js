@@ -64,10 +64,10 @@ exports.editCoupon = async function (req, res) {
       if (validation_result && !validation_result.success) {
         throw validation_result.message;
       }
-      let couponExists = await Coupon.findOne({couponCode:req.body.couponCode,isDeleted:false})
+      let couponExists = await Coupon.findOne({id:req.body.id,isDeleted:false})
 
-    if(couponExists){
-        throw constants.COUPON.ALREADY_EXISTS;
+    if(!couponExists){
+        throw constants.COUPON.NOT_EXISTS;
     }
 
     let user = await Users.findOne({id:req.body.media,isDeleted:false}) //here media refers to affiliate 

@@ -44,6 +44,7 @@ exports.addCoupon = async (req, res, next) => {
 };
 exports.editCoupon = async (req, res, next) => {
   const schema = Joi.object({
+    id:Joi.string().required(),
     media: Joi.string()
       .when('visibility', {
         is: "Exclusive to specific affiliate",
