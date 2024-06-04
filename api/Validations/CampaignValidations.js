@@ -5,6 +5,8 @@ exports.addCampaign = async (req, res, next) => {
 
     const schema = Joi.object({
         name: Joi.string().required(),
+        brand_id:Joi.string().required(),
+        parent_role:Joi.string().optional(),
         affiliate_id: Joi.string().optional(),
         event_type: Joi.array().optional().items(Joi.string().optional()),
         description: Joi.string().optional().allow(""),
