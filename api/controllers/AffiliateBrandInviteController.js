@@ -118,7 +118,31 @@ exports.sendApplyRequest = async (req, res) => {
       } else {
         throw `Brand with ID: ${brand_id} does not exist.`;
       }
+
+      
+      //-------------------- Send Notification ------------------//
+      let notification_payload = {};
+      // notification_payload.send_to = add_campaign.affiliate_id;
+      notification_payload.title = `Affiliate Request | ${await Services.Utils.title_case(find_brand.fullName)} | ${await Services.Utils.title_case(req.identity.fullName)}`;
+      notification_payload.message = `You have a new affiliate request from ${await Services.Utils.title_case(req.identity.fullName)}`;
+      notification_payload.type = "affilite_request"
+      notification_payload.addedBy = req.identity.id;
+      notification_payload.send_to = find_brand.id;
+      let create_notification = await Notifications.create(notification_payload).fetch();
+
+      let brand_detail = await Users.findOne({ id: find_brand.id })
+      if (create_notification && brand_detail.device_token) {
+          let fcm_payload = {
+              device_token: brand_detail.device_token,
+              title: req.identity.fullName,
+              message: create_notification.message,
+          }
+
+          await Services.FCM.send_fcm_push_notification(fcm_payload)
+      }
     }
+
+
 
     return response.success(
       invitations,

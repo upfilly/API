@@ -55,7 +55,8 @@ module.exports.constants = {
         USER_ADD: "User added successfully.",
         BRAND_NOT_EXISTS:"Brand not exists",
         ACTIVE_USER_CHANGED:"Active user status changes",
-        INVITED_USER_DELETED:"Invited user deleted"
+        INVITED_USER_DELETED:"Invited user deleted",
+        INVITED_USER_UPDATED:"Invited user updated"
     },
     COMMON: {
         COUNTRY_CODE_REQUIRED: "Country  code is required",

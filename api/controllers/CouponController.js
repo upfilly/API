@@ -40,7 +40,9 @@ exports.addCoupon = async (req, res) => {
     if(new Date(startDate)> new Date(expirationDate)){
         throw constants.COUPON.START_DATE_OVERLAPED;
     }
-    
+
+    req.body.addedBy = req.identity.id;
+
     const coupon = await Coupon.create(req.body).fetch();
 
     if (coupon) {
@@ -125,7 +127,7 @@ exports.getAllCoupon = async (req, res) => {
         let count = req.param('count') || 10;
         let page = req.param('page') || 1;
         let skipNo = (Number(page) - 1) * Number(count);
-        let { search, sortBy, status, isDeleted, plan_type } = req.query;
+        let { search, sortBy, status, isDeleted, plan_type,addedBy } = req.query;
         let sortquery = {};
 
         if (search) {
@@ -157,6 +159,9 @@ exports.getAllCoupon = async (req, res) => {
 
         if (plan_type) {
             query.plan_type = plan_type;
+        }
+        if (addedBy) {
+            query.addedBy =ObjectId( addedBy);
         }
 
         // console.log(sortquery, "-----------------sortquery");
@@ -217,7 +222,7 @@ exports.getAllCoupon = async (req, res) => {
                 if (!req.param('page') && !req.param('count')) {
                     resData.data = totalresult ? totalresult : [];
                 }
-                return response.success(resData, constants.DISCOUNT.FETCHED, req, res);
+                return response.success(resData, constants.COUPON.FETCHED, req, res);
             })
         })
     } catch (error) {

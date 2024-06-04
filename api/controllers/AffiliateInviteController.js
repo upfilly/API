@@ -61,6 +61,31 @@ module.exports = {
                   brand_name: brand_detail.fullName,
                   affiliate_name: brand_detail.fullName,
                 };
+
+
+                let notification_payload = {};
+                // notification_payload.send_to = add_campaign.affiliate_id;
+                notification_payload.title = `Brand Invite | ${await Services.Utils.title_case(data.fullName)} | ${await Services.Utils.title_case(req.identity.fullName)}`;
+                notification_payload.message = `You have a new Brand invite from ${await Services.Utils.title_case(req.identity.fullName)}`;
+                notification_payload.type = "brand_request"
+                notification_payload.addedBy = req.identity.id;
+                notification_payload.send_to = data.id;
+                let create_notification = await Notifications.create(notification_payload).fetch();
+          
+                let affiliate_detail = await Users.findOne({ id: data.id })
+                if (create_notification && affiliate_detail.device_token) {
+                    let fcm_payload = {
+                        device_token: affiliate_detail.device_token,
+                        title: req.identity.fullName,
+                        message: create_notification.message,
+                    }
+          
+                    await Services.FCM.send_fcm_push_notification(fcm_payload)
+              }
+
+
+
+
                 await Emails.OnboardingEmails.send_mail_to_affiliate(emailpayload);
                 return response.success(
                   null,

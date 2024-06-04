@@ -454,4 +454,56 @@ module.exports = {
   }
   },
 
+  updateInviteUser: async (req, res) => {
+    try {
+      let user_id = req.identity.id;
+
+      let loggedInUser = await Users.findOne({ id: user_id, isDeleted: false });
+
+      let isPermissionExists = await Permissions.findOne({role:loggedInUser.role});
+
+      if(!isPermissionExists){
+          throw "Permission not exists";
+      }   
+
+      if(!isPermissionExists.user_edit){
+          throw "User not allowed to edit invite user";
+      }
+      
+      const id = req.query.id;
+
+      if (!id || id == undefined) {
+        return res.status(400).json({
+          success: false,
+          error: { code: 400, message: constants.user.INVALID_ID },
+        });
+      }
+      // console.log(id);
+      let userExists = await Users.findOne({ id: id, isDeleted: false });
+
+      if (!userExists) {
+        throw constants.user.USER_NOT_FOUND;
+      }
+      let updatedUser = {};
+
+      updatedUser = await InviteUsers.updateOne(
+        { user_id: id, addedBy: req.identity.id },
+        req.body
+      );
+
+      // await Users.update({ activeUser: id }, { activeUser: null }); //here we are removing that active user from every other brand where it is active
+
+      return res.status(200).json({
+        success: true,
+        message: constants.user.INVITED_USER_UPDATED,
+      });
+    } catch (err) {
+      console.log(err);
+      return res.status(400).json({
+        success: false,
+        error: { code: 400, message: "" + err },
+      });
+    }
+  },
+
 };
