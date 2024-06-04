@@ -480,7 +480,7 @@ module.exports = {
       let updatedUser = {};
 delete req.body.id;
       updatedUser = await InviteUsers.updateOne(
-        { user_id: req.body.user_id, addedBy: req.body.brand_id },
+        { user_id: req.body.user_id, brand_id: req.body.brand_id },
         req.body
       );
 
@@ -489,6 +489,50 @@ delete req.body.id;
       return res.status(200).json({
         success: true,
         message: constants.user.INVITED_USER_UPDATED,
+      });
+    } catch (err) {
+      console.log(err);
+      return res.status(400).json({
+        success: false,
+        error: { code: 400, message: "" + err },
+      });
+    }
+  },
+  getInviteUser: async (req, res) => {
+    try {
+      let user_id = req.identity.id;
+
+      let loggedInUser = await Users.findOne({ id: user_id, isDeleted: false });
+
+      let isPermissionExists = await Permissions.findOne({role:loggedInUser.role});
+
+      if(!isPermissionExists){
+          throw "Permission not exists";
+      }   
+
+      if(!isPermissionExists.user_edit){
+          throw "User not allowed to edit invite user";
+      }
+      
+      user_id = req.query.user_id;
+
+      brand_id = req.query.brand_id;
+
+      let userExists = await Users.findOne({ id: user_id, isDeleted: false });
+
+      if (!userExists) {
+        throw constants.user.USER_NOT_FOUND;
+      }
+      let updatedUser = {};
+
+      updatedUser = await InviteUsers.findOne({ user_id: user_id, brand_id: brand_id ,isDeleted:false});
+
+      // await Users.update({ activeUser: id }, { activeUser: null }); //here we are removing that active user from every other brand where it is active
+
+      return res.status(200).json({
+        success: true,
+        message: constants.user.INVITED_USER_UPDATED,
+        data:updatedUser
       });
     } catch (err) {
       console.log(err);

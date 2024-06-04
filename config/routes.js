@@ -463,6 +463,7 @@ module.exports.routes = {
 "get /getallactivities":"InviteUserController.getAllActivities",
 "get /getallassociatedusers":"InviteUserController.getAllAssociatedUsers",
 "put /updateInviteUser":"InviteUserController.updateInviteUser",
+"get /getinviteuser":"InviteUserController.getInviteUser",
 
 /**
  * @AffiliateBrandInviteController
