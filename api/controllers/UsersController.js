@@ -595,11 +595,79 @@ module.exports = {
       } else {
         query.role = { $nin: ['admin', 'team', ''] };
       }
-
+      
       if (role) {
         query.role = role;
-      }
+        if(role === "affiliate"){
+         var lookupPipelineForbrandoraffiliate={
+            $lookup:
+            {
+              from: "affiliatebrandinvite",
+              let: { affiliate_id: "$_id", isDeleted: false, brand_id: ObjectId(req.identity.id) },
+              // let: { user_id: "$req.identity.id", fav_user_id: ObjectId("64d076e86ecebee01af09d8c") },
+              pipeline: [
+                {
+                  $match:
+                  {
+                    $expr:
+                    {
+                      $and:
+                        [
+                          { $eq: ["$brand_id", "$$brand_id"] },
+                          { $eq: ["$isDeleted", "$$isDeleted"] },
+                          { $eq: ["$affiliate_id", "$$affiliate_id"] }
+  
+                        ]
+                    }
+                  }
+                }
+              ],
+              as: "invite_affiliate_details"
+            }
+          }
+          var upwindPipelineForBrandoraffiliate=
+            {
+              $unwind: {
+                path: '$invite_affiliate_details',
+                preserveNullAndEmptyArrays: true
+              }
+            }
+        }else{
+        var lookupPipelineForbrandoraffiliate={
+          $lookup:
+          {
+            from: "affiliatebrandinvite",
+            let: { affiliate_id: ObjectId(req.identity.id), isDeleted: false, brand_id: "$_id" },
+            // let: { user_id: "$req.identity.id", fav_user_id: ObjectId("64d076e86ecebee01af09d8c") },
+            pipeline: [
+              {
+                $match:
+                {
+                  $expr:
+                  {
+                    $and:
+                      [
+                        { $eq: ["$brand_id", "$$brand_id"] },
+                        { $eq: ["$isDeleted", "$$isDeleted"] },
+                        { $eq: ["$affiliate_id", "$$affiliate_id"] }
 
+                      ]
+                  }
+                }
+              }
+            ],
+            as: "invite_affiliate_details"
+          }
+        }
+        var upwindPipelineForBrandoraffiliate=
+            {
+              $unwind: {
+                path: '$invite_affiliate_details',
+                preserveNullAndEmptyArrays: true
+              }
+            }
+      }
+    }
       if (status) { query.status = status; };
       if (invite_status) { query.invite_status = invite_status; };
 
@@ -680,38 +748,11 @@ module.exports = {
             preserveNullAndEmptyArrays: true
           }
         },
-        {
-          $lookup:
-          {
-            from: "affiliatebrandinvite",
-            let: { affiliate_id: "$_id", isDeleted: false, brand_id: ObjectId(req.identity.id) },
-            // let: { user_id: "$req.identity.id", fav_user_id: ObjectId("64d076e86ecebee01af09d8c") },
-            pipeline: [
-              {
-                $match:
-                {
-                  $expr:
-                  {
-                    $and:
-                      [
-                        { $eq: ["$brand_id", "$$brand_id"] },
-                        { $eq: ["$isDeleted", "$$isDeleted"] },
-                        { $eq: ["$affiliate_id", "$$affiliate_id"] }
+        
+        lookupPipelineForbrandoraffiliate,
+        upwindPipelineForBrandoraffiliate,
 
-                      ]
-                  }
-                }
-              }
-            ],
-            as: "invite_affiliate_details"
-          }
-        },
-        {
-          $unwind: {
-            path: '$invite_affiliate_details',
-            preserveNullAndEmptyArrays: true
-          }
-        },
+
         {
           $lookup: {
             from: 'commoncategories',
@@ -726,6 +767,7 @@ module.exports = {
             preserveNullAndEmptyArrays: true
           }
         },
+        
       ];
 
       let projection = {
