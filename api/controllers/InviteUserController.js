@@ -486,9 +486,9 @@ module.exports = {
         throw constants.user.USER_NOT_FOUND;
       }
       let updatedUser = {};
-
+delete req.body.id;
       updatedUser = await InviteUsers.updateOne(
-        { user_id: id, addedBy: req.identity.id },
+        { user_id: req.body.user_id, addedBy: req.identity.id },
         req.body
       );
 
