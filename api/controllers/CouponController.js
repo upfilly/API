@@ -127,7 +127,7 @@ exports.getAllCoupon = async (req, res) => {
         let count = req.param('count') || 10;
         let page = req.param('page') || 1;
         let skipNo = (Number(page) - 1) * Number(count);
-        let { search, sortBy, status, isDeleted, plan_type,addedBy } = req.query;
+        let { search, sortBy, status, isDeleted, plan_type,addedBy,media } = req.query;
         let sortquery = {};
 
         if (search) {
@@ -155,6 +155,9 @@ exports.getAllCoupon = async (req, res) => {
 
         if (status) {
             query.status = status;
+        }
+        if (media) {
+            query.media = ObjectId(media);
         }
 
         if (plan_type) {
