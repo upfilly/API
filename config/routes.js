@@ -462,6 +462,7 @@ module.exports.routes = {
 "delete /deleteinviteuser":"InviteUserController.deleteInviteUser",
 "get /getallactivities":"InviteUserController.getAllActivities",
 "get /getallassociatedusers":"InviteUserController.getAllAssociatedUsers",
+"put /updateInviteUser":"InviteUserController.updateInviteUser",
 
 /**
  * @AffiliateBrandInviteController

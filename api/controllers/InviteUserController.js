@@ -470,7 +470,7 @@ module.exports = {
           throw "User not allowed to edit invite user";
       }
       
-      const id = req.query.id;
+      const id = req.body.id;
 
       if (!id || id == undefined) {
         return res.status(400).json({
@@ -479,7 +479,7 @@ module.exports = {
         });
       }
       // console.log(id);
-      let userExists = await Users.findOne({ id: id, isDeleted: false });
+      let userExists = await Users.findOne({ id: user_id, isDeleted: false });
 
       if (!userExists) {
         throw constants.user.USER_NOT_FOUND;
