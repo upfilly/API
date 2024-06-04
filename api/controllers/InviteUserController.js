@@ -471,15 +471,7 @@ module.exports = {
       }
       
       user_id = req.body.user_id;
-      const brand_id = req.body.brand_id;
 
-      if (!id || id == undefined) {
-        return res.status(400).json({
-          success: false,
-          error: { code: 400, message: constants.user.INVALID_ID },
-        });
-      }
-      // console.log(id);
       let userExists = await Users.findOne({ id: user_id, isDeleted: false });
 
       if (!userExists) {
@@ -488,7 +480,7 @@ module.exports = {
       let updatedUser = {};
 delete req.body.id;
       updatedUser = await InviteUsers.updateOne(
-        { user_id: req.body.user_id, addedBy: req.identity.id },
+        { user_id: req.body.user_id, addedBy: req.body.brand_id },
         req.body
       );
 
