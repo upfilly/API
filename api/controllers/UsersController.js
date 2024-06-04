@@ -749,8 +749,63 @@ module.exports = {
           }
         },
         
-        lookupPipelineForbrandoraffiliate,
-        upwindPipelineForBrandoraffiliate,
+        (role && role==="affiliate")?{
+          $lookup:
+          {
+            from: "affiliatebrandinvite",
+            let: { affiliate_id: "$_id", isDeleted: false, brand_id: ObjectId(req.identity.id) },
+            // let: { user_id: "$req.identity.id", fav_user_id: ObjectId("64d076e86ecebee01af09d8c") },
+            pipeline: [
+              {
+                $match:
+                {
+                  $expr:
+                  {
+                    $and:
+                      [
+                        { $eq: ["$brand_id", "$$brand_id"] },
+                        { $eq: ["$isDeleted", "$$isDeleted"] },
+                        { $eq: ["$affiliate_id", "$$affiliate_id"] }
+
+                      ]
+                  }
+                }
+              }
+            ],
+            as: "invite_affiliate_details"
+          }
+        }:{
+          $lookup:
+          {
+            from: "affiliatebrandinvite",
+            let: { affiliate_id: ObjectId(req.identity.id), isDeleted: false, brand_id: "$_id" },
+            // let: { user_id: "$req.identity.id", fav_user_id: ObjectId("64d076e86ecebee01af09d8c") },
+            pipeline: [
+              {
+                $match:
+                {
+                  $expr:
+                  {
+                    $and:
+                      [
+                        { $eq: ["$brand_id", "$$brand_id"] },
+                        { $eq: ["$isDeleted", "$$isDeleted"] },
+                        { $eq: ["$affiliate_id", "$$affiliate_id"] }
+
+                      ]
+                  }
+                }
+              }
+            ],
+            as: "invite_affiliate_details"
+          }
+        },
+        {
+          $unwind: {
+            path: '$invite_affiliate_details',
+            preserveNullAndEmptyArrays: true
+          }
+        },
 
 
         {
