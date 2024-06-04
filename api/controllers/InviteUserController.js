@@ -395,20 +395,20 @@ module.exports = {
       if(req.identity.role === "brand" || req.identity.role === "affiliate"){
         console.log(req.identity.id);
         listOfOtherUsers = await InviteUsers.find({addedBy:req.identity.id,isDeleted:false});
-          let current_user  = {}
-          current_user.createdAt=req.identity.createdAt
-          current_user.updatedAt=req.identity.updatedAt
-          current_user.id=req.identity.id
-          current_user.firstName=req.identity.firstName
-          current_user.lastName=req.identity.lastName
-          current_user.email=req.identity.email
-          current_user.role=req.identity.role
-          current_user.isDeleted=req.identity.isDeleted
-          current_user.user_id=req.identity.id
-          current_user.addedBy=req.identity.addedBy
-          current_user.updatedBy=req.identity.updatedBy
+        //   let current_user  = {}
+        //   current_user.createdAt=req.identity.createdAt
+        //   current_user.updatedAt=req.identity.updatedAt
+        //   current_user.id=req.identity.id
+        //   current_user.firstName=req.identity.firstName
+        //   current_user.lastName=req.identity.lastName
+        //   current_user.email=req.identity.email
+        //   current_user.role=req.identity.role
+        //   current_user.isDeleted=req.identity.isDeleted
+        //   current_user.user_id=req.identity.id
+        //   current_user.addedBy=req.identity.addedBy
+        //   current_user.updatedBy=req.identity.updatedBy
 
-        listOfOtherUsers.push(current_user);
+        // listOfOtherUsers.push(current_user);
         return response.success(listOfOtherUsers, constants.user.ALL_OTHER_USERS_FETCHED, req, res);
       }else{
         let listOfUsers = await InviteUsers.find({email:req.identity.email,isDeleted:false});
@@ -470,7 +470,8 @@ module.exports = {
           throw "User not allowed to edit invite user";
       }
       
-      const id = req.body.id;
+      user_id = req.body.user_id;
+      const brand_id = req.body.brand_id;
 
       if (!id || id == undefined) {
         return res.status(400).json({
