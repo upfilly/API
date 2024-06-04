@@ -64,8 +64,9 @@ exports.addCampaign = async (req, res) => {
             throw constants.CAMPAIGN.ALREADY_EXIST
         }
 
-        req.body.addedBy = req.identity.id;
-        req.body.brand_id = req.identity.id;
+            req.body.addedBy = req.identity.id;
+            req.body.brand_id = req.body.brand_id;
+        
 
         req.body.campaign_unique_id = generateRandom8DigitNumber();
         var campaign_linkArr = [];
@@ -400,7 +401,7 @@ exports.changeCampaignStatus = async (req, res) => {
             throw "Permission not exists";
         }   
 
-        if(!isPermissionExists.edit_campaign){
+        if(!isPermissionExists.campaign_edit){
             throw "User not allowed to edit campaign status";
         }
 
