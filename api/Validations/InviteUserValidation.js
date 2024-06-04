@@ -4,7 +4,7 @@ exports.addInvite = async (req, res, next) => {
 
     const schema = Joi.object({
         email: Joi.string().required(),
-        brand_id:Joi.string().required(),
+        // brand_id:Joi.string().required(),
         firstName: Joi.string().required(),
         lastName:Joi.string().optional(),
         email:Joi.string().required(),
