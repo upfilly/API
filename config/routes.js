@@ -464,6 +464,7 @@ module.exports.routes = {
 "get /getallassociatedusers":"InviteUserController.getAllAssociatedUsers",
 "put /updateInviteUser":"InviteUserController.updateInviteUser",
 "get /getinviteuser":"InviteUserController.getInviteUser",
+"get /getAllInvitedUsers":"InviteUserController.getAllInvitedUsers",
 
 /**
  * @AffiliateBrandInviteController

@@ -17,9 +17,9 @@ module.exports = {
   ADMIN_WEB_URL: 'https://upfillyadmin.jcsoftwaresolution.in',
 
 
-  DB_USER: 'upfillyapp',
-  DB_PASSWORD: 'up12filLLL09LIl23e',
-  DB_HOST: '74.208.206.18',
+  DB_USER: 'UuNe17p04FillLyGinN24UseR',
+  DB_PASSWORD: 'Jc17kaUpFillyam04sAA24SeC',
+  DB_HOST: '18.221.191.84',
   DB_PORT: 27017,
   DB_NAME: "db_upfilly",
   // GOOGLE_API_KEY :"AIzaSyDmvz3A-BAjR77dy4PsaoHJC15mUdffLSA"

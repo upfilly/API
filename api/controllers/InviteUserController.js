@@ -552,8 +552,8 @@ delete req.body.id;
           var count = parseInt(req.param('count'));
           let sortBy = req.param("sortBy");
           let addedBy = req.param('addedBy');
-          // let employee = req.param('employee');
-          // let project = req.param('project');
+          let brand_id = req.param('brand_id');
+          
 
           var date = new Date();
           var current_date = date.toISOString().substring(0, 10);
@@ -565,6 +565,12 @@ delete req.body.id;
                   { event: { $regex: search, '$options': 'i' } },
               ]
           }
+          if(brand_id){
+            query.brand_id = ObjectId(brand_id);
+          }else{
+            query.brand_id = ObjectId(req.identity.id);
+          }
+
           let sortquery = {};
           if (sortBy) {
               let typeArr = [];
@@ -582,34 +588,50 @@ delete req.body.id;
               {
                   $lookup: {
                       from: "users",
-                      localField: "employee",
+                      localField: "user_id",
                       foreignField: "_id",
-                      as: "employee",
+                      as: "user_details",
                   },
               },
               {
                   $unwind: {
-                      path: "$employee",
+                      path: "$user_details",
                       preserveNullAndEmptyArrays: true,
                   },
               },
               {
+                $lookup: {
+                    from: "users",
+                    localField: "brand_id",
+                    foreignField: "_id",
+                    as: "brand_details",
+                },
+            },
+            {
+                $unwind: {
+                    path: "$brand_details",
+                    preserveNullAndEmptyArrays: true,
+                },
+            },
+              {
                   $project: {
-                      taskName:"$taskName",
-                      assignDateAndTime:"$assignDateAndTime",
-                      submitDateAndTime:"$submitDateAndTime",
-                      employee:"$employee",
-                      employee_id:"$employee._id",
-                      project_id:"$project._id",
-                      project:"$project",
-                      description:"$description",
-                      status:"$status",
-                      submitBy:"$submitBy",
-                      isDeleted: "$isDeleted",
-                      addedBy: "$addedBy",
-                      updatedBy: "$updatedBy",
-                      createdAt: "$createdAt",
-                      updatedAt: "$updatedAt",
+                     _id :"$_id",
+    firstName :"$firstName" ,
+    lastName :"$lastName" ,
+    email :"$email" ,
+    role :"$role" ,
+    description :"$description" ,
+    user_id: "$user_id",
+    user_details:"$user_details",
+    language :"$language" ,
+    brand_details :"$brand_details" ,
+    addedBy :"$addedBy" ,
+    updatedBy :"$updatedBy" ,
+    createdAt :"$createdAt" ,
+    updatedAt :"$updatedAt" ,
+    invitationAccepted :"$invitationAccepted",
+    brand_id :"$brand_id" ,
+    isDeleted :"$isDeleted",
                   }
               },
               {
@@ -619,7 +641,7 @@ delete req.body.id;
                   $sort: sortquery
               },
           ]
-          db.collection('task').aggregate([...pipeline]).toArray((err, totalResult) => {
+          db.collection('inviteusers').aggregate([...pipeline]).toArray((err, totalResult) => {
               if (page && count) {
                   var skipNo = (page - 1) * count;
                   pipeline.push(
@@ -630,7 +652,7 @@ delete req.body.id;
                           $limit: Number(count)
                       })
               }
-              db.collection('task').aggregate([...pipeline]).toArray((err, result) => {
+              db.collection('inviteusers').aggregate([...pipeline]).toArray((err, result) => {
                   return res.status(200).json({
                       "success": true,
                       "data": result,
