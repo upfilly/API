@@ -367,8 +367,8 @@ exports.getRequestDetail= async (req, res) => {
               message: constants.user.ID_REQUIRED,
             });
           } else {
-            let requestDetail = await AffiliateInvite.findOne({ id: id ,isDeleted:false})
-              .populate("campaign_id")
+            let requestDetail = await AffiliateBrandInvite.findOne({ id: id ,isDeleted:false})
+              .populate("brand_id")
               .populate("affiliate_id")
               .populate("addedBy");
             if (!requestDetail) {
