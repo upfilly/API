@@ -350,8 +350,10 @@ module.exports = {
             console.log(error);
             return response.failed(null, `${error}`, req, res)
         }
-    }
+    },
 
+
+    
 
 };
 

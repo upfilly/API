@@ -395,20 +395,20 @@ module.exports = {
       if(req.identity.role === "brand" || req.identity.role === "affiliate"){
         console.log(req.identity.id);
         listOfOtherUsers = await InviteUsers.find({addedBy:req.identity.id,isDeleted:false});
-        //   let current_user  = {}
-        //   current_user.createdAt=req.identity.createdAt
-        //   current_user.updatedAt=req.identity.updatedAt
-        //   current_user.id=req.identity.id
-        //   current_user.firstName=req.identity.firstName
-        //   current_user.lastName=req.identity.lastName
-        //   current_user.email=req.identity.email
-        //   current_user.role=req.identity.role
-        //   current_user.isDeleted=req.identity.isDeleted
-        //   current_user.user_id=req.identity.id
-        //   current_user.addedBy=req.identity.addedBy
-        //   current_user.updatedBy=req.identity.updatedBy
+          let current_user  = {}
+          current_user.createdAt=req.identity.createdAt
+          current_user.updatedAt=req.identity.updatedAt
+          current_user.id=req.identity.id
+          current_user.firstName=req.identity.firstName
+          current_user.lastName=req.identity.lastName
+          current_user.email=req.identity.email
+          current_user.role=req.identity.role
+          current_user.isDeleted=req.identity.isDeleted
+          current_user.user_id=req.identity.id
+          current_user.addedBy=req.identity.addedBy
+          current_user.updatedBy=req.identity.updatedBy
 
-        // listOfOtherUsers.push(current_user);
+        listOfOtherUsers.push(current_user);
         return response.success(listOfOtherUsers, constants.user.ALL_OTHER_USERS_FETCHED, req, res);
       }else{
         let listOfUsers = await InviteUsers.find({email:req.identity.email,isDeleted:false});
@@ -542,5 +542,107 @@ delete req.body.id;
       });
     }
   },
+  getAllInvitedUsers: async (req, res) => {
+    // getTasks: async (req, res) => {
 
+      try {
+          var search = req.param('search');
+          var isDeleted = req.param('isDeleted');
+          var page = req.param('page');
+          var count = parseInt(req.param('count'));
+          let sortBy = req.param("sortBy");
+          let addedBy = req.param('addedBy');
+          // let employee = req.param('employee');
+          // let project = req.param('project');
+
+          var date = new Date();
+          var current_date = date.toISOString().substring(0, 10);
+
+          var query = {};
+
+          if (search) {
+              query.$or = [
+                  { event: { $regex: search, '$options': 'i' } },
+              ]
+          }
+          let sortquery = {};
+          if (sortBy) {
+              let typeArr = [];
+              typeArr = sortBy.split(" ");
+              let sortType = typeArr[1];
+              let field = typeArr[0];
+              sortquery[field ? field : 'updatedAt'] = sortType ? (sortType == 'desc' ? -1 : 1) : -1;
+          } else {
+          sortquery = { updatedAt: -1 }
+          }
+
+          query.isDeleted = false;
+
+          const pipeline = [
+              {
+                  $lookup: {
+                      from: "users",
+                      localField: "employee",
+                      foreignField: "_id",
+                      as: "employee",
+                  },
+              },
+              {
+                  $unwind: {
+                      path: "$employee",
+                      preserveNullAndEmptyArrays: true,
+                  },
+              },
+              {
+                  $project: {
+                      taskName:"$taskName",
+                      assignDateAndTime:"$assignDateAndTime",
+                      submitDateAndTime:"$submitDateAndTime",
+                      employee:"$employee",
+                      employee_id:"$employee._id",
+                      project_id:"$project._id",
+                      project:"$project",
+                      description:"$description",
+                      status:"$status",
+                      submitBy:"$submitBy",
+                      isDeleted: "$isDeleted",
+                      addedBy: "$addedBy",
+                      updatedBy: "$updatedBy",
+                      createdAt: "$createdAt",
+                      updatedAt: "$updatedAt",
+                  }
+              },
+              {
+                  $match: query
+              },
+              {
+                  $sort: sortquery
+              },
+          ]
+          db.collection('task').aggregate([...pipeline]).toArray((err, totalResult) => {
+              if (page && count) {
+                  var skipNo = (page - 1) * count;
+                  pipeline.push(
+                      {
+                          $skip: Number(skipNo)
+                      },
+                      {
+                          $limit: Number(count)
+                      })
+              }
+              db.collection('task').aggregate([...pipeline]).toArray((err, result) => {
+                  return res.status(200).json({
+                      "success": true,
+                      "data": result,
+                      "total": totalResult.length,
+                  });
+              })
+          })
+      } catch (err) {
+          return res.status(400).json({
+              success: false,
+              error: { code: 400, message: "" + err }
+          })
+      }
+  },
 };

@@ -356,3 +356,36 @@ exports.changeRequestStatus = async (req, res) => {
     return response.failed(null, `${error}`, req, res);
   }
 };
+exports.getRequestDetail= async (req, res) => {
+        try {
+          // console.log("asdfsadf")
+          const id = req.param("id");
+          if (!id) {
+            return res.status(400).json({
+              success: false,
+              code: 400,
+              message: constants.user.ID_REQUIRED,
+            });
+          } else {
+            let requestDetail = await AffiliateInvite.findOne({ id: id ,isDeleted:false})
+              .populate("campaign_id")
+              .populate("affiliate_id")
+              .populate("addedBy");
+            if (!requestDetail) {
+              return res.status(400).json({
+                success: false,
+                code: 400,
+                message: constants.AFFILIATEINVITE.INVALID_ID,
+              });
+            }
+            return res.status(200).json({
+              success: true,
+              message:constants.AFFILIATEINVITE.FETCHED,
+              data: requestDetail,
+            });
+          }
+        } catch (err) {
+          console.log(err);
+          return res.status(400).json({ success: false, code: 400, error: err });
+        }
+      }

@@ -123,6 +123,7 @@ exports.getAllCommission = async (req, res) => {
         if (status) { query.status = status; }
         if (upload_method) { query.upload_method = upload_method; }
         if (commission_type) { query.commission_type = commission_type; }
+        if (addedBy) { query.addedBy = ObjectId(addedBy); }
 
 
         let sortquery = {};
