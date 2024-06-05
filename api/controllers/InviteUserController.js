@@ -571,7 +571,7 @@ delete req.body.id;
             query.brand_id = ObjectId(req.identity.id);
           }
 
-          let sortquery = {};
+          let sortquery = {};  
           if (sortBy) {
               let typeArr = [];
               typeArr = sortBy.split(" ");
