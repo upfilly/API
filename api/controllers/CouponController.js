@@ -156,9 +156,9 @@ exports.getAllCoupon = async (req, res) => {
         if (status) {
             query.status = status;
         }
-        if (media) {
-            query.media = ObjectId(media);
-        }
+        // if (media) {
+        //     query.media = ObjectId(media);
+        // }
 
         if (plan_type) {
             query.plan_type = plan_type;
@@ -166,6 +166,7 @@ exports.getAllCoupon = async (req, res) => {
         if (addedBy) {
             query.addedBy =ObjectId( addedBy);
         }
+
 
         // console.log(sortquery, "-----------------sortquery");
         let pipeline = [

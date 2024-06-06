@@ -486,6 +486,12 @@ module.exports.routes = {
 'put /coupon/edit': 'CouponController.editCoupon',
 'delete /coupon/delete': 'CouponController.deleteCoupon',
 
+/**
+ * @CSVImportController
+ * 
+*/
+
+'post /csv/import':'CsvImportController.importCsvData'
 
 };
 

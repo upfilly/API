@@ -576,5 +576,8 @@ module.exports.constants = {
         FETCHED_ALL: "All Coupon Fetched successfully",
         ALREADY_EXISTS:"Coupon code already exists",
         NOT_EXISTS:"Coupon not exists"
+    },
+    CSVDATA:{
+        IMPORTED_SUCCESSFULLY:"DATA IMPORTED SUCCESSFULLY"
     }
 }
