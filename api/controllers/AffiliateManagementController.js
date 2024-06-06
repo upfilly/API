@@ -129,7 +129,7 @@ exports.getAllAffiliateGroup = async (req, res) => {
         let query = {};
         let count = req.param('count') || 10;
         let page = req.param('page') || 1;
-        let { search, isDeleted, status, sortBy, addedBy } = req.query;
+        let { search, isDeleted, status, sortBy, addedBy,group_name } = req.query;
         let skipNo = (Number(page) - 1) * Number(count);
 
         if (search) {
@@ -147,6 +147,9 @@ exports.getAllAffiliateGroup = async (req, res) => {
 
         if (status) {
             query.status = status;
+        }
+        if (group_name) {
+            query.group_name = group_name;
         }
 
         if (addedBy) {

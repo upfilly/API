@@ -15,9 +15,117 @@ const response = require("../services/Response");
 const Emails = require("../Emails/index");
 
 module.exports = {
-  addInvite: async (req, res) => {
-    try {
-      let validation_result = await Validations.addinvite(req, res);
+   
+    addInvite: async (req, res) => {
+        try {
+          let validation_result = await Validations.addinvite(req, res);
+    
+          if (validation_result && !validation_result.success) {
+            throw validation_result.message;
+          }
+    
+          req.body.addedBy = req.identity.id;
+    
+          let data = req.body;
+    
+          let result = await AffiliateInvite.find({
+            affiliate_id: { in: data.affiliate_id },
+            campaign_id: data.campaign_id,
+            addedBy: req.identity.id,
+            isDeleted: false,
+          });
+    
+          if (result.length === 0) {
+    
+            for await (let affiliate_id of data.affiliate_id) {
+    
+              let result1 = await AffiliateInvite.create({
+                affiliate_id: affiliate_id,
+                message: data.message,
+                campaign_id: data.campaign_id,
+                tags: data.tags,
+                addedBy: data.addedBy,
+              }).fetch();
+    
+              if (result1) {
+                let brand_detail = await Users.findOne({
+                  id: result1.addedBy,
+                  isDeleted: false,
+                });
+                let data = await Users.findOne({
+                  id: result1.affiliate_id,
+                  isDeleted: false,
+                });
+                const emailpayload = {
+                  email: data.email,
+                  brand_name: brand_detail.fullName,
+                  affiliate_name: brand_detail.fullName,
+                };
+
+
+                let notification_payload = {};
+                // notification_payload.send_to = add_campaign.affiliate_id;
+                notification_payload.title = `Brand Invite | ${await Services.Utils.title_case(data.fullName)} | ${await Services.Utils.title_case(req.identity.fullName)}`;
+                notification_payload.message = `You have a new Brand invite from ${await Services.Utils.title_case(req.identity.fullName)}`;
+                notification_payload.type = "brand_request"
+                notification_payload.addedBy = req.identity.id;
+                notification_payload.send_to = data.id;
+                let create_notification = await Notifications.create(notification_payload).fetch();
+          
+                let affiliate_detail = await Users.findOne({ id: data.id })
+                if (create_notification && affiliate_detail.device_token) {
+                    let fcm_payload = {
+                        device_token: affiliate_detail.device_token,
+                        title: req.identity.fullName,
+                        message: create_notification.message,
+                    }
+          
+                    await Services.FCM.send_fcm_push_notification(fcm_payload)
+              }
+
+
+
+
+                await Emails.OnboardingEmails.send_mail_to_affiliate(emailpayload);
+                return response.success(
+                  null,
+                  constants.AFFILIATEINVITE.ADDED,
+                  req,
+                  res
+                );
+              }
+            }
+          } else {
+            throw constants.AFFILIATEINVITE.ALREADY_EXIST;
+          }
+    
+        } catch (error) {
+          console.log(error);
+          return response.failed(null, `${error}`, req, res);
+        }
+      },
+
+    getInviteById: async (req, res) => {
+        try {
+            let validation_result = await Validations.getinvite(req, res);
+
+            if (validation_result && !validation_result.success) {
+                throw validation_result.message;
+            }
+
+            let result = await AffiliateInvite.findOne({ id: req.query.id, isDeleted: false }).populate('affiliate_id').populate('addedBy').populate('campaign_id');
+            if (result) {
+                return response.success(result, constants.AFFILIATEINVITE.FETCHED, req, res);
+            }
+            else {
+                throw constants.AFFILIATEINVITE.INVALID_ID
+            }
+        }
+        catch (error) {
+            return response.failed(null, `${error}`, req, res)
+        }
+
+    },
 
       if (validation_result && !validation_result.success) {
         throw validation_result.message;
@@ -347,6 +455,7 @@ module.exports = {
             res
           );
         }
+<<<<<<< HEAD
       }
       throw constants.COMMON.SERVER_ERROR;
     } catch (error) {
@@ -354,4 +463,11 @@ module.exports = {
       return response.failed(null, `${error}`, req, res);
     }
   },
+=======
+    },
+
+
+    
+
+>>>>>>> 51d2f3af739e79389b44b7825dcc51b3e6df5e5a
 };

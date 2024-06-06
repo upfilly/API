@@ -382,7 +382,7 @@ module.exports.routes = {
   'post /invite': 'InviteController.addInvite',
   'get /invites': 'InviteController.getAllInvite',
   'get /invite': 'InviteController.getById',
-
+  'get /getallaffiliatelisting': 'InviteController.getAllAffiliateListing',
 
   /**
    * @AffiliateLink
@@ -424,6 +424,7 @@ module.exports.routes = {
   'delete /deleteInvite': 'AffiliateInviteController.deleteInvite',
   'get /getAllInviteDetails': 'AffiliateInviteController.getAllInviteDetails',
   'put /update/status': 'AffiliateInviteController.changeStatus',
+ 
 
   /**
    * @ChildSubCategory
@@ -456,13 +457,41 @@ module.exports.routes = {
 * @InviteUserController
 */
 
-  "post /addinviteuser":"InviteUserController.addInviteUser",
-  "put /changeactiveuser":"InviteUserController.changeActiveUser",
-  "delete /deleteinviteuser":"InviteUserController.deleteInviteUser",
-  "get /getallactivities":"InviteUserController.getAllActivities",
+"post /addinviteuser":"InviteUserController.addInviteUser",
+"put /changeactiveuser":"InviteUserController.changeActiveUser",
+"delete /deleteinviteuser":"InviteUserController.deleteInviteUser",
+"get /getallactivities":"InviteUserController.getAllActivities",
+"get /getallassociatedusers":"InviteUserController.getAllAssociatedUsers",
+"put /updateInviteUser":"InviteUserController.updateInviteUser",
+"get /getinviteuser":"InviteUserController.getInviteUser",
+"get /getAllInvitedUsers":"InviteUserController.getAllInvitedUsers",
 
+/**
+ * @AffiliateBrandInviteController
+ * 
+*/
 
+"post /brand/applyrequest":"AffiliateBrandInviteController.sendApplyRequest",
+"get /brand/getallrequests":"AffiliateBrandInviteController.getAllRequests",
+"get /brand/getrequestdetails":"AffiliateBrandInviteController.getRequestDetail",
+"put /brand/changerequeststatus":"AffiliateBrandInviteController.changeRequestStatus",
 
+/**
+ * @CouponController
+ * 
+*/
+'post /coupon/add': "CouponController.addCoupon",
+'get /coupon/get': 'CouponController.getByIdCoupon',
+'get /coupon/getAll': 'CouponController.getAllCoupon',
+'put /coupon/edit': 'CouponController.editCoupon',
+'delete /coupon/delete': 'CouponController.deleteCoupon',
+
+/**
+ * @CSVImportController
+ * 
+*/
+
+'post /csv/import':'CsvImportController.importCsvData'
 
 };
 

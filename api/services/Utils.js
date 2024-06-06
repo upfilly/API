@@ -205,3 +205,6 @@ exports.make_valid_social_media_username = (name) => {
     }
     return name
 }
+exports.paginate = (array, count, page_no) => {
+    return array.slice((page_no - 1) * count, page_no * count);
+}

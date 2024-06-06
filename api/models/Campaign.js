@@ -14,6 +14,8 @@ module.exports = {
     schema: true,
     attributes: {
         brand_id: { model: "users" },
+        parent_id:{model:'users'},
+        parent_role:{type: "string" },
         affiliate_id: { model: "users" },
         name: { type: "string" },
         description: { type: "string" },

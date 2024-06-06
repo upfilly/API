@@ -33,6 +33,9 @@ module.exports = {
     user_id:{
       model:"users"
     },
+    brand_id:{
+      model:"users"
+    },
       // Common Keys
       addedBy: { model: 'users' },
       updatedBy: { model: 'users' },

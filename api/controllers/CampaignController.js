@@ -34,10 +34,24 @@ generateRandom8DigitNumber = function () {
 exports.addCampaign = async (req, res) => {
     try {
 
-        if (req.identity.role !== "brand") {
-            throw constants.COMMON.UNAUTHORIZED;
-        }
+        // if (req.identity.role !== "brand") {
+        //     throw constants.COMMON.UNAUTHORIZED;
+        // }
 
+        let id = req.identity.id;
+
+        let loggedInUser = await Users.findOne({ id: id, isDeleted: false });
+
+        let isPermissionExists = await Permissions.findOne({role:loggedInUser.role});
+
+        if(!isPermissionExists){
+            throw "Permission not exists";
+        }   
+
+        if(!isPermissionExists.campaign_add){
+            throw "User not allowed to create campaign";
+        }
+        // return;
         let validation_result = await Validations.CampaignValidations.addCampaign(req, res);
 
         if (validation_result && !validation_result.success) {
@@ -50,8 +64,9 @@ exports.addCampaign = async (req, res) => {
             throw constants.CAMPAIGN.ALREADY_EXIST
         }
 
-        req.body.addedBy = req.identity.id;
-        req.body.brand_id = req.identity.id;
+            req.body.addedBy = req.identity.id;
+            req.body.brand_id = req.body.brand_id;
+        
 
         req.body.campaign_unique_id = generateRandom8DigitNumber();
         var campaign_linkArr = [];
@@ -129,7 +144,7 @@ exports.addCampaign = async (req, res) => {
 
             //-------------------- Send Notification ------------------//
 
-            return response.success(null, constants.CAMPAIGN.ADDED, req, res);
+            return response.success(add_campaign, constants.CAMPAIGN.ADDED, req, res);
         }
         throw constants.COMMON.SERVER_ERROR;
 
@@ -141,6 +156,21 @@ exports.addCampaign = async (req, res) => {
 
 exports.editCampaign = async (req, res) => {
     try {
+
+        let user_id = req.identity.id;
+
+        let loggedInUser = await Users.findOne({ id: user_id, isDeleted: false });
+
+        let isPermissionExists = await Permissions.findOne({role:loggedInUser.role});
+
+        if(!isPermissionExists){
+            throw "Permission not exists";
+        }   
+
+        if(!isPermissionExists.campaign_edit){
+            throw "User not allowed to edit campaign";
+        }
+
         let validation_result = await Validations.CampaignValidations.editCampaign(req, res);
 
         if (validation_result && !validation_result.success) {
@@ -173,6 +203,20 @@ exports.editCampaign = async (req, res) => {
 
 exports.getAllCampaigns = async (req, res) => {
     try {
+        let user_id = req.identity.id;
+
+        let loggedInUser = await Users.findOne({ id: user_id, isDeleted: false });
+
+        let isPermissionExists = await Permissions.findOne({role:loggedInUser.role});
+
+        if(!isPermissionExists){
+            throw "Permission not exists";
+        }   
+
+        if(!isPermissionExists.campaign_get){
+            throw "User not allowed to view campaign";
+        }
+
         let query = {};
         let count = req.param('count') || 10;
         let page = req.param('page') || 1;
@@ -315,6 +359,20 @@ exports.getAllCampaigns = async (req, res) => {
 
 exports.getCampaignById = async (req, res) => {
     try {
+        let user_id = req.identity.id;
+
+        let loggedInUser = await Users.findOne({ id: user_id, isDeleted: false });
+
+        let isPermissionExists = await Permissions.findOne({role:loggedInUser.role});
+
+        if(!isPermissionExists){
+            throw "Permission not exists";
+        }   
+
+        if(!isPermissionExists.campaign_get){
+            throw "User not allowed to view campaign";
+        }
+
         let id = req.param("id")
         if (!id) {
             throw constants.CAMPAIGN.ID_REQUIRED;
@@ -332,6 +390,21 @@ exports.getCampaignById = async (req, res) => {
 
 exports.changeCampaignStatus = async (req, res) => {
     try {
+
+        let user_id = req.identity.id;
+
+        let loggedInUser = await Users.findOne({ id: user_id, isDeleted: false });
+
+        let isPermissionExists = await Permissions.findOne({role:loggedInUser.role});
+
+        if(!isPermissionExists){
+            throw "Permission not exists";
+        }   
+
+        if(!isPermissionExists.campaign_edit){
+            throw "User not allowed to edit campaign status";
+        }
+
 
         let validation_result = await Validations.CampaignValidations.changeCampaignStatus(req, res);
         if (validation_result && !validation_result.success) {
@@ -408,6 +481,22 @@ exports.changeCampaignStatus = async (req, res) => {
 
 exports.deleteCampaign = async (req, res) => {
     try {
+
+        let user_id = req.identity.id;
+
+        let loggedInUser = await Users.findOne({ id: user_id, isDeleted: false });
+
+        let isPermissionExists = await Permissions.findOne({role:loggedInUser.role});
+
+        if(!isPermissionExists){
+            throw "Permission not exists";
+        }   
+
+        if(!isPermissionExists.campaign_delete){
+            throw "User not allowed to delete campaign";
+        }
+
+
         let id = req.param("id");
         if (!id) {
             throw constants.CAMPAIGN.ID_REQUIRED;

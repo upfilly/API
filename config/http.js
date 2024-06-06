@@ -16,10 +16,11 @@ module.exports.http = {
       res.on("finish", async function () {
 
         responseBody = JSON.parse(responseBody);
-        if(req.url.split("?")[0] !== "/getallactivities"){
+        if(req.url.split("?")[0] !== "/getallactivities" && req.method !== "GET"){
         if (responseBody.code >= 200 && responseBody.code < 300) {
 
-         if(req.identity) {let user = await Users.findOne({ id: req.identity.id });
+         if(req.identity) {
+          let user = await Users.findOne({ id: req.identity.id });
 
           if (user.activeUser && user.activeUser != null) {
             parentUserId = user.activeUser;
@@ -52,7 +53,7 @@ module.exports.http = {
               data:responseBody,
               url: req.url,
               status:"failed",
-              parentUserId: parentUserId,
+              // parentUserId: parentUserId,
             }).exec((err) => {
               if (err) {
                 sails.log.error("Failed to log influencer activity:", err);

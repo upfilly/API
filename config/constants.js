@@ -55,7 +55,9 @@ module.exports.constants = {
         USER_ADD: "User added successfully.",
         BRAND_NOT_EXISTS:"Brand not exists",
         ACTIVE_USER_CHANGED:"Active user status changes",
-        INVITED_USER_DELETED:"Invited user deleted"
+        INVITED_USER_DELETED:"Invited user deleted",
+        INVITED_USER_UPDATED:"Invited user updated",
+        INVITED_USER_DETAILS:"Invited user details fetched"
     },
     COMMON: {
         COUNTRY_CODE_REQUIRED: "Country  code is required",
@@ -555,5 +557,27 @@ module.exports.constants = {
     },
     ACTIVITY_LOGS:{
         FETCHED_ALL:"Fetched successfully"
+    },
+    AFFILIATE_BRAND_INVITE:{
+        REQUEST_SEND:"Request to brand send successfully",
+        ALL_FETCHED_SUCCESS:"All records are fetched successfully",
+        REQUEST_NOT_FOUND:"Request not found",
+        STATUS_UPDATE:"Request status changed"
+    },
+
+    COUPON:{
+
+        ADDED: "Coupon Added successfully",
+        UPDATED: "Coupon Updated successfully",
+        INVALID_ID: "Invaild Id",
+        FETCHED: "Coupon Fetched successfully",
+        ID_REQUIRED: "Id is required",
+        DELETED: "Coupon Deleted successfully",
+        FETCHED_ALL: "All Coupon Fetched successfully",
+        ALREADY_EXISTS:"Coupon code already exists",
+        NOT_EXISTS:"Coupon not exists"
+    },
+    CSVDATA:{
+        IMPORTED_SUCCESSFULLY:"DATA IMPORTED SUCCESSFULLY"
     }
 }

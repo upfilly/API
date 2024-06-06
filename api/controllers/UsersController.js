@@ -377,9 +377,9 @@ module.exports = {
         user = await Users.findOne({id:user.id,isDeleted:false}).populate("activeUser").populate("addedBy");
         
         if(user.role === "operator" ||user.role === "analyzer" ){
-          await Users.updateOne({id:user.id},{activeUser:req.identity})
+          await Users.updateOne({id:user.id},{activeUser:user.id})
           user.activeUser = req.identity;
-          let listOfUsers = await InviteUsers.find({user_id:user.id,isDeleted:false});
+          let listOfUsers = await InviteUsers.find({email:user.email,isDeleted:false});
           // console.log(listOfUsers)
           for(let otherUsers of listOfUsers){
             // console.log("=============>",otherUsers);
@@ -389,7 +389,7 @@ module.exports = {
         }else{
 
         //throw msg here if not exists then throw brand not exists
-        await Users.updateOne({id:user.id},{activeUser:req.identity})
+        await Users.updateOne({id:user.id},{activeUser:user.id})
         
         listOfOtherUsers = await InviteUsers.find({addedBy:user.id,isDeleted:false});
         }
@@ -428,6 +428,12 @@ module.exports = {
 
       delete user.stripe_customer_id;
       delete user.status;
+
+      let get_permission = await Permissions.findOne({ role: user.role });
+
+      if (get_permission) {
+        user.permission_detail = get_permission;
+      }
 
       return response.success(user, constants.user.SUCCESSFULLY_LOGGEDIN, req, res);
 
@@ -589,11 +595,79 @@ module.exports = {
       } else {
         query.role = { $nin: ['admin', 'team', ''] };
       }
-
+      
       if (role) {
         query.role = role;
-      }
+        if(role === "affiliate"){
+         var lookupPipelineForbrandoraffiliate={
+            $lookup:
+            {
+              from: "affiliatebrandinvite",
+              let: { affiliate_id: "$_id", isDeleted: false, brand_id: ObjectId(req.identity.id) },
+              // let: { user_id: "$req.identity.id", fav_user_id: ObjectId("64d076e86ecebee01af09d8c") },
+              pipeline: [
+                {
+                  $match:
+                  {
+                    $expr:
+                    {
+                      $and:
+                        [
+                          { $eq: ["$brand_id", "$$brand_id"] },
+                          { $eq: ["$isDeleted", "$$isDeleted"] },
+                          { $eq: ["$affiliate_id", "$$affiliate_id"] }
+  
+                        ]
+                    }
+                  }
+                }
+              ],
+              as: "invite_affiliate_details"
+            }
+          }
+          var upwindPipelineForBrandoraffiliate=
+            {
+              $unwind: {
+                path: '$invite_affiliate_details',
+                preserveNullAndEmptyArrays: true
+              }
+            }
+        }else{
+        var lookupPipelineForbrandoraffiliate={
+          $lookup:
+          {
+            from: "affiliatebrandinvite",
+            let: { affiliate_id: ObjectId(req.identity.id), isDeleted: false, brand_id: "$_id" },
+            // let: { user_id: "$req.identity.id", fav_user_id: ObjectId("64d076e86ecebee01af09d8c") },
+            pipeline: [
+              {
+                $match:
+                {
+                  $expr:
+                  {
+                    $and:
+                      [
+                        { $eq: ["$brand_id", "$$brand_id"] },
+                        { $eq: ["$isDeleted", "$$isDeleted"] },
+                        { $eq: ["$affiliate_id", "$$affiliate_id"] }
 
+                      ]
+                  }
+                }
+              }
+            ],
+            as: "invite_affiliate_details"
+          }
+        }
+        var upwindPipelineForBrandoraffiliate=
+            {
+              $unwind: {
+                path: '$invite_affiliate_details',
+                preserveNullAndEmptyArrays: true
+              }
+            }
+      }
+    }
       if (status) { query.status = status; };
       if (invite_status) { query.invite_status = invite_status; };
 
@@ -674,11 +748,12 @@ module.exports = {
             preserveNullAndEmptyArrays: true
           }
         },
-        {
+        
+        (role && role==="affiliate")?{
           $lookup:
           {
-            from: "affiliateinvite",
-            let: { affiliate_id: "$_id", isDeleted: false, addedBy: ObjectId(req.identity.id) },
+            from: "affiliatebrandinvite",
+            let: { affiliate_id: "$_id", isDeleted: false, brand_id: ObjectId(req.identity.id) },
             // let: { user_id: "$req.identity.id", fav_user_id: ObjectId("64d076e86ecebee01af09d8c") },
             pipeline: [
               {
@@ -688,9 +763,34 @@ module.exports = {
                   {
                     $and:
                       [
-                        { $eq: ["$affiliate_id", "$$affiliate_id"] },
+                        { $eq: ["$brand_id", "$$brand_id"] },
                         { $eq: ["$isDeleted", "$$isDeleted"] },
-                        { $eq: ["$addedBy", "$$addedBy"] }
+                        { $eq: ["$affiliate_id", "$$affiliate_id"] }
+
+                      ]
+                  }
+                }
+              }
+            ],
+            as: "invite_affiliate_details"
+          }
+        }:{
+          $lookup:
+          {
+            from: "affiliatebrandinvite",
+            let: { affiliate_id: ObjectId(req.identity.id), isDeleted: false, brand_id: "$_id" },
+            // let: { user_id: "$req.identity.id", fav_user_id: ObjectId("64d076e86ecebee01af09d8c") },
+            pipeline: [
+              {
+                $match:
+                {
+                  $expr:
+                  {
+                    $and:
+                      [
+                        { $eq: ["$brand_id", "$$brand_id"] },
+                        { $eq: ["$isDeleted", "$$isDeleted"] },
+                        { $eq: ["$affiliate_id", "$$affiliate_id"] }
 
                       ]
                   }
@@ -706,6 +806,8 @@ module.exports = {
             preserveNullAndEmptyArrays: true
           }
         },
+
+
         {
           $lookup: {
             from: 'commoncategories',
@@ -720,6 +822,7 @@ module.exports = {
             preserveNullAndEmptyArrays: true
           }
         },
+        
       ];
 
       let projection = {
@@ -1058,14 +1161,16 @@ module.exports = {
   userDetail: async (req, res, next) => {
     try {
       let id = req.param('id');
+      let listOfOtherUsers=[];
       let get_user = await Users.findOne({ id: id }).populate("activeUser");
       if (get_user) {
-
+        // console.log(get_user.role);
         if(get_user.role === "brand" ||get_user.role === "affiliate"){
           let active_user = get_user;
-          get_user = await Users.findOne({id:get_user.addedBy,isDeleted:false});
+          // get_user = await Users.findOne({id:get_user.addedBy,isDeleted:false});
           //throw msg here if not exists then throw brand not exists
           await Users.updateOne({id:get_user.id},{activeUser:id})
+          console.log(get_user.id);
           listOfOtherUsers = await InviteUsers.find({addedBy:get_user.id,isDeleted:false});
           let current_user  = {}
 
@@ -1080,14 +1185,42 @@ module.exports = {
           current_user.user_id=get_user.id
           current_user.addedBy=get_user.addedBy
           current_user.updatedBy=get_user.updatedBy
-
+          // listOfOtherUsers.push(current_user);
+          // console.log("===========>",listOfOtherUsers);
           get_user.listOfOtherUsers = listOfOtherUsers;
           
           get_user.listOfOtherUsers.push(current_user);
-          get_user.activeUser = active_user;
+          // get_user.activeUser = active_user;
 
         }else{
-          listOfOtherUsers = await InviteUsers.find({addedBy:get_user.id,isDeleted:false});
+
+          
+
+
+
+          // listOfOtherUsers = await InviteUsers.find({addedBy:get_user.addedBy,isDeleted:false});
+          let listOfUsers = await InviteUsers.find({email:get_user.email,isDeleted:false});
+          // console.log(listOfUsers)
+          for(let otherUsers of listOfUsers){
+            // console.log("=============>",otherUsers);
+            let parentUser = await Users.findOne({id:otherUsers.addedBy,isDeleted:false})
+           let currentparentUser={};
+            currentparentUser.createdAt=parentUser.createdAt
+            currentparentUser.updatedAt=parentUser.updatedAt
+            currentparentUser.id=parentUser.id
+            currentparentUser.firstName=parentUser.firstName
+            currentparentUser.lastName=parentUser.lastName
+            currentparentUser.email=parentUser.email
+            currentparentUser.role=parentUser.role
+            currentparentUser.isDeleted=parentUser.isDeleted
+            currentparentUser.user_id=parentUser.id
+            currentparentUser.addedBy=parentUser.addedBy
+            currentparentUser.updatedBy=parentUser.updatedBy
+
+            
+            listOfOtherUsers.push(currentparentUser);
+          }
+          
           let current_user  = {}
 
           current_user.createdAt=get_user.createdAt
@@ -1103,6 +1236,7 @@ module.exports = {
           current_user.updatedBy=get_user.updatedBy
 
           get_user.listOfOtherUsers = listOfOtherUsers?listOfOtherUsers:[];
+          // get_user.activeUser = req.identity;
           
           get_user.listOfOtherUsers.push(current_user);
         }
@@ -1154,12 +1288,12 @@ module.exports = {
 
         }
 
-        let get_permission = await Permissions.findOne({ role: get_user.role });
+        // let get_permission = await Permissions.findOne({ role: get_user.role });
 
-        if (get_permission) {
-          get_user.permission_detail = get_permission;
+        // if (get_permission) {
+        //   get_user.permission_detail = get_permission;
 
-        }
+        // }
 
         // if (get_user) {
         //   let get_campaign = await Campaign.find({ affiliate_id: id });
@@ -1863,6 +1997,12 @@ module.exports = {
       delete update_user.stripe_customer_id;
       delete update_user.isVerified;
       delete update_user.status;
+
+      let get_permission = await Permissions.findOne({ role: update_user.role });
+
+      if (get_permission) {
+        update_user.permission_detail = get_permission;
+      }
 
       return response.success(update_user, constants.user.SUCCESSFULLY_LOGGEDIN, req, res
       );

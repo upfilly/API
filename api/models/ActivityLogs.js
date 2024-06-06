@@ -15,6 +15,7 @@ module.exports = {
     status:{type:"string"},
     parentUserId:{model:"users"},
     data:{type:"json"},
+    
     createdAt: { type: "ref", autoCreatedAt: true },
     updatedAt: { type: "ref", autoUpdatedAt: true },
     isDeleted: { type: 'Boolean', defaultsTo: false }
