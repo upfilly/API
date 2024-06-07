@@ -45,7 +45,8 @@ module.exports = {
     Banner: require('./BannerValidations'),
     CommissionNew: require('./CommissionNewValidations'),
     InviteUserValidation:require('./InviteUserValidation'),
-    CouponValidations:require('./CouponValidations')
+    CouponValidations:require('./CouponValidations'),
+    DataSetValidation:require('./DataSetValidations')
 
     // DiscountBraintreeValidation: require("./DiscountBraintreeValidations")
 }

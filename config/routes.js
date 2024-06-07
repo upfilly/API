@@ -491,7 +491,9 @@ module.exports.routes = {
  * 
 */
 
-'post /csv/import':'CsvImportController.importCsvData'
+'post /csv/import':'DataSetController.importCsvData',
+'post /dataset/send':'DataSetController.sendDataSets',
+'get /dataset/list':'DataSetController.listOfDataSet'
 
 };
 
