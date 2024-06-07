@@ -579,5 +579,8 @@ module.exports.constants = {
     },
     CSVDATA:{
         IMPORTED_SUCCESSFULLY:"DATA IMPORTED SUCCESSFULLY"
+    },
+    DATASET:{
+        ADDED:"DATA ADDED SUCCESSFULLY"
     }
 }

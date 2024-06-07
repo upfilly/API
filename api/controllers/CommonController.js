@@ -852,6 +852,7 @@ module.exports = {
                 data,
                 async function (err, image) {
                   if (err) {
+                    console.log(err);
                     return res.status(400).json({
                       success: false,
                       error: {
