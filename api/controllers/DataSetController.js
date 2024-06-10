@@ -436,7 +436,7 @@ exports.listOfEmailMessage = async (req, res) => {
           from: "users",
           localField: "addedBy",
           foreignField: "_id",
-          as: "users",
+          as: "addedBy_details",
         },
       },
       {
@@ -464,6 +464,8 @@ exports.listOfEmailMessage = async (req, res) => {
           title: "$title",
           user_id: "$user_id",
           description: "$description",
+          user_details:"$user_details",
+          addedBy_details:"$addedBy_details",
           status: "$status",
           isDeleted: "$isDeleted",
           addedBy: "$addedBy",
