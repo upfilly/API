@@ -208,8 +208,6 @@ exports.listOfDataSet = async (req, res) => {
 
     if (user_id) {
       query.user_id = user_id;
-    } else {
-      query.user_id = req.identity.id;
     }
 
     if (addedBy) {
@@ -243,7 +241,7 @@ exports.listOfDataSet = async (req, res) => {
           from: "users",
           localField: "addedBy",
           foreignField: "_id",
-          as: "users",
+          as: "addedBy_details",
         },
       },
       {
