@@ -5,5 +5,6 @@ module.exports = {
     MakeOfferEmails: require("./MakeOfferEmails"),
     Commission:require('./CommissionEmails'),
     InviteUser:require("./InviteUserEmails"),
-    DataSet:require("./DataSet")
+    DataSet:require("./DataSet"),
+    EmailMessageTemplate:require("./EmailMessageTemplate")
 }

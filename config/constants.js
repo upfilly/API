@@ -582,5 +582,9 @@ module.exports.constants = {
     },
     DATASET:{
         ADDED:"DATA ADDED SUCCESSFULLY"
+    },
+    EMAILMESSAGE:{
+        ERROR_SENDING_EMAIL:"Error sending email message",
+        ADDED:"Email message added successfully"
     }
 }

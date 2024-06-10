@@ -13,6 +13,7 @@ const xlsx = require("xlsx");
 const excel = require("exceljs");
 const Validations = require("../Validations/index");
 const Emails = require("../Emails");
+// const EmailMessageTemplate = require("../models/EmailMessageTemplate");
 
 exports.importCsvData = async (req, res) => {
   let duplicate = 0;
@@ -158,7 +159,7 @@ exports.sendDataSets = async (req, res) => {
     let emailPayload = {
       brandFullName: req.identity.fullName,
       affiliateFullName: isExists.fullName,
-      affiliateEmail:isExists.email
+      affiliateEmail: isExists.email,
     };
 
     await Emails.DataSet.sendDataSet(emailPayload);
@@ -205,19 +206,17 @@ exports.listOfDataSet = async (req, res) => {
 
     query.isDeleted = false;
 
-    if(user_id){
+    if (user_id) {
       query.user_id = user_id;
-    }else{
+    } else {
       query.user_id = req.identity.id;
     }
-
 
     if (addedBy) {
       query.addedBy = ObjectId(addedBy);
     }
 
     if (startDate && endDate) {
-      
       startDate = new Date(startDate);
       endDate = new Date(endDate);
 
@@ -228,17 +227,15 @@ exports.listOfDataSet = async (req, res) => {
     }
     if (startDate && !endDate) {
       startDate = new Date(startDate);
-      
-      query.assignDateAndTime = { $gte: startDate }
-       
+
+      query.assignDateAndTime = { $gte: startDate };
     }
     if (!startDate && endDate) {
       endDate = new Date(endDate);
-      query.submitDateAndTime = { $lte: endDate }
-       
+      query.submitDateAndTime = { $lte: endDate };
     }
-    
-  console.log (query)
+
+    console.log(query);
 
     const pipeline = [
       {
@@ -271,11 +268,11 @@ exports.listOfDataSet = async (req, res) => {
       },
       {
         $project: {
-          user_id:"$user_id",
-          filePath:"$filePath",
-          user_details:"$user_details",
-          addedBy_details:"$addedBy_details",
-          status: "$status", 
+          user_id: "$user_id",
+          filePath: "$filePath",
+          user_details: "$user_details",
+          addedBy_details: "$addedBy_details",
+          status: "$status",
           isDeleted: "$isDeleted",
           addedBy: "$addedBy",
           updatedBy: "$updatedBy",
@@ -321,4 +318,196 @@ exports.listOfDataSet = async (req, res) => {
       error: { code: 400, message: "" + err },
     });
   }
-}
+};
+
+exports.sendEmailMessage = async (req, res) => {
+  try {
+    let validation_result = await Validations.SendEmailMessage.sendEmailMessage(
+      req,
+      res
+    );
+
+    if (validation_result && !validation_result.success) {
+      throw validation_result.message;
+    }
+
+    let data = req.body;
+
+    let isExists = await Users.findOne({ id: data.user_id, isDeleted: false });
+
+    if (!isExists) {
+      throw constants.user.USER_NOT_FOUND;
+    }
+
+    data.addedBy = req.identity.id;
+
+    let emailMessage = await EmailMessageTemplate.create(data).fetch();
+
+    if (!emailMessage) {
+      throw constants.EMAILMESSAGE.ERROR_SENDING_EMAIL;
+    }
+
+    let emailPayload = {
+      brandFullName: req.identity.fullName,
+      affiliateFullName: isExists.fullName,
+      affiliateEmail: isExists.email,
+      emailMessage: data.description,
+    };
+
+    await Emails.EmailMessageTemplate.sendEmailMessageTemplate(emailPayload);
+
+    response.success(emailMessage, constants.EMAILMESSAGE.ADDED, req, res);
+  } catch (error) {
+    console.log(error);
+    return res.status(400).json({
+      success: false,
+      error: { code: 400, message: "" + error },
+    });
+  }
+};
+
+exports.listOfEmailMessage = async (req, res) => {
+  try {
+    var search = req.param("search");
+    var isDeleted = req.param("isDeleted");
+    var page = req.param("page");
+    var count = parseInt(req.param("count"));
+    let sortBy = req.param("sortBy");
+    let addedBy = req.param("addedBy");
+    let user_id = req.param("user_id");
+   
+
+    var date = new Date();
+
+    var query = {};
+
+    if (search) {
+      query.$or = [{ event: { $regex: search, $options: "i" } }];
+    }
+    let sortquery = {};
+    if (sortBy) {
+      let typeArr = [];
+      typeArr = sortBy.split(" ");
+      let sortType = typeArr[1];
+      let field = typeArr[0];
+      sortquery[field ? field : "updatedAt"] = sortType
+        ? sortType == "desc"
+          ? -1
+          : 1
+        : -1;
+    } else {
+      sortquery = { updatedAt: -1 };
+    }
+
+    query.isDeleted = false;
+
+    if (user_id) {
+      query.user_id = user_id;
+    } 
+
+    if (addedBy) {
+      query.addedBy = ObjectId(addedBy);
+    }
+
+    // if (startDate && endDate) {
+    //   startDate = new Date(startDate);
+    //   endDate = new Date(endDate);
+
+    //   query.$and = [
+    //     { assignDateAndTime: { $gte: startDate } },
+    //     { submitDateAndTime: { $lte: endDate } },
+    //   ];
+    // }
+    // if (startDate && !endDate) {
+    //   startDate = new Date(startDate);
+
+    //   query.assignDateAndTime = { $gte: startDate };
+    // }
+    // if (!startDate && endDate) {
+    //   endDate = new Date(endDate);
+    //   query.submitDateAndTime = { $lte: endDate };
+    // }
+
+    console.log(query);
+
+    const pipeline = [
+      {
+        $lookup: {
+          from: "users",
+          localField: "addedBy",
+          foreignField: "_id",
+          as: "users",
+        },
+      },
+      {
+        $unwind: {
+          path: "$addedBy_details",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "user_id",
+          foreignField: "_id",
+          as: "user_details",
+        },
+      },
+      {
+        $unwind: {
+          path: "$user_details",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $project: {
+          title: "$title",
+          user_id: "$user_id",
+          description: "$description",
+          status: "$status",
+          isDeleted: "$isDeleted",
+          addedBy: "$addedBy",
+          updatedBy: "$updatedBy",
+          createdAt: "$createdAt",
+          updatedAt: "$updatedAt",
+        },
+      },
+      {
+        $match: query,
+      },
+      {
+        $sort: sortquery,
+      },
+    ];
+    db.collection("emailmessagetemplate")
+      .aggregate([...pipeline])
+      .toArray((err, totalResult) => {
+        if (page && count) {
+          var skipNo = (page - 1) * count;
+          pipeline.push(
+            {
+              $skip: Number(skipNo),
+            },
+            {
+              $limit: Number(count),
+            }
+          );
+        }
+        db.collection("emailmessagetemplate")
+          .aggregate([...pipeline])
+          .toArray((err, result) => {
+            return res.status(200).json({
+              success: true,
+              data: result,
+              total: totalResult.length,
+            });
+          });
+      });
+  } catch (err) {
+    // (err)
+    return res.status(400).json({
+      success: false,
+      error: { code: 400, message: "" + err },
+    });
+  }
+};

@@ -493,7 +493,13 @@ module.exports.routes = {
 
 'post /csv/import':'DataSetController.importCsvData',
 'post /dataset/send':'DataSetController.sendDataSets',
-'get /dataset/list':'DataSetController.listOfDataSet'
+'get /dataset/list':'DataSetController.listOfDataSet',
+/**
+ * @EmailMessageTemplate
+ * 
+*/
+'post /emailmessage/send':'DataSetController.sendEmailMessage',
+'get /emailmessage/list':'DataSetController.listOfEmailMessage',
 
 };
 
