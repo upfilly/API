@@ -44,7 +44,8 @@ module.exports.http = {
 
         }else{
           if(responseBody.success === false){
-            if(req.identity){let code = responseBody.error.code;
+            if(req.identity){
+              // let code = responseBody.error.code;
             let message = responseBody.error.message;
             ActivityLogs.create({
               user_id: req.identity.id,

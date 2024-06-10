@@ -46,7 +46,7 @@ module.exports = {
     CommissionNew: require('./CommissionNewValidations'),
     InviteUserValidation:require('./InviteUserValidation'),
     CouponValidations:require('./CouponValidations'),
-    DataSetValidation:require('./DataSetValidations')
-
+    DataSetValidation:require('./DataSetValidations'),
+    SendEmailMessage:require('./EmailMessageValidations')
     // DiscountBraintreeValidation: require("./DiscountBraintreeValidations")
 }
