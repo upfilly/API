@@ -520,7 +520,7 @@ exports.getEmailMessage = async (req, res) => {
     }
     const get_Email = await EmailMessageTemplate.findOne({ id: id });
     if (get_Email) {
-        return response.success(get_Email, constants.COUPON.FETCHED, req, res);
+        return response.success(get_Email, constants.EMAILMESSAGE.FETCHED, req, res);
     }
     throw constants.EMAILMESSAGE.INVALID_ID;
        
