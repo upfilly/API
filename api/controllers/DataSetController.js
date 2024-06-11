@@ -511,3 +511,25 @@ exports.listOfEmailMessage = async (req, res) => {
     });
   }
 };
+
+exports.getEmailMessage = async (req, res) => {
+  try {
+    const id = req.param("id")
+    if (!id) {
+        throw constants.EMAIL_MESSAGE.ID_REQUIRED;
+    }
+    const get_Email = await EmailMessageTemplate.findOne({ id: id });
+    if (get_Email) {
+        return response.success(get_Email, constants.COUPON.FETCHED, req, res);
+    }
+    throw constants.EMAILMESSAGE.INVALID_ID;
+       
+  } catch (err) {
+    // (err)
+    return res.status(400).json({
+      success: false,
+      error: { code: 400, message: "" + err },
+    });
+  }
+
+};
