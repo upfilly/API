@@ -212,10 +212,7 @@ exports.listOfDataSet = async (req, res) => {
 
     if (addedBy) {
       query.addedBy = ObjectId(addedBy);
-    }else{
-      query.addedBy = ObjectId(req.identity.id);
     }
-
 
     if (startDate && endDate) {
       startDate = new Date(startDate);
@@ -408,8 +405,6 @@ exports.listOfEmailMessage = async (req, res) => {
 
     if (addedBy) {
       query.addedBy = ObjectId(addedBy);
-    }else{
-      query.addedBy = ObjectId(req.identity.id);
     }
 
     // if (startDate && endDate) {
