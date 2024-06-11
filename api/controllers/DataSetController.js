@@ -518,10 +518,12 @@ exports.getEmailMessage = async (req, res) => {
     if (!id) {
         throw constants.EMAIL_MESSAGE.ID_REQUIRED;
     }
-    const get_Email = await EmailMessageTemplate.findOne({ id: id });
+    const get_Email = await EmailMessageTemplate.findOne({ id: id }).populate("addedBy").populate("user_id");
+    
     if (get_Email) {
         return response.success(get_Email, constants.EMAILMESSAGE.FETCHED, req, res);
     }
+    
     throw constants.EMAILMESSAGE.INVALID_ID;
        
   } catch (err) {
