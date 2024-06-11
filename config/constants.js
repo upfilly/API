@@ -585,6 +585,8 @@ module.exports.constants = {
     },
     EMAILMESSAGE:{
         ERROR_SENDING_EMAIL:"Error sending email message",
-        ADDED:"Email message added successfully"
+        ADDED:"Email message added successfully",
+        ID_REQUIRED:"Id required",
+        INVALID_ID:"Invalid Id",
     }
 }

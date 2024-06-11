@@ -500,6 +500,8 @@ module.exports.routes = {
 */
 'post /emailmessage/send':'DataSetController.sendEmailMessage',
 'get /emailmessage/list':'DataSetController.listOfEmailMessage',
+'get /emailmessage':'DataSetController.getEmailMessage',
+
 
 };
 
