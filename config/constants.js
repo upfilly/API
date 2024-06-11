@@ -588,5 +588,6 @@ module.exports.constants = {
         ADDED:"Email message added successfully",
         ID_REQUIRED:"Id required",
         INVALID_ID:"Invalid Id",
+        FETCHED:"Fetched successfully"
     }
 }
