@@ -578,10 +578,10 @@ module.exports.constants = {
         NOT_EXISTS:"Coupon not exists"
     },
     CSVDATA:{
-        IMPORTED_SUCCESSFULLY:"DATA IMPORTED SUCCESSFULLY"
+        IMPORTED_SUCCESSFULLY:"Data imported successfully"
     },
     DATASET:{
-        ADDED:"DATA ADDED SUCCESSFULLY"
+        ADDED:"Data added successfully"
     },
     EMAILMESSAGE:{
         ERROR_SENDING_EMAIL:"Error sending email message",
