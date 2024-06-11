@@ -164,7 +164,10 @@ exports.getAllCoupon = async (req, res) => {
             query.plan_type = plan_type;
         }
         if (addedBy) {
-            query.addedBy =ObjectId( addedBy);
+            query.addedBy =ObjectId(addedBy);
+        }
+        else{
+            query.addedBy = ObjectId(req.identity.id);
         }
 
 
