@@ -207,7 +207,7 @@ exports.listOfDataSet = async (req, res) => {
     query.isDeleted = false;
 
     if (user_id) {
-      query.user_id = user_id;
+      query.user_id = ObjectId(user_id);
     }
 
     if (addedBy) {
@@ -403,7 +403,7 @@ exports.listOfEmailMessage = async (req, res) => {
     query.isDeleted = false;
 
     if (user_id) {
-      query.user_id = user_id;
+      query.user_id = ObjectId(user_id);
     } 
 
     if (addedBy) {
