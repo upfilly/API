@@ -124,7 +124,7 @@ exports.getAllBanner = async (req, res) => {
         let count = req.param('count') || 10;
         let page = req.param('page') || 1;
 
-        let { search, isDeleted, status, sortBy, is_animation, is_deep_linking, mobile_creative } = req.query;
+        let { search, isDeleted, status, sortBy, is_animation, is_deep_linking, mobile_creative ,addedBy} = req.query;
         let skipNo = (Number(page) - 1) * Number(count);
 
         if (search) {
@@ -141,6 +141,12 @@ exports.getAllBanner = async (req, res) => {
         if (is_deep_linking) { if (is_deep_linking === 'true') { is_deep_linking = true; } else { is_deep_linking = false; } query.is_deep_linking = is_deep_linking; }
         if (mobile_creative) { if (mobile_creative === 'true') { mobile_creative = true; } else { mobile_creative = false; } query.mobile_creative = mobile_creative; }
         if (status) { query.status = status; }
+        
+        if(addedBy){
+            query.addedBy = ObjectId(addedBy);
+        }else{
+            query.addedBy = ObjectId(req.identity.id);
+        }
 
         let sortquery = {};
         if (sortBy) {
