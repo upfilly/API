@@ -51,29 +51,6 @@ exports.addInvite = async (req, res) => {
       };
       await Emails.OnboardingEmails.send_invite(email_payload);
 
-      // //-------------------- Send Notification ------------------//
-      // let notification_payload = {};
-      // notification_payload.send_to = add_campaign.affiliate_id;
-      // notification_payload.title = `Campaign | ${await Services.Utils.title_case(add_campaign.name)} | ${await Services.Utils.title_case(req.identity.fullName)}`;
-      // notification_payload.message = `You have a new campaign request from ${await Services.Utils.title_case(req.identity.fullName)}`;
-      // notification_payload.type = "campaign"
-      // notification_payload.addedBy = req.identity.id;
-      // notification_payload.campaign_id = add_campaign.id;
-      // let create_notification = await Notifications.create(notification_payload).fetch();
-
-      // let affiliate_detail = await Users.findOne({ id: add_campaign.affiliate_id })
-      // if (create_notification && affiliate_detail.device_token) {
-      //     let fcm_payload = {
-      //         device_token: affiliate_detail.device_token,
-      //         title: req.identity.fullName,
-      //         message: create_notification.message,
-      //     }
-
-      //     await Services.FCM.send_fcm_push_notification(fcm_payload)
-      // }
-
-      //-------------------- Send Notification ------------------//
-
       return response.success(null, constants.INVITE.ADDED, req, res);
     }
     throw constants.COMMON.SERVER_ERROR;

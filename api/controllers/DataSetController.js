@@ -320,22 +320,22 @@ exports.listOfDataSet = async (req, res) => {
 
 exports.sendEmailMessage = async (req, res) => {
   try {
-    let validation_result = await Validations.SendEmailMessage.sendEmailMessage(
-      req,
-      res
-    );
+    // let validation_result = await Validations.SendEmailMessage.sendEmailMessage(
+    //   req,
+    //   res
+    // );
 
-    if (validation_result && !validation_result.success) {
-      throw validation_result.message;
-    }
+    // if (validation_result && !validation_result.success) {
+    //   throw validation_result.message;
+    // }
 
     let data = req.body;
 
-    let isExists = await Users.findOne({ id: data.user_id, isDeleted: false });
+    // let isExists = await Users.findOne({ id: data.user_id, isDeleted: false });
 
-    if (!isExists) {
-      throw constants.user.USER_NOT_FOUND;
-    }
+    // if (!isExists) {
+    //   throw constants.user.USER_NOT_FOUND;
+    // }
 
     data.addedBy = req.identity.id;
 
@@ -345,14 +345,40 @@ exports.sendEmailMessage = async (req, res) => {
       throw constants.EMAILMESSAGE.ERROR_SENDING_EMAIL;
     }
 
-    let emailPayload = {
-      brandFullName: req.identity.fullName,
-      affiliateFullName: isExists.fullName,
-      affiliateEmail: isExists.email,
-      emailMessage: data.description,
-    };
+    let listOfAcceptedInvites = await AffiliateInvite.find({
+      addedBy: req.identity.id,
+      status: "accepted",
+    });
 
-    await Emails.EmailMessageTemplate.sendEmailMessageTemplate(emailPayload);
+    for (let invites of listOfAcceptedInvites) {
+      let findUser = await Users.findOne({ id: invites.affiliate_id });
+      // listOfAffiliate.push(findUser);
+      let emailPayload = {
+        brandFullName: req.identity.fullName,
+        affiliateFullName: findUser.fullName,
+        affiliateEmail: findUser.email,
+        emailMessage: data.description,
+      };
+      await Emails.EmailMessageTemplate.sendEmailMessageTemplate(emailPayload);
+    }
+
+    let listOfBrandInvite = await AffiliateBrandInvite.find({
+      brand_id: req.identity.id,
+      status: "accepted",
+      isDeleted: false,
+    });
+
+    for (let invites of listOfBrandInvite) {
+      let findUser = await Users.findOne({ id: invites.affiliate_id });
+      let emailPayload = {
+        brandFullName: req.identity.fullName,
+        affiliateFullName: findUser.fullName,
+        affiliateEmail: findUser.email,
+        emailMessage: data.description,
+      };
+
+      await Emails.EmailMessageTemplate.sendEmailMessageTemplate(emailPayload);
+    }
 
     response.success(emailMessage, constants.EMAILMESSAGE.ADDED, req, res);
   } catch (error) {
@@ -373,7 +399,6 @@ exports.listOfEmailMessage = async (req, res) => {
     let sortBy = req.param("sortBy");
     let addedBy = req.param("addedBy");
     let user_id = req.param("user_id");
-   
 
     var date = new Date();
 
@@ -401,7 +426,7 @@ exports.listOfEmailMessage = async (req, res) => {
 
     if (user_id) {
       query.user_id = ObjectId(user_id);
-    } 
+    }
 
     if (addedBy) {
       query.addedBy = ObjectId(addedBy);
@@ -462,8 +487,8 @@ exports.listOfEmailMessage = async (req, res) => {
           title: "$title",
           user_id: "$user_id",
           description: "$description",
-          user_details:"$user_details",
-          addedBy_details:"$addedBy_details",
+          user_details: "$user_details",
+          addedBy_details: "$addedBy_details",
           status: "$status",
           isDeleted: "$isDeleted",
           addedBy: "$addedBy",
@@ -514,18 +539,24 @@ exports.listOfEmailMessage = async (req, res) => {
 
 exports.getEmailMessage = async (req, res) => {
   try {
-    const id = req.param("id")
+    const id = req.param("id");
     if (!id) {
-        throw constants.EMAIL_MESSAGE.ID_REQUIRED;
+      throw constants.EMAIL_MESSAGE.ID_REQUIRED;
     }
-    const get_Email = await EmailMessageTemplate.findOne({ id: id }).populate("addedBy").populate("user_id");
-    
+    const get_Email = await EmailMessageTemplate.findOne({ id: id })
+      .populate("addedBy")
+      .populate("user_id");
+
     if (get_Email) {
-        return response.success(get_Email, constants.EMAILMESSAGE.FETCHED, req, res);
+      return response.success(
+        get_Email,
+        constants.EMAILMESSAGE.FETCHED,
+        req,
+        res
+      );
     }
-    
+
     throw constants.EMAILMESSAGE.INVALID_ID;
-       
   } catch (err) {
     // (err)
     return res.status(400).json({
@@ -533,5 +564,4 @@ exports.getEmailMessage = async (req, res) => {
       error: { code: 400, message: "" + err },
     });
   }
-
 };

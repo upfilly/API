@@ -749,7 +749,7 @@ module.exports = {
           }
         },
         
-        (role && role==="affiliate")?{
+        (role && role==="brand")?{
           $lookup:
           {
             from: "affiliatebrandinvite",
@@ -848,6 +848,7 @@ module.exports = {
           invite_status: {
             $cond: [{ $ifNull: ['$invite_affiliate_details.status', false] }, "$invite_affiliate_details.status", "not_invited"]
           },
+          invite_affiliate_details_status:"$invite_affiliate_details.status",
           status: "$status",
           createdAt: "$createdAt",
           updatedAt: "$updatedAt",
