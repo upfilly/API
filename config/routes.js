@@ -503,6 +503,16 @@ module.exports.routes = {
   "post /emailmessage/send": "DataSetController.sendEmailMessage",
   "get /emailmessage/list": "DataSetController.listOfEmailMessage",
   "get /emailmessage": "DataSetController.getEmailMessage",
+/**
+   * @EmailTemplate
+   *
+   */
+
+  'POST /emailtemplate': 'EmailTemplateController.create',
+  'GET /emailtemplate': 'EmailTemplateController.read',
+  'GET /emailtemplate/getAll': 'EmailTemplateController.getAll',
+  'PUT /emailtemplate': 'EmailTemplateController.update',
+  'DELETE /emailtemplate': 'EmailTemplateController.delete'
 };
 
 
