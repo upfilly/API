@@ -439,7 +439,7 @@ exports.changeCampaignStatus = async (req, res) => {
 
         }
 
-        req.body.updatedBy = req.identity.id;
+        req.body.updatedBy = user_id;
         let update_status = await Campaign.updateOne({ id: req.body.id }, req.body);
 
         if (update_status) {
