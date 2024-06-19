@@ -306,6 +306,7 @@ exports.getAllCampaigns = async (req, res) => {
                 affiliate_name: "$affiliate_id_details.fullName",
                 brand_id: "$brand_id",
                 brand_name: "$brand_id_details.fullName",
+                group_type:"$group_type",
                 name: "$name",
                 images: "$images",
                 videos: "$videos",

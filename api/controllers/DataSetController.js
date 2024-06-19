@@ -328,9 +328,191 @@ exports.sendEmailMessage = async (req, res) => {
     // if (validation_result && !validation_result.success) {
     //   throw validation_result.message;
     // }
+    let query1 = {};
+    let query2 = {};
 
     let data = req.body;
+    if (data.isAllJoined) {
+      query1 = {
+        addedBy: req.identity.id,
+        status: "accepted",
+        isDeleted: false,
+      };
+      query2 = {
+        brand_id: req.identity.id,
+        status: "accepted",
+        isDeleted: false,
+      };
 
+      // console.log(query1);
+      let listOfAcceptedInvites = await AffiliateInvite.find(query1);
+      let listOfBrandInvite = await AffiliateBrandInvite.find(query2);
+
+      function removeDuplicates(array, key) {
+        const seen = new Set();
+        return array.filter((item) => {
+          const keyValue = item[key];
+          if (seen.has(keyValue)) {
+            return false;
+          }
+          seen.add(keyValue);
+          return true;
+        });
+      }
+
+      // Combine the two lists
+      let combinedList = [...listOfBrandInvite, ...listOfAcceptedInvites];
+      console.log(combinedList);
+      // Remove duplicates based on the 'id' key
+      listOfAcceptedInvites = removeDuplicates(combinedList, "affiliate_id");
+
+      for (let invites of listOfAcceptedInvites) {
+        let findUser = await Users.findOne({
+          id: invites.affiliate_id,
+          status: data.affiliateStatus,
+          isDeleted: false,
+        });
+        let emailPayload = {
+          brandFullName: req.identity.fullName,
+          affiliateFullName: findUser.fullName,
+          affiliateEmail: findUser.email,
+          emailMessage: data.description,
+        };
+
+        await Emails.EmailMessageTemplate.sendEmailMessageTemplate(
+          emailPayload
+        );
+      }
+    }
+    // if(data.groups && data.groups.length>0){
+
+    // }
+    if (data.acceptedDate) {
+      if (data.timeInterval === "before") {
+       let updatedAt= {
+          "<=": new Date(new Date(data.acceptedDate).setHours(0, 0, 0))
+        }
+        query1 = {
+          addedBy: req.identity.id,
+          status: "accepted",
+          isDeleted: false,
+          updatedAt: updatedAt,
+        };
+        query2 = {
+          brand_id: req.identity.id,
+          status: "accepted",
+          isDeleted: false,
+          updatedAt: updatedAt,
+        };
+      }
+      if (data.timeInterval === "after") {
+        let updatedAt= {
+          ">=": new Date(new Date(data.acceptedDate).setHours(0, 0, 0))
+        }
+        query1 = {
+          addedBy: req.identity.id,
+          status: "accepted",
+          isDeleted: false,
+          updatedAt: updatedAt,
+        };
+        query2 = {
+          brand_id: req.identity.id,
+          status: "accepted",
+          isDeleted: false,
+          updatedAt: updatedAt,
+        };
+      }
+      // console.log(query1);
+      let listOfAcceptedInvites = await AffiliateInvite.find(query1);
+      let listOfBrandInvite = await AffiliateBrandInvite.find(query2);
+
+      function removeDuplicates(array, key) {
+        const seen = new Set();
+        return array.filter((item) => {
+          const keyValue = item[key];
+          if (seen.has(keyValue)) {
+            return false;
+          }
+          seen.add(keyValue);
+          return true;
+        });
+      }
+
+      // Combine the two lists
+      let combinedList = [...listOfBrandInvite, ...listOfAcceptedInvites];
+      console.log(combinedList);
+      // Remove duplicates based on the 'id' key
+      listOfAcceptedInvites = removeDuplicates(combinedList, "affiliate_id");
+
+      for (let invites of listOfAcceptedInvites) {
+        let findUser = await Users.findOne({
+          id: invites.affiliate_id,
+          status: data.affiliateStatus,
+          isDeleted: false,
+        });
+        let emailPayload = {
+          brandFullName: req.identity.fullName,
+          affiliateFullName: findUser.fullName,
+          affiliateEmail: findUser.email,
+          emailMessage: data.description,
+        };
+
+        await Emails.EmailMessageTemplate.sendEmailMessageTemplate(
+          emailPayload
+        );
+      }
+    }
+
+    if (data.affiliateStatus) {
+      query2 = {
+        brand_id: req.identity.id,
+        // status: "accepted",
+        isDeleted: false,
+        // status: data.affiliateStatus,
+      };
+      query1 = {
+        addedBy: req.identity.id,
+        // status: "accepted",
+        isDeleted: false,
+        // status: data.affiliateStatus,
+      };
+
+      // console.log(query1);
+      let listOfAcceptedInvites = await AffiliateInvite.find(query1);
+      let listOfBrandInvite = await AffiliateBrandInvite.find(query2);
+
+      function removeDuplicates(array, key) {
+        const seen = new Set();
+        return array.filter((item) => {
+          const keyValue = item[key];
+          if (seen.has(keyValue)) {
+            return false;
+          }
+          seen.add(keyValue);
+          return true;
+        });
+      }
+
+      // Combine the two lists
+      let combinedList = [...listOfBrandInvite, ...listOfAcceptedInvites];
+      console.log(combinedList);
+      // Remove duplicates based on the 'id' key
+      listOfAcceptedInvites = removeDuplicates(combinedList, "affiliate_id");
+
+      for (let invites of listOfAcceptedInvites) {
+        let findUser = await Users.findOne({ id: invites.affiliate_id ,status:data.affiliateStatus,isDeleted:false});
+        let emailPayload = {
+          brandFullName: req.identity.fullName,
+          affiliateFullName: findUser.fullName,
+          affiliateEmail: findUser.email,
+          emailMessage: data.description,
+        };
+
+        await Emails.EmailMessageTemplate.sendEmailMessageTemplate(
+          emailPayload
+        );
+      }
+    }
     // let isExists = await Users.findOne({ id: data.user_id, isDeleted: false });
 
     // if (!isExists) {
@@ -344,41 +526,7 @@ exports.sendEmailMessage = async (req, res) => {
     if (!emailMessage) {
       throw constants.EMAILMESSAGE.ERROR_SENDING_EMAIL;
     }
-
-    let listOfAcceptedInvites = await AffiliateInvite.find({
-      addedBy: req.identity.id,
-      status: "accepted",
-    });
-
-    for (let invites of listOfAcceptedInvites) {
-      let findUser = await Users.findOne({ id: invites.affiliate_id });
-      // listOfAffiliate.push(findUser);
-      let emailPayload = {
-        brandFullName: req.identity.fullName,
-        affiliateFullName: findUser.fullName,
-        affiliateEmail: findUser.email,
-        emailMessage: data.description,
-      };
-      await Emails.EmailMessageTemplate.sendEmailMessageTemplate(emailPayload);
-    }
-
-    let listOfBrandInvite = await AffiliateBrandInvite.find({
-      brand_id: req.identity.id,
-      status: "accepted",
-      isDeleted: false,
-    });
-
-    for (let invites of listOfBrandInvite) {
-      let findUser = await Users.findOne({ id: invites.affiliate_id });
-      let emailPayload = {
-        brandFullName: req.identity.fullName,
-        affiliateFullName: findUser.fullName,
-        affiliateEmail: findUser.email,
-        emailMessage: data.description,
-      };
-
-      await Emails.EmailMessageTemplate.sendEmailMessageTemplate(emailPayload);
-    }
+    
 
     response.success(emailMessage, constants.EMAILMESSAGE.ADDED, req, res);
   } catch (error) {
