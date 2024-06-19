@@ -129,7 +129,15 @@ exports.getAllAffiliateGroup = async (req, res) => {
         let query = {};
         let count = req.param('count') || 10;
         let page = req.param('page') || 1;
-        let { search, isDeleted, status, sortBy, addedBy,group_name } = req.query;
+        let {
+          search,
+          isDeleted,
+          status,
+          sortBy,
+          addedBy,
+          group_name,
+          group_type,
+        } = req.query;
         let skipNo = (Number(page) - 1) * Number(count);
 
         if (search) {
@@ -147,6 +155,9 @@ exports.getAllAffiliateGroup = async (req, res) => {
 
         if (status) {
             query.status = status;
+        }
+        if (group_type) {
+          query.group_type = group_type;
         }
         if (group_name) {
             query.group_name = group_name;
@@ -230,6 +241,7 @@ exports.getAllAffiliateGroup = async (req, res) => {
                 isArchive: "$isArchive",
                 commision: "$commision",
                 status: "$status",
+                group_type:"$group_type",
                 isPreRegisterLeads: "$isPreRegisterLeads",
                 affiliate_group_details: "$affiliate_group_details._id",
                 number_of_affiliate_added: { $size: "$affiliate_group_details" },
