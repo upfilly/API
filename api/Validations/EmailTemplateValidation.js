@@ -12,8 +12,8 @@ exports.addEmailTemplate = async (req, res, next) => {
     format: Joi.string().valid("HTML", "Text").default("HTML"),
     subject: Joi.string().required(),
     from: Joi.string().required(),
-    htmlContent: Joi.string().optional(),
-    textContent: Joi.string().optional(),
+    htmlContent: Joi.string().optional().allow(""),
+    textContent: Joi.string().optional().allow(""),
     imagesAndLinks: Joi.array()
       .items(
         Joi.object({
@@ -40,8 +40,8 @@ exports.editEmailTemplate = async (req, res, next) => {
     format: Joi.string().valid("HTML", "Text").default("HTML"),
     subject: Joi.string().required(),
     from: Joi.string().required(),
-    htmlContent: Joi.string().optional(),
-    textContent: Joi.string().optional(),
+    htmlContent: Joi.string().optional().allow(""),
+    textContent: Joi.string().optional().allow(""),
     imagesAndLinks: Joi.array()
       .items(
         Joi.object({
