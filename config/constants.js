@@ -589,5 +589,15 @@ module.exports.constants = {
         ID_REQUIRED:"Id required",
         INVALID_ID:"Invalid Id",
         FETCHED:"Fetched successfully"
-    }
+    },
+    EMAILTEMPLATE:{
+        ERROR_SENDING_EMAIL:"Error sending email template",
+        CREATED:"Email template added successfully",
+        ID_REQUIRED:"Id required",
+        INVALID_ID:"Invalid Id",
+        FETCHED:"Fetched successfully",
+        ALREADY_EXISTS:"Already Exists",
+        TEMPLATE_NOT_FOUND:"Template not found",
+        DELETED:"Email Template deleted successfully"
+    },
 }
