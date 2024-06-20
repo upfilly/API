@@ -421,10 +421,10 @@ exports.sendEmailMessage = async (req, res) => {
       for (let invites of listOfAcceptedInvites) {
         let findUser = await Users.findOne({
           id: invites.affiliate_id,
-          status: data.affiliateStatus,
+          // status: data.affiliateStatus,
           isDeleted: false,
         });
-        let emailPayload = {
+       if(findUser) {let emailPayload = {
           brandFullName: req.identity.fullName,
           affiliateFullName: findUser.fullName,
           affiliateEmail: findUser.email,
@@ -433,7 +433,7 @@ exports.sendEmailMessage = async (req, res) => {
 
         await Emails.EmailMessageTemplate.sendEmailMessageTemplate(
           emailPayload
-        );
+        );}
       }
     }
     // if(data.groups && data.groups.length>0){
@@ -499,10 +499,10 @@ exports.sendEmailMessage = async (req, res) => {
       for (let invites of listOfAcceptedInvites) {
         let findUser = await Users.findOne({
           id: invites.affiliate_id,
-          status: data.affiliateStatus,
+          // status: data.affiliateStatus,
           isDeleted: false,
         });
-        let emailPayload = {
+     if(findUser)  { let emailPayload = {
           brandFullName: req.identity.fullName,
           affiliateFullName: findUser.fullName,
           affiliateEmail: findUser.email,
@@ -511,7 +511,7 @@ exports.sendEmailMessage = async (req, res) => {
 
         await Emails.EmailMessageTemplate.sendEmailMessageTemplate(
           emailPayload
-        );
+        );}
       }
     }
 
@@ -553,7 +553,7 @@ exports.sendEmailMessage = async (req, res) => {
 
       for (let invites of listOfAcceptedInvites) {
         let findUser = await Users.findOne({ id: invites.affiliate_id, status: data.affiliateStatus, isDeleted: false });
-        let emailPayload = {
+        if(findUser){let emailPayload = {
           brandFullName: req.identity.fullName,
           affiliateFullName: findUser.fullName,
           affiliateEmail: findUser.email,
@@ -562,7 +562,7 @@ exports.sendEmailMessage = async (req, res) => {
 
         await Emails.EmailMessageTemplate.sendEmailMessageTemplate(
           emailPayload
-        );
+        );}
       }
     }
     // let isExists = await Users.findOne({ id: data.user_id, isDeleted: false });
