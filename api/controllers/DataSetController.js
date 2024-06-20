@@ -201,7 +201,7 @@ exports.sendDataSets = async (req, res) => {
     for (let invites of listOfAcceptedInvites) {
       let findUser = await Users.findOne({
         id: invites.affiliate_id,
-        status: data.affiliateStatus,
+        // status: data.affiliateStatus,
         isDeleted: false,
       });
       let emailPayload = {

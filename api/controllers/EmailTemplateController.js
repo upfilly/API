@@ -32,12 +32,57 @@ exports.create = async (req, res) => {
     if (isEmailTemplateExists) {
       throw constants.EMAILTEMPLATE.ALREADY_EXISTS;
     }
+
+    query1 = {
+      addedBy: req.identity.id,
+      status: "accepted",
+      isDeleted: false,
+    };
+    query2 = {
+      brand_id: req.identity.id,
+      status: "accepted",
+      isDeleted: false,
+    };
+
+    // console.log(query1);
+    let listOfAcceptedInvites = await AffiliateInvite.find(query1);
+    let listOfBrandInvite = await AffiliateBrandInvite.find(query2);
+
+    function removeDuplicates(array, key) {
+      const seen = new Set();
+      return array.filter((item) => {
+        const keyValue = item[key];
+        if (seen.has(keyValue)) {
+          return false;
+        }
+        seen.add(keyValue);
+        return true;
+      });
+    }
+
+    let combinedList = [...listOfBrandInvite, ...listOfAcceptedInvites];
+    console.log(combinedList);
+    // Remove duplicates based on the 'id' key
+    listOfAcceptedInvites = removeDuplicates(combinedList, "affiliate_id");
+
     req.body.addedBy = req.identity.id;
     req.body.updatedBy = req.identity.id;
     let newTemplate = await EmailTemplate.create(req.body).fetch();
-    for (let affiliate of data.affiliates) {
+    for (let affiliate of listOfAcceptedInvites) {
+      let findUser = await Users.findOne({
+        id: affiliate.affiliate_id,
+        isDeleted: false,
+      });
+      let emailPayload = {
+        brandFullName: req.identity.fullName,
+        affiliateFullName: findUser.fullName,
+        affiliateEmail: findUser.email,
+      };
+
+      await Emails.EmailTemplate.sendEmailTemplate(emailPayload);
+
       await EmailTemplateAffiliate.create({
-        affiliate_id: affiliate,
+        affiliate_id: affiliate.id,
         email_template_id: newTemplate.id,
         addedBy: req.identity.id,
         updatedBy: req.identity.id

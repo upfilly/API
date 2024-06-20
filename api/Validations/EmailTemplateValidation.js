@@ -3,7 +3,7 @@ const Validate = require('./Validate').validate;
 
 exports.addEmailTemplate = async (req, res, next) => {
   const schema = Joi.object({
-    affiliates:Joi.array().required(),
+    // affiliates:Joi.array().required(),
     templateName: Joi.string().required(),
     emailName: Joi.string().required(),
     purpose: Joi.string().required(),

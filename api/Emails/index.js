@@ -6,5 +6,6 @@ module.exports = {
     Commission:require('./CommissionEmails'),
     InviteUser:require("./InviteUserEmails"),
     DataSet:require("./DataSet"),
-    EmailMessageTemplate:require("./EmailMessageTemplate")
+    EmailMessageTemplate:require("./EmailMessageTemplate"),
+    EmailTemplate:require("./EmailTemplate"),
 }
