@@ -220,10 +220,9 @@ exports.sendDataSets = async (req, res) => {
 
     let dataset = await DataSet.create(data).fetch();
 
-    if (!emailMessage) {
+    if (!dataset) {
       throw constants.EMAILMESSAGE.ERROR_SENDING_EMAIL;
     }
-
 
     response.success(dataset, constants.DATASET.ADDED, req, res);
   } catch (err) {
