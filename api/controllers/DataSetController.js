@@ -211,20 +211,11 @@ exports.sendDataSets = async (req, res) => {
       };
 
       await Emails.DataSet.sendDataSet(emailPayload);
-    }
-
-
-
-
-    data.addedBy = req.identity.id;
-
+      data.addedBy = req.identity.id;
+      data.user_id = invites.affiliate_id;
     let dataset = await DataSet.create(data).fetch();
-
-    if (!dataset) {
-      throw constants.EMAILMESSAGE.ERROR_SENDING_EMAIL;
     }
-
-    response.success(dataset, constants.DATASET.ADDED, req, res);
+    response.success(null, constants.DATASET.ADDED, req, res);
   } catch (err) {
     response.failed(err, `${err}`, req, res);
   }
