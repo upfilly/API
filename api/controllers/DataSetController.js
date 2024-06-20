@@ -37,7 +37,7 @@ exports.importCsvData = async (req, res) => {
             // checking file type
             if (
               uploadedFile.type !==
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" &&
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" &&
               uploadedFile.type !== "text/csv"
             ) {
               reject({
@@ -164,178 +164,57 @@ exports.sendDataSets = async (req, res) => {
 
     // await Emails.DataSet.sendDataSet(emailPayload);
 
-    if (data.isAllJoined) {
-      query1 = {
-        addedBy: req.identity.id,
-        status: "accepted",
-        isDeleted: false,
-      };
-      query2 = {
-        brand_id: req.identity.id,
-        status: "accepted",
-        isDeleted: false,
-      };
 
-      // console.log(query1);
-      let listOfAcceptedInvites = await AffiliateInvite.find(query1);
-      let listOfBrandInvite = await AffiliateBrandInvite.find(query2);
-
-      function removeDuplicates(array, key) {
-        const seen = new Set();
-        return array.filter((item) => {
-          const keyValue = item[key];
-          if (seen.has(keyValue)) {
-            return false;
-          }
-          seen.add(keyValue);
-          return true;
-        });
-      }
-
-      // Combine the two lists
-      let combinedList = [...listOfBrandInvite, ...listOfAcceptedInvites];
-      console.log(combinedList);
-      // Remove duplicates based on the 'id' key
-      listOfAcceptedInvites = removeDuplicates(combinedList, "affiliate_id");
-
-      for (let invites of listOfAcceptedInvites) {
-        let findUser = await Users.findOne({
-          id: invites.affiliate_id,
-          status: data.affiliateStatus,
-          isDeleted: false,
-        });
-        let emailPayload = {
-      brandFullName: req.identity.fullName,
-      affiliateFullName: findUser.fullName,
-      affiliateEmail: findUser.email,
+    query1 = {
+      addedBy: req.identity.id,
+      status: "accepted",
+      isDeleted: false,
+    };
+    query2 = {
+      brand_id: req.identity.id,
+      status: "accepted",
+      isDeleted: false,
     };
 
-        await Emails.DataSet.sendDataSet(emailPayload);
-      }
-    }
-    // if(data.groups && data.groups.length>0){
+    // console.log(query1);
+    let listOfAcceptedInvites = await AffiliateInvite.find(query1);
+    let listOfBrandInvite = await AffiliateBrandInvite.find(query2);
 
-    // }
-    if (data.acceptedDate) {
-      if (data.timeInterval === "before") {
-       let updatedAt= {
-          "<=": new Date(new Date(data.acceptedDate).setHours(0, 0, 0))
+    function removeDuplicates(array, key) {
+      const seen = new Set();
+      return array.filter((item) => {
+        const keyValue = item[key];
+        if (seen.has(keyValue)) {
+          return false;
         }
-        query1 = {
-          addedBy: req.identity.id,
-          status: "accepted",
-          isDeleted: false,
-          updatedAt: updatedAt,
-        };
-        query2 = {
-          brand_id: req.identity.id,
-          status: "accepted",
-          isDeleted: false,
-          updatedAt: updatedAt,
-        };
-      }
-      if (data.timeInterval === "after") {
-        let updatedAt= {
-          ">=": new Date(new Date(data.acceptedDate).setHours(0, 0, 0))
-        }
-        query1 = {
-          addedBy: req.identity.id,
-          status: "accepted",
-          isDeleted: false,
-          updatedAt: updatedAt,
-        };
-        query2 = {
-          brand_id: req.identity.id,
-          status: "accepted",
-          isDeleted: false,
-          updatedAt: updatedAt,
-        };
-      }
-      // console.log(query1);
-      let listOfAcceptedInvites = await AffiliateInvite.find(query1);
-      let listOfBrandInvite = await AffiliateBrandInvite.find(query2);
-
-      function removeDuplicates(array, key) {
-        const seen = new Set();
-        return array.filter((item) => {
-          const keyValue = item[key];
-          if (seen.has(keyValue)) {
-            return false;
-          }
-          seen.add(keyValue);
-          return true;
-        });
-      }
-
-      // Combine the two lists
-      let combinedList = [...listOfBrandInvite, ...listOfAcceptedInvites];
-      console.log(combinedList);
-      // Remove duplicates based on the 'id' key
-      listOfAcceptedInvites = removeDuplicates(combinedList, "affiliate_id");
-
-      for (let invites of listOfAcceptedInvites) {
-        let findUser = await Users.findOne({
-          id: invites.affiliate_id,
-          status: data.affiliateStatus,
-          isDeleted: false,
-        });
-        let emailPayload = {
-          brandFullName: req.identity.fullName,
-          affiliateFullName: findUser.fullName,
-          affiliateEmail: findUser.email,
-        };
-
-        await Emails.DataSet.sendDataSet(emailPayload);
-      }
+        seen.add(keyValue);
+        return true;
+      });
     }
 
-    if (data.affiliateStatus) {
-      query2 = {
-        brand_id: req.identity.id,
-        // status: "accepted",
+    // Combine the two lists
+    let combinedList = [...listOfBrandInvite, ...listOfAcceptedInvites];
+    console.log(combinedList);
+    // Remove duplicates based on the 'id' key
+    listOfAcceptedInvites = removeDuplicates(combinedList, "affiliate_id");
+
+    for (let invites of listOfAcceptedInvites) {
+      let findUser = await Users.findOne({
+        id: invites.affiliate_id,
+        status: data.affiliateStatus,
         isDeleted: false,
-        // status: data.affiliateStatus,
-      };
-      query1 = {
-        addedBy: req.identity.id,
-        // status: "accepted",
-        isDeleted: false,
-        // status: data.affiliateStatus,
+      });
+      let emailPayload = {
+        brandFullName: req.identity.fullName,
+        affiliateFullName: findUser.fullName,
+        affiliateEmail: findUser.email,
       };
 
-      // console.log(query1);
-      let listOfAcceptedInvites = await AffiliateInvite.find(query1);
-      let listOfBrandInvite = await AffiliateBrandInvite.find(query2);
-
-      function removeDuplicates(array, key) {
-        const seen = new Set();
-        return array.filter((item) => {
-          const keyValue = item[key];
-          if (seen.has(keyValue)) {
-            return false;
-          }
-          seen.add(keyValue);
-          return true;
-        });
-      }
-
-      // Combine the two lists
-      let combinedList = [...listOfBrandInvite, ...listOfAcceptedInvites];
-      console.log(combinedList);
-      // Remove duplicates based on the 'id' key
-      listOfAcceptedInvites = removeDuplicates(combinedList, "affiliate_id");
-
-      for (let invites of listOfAcceptedInvites) {
-        let findUser = await Users.findOne({ id: invites.affiliate_id ,status:data.affiliateStatus,isDeleted:false});
-        let emailPayload = {
-          brandFullName: req.identity.fullName,
-          affiliateFullName: findUser.fullName,
-          affiliateEmail: findUser.email,
-        };
-
-        await Emails.DataSet.sendDataSet(emailPayload);
-      }
+      await Emails.DataSet.sendDataSet(emailPayload);
     }
+
+
+
 
     data.addedBy = req.identity.id;
 
@@ -344,7 +223,7 @@ exports.sendDataSets = async (req, res) => {
     if (!emailMessage) {
       throw constants.EMAILMESSAGE.ERROR_SENDING_EMAIL;
     }
-    
+
 
     response.success(dataset, constants.DATASET.ADDED, req, res);
   } catch (err) {
@@ -571,7 +450,7 @@ exports.sendEmailMessage = async (req, res) => {
     // }
     if (data.acceptedDate) {
       if (data.timeInterval === "before") {
-       let updatedAt= {
+        let updatedAt = {
           "<=": new Date(new Date(data.acceptedDate).setHours(0, 0, 0))
         }
         query1 = {
@@ -588,7 +467,7 @@ exports.sendEmailMessage = async (req, res) => {
         };
       }
       if (data.timeInterval === "after") {
-        let updatedAt= {
+        let updatedAt = {
           ">=": new Date(new Date(data.acceptedDate).setHours(0, 0, 0))
         }
         query1 = {
@@ -682,7 +561,7 @@ exports.sendEmailMessage = async (req, res) => {
       listOfAcceptedInvites = removeDuplicates(combinedList, "affiliate_id");
 
       for (let invites of listOfAcceptedInvites) {
-        let findUser = await Users.findOne({ id: invites.affiliate_id ,status:data.affiliateStatus,isDeleted:false});
+        let findUser = await Users.findOne({ id: invites.affiliate_id, status: data.affiliateStatus, isDeleted: false });
         let emailPayload = {
           brandFullName: req.identity.fullName,
           affiliateFullName: findUser.fullName,
@@ -708,7 +587,7 @@ exports.sendEmailMessage = async (req, res) => {
     if (!emailMessage) {
       throw constants.EMAILMESSAGE.ERROR_SENDING_EMAIL;
     }
-    
+
 
     response.success(emailMessage, constants.EMAILMESSAGE.ADDED, req, res);
   } catch (error) {
