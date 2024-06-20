@@ -213,10 +213,11 @@ exports.sendDataSets = async (req, res) => {
       await Emails.DataSet.sendDataSet(emailPayload);
       data.addedBy = req.identity.id;
       data.user_id = invites.affiliate_id;
-    let dataset = await DataSet.create(data).fetch();
+    await DataSet.create(data)
     }
     response.success(null, constants.DATASET.ADDED, req, res);
   } catch (err) {
+    console.log(err)
     response.failed(err, `${err}`, req, res);
   }
 };
