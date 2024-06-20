@@ -512,7 +512,8 @@ module.exports.routes = {
   'GET /emailtemplate': 'EmailTemplateController.read',
   'GET /emailtemplate/getAll': 'EmailTemplateController.getAll',
   'PUT /emailtemplate': 'EmailTemplateController.update',
-  'DELETE /emailtemplate': 'EmailTemplateController.delete'
+  'DELETE /emailtemplate': 'EmailTemplateController.delete',
+  'get /getUserEmailTemplate': 'EmailTemplateController.getUserEmailTemplate'
 };
 
 
