@@ -352,6 +352,7 @@ exports.getUserEmailTemplate = async (req, res) => {
         brand_details:"$brand_details",
         affiliate_id:"$affiliate_id",
         isDeleted: '$isDeleted',
+        textJSONContent:"$textJSONContent",
         status: '$status',
         addedBy: '$addedBy',
         updatedBy: '$updatedBy',
