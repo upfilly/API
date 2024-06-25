@@ -34,6 +34,7 @@ exports.editEmailTemplate = async (req, res, next) => {
   const schema = Joi.object({
     id: Joi.string().required(),
     templateName: Joi.string().required(),
+    textJSONContent:Joi.object().optional(),
     emailName: Joi.string().required(),
     purpose: Joi.string().required(),
     audience: Joi.string().optional(),
