@@ -591,6 +591,7 @@ module.exports.constants = {
         FETCHED:"Fetched successfully"
     },
     EMAILTEMPLATE:{
+        UPDATED:"Email template updated successfully",
         ERROR_SENDING_EMAIL:"Error sending email template",
         CREATED:"Email template added successfully",
         ID_REQUIRED:"Id required",
