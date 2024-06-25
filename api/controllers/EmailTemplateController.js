@@ -61,7 +61,7 @@ exports.create = async (req, res) => {
     }
 
     let combinedList = [...listOfBrandInvite, ...listOfAcceptedInvites];
-    console.log(combinedList);
+    // console.log(combinedList);
     // Remove duplicates based on the 'id' key
     listOfAcceptedInvites = removeDuplicates(combinedList, "affiliate_id");
 
@@ -120,17 +120,17 @@ exports.update = async (req, res) => {
     }
     let data = req.body;
     let id = req.body.id;
-    let query = {
-      templateName: data.templateName,
-      isDeleted: false,
-      addedBy: req.identity.id,
-      id: { "!=": req.body.id },
-    };
-    let isEmailTemplateExists = await EmailTemplate.findOne(query);
+    // let query = {
+    //   templateName: data.templateName,
+    //   isDeleted: false,
+    //   addedBy: req.identity.id,
+    //   id: { "!=": req.body.id },
+    // };
+    // let isEmailTemplateExists = await EmailTemplate.findOne(query);
 
-    if (isEmailTemplateExists) {
-      throw constants.EMAILTEMPLATE.ALREADY_EXISTS;
-    }
+    // if (isEmailTemplateExists) {
+    //   throw constants.EMAILTEMPLATE.ALREADY_EXISTS;
+    // }
 
     delete data.id;
 
@@ -167,7 +167,7 @@ exports.update = async (req, res) => {
     }
 
     let combinedList = [...listOfBrandInvite, ...listOfAcceptedInvites];
-    console.log(combinedList);
+    // console.log(combinedList);
     // Remove duplicates based on the 'id' key
     listOfAcceptedInvites = removeDuplicates(combinedList, "affiliate_id");
 
