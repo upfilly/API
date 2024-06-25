@@ -21,7 +21,7 @@ exports.getAllTransactions = async (req, res) => {
         let count = req.param('count') || 10;
         let page = req.param('page') || 1;
         let sortBy = req.param("sortBy")
-        let { subscription_plan_id,role, isDeleted, export_to_xls, transaction_type, paid_to, user_id, search, transaction_status } = req.query;
+        let { subscription_plan_id,time_duration,role, isDeleted, export_to_xls, transaction_type, paid_to, user_id, search, transaction_status } = req.query;
 
         if (search) {
             query.$or = [
@@ -54,6 +54,114 @@ exports.getAllTransactions = async (req, res) => {
         if (role) {
             query.role = role
         }
+
+        if (time_duration) {
+            switch (time_duration) {
+              case "today":
+                var today = new Date();
+                today.setHours(0, 0, 0, 0);
+                query.createdAt = {
+                  $gte: today.toISOString(),
+                  $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000).toISOString(),
+                };
+                break;
+      
+              case "tomorrow":
+                let tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                tomorrow.setHours(0, 0, 0, 0);
+                query.createdAt = {
+                  $gte: tomorrow.toISOString(),
+                  $lt: new Date(
+                    tomorrow.getTime() + 24 * 60 * 60 * 1000
+                  ).toISOString(),
+                };
+                break;
+      
+              case "this_weekend":
+                var today = new Date();
+                var saturday = new Date(today);
+                saturday.setDate(today.getDate() + ((6 - today.getDay() + 7) % 7));
+                saturday.setHours(0, 0, 0, 0);
+                var sunday = new Date(saturday);
+                sunday.setDate(saturday.getDate() + 1);
+                sunday.setHours(0, 0, 0, 0);
+      
+                query.createdAt = {
+                  $gte: saturday.toISOString(),
+                  $lt: new Date(sunday.getTime() + 24 * 60 * 60 * 1000).toISOString(),
+                };
+                break;
+      
+              case "this_week":
+                today = new Date();
+                var startOfWeek = new Date(today);
+                startOfWeek.setDate(today.getDate() - today.getDay());
+                startOfWeek.setHours(0, 0, 0, 0);
+                var endOfWeek = new Date(startOfWeek);
+                endOfWeek.setDate(startOfWeek.getDate() + 7);
+                endOfWeek.setHours(0, 0, 0, 0);
+      
+                query.createdAt = {
+                  $gte: startOfWeek.toISOString(),
+                  $lt: endOfWeek.toISOString(),
+                };
+                break;
+      
+              case "next_week":
+                var today = new Date();
+                var startOfNextWeek = new Date(today);
+                startOfNextWeek.setDate(
+                  today.getDate() + ((7 - today.getDay() + 1) % 7)
+                );
+                startOfNextWeek.setHours(0, 0, 0, 0);
+                var endOfNextWeek = new Date(startOfNextWeek);
+                endOfNextWeek.setDate(startOfNextWeek.getDate() + 7);
+                endOfNextWeek.setHours(0, 0, 0, 0);
+      
+                query.createdAt = {
+                  $gte: startOfNextWeek.toISOString(),
+                  $lt: endOfNextWeek.toISOString(),
+                };
+                break;
+      
+              case "this_month":
+                var today = new Date();
+                var startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+                var endOfMonth = new Date(
+                  today.getFullYear(),
+                  today.getMonth() + 1,
+                  0
+                );
+                query.createdAt = {
+                  $gte: startOfMonth.toISOString(),
+                  $lt: endOfMonth.toISOString(),
+                };
+                break;
+      
+              case "next_month":
+                var today = new Date();
+                var nextMonth = new Date(
+                  today.getFullYear(),
+                  today.getMonth() + 1,
+                  1
+                );
+                var startOfNextMonth = new Date(nextMonth);
+                var endOfNextMonth = new Date(
+                  nextMonth.getFullYear(),
+                  nextMonth.getMonth() + 1,
+                  0
+                );
+                query.createdAt = {
+                  $gte: startOfNextMonth.toISOString(),
+                  $lt: endOfNextMonth.toISOString(),
+                };
+                break;
+      
+              default:
+            }
+          }
+
 
         let sortquery = {};
         if (sortBy) {
