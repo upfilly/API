@@ -613,6 +613,7 @@ module.exports = {
    */
   userDetails: async function (req, res) {
     var id = req.param("id");
+    console.log("reached here");
     if (!id || typeof id == undefined) {
       return res.status(400).json({
         success: false,
@@ -620,12 +621,20 @@ module.exports = {
       });
     }
 
-    var userDetails = await Users.find({ where: { id: id } });
+    var userDetail = await Users.find({ where: { id: id } });
+
+    console.log(userDetail)
+    let get_permission = await Permissions.findOne({ role: userDetail.role });
+
+    if (get_permission) {
+      userDetail.permission_detail = get_permission;
+    }
+
 
     return res.status(200).json({
       success: true,
       code: 200,
-      data: userDetails,
+      data: userDetail,
     });
   },
 
@@ -1690,7 +1699,12 @@ module.exports = {
         //     }
         //   }
         // }
+        let get_permission = await Permissions.findOne({ role: get_user.role });
 
+        if (get_permission) {
+          get_user.permission_detail = get_permission;
+        }
+    
         return response.success(get_user, constants.user.FETCHED, req, res);
       }
       throw constants.user.INVALID_ID;
