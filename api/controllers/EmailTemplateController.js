@@ -69,6 +69,7 @@ exports.create = async (req, res) => {
     req.body.updatedBy = req.identity.id;
     let newTemplate = await EmailTemplate.create(req.body).fetch();
     for (let affiliate of listOfAcceptedInvites) {
+      // console.log(affiliate);
       let findUser = await Users.findOne({
         id: affiliate.affiliate_id,
         isDeleted: false,
@@ -82,10 +83,10 @@ exports.create = async (req, res) => {
       await Emails.EmailTemplate.sendEmailTemplate(emailPayload);
 
       await EmailTemplateAffiliate.create({
-        affiliate_id: affiliate.id,
+        affiliate_id: affiliate.affiliate_id,
         email_template_id: newTemplate.id,
         addedBy: req.identity.id,
-        updatedBy: req.identity.id
+        updatedBy: req.identity.id,
       });
     }
     return response.success(newTemplate, constants.EMAILTEMPLATE.CREATED, req, res);
