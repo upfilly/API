@@ -516,6 +516,12 @@ module.exports.routes = {
   "get /getUserEmailTemplate": "EmailTemplateController.getUserEmailTemplate",
 
   "get /affiliate/banners": "BannerController.getAllAffiliateBanner",
+
+  "POST /affiliatelink": "AffiliateLinkController.create",
+  "GET /affiliatelink/all": "AffiliateLinkController.find",
+  "GET /affiliatelink": "AffiliateLinkController.findOne",
+  "PUT /affiliatelink": "AffiliateLinkController.update",
+  "DELETE /affiliatelink": "AffiliateLinkController.destroy",
 };
 
 

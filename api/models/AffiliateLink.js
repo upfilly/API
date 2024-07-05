@@ -11,6 +11,24 @@ module.exports = {
   attributes: {
     affiliate_id: { model: "users" },
     link: { type: "string" },
+
+    event: {
+      type: 'string',
+      required: true
+    },
+    timestamp: {
+      type: 'string',
+      required: true
+    },
+    urlParams: {
+      type: 'json',
+      required: true
+    },
+    data: {
+      type: 'json',
+      required: true
+    },
+    
     updatedBy: { model: "users" },
     createdAt: { type: "ref", autoCreatedAt: true, },
     updatedAt: { type: "ref", autoUpdatedAt: true, },
