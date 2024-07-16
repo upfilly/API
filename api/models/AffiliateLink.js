@@ -14,11 +14,9 @@ module.exports = {
 
     event: {
       type: 'string',
-      required: true
     },
     timestamp: {
       type: 'string',
-      required: true
     },
     urlParams: {
       type: 'json',

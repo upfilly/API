@@ -38,6 +38,7 @@ exports.generateLink = async (req, res) => {
         return response.success(get_link, constants.TRACKING.LINK, req, res);
 
     } catch (err) {
+      console.log(err);
         return response.failed(null, `${err}`, req, res);
     }
 }
