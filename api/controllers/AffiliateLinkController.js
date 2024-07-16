@@ -68,8 +68,8 @@ exports.create = async function (req, res) {
     if (!event || !timestamp || !urlParams || !data) {
       return response.failed(null, constants.AFFILIATELINK.MISSING_FIELDS, req, res);
     }
-    req.body.addedBy=req.identity.id;
-    req.body.updatedBy=req.identity.id;
+    req.body.addedBy=(req.identity?.id)?req.identity.id:null;
+    req.body.updatedBy=(req.identity?.id)?req.identity.id:null;
 
     const newAffiliateLink = await AffiliateLink.create(req.body).fetch();
 
