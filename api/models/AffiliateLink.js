@@ -20,11 +20,10 @@ module.exports = {
     },
     urlParams: {
       type: 'json',
-      required: true
+      
     },
     data: {
       type: 'json',
-      required: true
     },
     addedBy:{ model: "users" },
     updatedBy: { model: "users" },
