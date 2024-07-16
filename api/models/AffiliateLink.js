@@ -28,7 +28,7 @@ module.exports = {
       type: 'json',
       required: true
     },
-    
+    addedBy:{ model: "users" },
     updatedBy: { model: "users" },
     createdAt: { type: "ref", autoCreatedAt: true, },
     updatedAt: { type: "ref", autoUpdatedAt: true, },

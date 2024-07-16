@@ -76,7 +76,7 @@ module.exports = {
 
     // Coupon commission
     couponCommission: {
-      type: "number",
+      type: "string",
       required: true,
     },
     addedBy: { model: "users" },
