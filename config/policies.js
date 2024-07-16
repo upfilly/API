@@ -94,4 +94,8 @@ module.exports.policies = {
   //   getOriginalUrl: true
 
   // }
+  AffiliateLinkController:{
+
+    create:true
+  }
 };
