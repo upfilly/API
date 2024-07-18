@@ -2087,7 +2087,7 @@ module.exports = {
             { id: permissions.id, user_id: id },
             permissions
           );
-          if (["team"].includes(req.identity.role)) {
+          if (["brand","affiliate"].includes(req.identity.role)) {
             await Services.AuditTrial.create_audit_trial(
               req.identity.id,
               "permissions",
@@ -2166,7 +2166,7 @@ module.exports = {
           });
         }
 
-        if (["team"].includes(req.identity.role)) {
+        if (["brand","affiliate"].includes(req.identity.role)) {
           await Services.AuditTrial.create_audit_trial(
             req.identity.id,
             "users",
