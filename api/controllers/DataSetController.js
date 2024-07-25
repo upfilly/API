@@ -14,6 +14,8 @@ const excel = require("exceljs");
 const Validations = require("../Validations/index");
 const Emails = require("../Emails");
 // const EmailMessageTemplate = require("../models/EmailMessageTemplate");
+const https = require('https');
+// const FileType = require('file-type');
 
 exports.importCsvData = async (req, res) => {
   let duplicate = 0;
@@ -109,6 +111,87 @@ exports.importCsvData = async (req, res) => {
     });
   }
 };
+
+
+
+
+exports.importCsvDataHttp = async (req, res) => {
+  let duplicate = 0;
+  let createdCount = 0;
+  try {
+    let user_id = req.query.id;
+    let isExists = await DataSet.findOne({user_id:user_id});
+    if(!isExists) {
+      throw ""
+    }
+    const url = req.query.url; // assume the URL is sent in the request body
+    const { fileType1, fileBuffer } = await getFileFromUrl(url);
+    let fileType= url.substr(url.lastIndexOf(".")+1)
+    if (fileType !== 'csv' && fileType !== 'xlsx' && fileType !== 'xls') {
+      throw {
+        success: false,
+        error: {
+          code: 404,
+          message: 'Invalid file type',
+        },
+      };
+    }
+    let student_arr;
+    if (fileType === 'csv') {
+      student_arr = await parseCSV(fileBuffer.toString('utf8'));
+    } else {
+      student_arr = await parseExcelFile(fileBuffer);
+    }
+    response.success(
+      student_arr,
+      constants.CSVDATA.IMPORTED_SUCCESSFULLY,
+      req,
+      res
+    );
+  } catch (err) {
+    console.log(err);
+    res.status(400).json({
+      success: false,
+      error: {
+        code: 400,
+        message: err,
+      },
+    });
+  }
+};
+
+async function getFileFromUrl(url) {
+  return new Promise((resolve, reject) => {
+    https.get(url, (res) => {
+      const fileType = res.headers['content-type'];
+      const chunks = [];
+      res.on('data', (chunk) => {
+        chunks.push(chunk);
+      });
+      res.on('end', () => {
+        const fileBuffer = Buffer.concat(chunks);
+        resolve({ fileType, fileBuffer });
+      });
+    }).on('error', (err) => {
+      reject(err);
+    });
+  });
+}
+
+// async function getFileType(fileBuffer) {
+//   const fileType = await FileType.fromBuffer(fileBuffer);
+//   return fileType.ext;
+// }
+
+async function parseExcelFile(fileBuffer) {
+  const workbook = xlsx.read(fileBuffer, { type: 'buffer' });
+  const sheetName = workbook.SheetNames[0];
+  const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
+  return data;
+}
+
+
+
 async function parseCSV(csvData) {
   // Split the CSV data by lines
   const lines = csvData.trim().split("\n");

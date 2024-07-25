@@ -496,6 +496,7 @@ module.exports.routes = {
   "post /csv/import": "DataSetController.importCsvData",
   "post /dataset/send": "DataSetController.sendDataSets",
   "get /dataset/list": "DataSetController.listOfDataSet",
+  "get /dataset/view": "DataSetController.importCsvDataHttp",
   /**
    * @EmailMessageTemplate
    *

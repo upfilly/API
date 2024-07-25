@@ -10,14 +10,6 @@ module.exports = {
   attributes: {
     module: {
       type: "string",
-      isIn: [
-        'users',
-        'permissions',
-        'settings',
-        'smtp',
-        'commoncategories',
-        'contentmanagement'
-      ]
     },
     type: { type: "string", isIn: ['created', 'updated', 'deleted'] },
     user_id: { model: "users" },

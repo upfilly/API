@@ -133,7 +133,7 @@ module.exports = {
     company_mobile_no: { type: 'string' },
     is_mobile_verified: { type: 'Boolean', defaultsTo: false },
 
-
+    
     //Paypal
     paypal_customer_id: { type: 'string' },
     paypal_subscription_id: { type: 'string' },
@@ -188,7 +188,7 @@ module.exports = {
   },
 
   beforeCreate: function (user, next) {
-    // console.log(user,"--------------user");
+    console.log(user,"--------------user");
     if (user.firstName || user.lastName) {
       user.fullName = user.firstName + ' ' + user.lastName;
     }

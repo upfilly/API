@@ -220,7 +220,7 @@ exports.editBanner = async (req, res) => {
 
         await AffiliateBanners.create({
           affiliate_id: affiliate.affiliate_id,
-          banner_id: add_detail.id,
+          banner_id: update_detail.id,
           addedBy: req.identity.id,
           updatedBy: req.identity.id,
         });
@@ -235,6 +235,7 @@ exports.editBanner = async (req, res) => {
     }
     throw constants.BANNER.INVALID_ID;
   } catch (err) {
+    console.log(err);
     return response.failed(null, `${err}`, req, res);
   }
 };

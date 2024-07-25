@@ -4299,6 +4299,8 @@ module.exports = {
           logo: "$logo",
           address: "$address",
           country: "$country",
+          
+          canChangeProjectStatus:"$canChangeProjectStatus",
           mobileNo: "$mobileNo",
           work_phone: "$work_phone",
           affiliate_code: "$affiliate_code",
