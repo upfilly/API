@@ -22,10 +22,10 @@ module.exports = {
             return res.status(200).json({
                 success: true,
                 message: "First promoter removed successfully",
-                data:response.reponse.data
+                data:response.data
             });
         } catch (error) {
-            console.log(error.response.data);
+            console.log(error);
             return res.status(400).json({
                 success: false,
                 error: { message: error },
@@ -47,9 +47,10 @@ module.exports = {
             return res.status(200).json({
                 success: true,
                 message: "First promoter updated successfully",
-                data:response
+                data:response.data
             });
         } catch (error) {
+            console.log(error)
             return res.status(400).json({
                 success: false,
                 error: { message: error },
