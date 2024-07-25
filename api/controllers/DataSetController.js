@@ -6,6 +6,7 @@
  */
 const response = require("../services/Response");
 const constants = require("../../config/constants").constants;
+const constant = require("../../config/local");
 const db = sails.getDatastore().manager;
 const ObjectId = require("mongodb").ObjectId;
 const fs = require("fs");
@@ -120,30 +121,36 @@ exports.importCsvDataHttp = async (req, res) => {
   let createdCount = 0;
   try {
     let user_id = req.query.id;
-    let isExists = await DataSet.findOne({user_id:user_id});
+    let isExists = await DataSet.find({user_id:user_id});
     if(!isExists) {
-      throw ""
+      throw "No data found";
     }
-    const url = req.query.url; // assume the URL is sent in the request body
-    const { fileType1, fileBuffer } = await getFileFromUrl(url);
-    let fileType= url.substr(url.lastIndexOf(".")+1)
-    if (fileType !== 'csv' && fileType !== 'xlsx' && fileType !== 'xls') {
-      throw {
-        success: false,
-        error: {
-          code: 404,
-          message: 'Invalid file type',
-        },
-      };
+    let listOfData = [];
+    for await(let data of isExists){
+      const url = constant.BACK_WEB_URL+"/"+data.filePath; // assume the URL is sent in the request body
+      console.log(url);
+      const { fileType1, fileBuffer } = await getFileFromUrl(url);
+      let fileType= url.substr(url.lastIndexOf(".")+1)
+      if (fileType !== 'csv' && fileType !== 'xlsx' && fileType !== 'xls') {
+        throw {
+          success: false,
+          error: {
+            code: 404,
+            message: 'Invalid file type',
+          },
+        };
+      }
+      let student_arr;
+      if (fileType === 'csv') {
+        student_arr = await parseCSV(fileBuffer.toString('utf8'));
+      } else {
+        student_arr = await parseExcelFile(fileBuffer);
+      }
+      listOfData.push(student_arr);
     }
-    let student_arr;
-    if (fileType === 'csv') {
-      student_arr = await parseCSV(fileBuffer.toString('utf8'));
-    } else {
-      student_arr = await parseExcelFile(fileBuffer);
-    }
+   
     response.success(
-      student_arr,
+      listOfData,
       constants.CSVDATA.IMPORTED_SUCCESSFULLY,
       req,
       res
