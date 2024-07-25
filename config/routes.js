@@ -508,21 +508,30 @@ module.exports.routes = {
    * @EmailTemplate
    *
    */
-
+  
   "POST /emailtemplate": "EmailTemplateController.create",
   "GET /emailtemplate": "EmailTemplateController.read",
   "GET /emailtemplate/getAll": "EmailTemplateController.getAll",
   "PUT /emailtemplate": "EmailTemplateController.update",
   "DELETE /emailtemplate": "EmailTemplateController.delete",
   "get /getUserEmailTemplate": "EmailTemplateController.getUserEmailTemplate",
-
+  
   "get /affiliate/banners": "BannerController.getAllAffiliateBanner",
-
+  
   "POST /affiliatelink": "AffiliateLinkController.create",
   "GET /affiliatelink/all": "AffiliateLinkController.find",
   "GET /affiliatelink": "AffiliateLinkController.findOne",
   "PUT /affiliatelink": "AffiliateLinkController.update",
   "DELETE /affiliatelink": "AffiliateLinkController.destroy",
+  
+  /**
+   * @FirstPromoter
+  */
+ 
+ "DELETE /firstpromoter/delete": "FirstpromoterController.removeFirstPromoter",
+ "PUT /firstpromoter/update": "FirstpromoterController.updateFirstPromoter",
+
+
 };
 
 

@@ -97,5 +97,9 @@ module.exports.policies = {
   AffiliateLinkController:{
 
     create:true
+  },
+  FirstpromoterController:{
+    removeFirstPromoter:true,
+    updateFirstPromoter:true
   }
 };
