@@ -12,7 +12,7 @@ module.exports = {
     group_name: { type: "string" },
     group_code: { type: "string" },
     group_type:{type:"string"},
-    // isDefaultAffiliateGroup: { type: 'Boolean', defaultsTo: false },
+    isDefaultAffiliateGroup: { type: 'Boolean', defaultsTo: false },
     isArchive: { type: 'Boolean', defaultsTo: false },
     isPreRegisterLeads: { type: 'Boolean', defaultsTo: false },
     commision: { type: "string" },

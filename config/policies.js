@@ -94,4 +94,12 @@ module.exports.policies = {
   //   getOriginalUrl: true
 
   // }
+  AffiliateLinkController:{
+
+    create:true
+  },
+  FirstpromoterController:{
+    removeFirstPromoter:true,
+    updateFirstPromoter:true
+  }
 };

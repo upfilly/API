@@ -48,7 +48,7 @@ module.exports = {
 
       // Check if an invite already exists
       const existingInvite = await InviteUsers.findOne({
-        email: email,
+        email: email.toLowerCase(),
         addedBy: req.identity.id,
         isDeleted: false,
       });
@@ -67,7 +67,7 @@ module.exports = {
           email: email,
           role: role,
           description: description,
-          user_id: newUser.id,
+          user_id: existingUser.id,
           brand_id:brand_id,
           language: language,
           addedBy: req.identity.id,
@@ -77,9 +77,9 @@ module.exports = {
         let password = await generatePassword();
         // Create new user
         let newUser = await Users.create({
-          firstName,
-          lastName,
-          email,
+          firstName:firstName,
+          lastName:lastName,
+          email:email,
           role: role,
           password: password,
           isVerified: "Y",

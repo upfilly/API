@@ -7,6 +7,10 @@
 
 module.exports = {
   attributes: {
+    textJSONContent:{
+      type:"json",
+      defaultsTo:[]
+    },
     templateName: {
       type: "string",
       required: true,

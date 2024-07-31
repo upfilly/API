@@ -110,7 +110,7 @@ exports.getAllScript = async (req, res) => {
                 id: "$_id",
                 script_content: "$script_content",
                 script_type: "$script_type",
-                isDeleted:"$isDeleted",
+                isDeleted: "$isDeleted",
                 status: "$status",
                 addedBy: "$addedBy",
                 addedBy_name: "$addedBy_details.fullName",

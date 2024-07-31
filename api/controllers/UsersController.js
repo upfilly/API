@@ -492,6 +492,7 @@ module.exports = {
         res
       );
     } catch (error) {
+      console.log(error);
       return response.failed(null, `${error}`, req, res);
     }
   },
@@ -613,6 +614,7 @@ module.exports = {
    */
   userDetails: async function (req, res) {
     var id = req.param("id");
+    console.log("reached here");
     if (!id || typeof id == undefined) {
       return res.status(400).json({
         success: false,
@@ -620,12 +622,20 @@ module.exports = {
       });
     }
 
-    var userDetails = await Users.find({ where: { id: id } });
+    var userDetail = await Users.find({ where: { id: id } });
+
+    console.log(userDetail)
+    let get_permission = await Permissions.findOne({ role: userDetail.role });
+
+    if (get_permission) {
+      userDetail.permission_detail = get_permission;
+    }
+
 
     return res.status(200).json({
       success: true,
       code: 200,
-      data: userDetails,
+      data: userDetail,
     });
   },
 
@@ -1690,7 +1700,12 @@ module.exports = {
         //     }
         //   }
         // }
+        let get_permission = await Permissions.findOne({ role: get_user.role });
 
+        if (get_permission) {
+          get_user.permission_detail = get_permission;
+        }
+    
         return response.success(get_user, constants.user.FETCHED, req, res);
       }
       throw constants.user.INVALID_ID;
@@ -2073,7 +2088,7 @@ module.exports = {
             { id: permissions.id, user_id: id },
             permissions
           );
-          if (["team"].includes(req.identity.role)) {
+          if (["brand","affiliate"].includes(req.identity.role)) {
             await Services.AuditTrial.create_audit_trial(
               req.identity.id,
               "permissions",
@@ -2152,7 +2167,7 @@ module.exports = {
           });
         }
 
-        if (["team"].includes(req.identity.role)) {
+        if (["brand","affiliate"].includes(req.identity.role)) {
           await Services.AuditTrial.create_audit_trial(
             req.identity.id,
             "users",
@@ -4285,6 +4300,8 @@ module.exports = {
           logo: "$logo",
           address: "$address",
           country: "$country",
+          
+          canChangeProjectStatus:"$canChangeProjectStatus",
           mobileNo: "$mobileNo",
           work_phone: "$work_phone",
           affiliate_code: "$affiliate_code",

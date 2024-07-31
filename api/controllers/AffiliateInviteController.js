@@ -73,7 +73,6 @@ module.exports = {
       } else {
         throw constants.AFFILIATEINVITE.ALREADY_EXIST;
       }
-
     } catch (error) {
       console.log(error);
       return response.failed(null, `${error}`, req, res);

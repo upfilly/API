@@ -8,22 +8,11 @@
 module.exports = {
   schema: true,
   attributes: {
-    module: {
-      type: "string",
-      isIn: [
-        'users',
-        'permissions',
-        'settings',
-        'smtp',
-        'commoncategories',
-        'contentmanagement'
-      ]
-    },
-    type: { type: "string", isIn: ['created', 'updated', 'deleted'] },
-    user_id: { model: "users" },
-    changed_id: { type: "string" },
-    old_data: { type: "json", },
-    data: { type: "json", },
+    model: { type: 'string', required: true },
+    action: { type: 'string', required: true },
+    previousState: { type: 'json', defaultsTo: {} },
+    currentState: { type: 'json', defaultsTo: {} },
+    performedBy: { type: 'string', required: true },
     isDeleted: { type: 'Boolean', defaultsTo: false },
     createdAt: { type: "ref", autoCreatedAt: true },
     updatedAt: { type: "ref", autoUpdatedAt: true },
