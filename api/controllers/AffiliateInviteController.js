@@ -34,11 +34,9 @@ module.exports = {
         isDeleted: false,
       });
 
-      console.log(result,"================");
+      console.log(result, "================");
       if (result.length === 0) {
-
         for await (let affiliate_id of data.affiliate_id) {
-
           let result1 = await AffiliateInvite.create({
             affiliate_id: affiliate_id,
             message: data.message,
