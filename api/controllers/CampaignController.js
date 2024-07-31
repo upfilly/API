@@ -306,6 +306,7 @@ exports.getAllCampaigns = async (req, res) => {
                 affiliate_name: "$affiliate_id_details.fullName",
                 brand_id: "$brand_id",
                 brand_name: "$brand_id_details.fullName",
+                group_type:"$group_type",
                 name: "$name",
                 images: "$images",
                 videos: "$videos",
@@ -419,8 +420,62 @@ exports.changeCampaignStatus = async (req, res) => {
             throw constants.CAMPAIGN.INVALID_ID;
         }
 
+        if(get_campaign && get_campaign.access_type === "public"){
+            if (!['affiliate'].includes(req.identity.role)) {
+                throw constants.COMMON.UNAUTHORIZED;
+            }
+            switch (req.body.status) {
+                case "accepted":
+                    req.body.accepted_at = new Date()
+                    break;
+                default:
+                    break;
+    
+            }
+            req.body.addedBy = user_id;
+            
 
+            let publicCampaign = await PublicCampaigns.findOne({affiliate_id:req.identity.id,campaign_id:get_campaign.id,brand_id:get_campaign.addedBy,addedBy:req.identity.id});
+            
+            if(publicCampaign){
+                throw "Campaign request already accepted";
+            }
 
+            await PublicCampaigns.create({affiliate_id:req.identity.id,campaign_id:get_campaign.id,brand_id:get_campaign.addedBy,addedBy:req.identity.id});
+            
+            let email_payload = {
+                affiliate_id: req.identity.id,
+                brand_id: get_campaign.brand_id,
+                status: req.body.status,
+                reason: req.body.reason?req.body.reason:"",
+            };
+            
+            console.log(email_payload,"---------->");
+            
+            await Emails.CampaignEmails.changeStatus(email_payload);
+
+            let device_token = "";
+            let notification_payload = {};
+            notification_payload.type = "campaign"
+            notification_payload.addedBy = req.identity.id;
+            notification_payload.title = `Campaign ${await Services.Utils.title_case(get_campaign.status)} | ${await Services.Utils.title_case(get_campaign.name)} | ${req.identity.fullName}`;
+            notification_payload.message = `Your campaign request is ${await Services.Utils.title_case(get_campaign.status)}`;
+            notification_payload.send_to = get_campaign.brand_id;
+            notification_payload.campaign_id = get_campaign.id;
+            let brandDetail = await Users.findOne({ id: get_campaign.brand_id })
+            let create_notification = await Notifications.create(notification_payload).fetch();
+            if (create_notification && brandDetail && brandDetail.device_token) {
+                let fcm_payload = {
+                    device_token: brandDetail.device_token,
+                    title: req.identity.fullName,
+                    message: create_notification.message,
+                }
+
+                await Services.FCM.send_fcm_push_notification(fcm_payload)
+            }
+            return response.success(null, constants.CAMPAIGN.STATUS_UPDATE, req, res)
+        }
+else{
         if (req.body.status == "accepted" && ['accepted'].includes(get_campaign.status)) {
             throw constants.CAMPAIGN.CANNOT_ACCEPT;
         }
@@ -438,16 +493,17 @@ exports.changeCampaignStatus = async (req, res) => {
 
         }
 
-        req.body.updatedBy = req.identity.id;
+        req.body.updatedBy = user_id;
         let update_status = await Campaign.updateOne({ id: req.body.id }, req.body);
 
         if (update_status) {
             let email_payload = {
-                affiliate_id: get_campaign.affiliate_id,
+                affiliate_id: req.identity.id,
                 brand_id: get_campaign.brand_id,
                 status: update_status.status,
                 reason: update_status.reason
             };
+            console.log(email_payload,"---------->");
             await Emails.CampaignEmails.changeStatus(email_payload);
 
             let device_token = "";
@@ -471,6 +527,7 @@ exports.changeCampaignStatus = async (req, res) => {
             }
             return response.success(null, constants.CAMPAIGN.STATUS_UPDATE, req, res)
         }
+    }
         throw constants.COMMON.SERVER_ERROR
 
     } catch (error) {

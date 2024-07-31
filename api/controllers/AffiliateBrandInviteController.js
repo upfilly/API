@@ -87,14 +87,14 @@ exports.sendApplyRequest = async (req, res) => {
             addedBy = affiliate_id;
             updatedBy = affiliate_id;
             brand_id = brand_id;
-            inviteCreated = await AffiliateBrandInvite.create({affiliate_id,addedBy,updatedBy,brand_id}).fetch();
+            inviteCreated = await AffiliateBrandInvite.create({ affiliate_id, addedBy, updatedBy, brand_id }).fetch();
           }
         } else {
           affiliate_id = affiliate_id;
           addedBy = affiliate_id;
           updatedBy = affiliate_id;
           brand_id = brand_id;
-          inviteCreated = await AffiliateBrandInvite.create({affiliate_id,addedBy,updatedBy,brand_id}).fetch();
+          inviteCreated = await AffiliateBrandInvite.create({ affiliate_id, addedBy, updatedBy, brand_id }).fetch();
         }
 
         if (inviteCreated) {
@@ -119,7 +119,7 @@ exports.sendApplyRequest = async (req, res) => {
         throw `Brand with ID: ${brand_id} does not exist.`;
       }
 
-      
+
       //-------------------- Send Notification ------------------//
       let notification_payload = {};
       // notification_payload.send_to = add_campaign.affiliate_id;
@@ -132,13 +132,13 @@ exports.sendApplyRequest = async (req, res) => {
 
       let brand_detail = await Users.findOne({ id: find_brand.id })
       if (create_notification && brand_detail.device_token) {
-          let fcm_payload = {
-              device_token: brand_detail.device_token,
-              title: req.identity.fullName,
-              message: create_notification.message,
-          }
+        let fcm_payload = {
+          device_token: brand_detail.device_token,
+          title: req.identity.fullName,
+          message: create_notification.message,
+        }
 
-          await Services.FCM.send_fcm_push_notification(fcm_payload)
+        await Services.FCM.send_fcm_push_notification(fcm_payload)
       }
     }
 
@@ -186,8 +186,8 @@ exports.getAllRequests = async (req, res) => {
       query.isDeleted = isDeleted
         ? isDeleted === "true"
         : true
-        ? isDeleted
-        : false;
+          ? isDeleted
+          : false;
     }
 
     let sortquery = {};
@@ -356,36 +356,36 @@ exports.changeRequestStatus = async (req, res) => {
     return response.failed(null, `${error}`, req, res);
   }
 };
-exports.getRequestDetail= async (req, res) => {
-        try {
-          // console.log("asdfsadf")
-          const id = req.param("id");
-          if (!id) {
-            return res.status(400).json({
-              success: false,
-              code: 400,
-              message: constants.user.ID_REQUIRED,
-            });
-          } else {
-            let requestDetail = await AffiliateBrandInvite.findOne({ id: id ,isDeleted:false})
-              .populate("brand_id")
-              .populate("affiliate_id")
-              .populate("addedBy");
-            if (!requestDetail) {
-              return res.status(400).json({
-                success: false,
-                code: 400,
-                message: constants.AFFILIATEINVITE.INVALID_ID,
-              });
-            }
-            return res.status(200).json({
-              success: true,
-              message:constants.AFFILIATEINVITE.FETCHED,
-              data: requestDetail,
-            });
-          }
-        } catch (err) {
-          console.log(err);
-          return res.status(400).json({ success: false, code: 400, error: err });
-        }
+exports.getRequestDetail = async (req, res) => {
+  try {
+    // console.log("asdfsadf")
+    const id = req.param("id");
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        code: 400,
+        message: constants.user.ID_REQUIRED,
+      });
+    } else {
+      let requestDetail = await AffiliateBrandInvite.findOne({ id: id, isDeleted: false })
+        .populate("brand_id")
+        .populate("affiliate_id")
+        .populate("addedBy");
+      if (!requestDetail) {
+        return res.status(400).json({
+          success: false,
+          code: 400,
+          message: constants.AFFILIATEINVITE.INVALID_ID,
+        });
       }
+      return res.status(200).json({
+        success: true,
+        message: constants.AFFILIATEINVITE.FETCHED,
+        data: requestDetail,
+      });
+    }
+  } catch (err) {
+    console.log(err);
+    return res.status(400).json({ success: false, code: 400, error: err });
+  }
+}

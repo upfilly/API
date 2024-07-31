@@ -1,10 +1,12 @@
 module.exports = {
-    OnboardingEmails: require('./OnboardingEmails'),
-    CampaignEmails: require("./CampaignEmails"),
-    ProposalEmails: require("./ProposalEmails"),
-    MakeOfferEmails: require("./MakeOfferEmails"),
-    Commission:require('./CommissionEmails'),
-    InviteUser:require("./InviteUserEmails"),
-    DataSet:require("./DataSet"),
-    EmailMessageTemplate:require("./EmailMessageTemplate")
-}
+  OnboardingEmails: require("./OnboardingEmails"),
+  CampaignEmails: require("./CampaignEmails"),
+  ProposalEmails: require("./ProposalEmails"),
+  MakeOfferEmails: require("./MakeOfferEmails"),
+  Commission: require("./CommissionEmails"),
+  InviteUser: require("./InviteUserEmails"),
+  DataSet: require("./DataSet"),
+  EmailMessageTemplate: require("./EmailMessageTemplate"),
+  EmailTemplate: require("./EmailTemplate"),
+  AffiliateBanner: require("./AffiliateBanner"),
+};
