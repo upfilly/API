@@ -32,24 +32,93 @@ module.exports = {
     createdAt: { type: "ref", autoCreatedAt: true },
     updatedAt: { type: "ref", autoUpdatedAt: true },
   },
-  beforeCreate: async function (newlyInsertedRecord, proceed) {
-    // let isExists = await AuditTrials.findOne({id:newlyInsertedRecord.id,isDeleted:false});
-    // let beforeCreated = {};
-    // beforeCreated = await AuditTrials.create({old_data:isExists.old_data,module:'banner',type:"created"}).fetch();
-    // return proceed();
-    console.log("Banner created");
-  },
-  beforeUpdate: async function (newlyInsertedRecord, proceed) {
-    let isExists = await Banner.findOne({
-      id: newlyInsertedRecord.id,
-      isDeleted: false,
-    });
-    let beforeCreated = {};
-    beforeCreated = await AuditTrials.create({
-      old_data: isExists,
-      module: "banner",
-      type: "updated",
-    }).fetch();
+
+  afterCreate: async function (newlyInsertedRecord, proceed) {
+    await AuditService.log(
+      'create',
+      'Banners',
+      null,
+      newlyInsertedRecord,
+      newlyInsertedRecord.addedBy// or fetch from the session if available
+    );
     return proceed();
   },
+  beforeUpdate: async function (newlyInsertedRecord, proceed) {
+    let isExists = await Banners.findOne({id:newlyInsertedRecord.id,isDeleted:false})
+    if(isExists){
+      await AuditService.log(
+        'update',
+        'Banners',
+        isExists,
+        newlyInsertedRecord,
+        newlyInsertedRecord.addedBy// or fetch from the session if available
+      );
+    }
+    return proceed();
+  },
+
+  // afterDestroy: async function (destroyedRecords, proceed) {
+  //   for (let record of destroyedRecords) {
+  //     await AuditService.log(
+  //       'delete',
+  //       'Banners',
+  //       record.previousState,
+  //       null,
+  //       'system' // or fetch from the session if available
+  //     );
+  //   }
+  //   return proceed();
+  // },
+/**
+ * 
+ * beforeUpdate: async function (valuesToUpdate, proceed) {
+    const previousState = await User.findOne(valuesToUpdate.id);
+    valuesToUpdate.previousState = previousState;
+    return proceed();
+  },
+
+  afterUpdate: async function (updatedRecord, proceed) {
+    await AuditService.log(
+      'update',
+      'User',
+      updatedRecord.previousState,
+      updatedRecord,
+      'system' // or fetch from the session if available
+    );
+    return proceed();
+  },
+
+  beforeDestroy: async function (criteria, proceed) {
+    const previousState = await User.findOne(criteria.where.id);
+    criteria.previousState = previousState;
+    return proceed();
+  },
+
+  afterDestroy: async function (destroyedRecords, proceed) {
+    for (let record of destroyedRecords) {
+      await AuditService.log(
+        'delete',
+        'User',
+        record.previousState,
+        null,
+        'system' // or fetch from the session if available
+      );
+    }
+    return proceed();
+  },
+
+  afterCreate: async function (newlyInsertedRecord, proceed) {
+    await AuditService.log(
+      'create',
+      'User',
+      null,
+      newlyInsertedRecord,
+      'system' // or fetch from the session if available
+    );
+    return proceed();
+  },
+ * 
+ * 
+ */
+
 };

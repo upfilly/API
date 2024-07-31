@@ -48,7 +48,7 @@ module.exports = {
 
       // Check if an invite already exists
       const existingInvite = await InviteUsers.findOne({
-        email: email,
+        email: email.toLowerCase(),
         addedBy: req.identity.id,
         isDeleted: false,
       });

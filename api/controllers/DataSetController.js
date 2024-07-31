@@ -1,9 +1,3 @@
-/**
- * CsvImportControllerController
- *
- * @description :: Server-side actions for handling incoming requests.
- * @help        :: See https://sailsjs.com/docs/concepts/actions
- */
 const response = require("../services/Response");
 const constants = require("../../config/constants").constants;
 const constant = require("../../config/local");
@@ -128,7 +122,7 @@ exports.importCsvDataHttp = async (req, res) => {
     let listOfData = [];
     for await(let data of isExists){
       const url = constant.BACK_WEB_URL+"/"+data.filePath; // assume the URL is sent in the request body
-      console.log(url);
+      // console.log(url);
       const { fileType1, fileBuffer } = await getFileFromUrl(url);
       let fileType= url.substr(url.lastIndexOf(".")+1)
       if (fileType !== 'csv' && fileType !== 'xlsx' && fileType !== 'xls') {
@@ -140,15 +134,15 @@ exports.importCsvDataHttp = async (req, res) => {
           },
         };
       }
-      let student_arr;
+      var student_arr;
       if (fileType === 'csv') {
-        student_arr = await parseCSV(fileBuffer.toString('utf8'));
+        student_arr = await parseCSV(fileBuffer.toString('utf8'),data.addedBy);
       } else {
-        student_arr = await parseExcelFile(fileBuffer);
+        student_arr = await parseExcelFile(fileBuffer,data.addedBy);
       }
       listOfData.push(student_arr);
     }
-   
+  //  console.log(listOfData);
     response.success(
       listOfData,
       constants.CSVDATA.IMPORTED_SUCCESSFULLY,
@@ -190,7 +184,7 @@ async function getFileFromUrl(url) {
 //   return fileType.ext;
 // }
 
-async function parseExcelFile(fileBuffer) {
+async function parseExcelFile(fileBuffer,addedBy) {
   const workbook = xlsx.read(fileBuffer, { type: 'buffer' });
   const sheetName = workbook.SheetNames[0];
   const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
@@ -199,7 +193,7 @@ async function parseExcelFile(fileBuffer) {
 
 
 
-async function parseCSV(csvData) {
+async function parseCSV(csvData,addedBy) {
   // Split the CSV data by lines
   const lines = csvData.trim().split("\n");
   const result = [];
@@ -216,7 +210,7 @@ async function parseCSV(csvData) {
     headers.forEach((header, index) => {
       obj[header.trim()] = values[index].trim();
     });
-
+    obj["addedBy"] = addedBy;
     result.push(obj);
   }
 
@@ -235,25 +229,6 @@ exports.sendDataSets = async (req, res) => {
     }
 
     let data = req.body;
-
-    // let isExists = await Users.findOne({ id: data.user_id, isDeleted: false });
-
-    // if (!isExists) {
-    //   throw constants.user.USER_NOT_FOUND;
-    // }
-
-    // data.addedBy = req.identity.id;
-
-    // let dataset = await DataSet.create(data).fetch();
-    // console.log(isExists.email);
-    // let emailPayload = {
-    //   brandFullName: req.identity.fullName,
-    //   affiliateFullName: isExists.fullName,
-    //   affiliateEmail: isExists.email,
-    // };
-
-    // await Emails.DataSet.sendDataSet(emailPayload);
-
 
     query1 = {
       addedBy: req.identity.id,
@@ -284,7 +259,7 @@ exports.sendDataSets = async (req, res) => {
 
     // Combine the two lists
     let combinedList = [...listOfBrandInvite, ...listOfAcceptedInvites];
-    console.log(combinedList);
+    // console.log(combinedList);
     // Remove duplicates based on the 'id' key
     listOfAcceptedInvites = removeDuplicates(combinedList, "affiliate_id");
 
@@ -301,13 +276,74 @@ exports.sendDataSets = async (req, res) => {
       };
 
       await Emails.DataSet.sendDataSet(emailPayload);
-      data.addedBy = req.identity.id;
-      data.user_id = invites.affiliate_id;
-      await DataSet.create(data)
     }
-    response.success(null, constants.DATASET.ADDED, req, res);
+    let payload = {
+      addedBy: req.identity.id,
+      filePath: data.filePath,
+    }
+
+    await DataSet.create(payload);
+
+    // here we are storing data feeds
+
+    let duplicate = 0;
+    let createdCount = 0;
+        const url = constant.BACK_WEB_URL+"/"+data.filePath; // assume the URL is sent in the request body
+        console.log(url);
+        const { fileType1, fileBuffer } = await getFileFromUrl(url);
+        let fileType= url.substr(url.lastIndexOf(".")+1)
+        if (fileType !== 'csv' && fileType !== 'xlsx' && fileType !== 'xls') {
+          throw {
+            success: false,
+            error: {
+              code: 404,
+              message: 'Invalid file type',
+            },
+          };
+        }
+        var student_arr;
+        if (fileType === 'csv') {
+          student_arr = await parseCSV(fileBuffer.toString('utf8'));
+        } else {
+          student_arr = await parseExcelFile(fileBuffer);
+        }
+       
+      
+      for (let item of student_arr) {
+          payload = {
+            ID:item.ID,
+            type:item.Type,
+            SKU:item.SKU,
+            Name:item.Name,
+            Published:Boolean(Number(item.Published)),
+            isFeatured:Boolean(Number(item.Is_Featured)),
+            isVisible:Boolean(Number(item.Is_Visible)),
+            shortDescription:item.Short_Description,
+            longDescription:item.Long_Description,
+            brand_name:req.identity.name,
+            brand_id:req.identity.id,
+            url:item.url
+          }
+
+          let existingData = await DataFeeds.findOne({
+            SKU: item.SKU,
+            brand_id: req.identity.id,
+          });
+
+          if (!existingData) {
+            await DataFeeds.create(payload);
+          }else{
+            await DataFeeds.updateOne({ID:item.ID},payload);
+          }
+
+      }
+      
+
+
+
+      response.success(student_arr, constants.DATASET.ADDED, req, res);
   } catch (err) {
-    console.log(err)
+    console.log(err);
     response.failed(err, `${err}`, req, res);
   }
 };
@@ -827,6 +863,14 @@ exports.listOfEmailMessage = async (req, res) => {
   }
 };
 
+exports.getDataSets = async (req, res) => {
+  try{
+    let id = req.identity.id;
+    
+  }catch(error){
+    response.failed(null,`Some thing went wrong`,req,res);
+  }
+}
 exports.getEmailMessage = async (req, res) => {
   try {
     const id = req.param("id");
