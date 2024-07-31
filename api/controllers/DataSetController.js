@@ -899,3 +899,53 @@ exports.getEmailMessage = async (req, res) => {
     });
   }
 };
+
+exports.ListDataSetsBrand = async(req,res)=>{
+  try{
+       let affiliate_id = req.identity.id;
+
+       if(affiliate_id){
+        let listAffiliateInvite = await AffiliateInvite.find({affiliate_id:affiliate_id,isDeleted:false});
+        if(listAffiliateInvite){
+          var findBrandList = await DataFeeds.find({brand_id:listAffiliateInvite.brand_id,isDeleted:false})   
+        }
+
+        let listOfAffiliateBrandInvite = await AffiliateBrandInvite.find({affiliate_id:affiliate_id,isDeleted:false});
+        if(listOfAffiliateBrandInvite){
+          var findAffiliateBrandInvite = await DataFeeds.find({brand_id:listOfAffiliateBrandInvite.addedBy,isDeleted:false}) 
+        }
+
+        let listAllAffiliate
+        if(findBrandList && findAffiliateBrandInvite )  {
+           listAllAffiliate = [...findBrandList, ...findAffiliateBrandInvite];
+        }else if(findBrandList){
+          listAllAffiliate = findBrandList
+         }else if(findAffiliateBrandInvite)  {
+          listAllAffiliate = findAffiliateBrandInvite
+         }
+
+        const uniquelistAllAffiliate = [...new Set(listAllAffiliate)];
+
+
+
+        return res.status(200).json({
+          success: true,
+          data: uniquelistAllAffiliate,
+          total: uniquelistAllAffiliate.length,
+        });
+        
+       }
+
+          
+
+
+    
+
+  }catch(err){
+    return res.status(400).json({
+      success: false,
+      error: { code: 400, message: "" + err },
+    });
+  }
+
+}
