@@ -444,11 +444,12 @@ exports.changeCampaignStatus = async (req, res) => {
 
         if (update_status) {
             let email_payload = {
-                affiliate_id: get_campaign.affiliate_id,
+                affiliate_id: req.identity.id,
                 brand_id: get_campaign.brand_id,
                 status: update_status.status,
                 reason: update_status.reason
             };
+            console.log(email_payload,"---------->");
             await Emails.CampaignEmails.changeStatus(email_payload);
 
             let device_token = "";
