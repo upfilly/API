@@ -12,6 +12,34 @@ const Emails = require("../Emails");
 const https = require('https');
 // const FileType = require('file-type');
 
+
+let Unique = (arr) => {
+  //To store the unique sub arrays
+  let uniques = [];
+
+  //To keep track of the sub arrays
+  let itemsFound = {};
+
+  for(let val of arr) {
+      //convert the sub array to the string
+      let stringified = JSON.stringify(val);
+
+      //If it is already added then skip to next element
+      if(itemsFound[stringified]) { 
+         continue; 
+      }
+
+      //Else add the value to the unique list
+      uniques.push(val);
+
+      //Mark it as true so that it can tracked
+      itemsFound[stringified] = true;
+  }
+
+  //Return the unique list
+  return uniques;
+}
+
 exports.importCsvData = async (req, res) => {
   let duplicate = 0;
   let createdCount = 0;
@@ -922,11 +950,12 @@ exports.ListDataSetsBrand = async(req,res)=>{
           listAllAffiliate = findBrandList
          }else if(findAffiliateBrandInvite)  {
           listAllAffiliate = findAffiliateBrandInvite
+         }else{
+          listAllAffiliate = []
          }
 
-        const uniquelistAllAffiliate = [...new Set(listAllAffiliate)];
-
-
+        
+         let uniquelistAllAffiliate = Unique(listAllAffiliate);
 
         return res.status(200).json({
           success: true,
