@@ -531,6 +531,7 @@ module.exports.routes = {
  
  "DELETE /firstpromoter/delete": "FirstpromoterController.removeFirstPromoter",
  "PUT /firstpromoter/update": "FirstpromoterController.updateFirstPromoter",
+ "POST /firstpromoterdata/export": "FirstpromoterController.exportFirstPromoterData",
 
 
 };
