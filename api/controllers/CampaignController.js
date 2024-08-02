@@ -379,11 +379,15 @@ exports.getCampaignById = async (req, res) => {
             throw constants.CAMPAIGN.ID_REQUIRED;
         }
         let get_campaign = await Campaign.findOne({ id: id, isDeleted: false }).populate('brand_id').populate('affiliate_id');
-        if (get_campaign) {
-            return response.success(get_campaign, constants.CAMPAIGN.FETCHED, req, res);
+       
+        if (!get_campaign) {
+            throw constants.CAMPAIGN.INVALID_ID;
         }
-        throw constants.CAMPAIGN.INVALID_ID;
-
+        if(get_campaign && get_campaign.access_type === "public"){
+            let listOfAffiliates = await PublicCampaigns.find({where:{campaign_id:get_campaign.id,brand_id:get_campaign.addedBy},select: [ 'affiliate_id']}).populate("affiliate_id");
+            get_campaign.listOfAffiliates = listOfAffiliates;
+        }
+        return response.success(get_campaign, constants.CAMPAIGN.FETCHED, req, res);
     } catch (error) {
         return response.failed(null, `${error}`, req, res);
     }

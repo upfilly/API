@@ -49,7 +49,7 @@ module.exports.http = {
             let message = responseBody.error.message;
             ActivityLogs.create({
               user_id: req.identity.id,
-              message: message,
+              message: message.toString(),
               method: req.method,
               data:responseBody,
               url: req.url,
