@@ -9,6 +9,7 @@ module.exports = {
   attributes: {
     affiliate_id: { model: "users" },
     banner_id: { model: "banner" },
+    access_type: { type: "string" },
     addedBy: { model: "users" },
     updatedBy: { model: "users" },
     isDeleted: { type: "Boolean", defaultsTo: false },

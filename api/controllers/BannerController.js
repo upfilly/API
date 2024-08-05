@@ -15,6 +15,7 @@ const Emails = require("../Emails/index");
 
 exports.addBanner = async (req, res) => {
   try {
+
     let validation_result = await Validations.Banner.addBanner(req, res);
 
     if (validation_result && !validation_result.success) {
@@ -27,6 +28,8 @@ exports.addBanner = async (req, res) => {
       availability_date,
       expiration_date,
       category_id,
+      access_type,
+      affiliate_id
     } = req.body;
 
     let query = {};
@@ -34,12 +37,15 @@ exports.addBanner = async (req, res) => {
     query.isDeleted = false;
 
     let get_banner = await Banner.findOne(query);
+
     if (get_banner) {
       throw constants.BANNER.ALREADY_EXIST;
     }
 
     if (category_id) {
+
       let get_category = await CommonCategories.findOne({ id: category_id });
+
       if (!get_category) {
         throw constants.BANNER.INVALID_CATEGORY;
       }
@@ -50,14 +56,15 @@ exports.addBanner = async (req, res) => {
       status: "accepted",
       isDeleted: false,
     };
+
     let query2 = {
       brand_id: req.identity.id,
       status: "accepted",
       isDeleted: false,
     };
 
-    // console.log(query1);
     let listOfAcceptedInvites = await AffiliateInvite.find(query1);
+
     let listOfBrandInvite = await AffiliateBrandInvite.find(query2);
 
     function removeDuplicates(array, key) {
@@ -77,6 +84,7 @@ exports.addBanner = async (req, res) => {
     listOfAcceptedInvites = removeDuplicates(combinedList, "affiliate_id");
 
     req.body.addedBy = req.identity.id;
+
     req.body.title = req.body.title.toLowerCase();
 
     if (activation_date) {
@@ -93,12 +101,14 @@ exports.addBanner = async (req, res) => {
 
     let add_detail = await Banner.create(req.body).fetch();
 
+    if(access_type === "public"){
+
     for (let affiliate of listOfAcceptedInvites) {
-      // console.log(affiliate);
       let findUser = await Users.findOne({
         id: affiliate.affiliate_id,
         isDeleted: false,
       });
+  
       let emailPayload = {
         brandFullName: req.identity.fullName,
         affiliateFullName: findUser.fullName,
@@ -109,15 +119,39 @@ exports.addBanner = async (req, res) => {
 
       await AffiliateBanners.create({
         affiliate_id: affiliate.affiliate_id,
-        // email_template_id: newTemplate.id,
         banner_id: add_detail.id,
         addedBy: req.identity.id,
         updatedBy: req.identity.id,
+        access_type:req.body.access_type
       });
-    }
 
+    }
+  }else{
+    
+    let findUser = await Users.findOne({
+      id: affiliate_id,
+      isDeleted: false,
+    });
+
+    let emailPayload = {
+      brandFullName: req.identity.fullName,
+      affiliateFullName: findUser.fullName,
+      affiliateEmail: findUser.email,
+    };
+
+    await Emails.AffiliateBanner.sendEmailAffiliateBanner(emailPayload);
+
+    await AffiliateBanners.create({
+      affiliate_id: findUser.id,
+      banner_id: add_detail.id,
+      addedBy: req.identity.id,
+      updatedBy: req.identity.id,
+      access_type:req.body.access_type
+    });
+  
+  }
     if (add_detail) {
-      return response.success(null, constants.BANNER.ADDED, req, res);
+      return response.success(add_detail, constants.BANNER.ADDED, req, res);
     }
     throw constants.COMMON.SERVER_ERROR;
   } catch (err) {

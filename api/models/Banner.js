@@ -10,8 +10,10 @@ module.exports = {
   attributes: {
     title: { type: "string" },
     destination_url: { type: "string" },
+    affiliate_id:{type:"string"},
     description: { type: "string" },
     seo_attributes: { type: "string" },
+    access_type: { type: "string" },
     activation_date: { type: "ref", columnType: "datetime" },
     availability_date: { type: "ref", columnType: "datetime" },
     expiration_date: { type: "ref", columnType: "datetime" },
