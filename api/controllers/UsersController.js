@@ -825,7 +825,7 @@ module.exports = {
             let: {
               affiliate_id: "$_id",
               isDeleted: false,
-              brand_id: ObjectId(req.identity.id),
+              addedBy: ObjectId(req.identity.id),
             },
             // let: { user_id: "$req.identity.id", fav_user_id: ObjectId("64d076e86ecebee01af09d8c") },
             pipeline: [
@@ -833,7 +833,7 @@ module.exports = {
                 $match: {
                   $expr: {
                     $and: [
-                      { $eq: ["$brand_id", "$$brand_id"] },
+                      { $eq: ["$addedBy", "$$addedBy"] },
                       { $eq: ["$isDeleted", "$$isDeleted"] },
                       { $eq: ["$affiliate_id", "$$affiliate_id"] },
                     ],
@@ -872,6 +872,7 @@ module.exports = {
           createdByBrand: "$createdByBrand",
           affiliate_group: "$affiliate_group",
           affiliate_group_name: "$affiliate_group_details.group_name",
+          invite_affiliate_details:"$invite_affiliate_details",
           invite_status: {
             $cond: [
               { $ifNull: ["$invite_affiliate_details.status", false] },
@@ -879,7 +880,6 @@ module.exports = {
               "not_invited",
             ],
           },
-          invite_affiliate_details: "$invite_affiliate_details",
           invite_affiliate_details_status: "$invite_affiliate_details.status",
           status: "$status",
           createdAt: "$createdAt",

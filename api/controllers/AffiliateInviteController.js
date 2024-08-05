@@ -45,6 +45,12 @@ module.exports = {
             addedBy: data.addedBy,
           }).fetch();
 
+          await AffiliateBrandInvite.create({
+            affiliate_id: affiliate_id,
+            brand_id: req.identity.id,
+            addedBy:req.identity.id
+          });
+
           if (result1) {
             let brand_detail = await Users.findOne({
               id: result1.addedBy,
