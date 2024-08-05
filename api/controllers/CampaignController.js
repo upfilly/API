@@ -478,8 +478,7 @@ exports.changeCampaignStatus = async (req, res) => {
                 await Services.FCM.send_fcm_push_notification(fcm_payload)
             }
             return response.success(null, constants.CAMPAIGN.STATUS_UPDATE, req, res)
-        }
-else{
+        }else{
         if (req.body.status == "accepted" && ['accepted'].includes(get_campaign.status)) {
             throw constants.CAMPAIGN.CANNOT_ACCEPT;
         }
