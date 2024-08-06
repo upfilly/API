@@ -167,11 +167,11 @@ module.exports = {
             }
 
             if (addedBy) {
-                query.addedBy = ObjectId(addedBy);
+                query.addedBy = new ObjectId(addedBy);
             }
 
             if (brand_id) {
-                query.brand_id = ObjectId(brand_id);
+                query.brand_id = new ObjectId(brand_id);
             }
 
 

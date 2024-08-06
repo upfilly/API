@@ -2,7 +2,7 @@ const response = require("../services/Response");
 const { constants } = require("../../config/constants");
 const db = sails.getDatastore().manager;
 const Validations = require("../Validations/index");
-const ObjectId = require("mongodb").ObjectId;
+const  ObjectId = require("mongodb").ObjectId;
 const Services = require("../services/index");
 const Emails = require("../Emails/index");
 
@@ -206,12 +206,12 @@ exports.getAllRequests = async (req, res) => {
     }
 
     if (brand_id) {
-      query.brand_id = ObjectId(brand_id);
+      query.brand_id = new new ObjectId(brand_id);
     } else {
-      query.brand_id = ObjectId(req.identity.id);
+      query.brand_id = new new ObjectId(req.identity.id);
     }
     if (affiliate_id) {
-      query.affiliate_id = ObjectId(affiliate_id);
+      query.affiliate_id = new new ObjectId(affiliate_id);
     }
     if (status) {
       query.status = status;

@@ -164,7 +164,7 @@ exports.getAllAffiliateGroup = async (req, res) => {
         }
 
         if (addedBy) {
-            query.addedBy = ObjectId(addedBy)
+            query.addedBy = new ObjectId(addedBy)
         }
 
         let sortquery = {};
@@ -186,7 +186,7 @@ exports.getAllAffiliateGroup = async (req, res) => {
                 {
                     from: "users",
                     let: { affiliate_group: "$_id", isDeleted: false },
-                    // let: { user_id: "$req.identity.id", fav_user_id: ObjectId("64d076e86ecebee01af09d8c") },
+                    // let: { user_id: "$req.identity.id", fav_user_id: new ObjectId("64d076e86ecebee01af09d8c") },
                     pipeline: [
                         {
                             $match:

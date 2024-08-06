@@ -176,14 +176,14 @@ exports.getAllFaqs = async (req, res) => {
         }
 
         if (addedBy) {
-            query.addedBy = ObjectId(addedBy);
+            query.addedBy = new ObjectId(addedBy);
         }
         if (category_id) {
-            query.category_id = ObjectId(category_id);
+            query.category_id = new ObjectId(category_id);
         }
 
         if (content_id) {
-            query.content_id = ObjectId(content_id);
+            query.content_id = new ObjectId(content_id);
         }
 
         // Pipeline Stages

@@ -155,15 +155,15 @@ exports.getAllReviews = async (req, res) => {
         };
 
         if (user_id) {
-            query.user_id = ObjectId(user_id);
+            query.user_id = new ObjectId(user_id);
         };
 
         if (rate_to) {
-            query.rate_to = ObjectId(rate_to);
+            query.rate_to = new ObjectId(rate_to);
         };
 
         if (contract_id) {
-            query.contract_id = ObjectId(contract_id);
+            query.contract_id = new ObjectId(contract_id);
         };
 
         let pipeline = [

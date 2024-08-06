@@ -127,8 +127,8 @@ exports.getAllSubChildCommonCategory = async (req, res) => {
             sortquery = { updatedAt: -1 }
         }
 
-        if (category_id) { query.category_id = ObjectId(category_id); }
-        if (sub_category_id) { query.sub_category_id = ObjectId(sub_category_id); }
+        if (category_id) { query.category_id = new ObjectId(category_id); }
+        if (sub_category_id) { query.sub_category_id = new ObjectId(sub_category_id); }
 
 
         // Pipeline Stages

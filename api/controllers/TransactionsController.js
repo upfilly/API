@@ -33,15 +33,15 @@ exports.getAllTransactions = async (req, res) => {
         let skipNo = (page - 1) * count;
 
         if (user_id) {
-            query.user_id = ObjectId(user_id)
+            query.user_id = new ObjectId(user_id)
         }
 
         if (paid_to) {
-            query.paid_to = ObjectId(paid_to)
+            query.paid_to = new ObjectId(paid_to)
         }
 
         if (subscription_plan_id) {
-            query.subscription_plan_id = ObjectId(subscription_plan_id)
+            query.subscription_plan_id = new ObjectId(subscription_plan_id)
         }
 
         if (transaction_type) {
@@ -583,11 +583,11 @@ exports.getAllTransactionsContracts = async (req, res) => {
         }
 
         if (user_id) {
-            query.user_id = ObjectId(user_id);
+            query.user_id = new ObjectId(user_id);
         }
 
         if (paid_to) {
-            query.paid_to = ObjectId(paid_to);
+            query.paid_to = new ObjectId(paid_to);
         }
 
         if (transaction_type) {
@@ -701,8 +701,8 @@ exports.getTransactionsGraphData = async (req, res) => {
     try {
         let query = {};
         let { user_id, paid_to, year, month, transaction_type } = req.query;
-        if (user_id) { query.user_id = ObjectId(user_id); }
-        if (paid_to) { query.paid_to = ObjectId(paid_to); }
+        if (user_id) { query.user_id = new ObjectId(user_id); }
+        if (paid_to) { query.paid_to = new ObjectId(paid_to); }
         if (year) { query.year = Number(year) };
         if (month) { query.month = Number(month) };
         if (transaction_type) { query.transaction_type = transaction_type };

@@ -124,7 +124,7 @@ exports.find = async function (req, res) {
 
     // Handle addedBy
     if (addedBy) {
-      query.addedBy = ObjectId(addedBy);
+      query.addedBy = new ObjectId(addedBy);
     }
 
     // Handle format

@@ -132,14 +132,14 @@ exports.getAllOffers = async (req, res) => {
         }
 
         if (brand_id) {
-            query.brand_id = ObjectId(brand_id);
+            query.brand_id = new ObjectId(brand_id);
         }
 
         if (affiliate_id) {
-            query.affiliate_id = ObjectId(affiliate_id);
+            query.affiliate_id = new ObjectId(affiliate_id);
         } else {
             if (req.identity.role == "affiliate") {
-                query.affiliate_id = ObjectId(req.identity.id);
+                query.affiliate_id = new ObjectId(req.identity.id);
             }
         }
 

@@ -161,12 +161,12 @@ module.exports = {
 
             if (role) { query.role = role; };
 
-            if (addedBy) { query.addedBy = ObjectId(addedBy) };
+            if (addedBy) { query.addedBy = new ObjectId(addedBy) };
 
 
-            if (category_id) { query.category_id = ObjectId(category_id); }
+            if (category_id) { query.category_id = new ObjectId(category_id); }
 
-            if (sub_category_id) { query.sub_category_id = ObjectId(sub_category_id); }
+            if (sub_category_id) { query.sub_category_id = new ObjectId(sub_category_id); }
 
             if (opportunity_type) {
                 opportunity_type = opportunity_type.split(',');
@@ -249,8 +249,8 @@ module.exports = {
                     $lookup:
                     {
                         from: "makeoffer",
-                        let: { brand_id: ObjectId(req.identity.id), product_id: "$_id", isDeleted: false },
-                        // let: { user_id: "$req.identity.id", fav_user_id: ObjectId("64d076e86ecebee01af09d8c") },
+                        let: { brand_id: new ObjectId(req.identity.id), product_id: "$_id", isDeleted: false },
+                        // let: { user_id: "$req.identity.id", fav_user_id: new ObjectId("64d076e86ecebee01af09d8c") },
                         pipeline: [
                             {
                                 $match:

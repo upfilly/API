@@ -130,13 +130,13 @@ exports.getAllfavourite = async (req, res) => {
         }
 
         if (updatedBy) {
-            query.updatedBy = ObjectId(updatedBy);
+            query.updatedBy = new ObjectId(updatedBy);
         }
 
-        query.user_id = ObjectId(req.identity.id);
+        query.user_id = new ObjectId(req.identity.id);
 
         if (fav_user_id) {
-            query.fav_user_id = ObjectId(fav_user_id);
+            query.fav_user_id = new ObjectId(fav_user_id);
         }
 
         if (type) {

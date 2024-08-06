@@ -2,7 +2,7 @@ const response = require("../services/Response");
 const constants = require("../../config/constants").constants;
 const constant = require("../../config/local");
 const db = sails.getDatastore().manager;
-const ObjectId = require("mongodb").ObjectId;
+const ObjectId = require('mongodb').ObjectId;
 const fs = require("fs");
 const xlsx = require("xlsx");
 const excel = require("exceljs");
@@ -413,11 +413,11 @@ exports.listOfDataSet = async (req, res) => {
     query.isDeleted = false;
 
     if (user_id) {
-      query.user_id = ObjectId(user_id);
+      query.user_id = new ObjectId(user_id);
     }
 
     if (addedBy) {
-      query.addedBy = ObjectId(addedBy);
+      query.addedBy = new ObjectId(addedBy);
     }
 
     if (startDate && endDate) {
@@ -779,11 +779,11 @@ exports.listOfEmailMessage = async (req, res) => {
     query.isDeleted = false;
 
     if (user_id) {
-      query.user_id = ObjectId(user_id);
+      query.user_id = new ObjectId(user_id);
     }
 
     if (addedBy) {
-      query.addedBy = ObjectId(addedBy);
+      query.addedBy = new ObjectId(addedBy);
     }
 
     // if (startDate && endDate) {

@@ -7,7 +7,7 @@
 
 const constants = require("../../config/constants").constants;
 const db = sails.getDatastore().manager;
-const ObjectId = require("mongodb").ObjectId;
+const  ObjectId = require("mongodb").ObjectId;
 const Services = require("../services/index");
 const Joi = require("joi");
 const Validations = require("../Validations/AffiliateInviteValidations.js");
@@ -196,11 +196,11 @@ module.exports = {
       }
 
       if (addedBy) {
-        query.addedBy = new ObjectId(addedBy);
+        query.addedBy = new new ObjectId(addedBy);
       }
 
       if (affiliate_id) {
-        query.affiliate_id = new ObjectId(affiliate_id);
+        query.affiliate_id = new new ObjectId(affiliate_id);
       }
 
       const pipeline = [

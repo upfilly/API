@@ -137,11 +137,11 @@ module.exports = {
             }
 
             if (brand_id) {
-                query.brand_id = ObjectId(brand_id);
+                query.brand_id = new ObjectId(brand_id);
             }
 
             if (affiliate_id) {
-                query.addedBy = ObjectId(affiliate_id);
+                query.addedBy = new ObjectId(affiliate_id);
             }
 
             let sortquery = {};

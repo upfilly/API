@@ -341,9 +341,9 @@ exports.getAllBanner = async (req, res) => {
     }
 
     if (addedBy) {
-      query.addedBy = ObjectId(addedBy);
+      query.addedBy = new ObjectId(addedBy);
     } else {
-      query.addedBy = ObjectId(req.identity.id);
+      query.addedBy = new ObjectId(req.identity.id);
     }
 
     let sortquery = {};
@@ -560,13 +560,13 @@ exports.getAllAffiliateBanner = async (req, res) => {
     }
 
     if (affiliate_id) {
-      query.affiliate_id = ObjectId(affiliate_id);
+      query.affiliate_id = new ObjectId(affiliate_id);
     }
 
     if (addedBy) {
-      query.addedBy = ObjectId(addedBy);
+      query.addedBy = new ObjectId(addedBy);
     } else {
-      query.addedBy = ObjectId(req.identity.id);
+      query.addedBy = new ObjectId(req.identity.id);
     }
 
     let sortquery = {};

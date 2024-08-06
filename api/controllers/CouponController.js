@@ -7,7 +7,7 @@
 const response = require("../services/Response");
 const constants = require("../../config/constants").constants;
 const db = sails.getDatastore().manager;
-const ObjectId = require("mongodb").ObjectId;
+const  ObjectId = require("mongodb").ObjectId;
 const Services = require("../services/index");
 const Validations = require("../Validations/index");
 
@@ -157,17 +157,17 @@ exports.getAllCoupon = async (req, res) => {
             query.status = status;
         }
         // if (media) {
-        //     query.media = ObjectId(media);
+        //     query.media = new ObjectId(media);
         // }
 
         if (plan_type) {
             query.plan_type = plan_type;
         }
         if (addedBy) {
-            query.addedBy =ObjectId(addedBy);
+            query.addedBy =new ObjectId(addedBy);
         }
         else{
-            query.addedBy = ObjectId(req.identity.id);
+            query.addedBy = new ObjectId(req.identity.id);
         }
 
 

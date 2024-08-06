@@ -80,7 +80,7 @@ exports.getAllContents = async (req, res) => {
         }
 
         if (updatedBy) {
-            query.updatedBy = ObjectId(updatedBy);
+            query.updatedBy = new ObjectId(updatedBy);
         }
 
         if (isDeleted) {
