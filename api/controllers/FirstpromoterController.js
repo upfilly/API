@@ -134,8 +134,9 @@ module.exports = {
       const user_password = req.body.password;
       const user_email = req.body.email;
       const url = req.body.url;
-      
-    const downloadPath = path.resolve(__dirname, 'downloads');
+       var rootpath = process.cwd();
+    var fullpath = rootpath + "/assets/downloads/"
+    const downloadPath = fullpath;
 
     // Create the download directory if it doesn't exist
     if (!fs.existsSync(downloadPath)) {
