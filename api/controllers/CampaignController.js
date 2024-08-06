@@ -294,7 +294,40 @@ exports.getAllCampaigns = async (req, res) => {
                     path: '$brand_id_details',
                     preserveNullAndEmptyArrays: true
                 }
-            }
+            },
+
+            {
+                $lookup: {
+                  from: "publiccampaigns",
+                  let: {
+                    affiliate_id: "$_id",
+                    isDeleted: false,
+                    addedBy: new ObjectId(req.identity.id),
+                  },
+                  // let: { user_id: "$req.identity.id", fav_user_id: new ObjectId("64d076e86ecebee01af09d8c") },
+                  pipeline: [
+                    {
+                      $match: {
+                        $expr: {
+                          $and: [
+                            { $eq: ["$addedBy", "$$addedBy"] },
+                            { $eq: ["$isDeleted", "$$isDeleted"] },
+                            { $eq: ["$affiliate_id", "$$affiliate_id"] },
+                          ],
+                        },
+                      },
+                    },
+                  ],
+                  as: "campaign_details",
+                },
+              },
+
+              {
+                $unwind: {
+                  path: "$campaign_details",
+                  preserveNullAndEmptyArrays: true,
+                },
+              },
 
         ];
 

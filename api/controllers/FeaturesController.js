@@ -201,14 +201,14 @@ module.exports = {
                 $sort: sortquery
             });
 
-            db.collection('features').aggregate(pipeline).toArray((err, totalresult) => {
+            let totalresult = await db.collection('features').aggregate(pipeline).toArray();
                 pipeline.push({
                     $skip: Number(skipNo)
                 });
                 pipeline.push({
                     $limit: Number(count)
                 });
-                db.collection('features').aggregate(pipeline).toArray((err, result) => {
+                let result = await db.collection('features').aggregate(pipeline).toArray();
                     let resData = {
                         total_count: totalresult ? totalresult.length : 0,
                         data: result ? result : [],
@@ -217,8 +217,7 @@ module.exports = {
                         resData.data = totalresult ? totalresult : [];
                     }
                     return response.success(resData, constants.features.ALL_FEATURES, req, res);
-                })
-            })
+             
         } catch (error) {
             return response.failed(null, `${error}`, req, res);
         }

@@ -316,14 +316,14 @@ exports.getAllSubscriptionPlans = async (req, res) => {
         // }
         // pipeline.push(unset_stage)
 
-        db.collection('subscriptionplans').aggregate(pipeline).toArray((err, totalresult) => {
+        let totalresult = await   db.collection('subscriptionplans').aggregate(pipeline).toArray();
             pipeline.push({
                 $skip: Number(skipNo)
             });
             pipeline.push({
                 $limit: Number(count)
             });
-            db.collection('subscriptionplans').aggregate(pipeline).toArray(async (err, result) => {
+            let result = await   db.collection('subscriptionplans').aggregate(pipeline).toArray();
                 if (userId) {
                     var userDetail = await Users.findOne({ id: userId })
                 }
@@ -360,8 +360,7 @@ exports.getAllSubscriptionPlans = async (req, res) => {
                     resData.data = totalresult ? totalresult : [];
                 }
                 return response.success(resData, constants.SUBSCRIPTION_PLAN.FETCHED, req, res);
-            })
-        })
+          
     } catch (error) {
         return response.failed(null, `${error}`, req, res);
     }

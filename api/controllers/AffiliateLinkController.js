@@ -157,7 +157,7 @@ exports.find = async function (req, res) {
       $sort: sortquery
     });
 
-    db.collection('affiliatelink').aggregate(pipeline).toArray((err, totalresult) => {
+    let totalresult = await db.collection('affiliatelink').aggregate(pipeline).toArray();
       if (err) {
         return response.failed(null, `${err}`, req, res);
       }
@@ -169,7 +169,7 @@ exports.find = async function (req, res) {
         $limit: Number(count)
       });
 
-      db.collection('affiliatelink').aggregate(pipeline).toArray((err, result) => {
+      let result = await db.collection('affiliatelink').aggregate(pipeline).toArray();
         if (err) {
           return response.failed(null, `${err}`, req, res);
         }
@@ -184,8 +184,6 @@ exports.find = async function (req, res) {
         }
 
         return response.success(resData, constants.AFFILIATELINK.FETCHED, req, res);
-      });
-    });
   } catch (error) {
     return response.failed(null, `${error}`, req, res);
   }

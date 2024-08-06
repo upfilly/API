@@ -9,7 +9,7 @@ const bcrypt = require("bcrypt-nodejs");
 var constantObj = sails.config.constants;
 var constant = require("../../config/local.js");
 const db = sails.getDatastore().manager;
-const ObjectId = require('mongodb').ObjectId;
+const ObjectId = require("mongodb").ObjectId;
 const constants = require("../../config/constants").constants;
 const Emails = require("../Emails/index");
 const response = require("../services/Response");
@@ -624,13 +624,12 @@ module.exports = {
 
     var userDetail = await Users.find({ where: { id: id } });
 
-    console.log(userDetail)
+    console.log(userDetail);
     let get_permission = await Permissions.findOne({ role: userDetail.role });
 
     if (get_permission) {
       userDetail.permission_detail = get_permission;
     }
-
 
     return res.status(200).json({
       success: true,
@@ -872,7 +871,7 @@ module.exports = {
           createdByBrand: "$createdByBrand",
           affiliate_group: "$affiliate_group",
           affiliate_group_name: "$affiliate_group_details.group_name",
-          invite_affiliate_details:"$invite_affiliate_details",
+          invite_affiliate_details: "$invite_affiliate_details",
           invite_status: {
             $cond: [
               { $ifNull: ["$invite_affiliate_details.status", false] },
@@ -915,34 +914,26 @@ module.exports = {
         });
       }
       console.log(query);
-      db.collection("users")
+      let totalResult = await db
+        .collection("users")
         .aggregate(pipeline)
-        .toArray((err, totalResult) => {
-          pipeline.push({
-            $skip: Number(skipNo),
-          });
-          pipeline.push({
-            $limit: Number(count),
-          });
+        .toArray();
+      pipeline.push({
+        $skip: Number(skipNo),
+      });
+      pipeline.push({
+        $limit: Number(count),
+      });
 
-          db.collection("users")
-            .aggregate(pipeline)
-            .toArray(async (err, result) => {
-              let resData = {
-                total: totalResult ? totalResult.length : 0,
-                data: result ? result : [],
-              };
-              if (!req.param("page") && !req.param("count")) {
-                resData.data = totalResult ? totalResult : [];
-              }
-              return response.success(
-                resData,
-                constants.user.FETCHED_ALL,
-                req,
-                res
-              );
-            });
-        });
+      let result = await db.collection("users").aggregate(pipeline).toArray();
+      let resData = {
+        total: totalResult ? totalResult.length : 0,
+        data: result ? result : [],
+      };
+      if (!req.param("page") && !req.param("count")) {
+        resData.data = totalResult ? totalResult : [];
+      }
+      return response.success(resData, constants.user.FETCHED_ALL, req, res);
     } catch (error) {
       // console.log(error, "---err");
       return response.failed(null, `${error}`, req, res);
@@ -1220,9 +1211,9 @@ module.exports = {
         });
       }
       console.log(query);
-      db.collection("users")
+      let totalResult=await db.collection("users")
         .aggregate(pipeline)
-        .toArray((err, totalResult) => {
+        .toArray();
           pipeline.push({
             $skip: Number(skipNo),
           });
@@ -1230,9 +1221,9 @@ module.exports = {
             $limit: Number(count),
           });
 
-          db.collection("users")
+          let result =await  db.collection("users")
             .aggregate(pipeline)
-            .toArray(async (err, result) => {
+            .toArray();
               let resData = {
                 total: totalResult ? totalResult.length : 0,
                 data: result ? result : [],
@@ -1246,8 +1237,7 @@ module.exports = {
                 req,
                 res
               );
-            });
-        });
+           
     } catch (error) {
       // console.log(error, "---err");
       return response.failed(null, `${error}`, req, res);
@@ -1456,9 +1446,9 @@ module.exports = {
           },
         });
       }
-      db.collection("users")
+      let totalResult=await db.collection("users")
         .aggregate(pipeline)
-        .toArray((err, totalResult) => {
+        .toArray();
           pipeline.push({
             $skip: Number(skipNo),
           });
@@ -1466,9 +1456,9 @@ module.exports = {
             $limit: Number(count),
           });
 
-          db.collection("users")
+          let result = await db.collection("users")
             .aggregate(pipeline)
-            .toArray(async (err, result) => {
+            .toArray();
               let resData = {
                 total: totalResult ? totalResult.length : 0,
                 data: result ? result : [],
@@ -1482,8 +1472,7 @@ module.exports = {
                 req,
                 res
               );
-            });
-        });
+          
     } catch (error) {
       // console.log(error, "---err");
       return response.failed(null, `${error}`, req, res);
@@ -1705,7 +1694,7 @@ module.exports = {
         if (get_permission) {
           get_user.permission_detail = get_permission;
         }
-    
+
         return response.success(get_user, constants.user.FETCHED, req, res);
       }
       throw constants.user.INVALID_ID;
@@ -2088,7 +2077,7 @@ module.exports = {
             { id: permissions.id, user_id: id },
             permissions
           );
-          if (["brand","affiliate"].includes(req.identity.role)) {
+          if (["brand", "affiliate"].includes(req.identity.role)) {
             await Services.AuditTrial.create_audit_trial(
               req.identity.id,
               "permissions",
@@ -2167,7 +2156,7 @@ module.exports = {
           });
         }
 
-        if (["brand","affiliate"].includes(req.identity.role)) {
+        if (["brand", "affiliate"].includes(req.identity.role)) {
           await Services.AuditTrial.create_audit_trial(
             req.identity.id,
             "users",
@@ -4300,8 +4289,8 @@ module.exports = {
           logo: "$logo",
           address: "$address",
           country: "$country",
-          
-          canChangeProjectStatus:"$canChangeProjectStatus",
+
+          canChangeProjectStatus: "$canChangeProjectStatus",
           mobileNo: "$mobileNo",
           work_phone: "$work_phone",
           affiliate_code: "$affiliate_code",
@@ -4351,9 +4340,9 @@ module.exports = {
           },
         });
       }
-      db.collection("users")
+      let totalResult = await   db.collection("users")
         .aggregate(pipeline)
-        .toArray((err, totalResult) => {
+        .toArray();
           pipeline.push({
             $skip: Number(skipNo),
           });
@@ -4361,9 +4350,9 @@ module.exports = {
             $limit: Number(count),
           });
 
-          db.collection("users")
+          let result = await   db.collection("users")
             .aggregate(pipeline)
-            .toArray(async (err, result) => {
+            .toArray();
               let resData = {
                 total: totalResult ? totalResult.length : 0,
                 data: result ? result : [],
@@ -4377,8 +4366,7 @@ module.exports = {
                 req,
                 res
               );
-            });
-        });
+            
     } catch (error) {
       // console.log(error, "---err");
       return response.failed(null, `${error}`, req, res);

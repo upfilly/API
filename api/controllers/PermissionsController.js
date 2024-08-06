@@ -212,14 +212,14 @@ exports.getAllPermissions = async (req, res) => {
         $sort: sortquery
     });
     // Pipeline Stages
-    db.collection('permissions').aggregate(pipeline).toArray((err, totalresult) => {
+   let  totalresult  = await db.collection('permissions').aggregate(pipeline).toArray();
         pipeline.push({
             $skip: Number(skipNo)
         });
         pipeline.push({
             $limit: Number(count)
         });
-        db.collection("permissions").aggregate(pipeline).toArray((err, result) => {
+        let result=await  db.collection("permissions").aggregate(pipeline).toArray();
             let resData = {
                 total_count: totalresult ? totalresult.length : 0,
                 data: result ? result : [],
@@ -229,8 +229,7 @@ exports.getAllPermissions = async (req, res) => {
             }
             return response.success(resData, constants.PERMISSIONS.FETCHED, req, res);
 
-        })
-    })
+      
 
 };
 

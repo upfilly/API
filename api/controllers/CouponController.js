@@ -214,14 +214,14 @@ exports.getAllCoupon = async (req, res) => {
         // }
         // pipeline.push(unset_stage)
 
-        db.collection('coupon').aggregate(pipeline).toArray((err, totalresult) => {
+        let totalresult= db.collection('coupon').aggregate(pipeline).toArray();
             pipeline.push({
                 $skip: Number(skipNo)
             });
             pipeline.push({
                 $limit: Number(count)
             });
-            db.collection('coupon').aggregate(pipeline).toArray((err, result) => {
+            let result = await db.collection('coupon').aggregate(pipeline).toArray();
                 let resData = {
                     total_count: totalresult ? totalresult.length : 0,
                     data: result ? result : [],
@@ -230,8 +230,7 @@ exports.getAllCoupon = async (req, res) => {
                     resData.data = totalresult ? totalresult : [];
                 }
                 return response.success(resData, constants.COUPON.FETCHED, req, res);
-            })
-        })
+          
     } catch (error) {
         return response.failed(null, `${error}`, req, res);
     }

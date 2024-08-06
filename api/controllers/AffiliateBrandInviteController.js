@@ -206,12 +206,12 @@ exports.getAllRequests = async (req, res) => {
     }
 
     if (brand_id) {
-      query.brand_id = new new ObjectId(brand_id);
+      query.brand_id = new  ObjectId(brand_id);
     } else {
-      query.brand_id = new new ObjectId(req.identity.id);
+      query.brand_id = new  ObjectId(req.identity.id);
     }
     if (affiliate_id) {
-      query.affiliate_id = new new ObjectId(affiliate_id);
+      query.affiliate_id = new  ObjectId(affiliate_id);
     }
     if (status) {
       query.status = status;
@@ -274,14 +274,10 @@ exports.getAllRequests = async (req, res) => {
       $sort: sortquery,
     });
     console.log(query, "--------------->");
-    db.collection("affiliatebrandinvite")
+    let totalResult=await db.collection("affiliatebrandinvite")
       .aggregate(pipeline)
-      .toArray((err, totalResult) => {
-        if (err) {
-          return response.failed(null, `${err}`, req, res);
-        }
+      .toArray();
 
-        let result = [];
         if (totalResult && totalResult.length > 0) {
           result = Services.Utils.paginate(totalResult, count, page);
         }
@@ -290,16 +286,14 @@ exports.getAllRequests = async (req, res) => {
           total: totalResult ? totalResult.length : 0,
           data: totalResult ? totalResult : [],
         };
-        // if (!req.param("page") && !req.param("count")) {
-        //   resData.data = totalResult ? totalResult : [];
-        // }
+      
         return response.success(
           resData,
           constants.AFFILIATE_BRAND_INVITE.ALL_FETCHED_SUCCESS,
           req,
           res
         );
-      });
+
   } catch (error) {
     return response.failed(null, `${error}`, req, res);
   }

@@ -152,7 +152,7 @@ exports.recentUser = async (req, res) => {
                 }
             })
         }
-        db.collection('users').aggregate(pipeline).toArray((err, totalResult) => {
+        let totalResult= await db.collection('users').aggregate(pipeline).toArray();
             pipeline.push({
                 $skip: Number(skipNo)
             });
@@ -160,7 +160,7 @@ exports.recentUser = async (req, res) => {
                 $limit: Number(count)
             });
 
-            db.collection('users').aggregate(pipeline).toArray(async (err, result) => {
+            let result = await db.collection('users').aggregate(pipeline).toArray();
                 let resData = {
                     total: totalResult ? totalResult.length : 0,
                     data: result ? result : []
@@ -169,8 +169,7 @@ exports.recentUser = async (req, res) => {
                     resData.data = totalResult ? totalResult : []
                 }
                 return response.success(resData, constants.user.FETCHED_ALL, req, res);
-            })
-        })
+          
 
     } catch (error) {
         // console.log(error, "---err");
