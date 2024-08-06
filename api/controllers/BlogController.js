@@ -157,7 +157,7 @@ exports.getAllBlogs = async (req, res) => {
         }
 
         if (blog_type_id) {
-            query.blog_type_id = ObjectId(blog_type_id);
+            query.blog_type_id = new ObjectId(blog_type_id);
         }
 
         let pipeline = [

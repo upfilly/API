@@ -9,7 +9,7 @@ const bcrypt = require("bcrypt-nodejs");
 var constantObj = sails.config.constants;
 var constant = require("../../config/local.js");
 const db = sails.getDatastore().manager;
-const ObjectId = require("mongodb").ObjectId;
+const ObjectId = require('mongodb').ObjectId;
 const constants = require("../../config/constants.js").constants;
 const Emails = require("../Emails/index");
 const response = require("../services/Response.js");
@@ -292,11 +292,11 @@ module.exports = {
       }
 
       if (addedBy) {
-        query.user_id = ObjectId(addedBy);
+        query.user_id = new ObjectId(addedBy);
       }
 
       if (parentUserId) {
-        query.parentUserId = ObjectId(parentUserId);
+        query.parentUserId = new ObjectId(parentUserId);
       }
       // Pipeline Stages
       let pipeline = [
@@ -566,9 +566,9 @@ delete req.body.id;
               ]
           }
           if(brand_id){
-            query.brand_id = ObjectId(brand_id);
+            query.brand_id = new ObjectId(brand_id);
           }else{
-            query.brand_id = ObjectId(req.identity.id);
+            query.brand_id = new ObjectId(req.identity.id);
           }
 
           let sortquery = {};  

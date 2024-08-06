@@ -10,7 +10,7 @@ const response = require("../services/Response");
 const Validations = require("../Validations/index");
 const db = sails.getDatastore().manager;
 const Services = require("../services/index");
-const ObjectId = require("mongodb").ObjectId;
+const ObjectId = require('mongodb').ObjectId;
 const Emails = require("../Emails/index");
 
 exports.addInvite = async (req, res) => {
@@ -125,7 +125,7 @@ exports.getAllInvite = async (req, res) => {
     }
 
     if (addedBy) {
-      query.addedBy = ObjectId(addedBy);
+      query.addedBy = new ObjectId(addedBy);
     }
 
     if (invite_status) {

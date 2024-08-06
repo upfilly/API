@@ -1,8 +1,8 @@
 const moment = require('moment');
 const { constants } = require('../../config/constants');
 // const ObjectId = require('mongodb').ObjectId;
-// connect.ObjectID = core.BSON.ObjectID;
-// connect.ObjectId = core.BSON.ObjectID;
+// connect.new ObjectId = core.BSON.new ObjectId;
+// connect.new ObjectId = core.BSON.new ObjectId;
 
 exports.addOffsetTime = (date, offset) => {
     if (offset < 0) {

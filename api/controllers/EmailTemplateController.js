@@ -6,7 +6,7 @@
  */
 const constants = require("../../config/constants").constants;
 const db = sails.getDatastore().manager;
-const ObjectId = require("mongodb").ObjectId;
+const ObjectId = require('mongodb').ObjectId;
 const Services = require("../services/index");
 const Joi = require("joi");
 const Validations = require("../Validations");
@@ -255,7 +255,7 @@ exports.getAll = async (req, res) => {
       query.status = status;
     }
     if (addedBy) {
-      query.addedBy = ObjectId(addedBy);
+      query.addedBy = new ObjectId(addedBy);
     }
 
     if (format) {
@@ -366,11 +366,11 @@ exports.getUserEmailTemplate = async (req, res) => {
       query.status = status;
     }
     if (addedBy) {
-      query.addedBy = ObjectId(addedBy);
+      query.addedBy = new ObjectId(addedBy);
     }
 
     if (affiliate_id) {
-      query.affiliate_id = ObjectId(affiliate_id);
+      query.affiliate_id = new ObjectId(affiliate_id);
     }
 
     let pipeline = [

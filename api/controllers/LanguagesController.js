@@ -128,7 +128,7 @@ exports.getAllLanguages = async (req, res) => {
         }
 
         if (addedBy) {
-            query.addedBy = ObjectId(addedBy);
+            query.addedBy = new ObjectId(addedBy);
         }
 
         // Pipeline Stages

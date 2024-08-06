@@ -9,7 +9,7 @@ const bcrypt = require("bcrypt-nodejs");
 var constantObj = sails.config.constants;
 var constant = require("../../config/local.js");
 const db = sails.getDatastore().manager;
-const ObjectId = require("mongodb").ObjectId;
+const ObjectId = require('mongodb').ObjectId;
 const constants = require("../../config/constants").constants;
 const Emails = require("../Emails/index");
 const response = require("../services/Response");
@@ -28,7 +28,7 @@ async function string_ids_toObjectIds_array(string) {
     let string_arr = string.split(",");
     let string_arr2 = [];
     for await (let item of string_arr) {
-      string_arr2.push(ObjectId(item));
+      string_arr2.push(new ObjectId(item));
     }
     console.log(string_arr2);
     return string_arr2;
@@ -749,21 +749,21 @@ module.exports = {
       }
 
       if (createBybrand_id) {
-        query.createdByBrand = ObjectId(createBybrand_id);
+        query.createdByBrand = new ObjectId(createBybrand_id);
       }
 
       if (addedBy) {
-        query.addedBy = ObjectId(addedBy);
+        query.addedBy = new ObjectId(addedBy);
       }
 
       if (category_id) {
-        query.category_id = ObjectId(category_id);
+        query.category_id = new ObjectId(category_id);
       }
       if (sub_child_category_id) {
-        query.sub_child_category_id = ObjectId(sub_child_category_id);
+        query.sub_child_category_id = new ObjectId(sub_child_category_id);
       }
       if (sub_category_id) {
-        query.sub_category_id = ObjectId(sub_category_id);
+        query.sub_category_id = new ObjectId(sub_category_id);
       }
 
       if (cat_type) {
@@ -825,9 +825,9 @@ module.exports = {
             let: {
               affiliate_id: "$_id",
               isDeleted: false,
-              addedBy: ObjectId(req.identity.id),
+              addedBy: new ObjectId(req.identity.id),
             },
-            // let: { user_id: "$req.identity.id", fav_user_id: ObjectId("64d076e86ecebee01af09d8c") },
+            // let: { user_id: "$req.identity.id", fav_user_id: new ObjectId("64d076e86ecebee01af09d8c") },
             pipeline: [
               {
                 $match: {
@@ -1054,21 +1054,21 @@ module.exports = {
       }
 
       if (createBybrand_id) {
-        query.createdByBrand = ObjectId(createBybrand_id);
+        query.createdByBrand = new ObjectId(createBybrand_id);
       }
 
       if (addedBy) {
-        query.addedBy = ObjectId(addedBy);
+        query.addedBy = new ObjectId(addedBy);
       }
 
       if (category_id) {
-        query.category_id = ObjectId(category_id);
+        query.category_id = new ObjectId(category_id);
       }
       if (sub_child_category_id) {
-        query.sub_child_category_id = ObjectId(sub_child_category_id);
+        query.sub_child_category_id = new ObjectId(sub_child_category_id);
       }
       if (sub_category_id) {
-        query.sub_category_id = ObjectId(sub_category_id);
+        query.sub_category_id = new ObjectId(sub_category_id);
       }
 
       if (cat_type) {
@@ -1128,11 +1128,11 @@ module.exports = {
           $lookup: {
             from: "affiliatebrandinvite",
             let: {
-              affiliate_id: ObjectId(req.identity.id),
+              affiliate_id: new ObjectId(req.identity.id),
               isDeleted: false,
               brand_id: "$_id",
             },
-            // let: { user_id: "$req.identity.id", fav_user_id: ObjectId("64d076e86ecebee01af09d8c") },
+            // let: { user_id: "$req.identity.id", fav_user_id: new ObjectId("64d076e86ecebee01af09d8c") },
             pipeline: [
               {
                 $match: {
@@ -1335,7 +1335,7 @@ module.exports = {
           : false;
       }
 
-      query.addedBy = ObjectId(req.identity.id);
+      query.addedBy = new ObjectId(req.identity.id);
 
       if (start_date && end_date) {
         var date = new Date(start_date);
@@ -1373,8 +1373,8 @@ module.exports = {
         //   $lookup:
         //   {
         //     from: "affiliateinvite",
-        //     let: { affiliate_id: "$_id", isDeleted: false, addedBy: ObjectId(req.identity.id) },
-        //     // let: { user_id: "$req.identity.id", fav_user_id: ObjectId("64d076e86ecebee01af09d8c") },
+        //     let: { affiliate_id: "$_id", isDeleted: false, addedBy: new ObjectId(req.identity.id) },
+        //     // let: { user_id: "$req.identity.id", fav_user_id: new ObjectId("64d076e86ecebee01af09d8c") },
         //     pipeline: [
         //       {
         //         $match:
@@ -4055,9 +4055,9 @@ module.exports = {
               let: {
                 affiliate_id: "$_id",
                 isDeleted: false,
-                brand_id: ObjectId(req.identity.id),
+                brand_id: new ObjectId(req.identity.id),
               },
-              // let: { user_id: "$req.identity.id", fav_user_id: ObjectId("64d076e86ecebee01af09d8c") },
+              // let: { user_id: "$req.identity.id", fav_user_id: new ObjectId("64d076e86ecebee01af09d8c") },
               pipeline: [
                 {
                   $match: {
@@ -4085,11 +4085,11 @@ module.exports = {
             $lookup: {
               from: "affiliatebrandinvite",
               let: {
-                affiliate_id: ObjectId(req.identity.id),
+                affiliate_id: new ObjectId(req.identity.id),
                 isDeleted: false,
                 brand_id: "$_id",
               },
-              // let: { user_id: "$req.identity.id", fav_user_id: ObjectId("64d076e86ecebee01af09d8c") },
+              // let: { user_id: "$req.identity.id", fav_user_id: new ObjectId("64d076e86ecebee01af09d8c") },
               pipeline: [
                 {
                   $match: {
@@ -4150,21 +4150,21 @@ module.exports = {
       }
 
       if (createBybrand_id) {
-        query.createdByBrand = ObjectId(createBybrand_id);
+        query.createdByBrand = new ObjectId(createBybrand_id);
       }
 
       if (addedBy) {
-        query.addedBy = ObjectId(addedBy);
+        query.addedBy = new ObjectId(addedBy);
       }
 
       if (category_id) {
-        query.category_id = ObjectId(category_id);
+        query.category_id = new ObjectId(category_id);
       }
       if (sub_child_category_id) {
-        query.sub_child_category_id = ObjectId(sub_child_category_id);
+        query.sub_child_category_id = new ObjectId(sub_child_category_id);
       }
       if (sub_category_id) {
-        query.sub_category_id = ObjectId(sub_category_id);
+        query.sub_category_id = new ObjectId(sub_category_id);
       }
 
       if (cat_type) {
@@ -4221,9 +4221,9 @@ module.exports = {
                 let: {
                   affiliate_id: "$_id",
                   isDeleted: false,
-                  brand_id: ObjectId(req.identity.id),
+                  brand_id: new ObjectId(req.identity.id),
                 },
-                // let: { user_id: "$req.identity.id", fav_user_id: ObjectId("64d076e86ecebee01af09d8c") },
+                // let: { user_id: "$req.identity.id", fav_user_id: new ObjectId("64d076e86ecebee01af09d8c") },
                 pipeline: [
                   {
                     $match: {
@@ -4244,11 +4244,11 @@ module.exports = {
               $lookup: {
                 from: "affiliatebrandinvite",
                 let: {
-                  affiliate_id: ObjectId(req.identity.id),
+                  affiliate_id: new ObjectId(req.identity.id),
                   isDeleted: false,
                   brand_id: "$_id",
                 },
-                // let: { user_id: "$req.identity.id", fav_user_id: ObjectId("64d076e86ecebee01af09d8c") },
+                // let: { user_id: "$req.identity.id", fav_user_id: new ObjectId("64d076e86ecebee01af09d8c") },
                 pipeline: [
                   {
                     $match: {

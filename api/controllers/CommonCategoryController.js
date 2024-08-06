@@ -351,7 +351,7 @@ exports.getAllSubsCommonCategory = async (req, res) => {
 
         query.type = "sub";
         if (parent_id) {
-            query.parent_id = ObjectId(parent_id);
+            query.parent_id = new ObjectId(parent_id);
         }
 
         if (cat_type) {

@@ -40,7 +40,7 @@ exports.getAllAuditTrials = async (req, res) => {
             query.isDeleted = isDeleted ? isDeleted === 'true' : true ? isDeleted : false;
         }
 
-        if (user_id) { query.user_id = ObjectId(user_id) };
+        if (user_id) { query.user_id = new ObjectId(user_id) };
         if (module) { query.module = module; };
         if (type) { query.type = type; };
         // console.log(JSON.stringify(query), '===========query');

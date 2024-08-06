@@ -32,7 +32,7 @@ exports.getAllTrackingCustomer = async (req, res) => {
         }
 
         if (affiliate_id) {
-            query.affiliate_id = ObjectId(affiliate_id);
+            query.affiliate_id = new ObjectId(affiliate_id);
         }
 
         if (type) {

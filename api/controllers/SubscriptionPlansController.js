@@ -876,8 +876,8 @@ exports.getSubscriptionsGraphData = async (req, res) => {
     try {
         let query = {};
         let { user_id, subscription_plan_id, year, month, status } = req.query;
-        if (user_id) { query.user_id = ObjectId(user_id); }
-        if (subscription_plan_id) { query.subscription_plan_id = ObjectId(subscription_plan_id); }
+        if (user_id) { query.user_id = new ObjectId(user_id); }
+        if (subscription_plan_id) { query.subscription_plan_id = new ObjectId(subscription_plan_id); }
         if (year) { query.year = Number(year) };
         if (month) { query.month = Number(month) };
         if (status) { query.status = status };

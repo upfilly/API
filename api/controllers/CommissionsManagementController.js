@@ -156,7 +156,7 @@ exports.getAllCommission = async (req, res) => {
         }
 
         if (addedBy) {
-            query.addedBy = ObjectId(addedBy);
+            query.addedBy = new ObjectId(addedBy);
         }
 
         // console.log(JSON.stringify(query), "-----");

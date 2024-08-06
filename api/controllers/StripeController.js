@@ -178,7 +178,7 @@ exports.getAllCards = async (req, res) => {
         }
 
         if (user_id) {
-            query.user_id = ObjectId(user_id);
+            query.user_id = new ObjectId(user_id);
         }
 
         // console.log(JSON.stringify(query), '-------query');
