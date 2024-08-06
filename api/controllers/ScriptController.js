@@ -129,7 +129,7 @@ exports.getAllScript = async (req, res) => {
         });
         // Pipeline Stages
 
-        db.collection('script').aggregate(pipeline).toArray((err, totalresult) => {
+        let totalresult = await  db.collection('script').aggregate(pipeline).toArray();
             // console.log(totalresult,"-------ff");
             pipeline.push({
                 $skip: Number(skipNo)
@@ -137,7 +137,7 @@ exports.getAllScript = async (req, res) => {
             pipeline.push({
                 $limit: Number(count)
             });
-            db.collection("script").aggregate(pipeline).toArray((err, result) => {
+            let result = await db.collection("script").aggregate(pipeline).toArray();
                 let resData = {
                     data: result ? result : [],
                     total_count: totalresult ? totalresult.length : 0
@@ -147,8 +147,7 @@ exports.getAllScript = async (req, res) => {
                 }
                 return response.success(resData, constants.SCRIPT.FETCHED, req, res);
 
-            })
-        })
+          
 
     }
     catch (error) {

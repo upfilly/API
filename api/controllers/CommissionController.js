@@ -219,14 +219,14 @@ exports.getAllCommission = async (req, res) => {
             $sort: sortquery
         });
         // Pipeline Stages
-        db.collection('commission').aggregate(pipeline).toArray((err, totalresult) => {
+        let totalresult = await db.collection('commission').aggregate(pipeline).toArray();
             pipeline.push({
                 $skip: Number(skipNo)
             });
             pipeline.push({
                 $limit: Number(count)
             });
-            db.collection("commission").aggregate(pipeline).toArray((err, result) => {
+            let result =await  db.collection("commission").aggregate(pipeline).toArray();
                 let resData = {
                     total_count: totalresult ? totalresult.length : 0,
                     data: result ? result : [],
@@ -235,9 +235,6 @@ exports.getAllCommission = async (req, res) => {
                     resData.data = totalresult ? totalresult : [];
                 }
                 return response.success(resData, constants.COMMISSION.FETCHED_ALL, req, res);
-
-            })
-        })
     } catch (err) {
         return response.failed(null, `${err}`, req, res);
     }

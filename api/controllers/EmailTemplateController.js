@@ -296,7 +296,7 @@ exports.getAll = async (req, res) => {
       $sort: sortquery
     });
 
-    db.collection('emailtemplate').aggregate(pipeline).toArray((err, totalresult) => {
+   let totalresult = await  db.collection('emailtemplate').aggregate(pipeline).toArray();
       if (err) {
         return response.failed(null, `${err}`, req, res);
       }
@@ -308,7 +308,7 @@ exports.getAll = async (req, res) => {
         $limit: Number(count)
       });
 
-      db.collection('emailtemplate').aggregate(pipeline).toArray((err, result) => {
+      let result = await db.collection('emailtemplate').aggregate(pipeline).toArray();
         if (err) {
           return response.failed(null, `${err}`, req, res);
         }
@@ -323,8 +323,7 @@ exports.getAll = async (req, res) => {
         }
 
         return response.success(resData, constants.EMAILTEMPLATE.FETCHED, req, res);
-      });
-    });
+
   } catch (error) {
     return response.failed(null, `${error}`, req, res);
   }

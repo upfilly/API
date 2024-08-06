@@ -209,14 +209,14 @@ exports.getAllReviews = async (req, res) => {
         pipeline.push({
             $sort: sortquery
         });
-        db.collection('reviews').aggregate(pipeline).toArray((err, totalresult) => {
+        let totalresult = await  db.collection('reviews').aggregate(pipeline).toArray();
             pipeline.push({
                 $skip: Number(skipNo)
             });
             pipeline.push({
                 $limit: Number(count)
             });
-            db.collection("reviews").aggregate(pipeline).toArray((err, result) => {
+            let result =await   db.collection("reviews").aggregate(pipeline).toArray();
                 let resData = {
                     data: result ? result : [],
                     total_count: totalresult ? totalresult.length : 0
@@ -225,8 +225,7 @@ exports.getAllReviews = async (req, res) => {
                     resData.data = totalresult ? totalresult : [];
                 }
                 return response.success(resData, constants.REVIEWS.FETCHED, req, res);
-            })
-        });
+           
     } catch (error) {
         return response.failed(null, `${error}`, req, res)
     }

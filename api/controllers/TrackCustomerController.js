@@ -94,14 +94,14 @@ exports.getAllTrackingCustomer = async (req, res) => {
             $sort: sortquery
         });
         // Pipeline Stages
-        db.collection('trackcustomer').aggregate(pipeline).toArray((err, totalresult) => {
+        let totalresult =await  db.collection('trackcustomer').aggregate(pipeline).toArray();
             pipeline.push({
                 $skip: Number(skipNo)
             });
             pipeline.push({
                 $limit: Number(count)
             });
-            db.collection("trackcustomer").aggregate(pipeline).toArray((err, result) => {
+            let result = await  db.collection("trackcustomer").aggregate(pipeline).toArray();
                 let resData = {
                     total_count: totalresult ? totalresult.length : 0,
                     data: result ? result : [],
@@ -110,9 +110,6 @@ exports.getAllTrackingCustomer = async (req, res) => {
                     resData.data = totalresult ? totalresult : [];
                 }
                 return response.success(resData, constants.MAKE_OFFER.FETCHED_ALL, req, res);
-
-            })
-        })
     } catch (err) {
         return response.failed(null, `${err}`, req, res);
     }

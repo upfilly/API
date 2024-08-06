@@ -182,7 +182,7 @@ exports.getAllCards = async (req, res) => {
         }
 
         // console.log(JSON.stringify(query), '-------query');
-        db.collection('cards').aggregate([
+        let totalresult = await  db.collection('cards').aggregate([
             {
                 $project: {
                     id: "$_id",
@@ -199,12 +199,12 @@ exports.getAllCards = async (req, res) => {
             {
                 $match: query
             }
-        ]).toArray((err, totalresult) => {
+        ]).toArray();
             if (err) {
                 return response.failed(null, `${err}`, req, res);
             }
 
-            db.collection('cards').aggregate([
+            let result = await   db.collection('cards').aggregate([
                 {
                     $project: {
                         id: "$_id",
@@ -231,8 +231,7 @@ exports.getAllCards = async (req, res) => {
                     $limit: Number(count)
                 }
 
-            ]).toArray(async (err, result) => {
-                // console.log(result);
+            ]).toArray();
                 if (err) {
                     return response.failed(null, `${err}`, req, res);
                 }
@@ -256,8 +255,7 @@ exports.getAllCards = async (req, res) => {
                     data: result ? result : []
                 }
                 return response.success(resData, constants.CARD.FETCHED, req, res)
-            })
-        })
+          
     } catch (err) {
         return response.failed(null, `${err}`, req, res)
     }

@@ -157,14 +157,14 @@ exports.getAllLanguages = async (req, res) => {
             $sort: sortquery
         });
         // Pipeline Stages
-        db.collection('languages').aggregate(pipeline).toArray((err, totalresult) => {
+        let totalresult = await db.collection('languages').aggregate(pipeline).toArray();
             pipeline.push({
                 $skip: Number(skipNo)
             });
             pipeline.push({
                 $limit: Number(count)
             });
-            db.collection("languages").aggregate(pipeline).toArray((err, result) => {
+            let result = await db.collection("languages").aggregate(pipeline).toArray();
                 let resData = {
                     total_count: totalresult ? totalresult.length : 0,
                     data: result ? result : [],
@@ -174,8 +174,7 @@ exports.getAllLanguages = async (req, res) => {
                 }
                 return response.success(resData, constants.LANGUAGE.FETCHED_ALL, req, res);
 
-            })
-        })
+          
 
     } catch (error) {
         return response.failed(null, `${error}`, req, res);

@@ -185,7 +185,7 @@ exports.getAllTransactions = async (req, res) => {
             query.isDeleted = false;
         }
 
-        db.collection('transactions').aggregate([
+      let  totalresult =await db.collection('transactions').aggregate([
             {
                 $lookup: {
                     from: "subscriptionplans",
@@ -261,12 +261,12 @@ exports.getAllTransactions = async (req, res) => {
             {
                 $sort: sortquery
             },
-        ]).toArray((err, totalresult) => {
+        ]).toArray();
             if (err) {
                 return response.failed(null, `${err}`, req, res)
 
             }
-            db.collection('transactions').aggregate([
+            let result = await    db.collection('transactions').aggregate([
                 {
                     $lookup: {
                         from: "subscriptionplans",
@@ -349,7 +349,7 @@ exports.getAllTransactions = async (req, res) => {
                     $limit: Number(count)
                 }
 
-            ]).toArray(async (err, result) => {
+            ]).toArray();
                 if (err) {
                     return response.failed(null, `${err}`, req, res)
                 }
@@ -417,8 +417,7 @@ exports.getAllTransactions = async (req, res) => {
                     return response.success(resData, constants.TRANSACTION.FETCHED_ALL, req, res)
                 }
 
-            })
-        })
+          
 
     } catch (err) {
         return response.failed(null, `${err}`, req, res)

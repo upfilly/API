@@ -157,14 +157,14 @@ exports.getAllContents = async (req, res) => {
         });
         // Pipeline Stages
 
-        db.collection('contentmanagement').aggregate(pipeline).toArray((err, totalresult) => {
+        let totalresult=await  db.collection('contentmanagement').aggregate(pipeline).toArray();
             pipeline.push({
                 $skip: Number(skipNo)
             });
             pipeline.push({
                 $limit: Number(count)
             });
-            db.collection("contentmanagement").aggregate(pipeline).toArray((err, result) => {
+            let result  = await db.collection("contentmanagement").aggregate(pipeline).toArray();
                 let resData = {
                     data: result ? result : [],
                     total_count: totalresult ? totalresult.length : 0
@@ -174,8 +174,6 @@ exports.getAllContents = async (req, res) => {
                 }
                 return response.success(resData, constants.CONTENT_MANAGEMENT.FETCHED, req, res);
 
-            })
-        })
     } catch (err) {
         return response.failed(null, `${err}`, req, res);
     }

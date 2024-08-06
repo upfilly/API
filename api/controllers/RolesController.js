@@ -57,7 +57,7 @@ exports.getAllRoles = async (req, res) => {
         pipeline.push({
             $sort: sortquery
         });
-        db.collection('roles').aggregate(pipeline).toArray((err, totalResult) => {
+        let totalResult   = await db.collection('roles').aggregate(pipeline).toArray();
             pipeline.push({
                 $skip: Number(skipNo)
             });
@@ -65,14 +65,13 @@ exports.getAllRoles = async (req, res) => {
                 $limit: Number(count)
             });
 
-            db.collection('roles').aggregate(pipeline).toArray(async (err, result) => {
+            let result = await  db.collection('roles').aggregate(pipeline).toArray();
                 let resData = {
                     total: totalResult ? totalResult.length : 0,
                     data: result ? result : []
                 }
                 return response.success(resData, constants.COMMON.SUCCESS, req, res);
-            })
-        })
+          
 
     } catch (error) {
         return response.failed(null, `${error}`, req, res)

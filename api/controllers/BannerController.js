@@ -15,7 +15,6 @@ const Emails = require("../Emails/index");
 
 exports.addBanner = async (req, res) => {
   try {
-
     let validation_result = await Validations.Banner.addBanner(req, res);
 
     if (validation_result && !validation_result.success) {
@@ -29,7 +28,7 @@ exports.addBanner = async (req, res) => {
       expiration_date,
       category_id,
       access_type,
-      affiliate_id
+      affiliate_id,
     } = req.body;
 
     let query = {};
@@ -43,7 +42,6 @@ exports.addBanner = async (req, res) => {
     }
 
     if (category_id) {
-
       let get_category = await CommonCategories.findOne({ id: category_id });
 
       if (!get_category) {
@@ -101,14 +99,35 @@ exports.addBanner = async (req, res) => {
 
     let add_detail = await Banner.create(req.body).fetch();
 
-    if(access_type === "public"){
+    if (access_type === "public") {
+      for (let affiliate of listOfAcceptedInvites) {
+        let findUser = await Users.findOne({
+          id: affiliate.affiliate_id,
+          isDeleted: false,
+        });
 
-    for (let affiliate of listOfAcceptedInvites) {
+        let emailPayload = {
+          brandFullName: req.identity.fullName,
+          affiliateFullName: findUser.fullName,
+          affiliateEmail: findUser.email,
+        };
+
+        await Emails.AffiliateBanner.sendEmailAffiliateBanner(emailPayload);
+
+        await AffiliateBanners.create({
+          affiliate_id: affiliate.affiliate_id,
+          banner_id: add_detail.id,
+          addedBy: req.identity.id,
+          updatedBy: req.identity.id,
+          access_type: req.body.access_type,
+        });
+      }
+    } else {
       let findUser = await Users.findOne({
-        id: affiliate.affiliate_id,
+        id: affiliate_id,
         isDeleted: false,
       });
-  
+
       let emailPayload = {
         brandFullName: req.identity.fullName,
         affiliateFullName: findUser.fullName,
@@ -118,38 +137,13 @@ exports.addBanner = async (req, res) => {
       await Emails.AffiliateBanner.sendEmailAffiliateBanner(emailPayload);
 
       await AffiliateBanners.create({
-        affiliate_id: affiliate.affiliate_id,
+        affiliate_id: findUser.id,
         banner_id: add_detail.id,
         addedBy: req.identity.id,
         updatedBy: req.identity.id,
-        access_type:req.body.access_type
+        access_type: req.body.access_type,
       });
-
     }
-  }else{
-    
-    let findUser = await Users.findOne({
-      id: affiliate_id,
-      isDeleted: false,
-    });
-
-    let emailPayload = {
-      brandFullName: req.identity.fullName,
-      affiliateFullName: findUser.fullName,
-      affiliateEmail: findUser.email,
-    };
-
-    await Emails.AffiliateBanner.sendEmailAffiliateBanner(emailPayload);
-
-    await AffiliateBanners.create({
-      affiliate_id: findUser.id,
-      banner_id: add_detail.id,
-      addedBy: req.identity.id,
-      updatedBy: req.identity.id,
-      access_type:req.body.access_type
-    });
-  
-  }
     if (add_detail) {
       return response.success(add_detail, constants.BANNER.ADDED, req, res);
     }
@@ -429,33 +423,24 @@ exports.getAllBanner = async (req, res) => {
       $sort: sortquery,
     });
     // Pipeline Stages
-    db.collection("banner")
-      .aggregate(pipeline)
-      .toArray((err, totalresult) => {
-        pipeline.push({
-          $skip: Number(skipNo),
-        });
-        pipeline.push({
-          $limit: Number(count),
-        });
-        db.collection("banner")
-          .aggregate(pipeline)
-          .toArray((err, result) => {
-            let resData = {
-              total_count: totalresult ? totalresult.length : 0,
-              data: result ? result : [],
-            };
-            if (!req.param("page") && !req.param("count")) {
-              resData.data = totalresult ? totalresult : [];
-            }
-            return response.success(
-              resData,
-              constants.BANNER.FETCHED_ALL,
-              req,
-              res
-            );
-          });
-      });
+    let totalresult = await db.collection("banner").aggregate(pipeline).toArray();
+    pipeline.push({
+      $skip: Number(skipNo),
+    });
+    pipeline.push({
+      $limit: Number(count),
+    });
+
+    let result = await db.collection("banner").aggregate(pipeline).toArray();
+
+    let resData = {
+      total_count: totalresult ? totalresult.length : 0,
+      data: result ? result : [],
+    };
+    if (!req.param("page") && !req.param("count")) {
+      resData.data = totalresult ? totalresult : [];
+    }
+    return response.success(resData, constants.BANNER.FETCHED_ALL, req, res);
   } catch (err) {
     return response.failed(null, `${err}`, req, res);
   }

@@ -170,18 +170,18 @@ exports.getAllInvite = async (req, res) => {
     pipeline.push({
       $sort: sortquery,
     });
-    db.collection("invite")
+    let totalresult=await db.collection("invite")
       .aggregate(pipeline)
-      .toArray((err, totalresult) => {
+      .toArray();
         pipeline.push({
           $skip: Number(skipNo),
         });
         pipeline.push({
           $limit: Number(count),
         });
-        db.collection("invite")
+        let result =await db.collection("invite")
           .aggregate(pipeline)
-          .toArray((err, result) => {
+          .toArray();
             let resData = {
               data: result ? result : [],
               total_count: totalresult ? totalresult.length : 0,
@@ -190,8 +190,7 @@ exports.getAllInvite = async (req, res) => {
               resData.data = totalresult ? totalresult : [];
             }
             return response.success(resData, constants.BLOG.FETCHED, req, res);
-          });
-      });
+          
   } catch (error) {
     return response.failed(null, `${error}`, req, res);
   }

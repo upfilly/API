@@ -56,14 +56,14 @@ exports.getAllCountries = async (req, res) => {
         });
         // Pipeline Stages
 
-        db.collection('countries').aggregate(pipeline).toArray((err, totalresult) => {
+        let totalresult=await   db.collection('countries').aggregate(pipeline).toArray();
             pipeline.push({
                 $skip: Number(skipNo)
             });
             pipeline.push({
                 $limit: Number(count)
             });
-            db.collection("countries").aggregate(pipeline).toArray((err, result) => {
+            let result=await  db.collection("countries").aggregate(pipeline).toArray();
                 let resData = {
                     data: result ? result : [],
                     total_count: totalresult ? totalresult.length : 0
@@ -73,8 +73,6 @@ exports.getAllCountries = async (req, res) => {
                 }
                 return response.success(resData, constants.COMMON.SUCCESS, req, res);
 
-            })
-        })
     }
     catch (error) {
         return response.failed(null, `${error}`, req, res)

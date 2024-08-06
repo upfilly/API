@@ -218,14 +218,14 @@ exports.getAllfavourite = async (req, res) => {
         });
         // Pipeline Stages
 
-        db.collection('favourites').aggregate(pipeline).toArray((err, totalresult) => {
+        let totalresult= await db.collection('favourites').aggregate(pipeline).toArray();
             pipeline.push({
                 $skip: Number(skipNo)
             });
             pipeline.push({
                 $limit: Number(count)
             });
-            db.collection("favourites").aggregate(pipeline).toArray((err, result) => {
+            let result =await   db.collection("favourites").aggregate(pipeline).toArray();
                 let resData = {
                     data: result ? result : [],
                     total_count: totalresult ? totalresult.length : 0
@@ -235,8 +235,7 @@ exports.getAllfavourite = async (req, res) => {
                 }
                 return response.success(resData, constants.FAVOURITE.FETCHED, req, res);
 
-            })
-        })
+          
 
     }
     catch (error) {
