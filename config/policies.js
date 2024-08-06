@@ -100,6 +100,7 @@ module.exports.policies = {
   },
   FirstpromoterController:{
     removeFirstPromoter:true,
-    updateFirstPromoter:true
+    updateFirstPromoter:true,
+    exportScalenutData:true
   }
 };
