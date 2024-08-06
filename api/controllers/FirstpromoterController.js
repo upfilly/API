@@ -3,7 +3,7 @@ const axios = require("axios");
 const XLSX = require("xlsx");
 const fs = require("fs");
 const path = require("path");
-const puppeteer = require('puppeteer');
+const puppeteer = require('puppeteer-core');
 // const path = require('path');
 // const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
@@ -231,7 +231,7 @@ module.exports = {
     console.error("Error:", error);
     return res.status(400).json({
       success: false,
-      error: { message: "An error occurred while exporting Scalenut data." },
+      error: { message: `An error occurred while exporting Scalenut data.${error}` },
     });
   }
   },

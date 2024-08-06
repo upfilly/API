@@ -309,9 +309,7 @@ exports.getAll = async (req, res) => {
       });
 
       let result = await db.collection('emailtemplate').aggregate(pipeline).toArray();
-        if (err) {
-          return response.failed(null, `${err}`, req, res);
-        }
+        
 
         let resData = {
           total_count: totalresult ? totalresult.length : 0,
@@ -439,9 +437,7 @@ exports.getUserEmailTemplate = async (req, res) => {
       });
 
       db.collection('emailtemplateaffiliate').aggregate(pipeline).toArray((err, result) => {
-        if (err) {
-          return response.failed(null, `${err}`, req, res);
-        }
+       
 
         let resData = {
           total_count: totalresult ? totalresult.length : 0,

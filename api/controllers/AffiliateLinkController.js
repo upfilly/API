@@ -170,9 +170,7 @@ exports.find = async function (req, res) {
       });
 
       let result = await db.collection('affiliatelink').aggregate(pipeline).toArray();
-        if (err) {
-          return response.failed(null, `${err}`, req, res);
-        }
+        
 
         let resData = {
           total_count: totalresult ? totalresult.length : 0,
