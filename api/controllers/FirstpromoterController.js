@@ -148,7 +148,10 @@ module.exports = {
     const newFileName = `file_${uniqueId}.csv`; // Adjust file extension as needed
 
     // Launch the browser
-    const browser = await puppeteer.launch({ headless: true });
+    const browser = await puppeteer.launch({
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      headless: true,
+    });
     const page = await browser.newPage();
 
     // Set up download behavior
@@ -231,7 +234,7 @@ module.exports = {
     console.error("Error:", error);
     return res.status(400).json({
       success: false,
-      error: { message: "An error occurred while exporting Scalenut data." },
+      error: { message: `An error occurred while exporting Scalenut data.${error}` },
     });
   }
   },
