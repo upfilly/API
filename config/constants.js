@@ -609,4 +609,16 @@ module.exports.constants = {
     NOT_FOUND: "Affiliate link not found",
     MISSING_FIELDS: "Missing required fields",
   },
+  FIRST_PROMOTER:{
+    ID_REQUIRED:"Id required",
+    ALREADY_EXIST:"First Promoter is already registered",
+    CREATED:"First Promoter created successfully",
+    UPDATED:"First Promoter updated successfully",
+    DELETED:"First Promoter deleted successfully",
+    FETCHED:"First Promoter fetched",
+    NOT_FOUND:"First Promoter not found",
+    FETCHED_ALL:"All Promoters fetched",
+    MISSING_FIELDS:"Some fields not found",
+    INVALID_ID:"First Promoter invalid"
+  }
 };
