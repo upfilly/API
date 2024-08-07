@@ -10,11 +10,11 @@
  */
 
 module.exports = {
-  port: process.env.PORT || 6043,
+  port: process.env.PORT || 6042,
  
-  BACK_WEB_URL: 'https://upfillyapi.jcsoftwaresolution.in',
-  FRONT_WEB_URL: 'https://upfilly.jcsoftwaresolution.in',
-  ADMIN_WEB_URL: 'https://upfillyadmin.jcsoftwaresolution.in',
+  BACK_WEB_URL: 'https://api.upfilly.com',
+  FRONT_WEB_URL: 'https://upfilly.com',
+  ADMIN_WEB_URL: 'https://admin.upfilly.com',
 
 
   DB_USER: 'UuNe17p04FillLyGinN24UseR',
@@ -36,10 +36,13 @@ module.exports = {
     publicKey: "rzgv99j7cjfncz6c",
     privateKey: "d60651d59cc2feddc91550ce5ecafc09",
   },
- FCM_KEY:"AAAAvl8LWNI:APA91bFaQoymWiPrUf2IEVL8-W_GWFGdEp7V3bQodn9W8HOljy3ungT0WCDLjPJZWpaN5jnJQJgWGa_CpFOZy6FuX5shfXTqnciDAl3xrkvIHuYYWVYIBxNELsmWKLJH0wc4TPvOiteB"
+ FCM_KEY:"AAAAvl8LWNI:APA91bFaQoymWiPrUf2IEVL8-W_GWFGdEp7V3bQodn9W8HOljy3ungT0WCDLjPJZWpaN5jnJQJgWGa_CpFOZy6FuX5shfXTqnciDAl3xrkvIHuYYWVYIBxNELsmWKLJH0wc4TPvOiteB",
   //  FCM_KEY:"AAAAjMtJS4A:APA91bGBnEJEVIvk1JU0IG0wKopQJGdGlVVvR4O4PO8v1tFQ5erMbA9tiQBTbS-0Kg1QEFmFs0xqbBrfyxFVdTe-HR_AO1DqQge5UMpIlHrOLNOCoh4CvlZcaOp9586IoxU5QHMyyQtm",
   // ADMIN_EMAIL: "amit@yopmail.com",
   // /**BELOW ZOOM CREDS */
   // CLIENT_ID: "9lGUGyKS5qKYmFcgHY3vA",
-  // CLIENT_SECRET: "8FkIG182CAGDFHHCvbtrPJ62hOtGBdh7"
+  // CLIENT_SECRET: "8FkIG182CAGDFHHCvbtrPJ62hOtGBdh7",
+  FIRST_PROMOTER_DELETE:"https://firstpromoter.com/api/v1/promoters/delete",
+  FIRST_PROMOTER_UPDATE:"https://firstpromoter.com/api/v1/promoters/update",
+  FIRST_PROMOTER_KEY: "6b392f001d370d82efe168a6c8333765",
 };
