@@ -48,5 +48,6 @@ module.exports = {
   CouponValidations: require("./CouponValidations"),
   DataSetValidation: require("./DataSetValidations"),
   SendEmailMessage: require("./EmailMessageValidations"),
-  EmailTemplateValidation: require("./EmailTemplateValidation")
+  EmailTemplateValidation: require("./EmailTemplateValidation"),
+  FirstPromoterValidations: require("./FirstPromoterValidations")
 };

@@ -16,6 +16,7 @@ module.exports = {
     AuditTrial: require('./AuditTrialServices'),
     Smtp: require('./SmtpServices'),
     PaypalBraintreeServices: require('./PaypalBraintreeServices'),
-    generateAffiliateLink: require('./generateLinkServices')
+    generateAffiliateLink: require('./generateLinkServices'),
+    scalenutServices: require('./scalenutServices')
 
 }
