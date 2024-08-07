@@ -23,6 +23,7 @@ const csv = require('csv-parser');
  * @help        :: See https://sailsjs.com/docs/concepts/actions
  */
 
+
   exports.removeFirstPromoter= async function (req, res) {
     const url = `${constants.FIRST_PROMOTER_DELETE}?id=${req.query.id}`;
     const headers = {
@@ -46,6 +47,7 @@ const csv = require('csv-parser');
       });
     }
   };
+
   exports.updateFirstPromoter= async function (req, res) {
     const url = `${constants.FIRST_PROMOTER_UPDATE}`;
     const headers = {
@@ -69,6 +71,7 @@ const csv = require('csv-parser');
       });
     }
   },
+
   exports.exportFirstPromoterData= async function (req, res) {
     const loginUrl = `https://aiseo.firstpromoter.com/login?puser[email]=akshaysharma@jcsoftwaresolution.com&puser[password]=Akshay@123`;
     const exportUrl = constants.FIRST_PROMOTER_EXPORT;
@@ -135,6 +138,7 @@ const csv = require('csv-parser');
       });
     }
   };
+
   exports.exportScalenutData= async function (req, res) {
     // Define the download directory
     try{
@@ -245,6 +249,7 @@ const csv = require('csv-parser');
     });
   }
   };
+
 exports.addFirstPromoter = async (req, res) => {
     try {
         let validation_result = await Validations.FirstPromoterValidations.addFirstPromoter(req, res);
@@ -268,8 +273,12 @@ exports.addFirstPromoter = async (req, res) => {
         const createdPromoter = await FirstPromoter.create(data).fetch();
         if (createdPromoter) {
             let filePath = await Services.scalenutServices.exportScalenutData(data);
-            console.log(filePath);
-            let updatedPromoter = await FirstPromoter.updateOne({id:createdPromoter.id},{filePath:filePath});
+            let updatedPromoter = {};
+            if(filePath && filePath.success === true ){
+               updatedPromoter = await FirstPromoter.updateOne({id:createdPromoter.id},{filePath:filePath});
+            }else{
+              return response.failed(null,filePath.msg , req, res);  
+            }
             return response.success(updatedPromoter, constants.FIRST_PROMOTER.CREATED, req, res);
         }
         throw constants.COMMON.SERVER_ERROR;
