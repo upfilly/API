@@ -466,7 +466,7 @@ exports.importFirstPromoter = async (req, res) => {
   let duplicate = 0;
   let createdCount = 0;
   const errors = []; // To collect errors
-
+  let uploadedFile="";
   try {
     const firstPromoter = await new Promise((resolve, reject) => {
       req.file("file").upload(
@@ -482,7 +482,7 @@ exports.importFirstPromoter = async (req, res) => {
             return reject(new Error("No files were uploaded"));
           }
 
-          const uploadedFile = files[0];
+          uploadedFile = files[0];
           const filename = uploadedFile.filename;
           const name = uploadedFile.fd;
 
@@ -523,13 +523,13 @@ exports.importFirstPromoter = async (req, res) => {
     }
 
     // Remove the uploaded file if no errors
-    const uploadedFile = req.file("file")._files[0];
-    const name = uploadedFile.fd;
-    fs.unlink(name, (err) => {
-      if (err) {
-        console.error(`Error deleting file: ${name}`, err);
-      }
-    });
+    if(uploadedFile.fd){
+      fs.unlink(uploadedFile.fd, (err) => {
+        if (err) {
+          console.error(`Error deleting file: ${uploadedFile.fd}`, err);
+        }
+      });
+    }
 
     if (errors.length > 0) {
       return res.status(400).json({
@@ -545,6 +545,7 @@ exports.importFirstPromoter = async (req, res) => {
       duplicates: duplicate,
     });
   } catch (err) {
+    console.log(err);
     return res.status(500).json({
       success: false,
       error: {
