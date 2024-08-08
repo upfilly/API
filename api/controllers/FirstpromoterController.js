@@ -1,6 +1,6 @@
 const constant = require("../../config/local");
 const axios = require("axios");
-const XLSX = require("xlsx");
+const xlsx = require("xlsx");
 const fs = require("fs");
 const path = require("path");
 const puppeteer = require('puppeteer');
@@ -462,3 +462,95 @@ exports.deleteFirstPromoter = async (req, res) => {
     }
 }
 
+exports.importFirstPromoter = async (req, res) => {
+  let duplicate = 0;
+  let createdCount = 0;
+  const errors = []; // To collect errors
+
+  try {
+    const firstPromoter = await new Promise((resolve, reject) => {
+      req.file("file").upload(
+        { maxBytes: 10485760, dirname: "../../assets" }, // Change the directory
+        function whenDone(err, files) {
+          if (err && err.code === "E_EXCEEDS_UPLOAD_LIMIT") {
+            return reject(new Error("File size must be less than 10 MB"));
+          } else if (err) {
+            return reject(new Error("File upload error"));
+          }
+
+          if (!files || files.length === 0) {
+            return reject(new Error("No files were uploaded"));
+          }
+
+          const uploadedFile = files[0];
+          const filename = uploadedFile.filename;
+          const name = uploadedFile.fd;
+
+          if (filename.endsWith(".csv")) {
+            // CSV file
+            const results = [];
+            fs.createReadStream(name)
+              .pipe(csv())
+              .on('data', (data) => results.push(data))
+              .on('end', () => resolve(results))
+              .on('error', (error) => reject(new Error("Error reading CSV file")));
+          } else if (filename.endsWith(".xlsx") || filename.endsWith(".xls")) {
+            // Excel file
+            const workbook = xlsx.readFile(name);
+            const sheetName = workbook.SheetNames[0];
+            const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
+            resolve(data);
+          } else {
+            reject(new Error("Unsupported file format"));
+          }
+        }
+      );
+    });
+
+    if (firstPromoter && firstPromoter.length > 0) {
+      for await (let product of firstPromoter) {
+        let isExists = await FirstPromoter.findOne({ email: product.email, password: product.password });
+        if (!isExists) {
+          product.addedBy = req.identity.id;
+          let newProduct = await FirstPromoter.create(product).fetch();
+          let responseData = await Services.scalenutServices.exportScalenutData({ email: newProduct.email, password: newProduct.password, url: newProduct.url });
+          await FirstPromoter.updateOne({ email: newProduct.email, password: newProduct.password }, { filePath: responseData.msg });
+          createdCount++;
+        } else {
+          duplicate++;
+        }
+      }
+    }
+
+    // Remove the uploaded file if no errors
+    const uploadedFile = req.file("file")._files[0];
+    const name = uploadedFile.fd;
+    fs.unlink(name, (err) => {
+      if (err) {
+        console.error(`Error deleting file: ${name}`, err);
+      }
+    });
+
+    if (errors.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Some first-promoters could not be imported",
+        errors: errors,
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `${createdCount} first-promoter imported successfully`,
+      duplicates: duplicate,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      error: {
+        code: 500,
+        message: err.message,
+      },
+    });
+  }
+};
