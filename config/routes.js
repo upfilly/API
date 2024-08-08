@@ -540,4 +540,5 @@ module.exports.routes = {
   "GET /promoters/get": "FirstpromoterController.firstPromoterDetail",
   "GET /promoters/getAll": "FirstpromoterController.getAllFirstPromoters",
   "DELETE /promoters/delete": "FirstpromoterController.deleteFirstPromoter",
+  "POST /promoters/import": "FirstpromoterController.importFirstPromoter",
 };   
