@@ -529,6 +529,7 @@ module.exports.routes = {
    * @FirstPromoter
    */
 
+  "GET /firstpromoterdata/listing": "FirstpromoterController.firstPromoterDataListing",
   "DELETE /firstpromoter/delete": "FirstpromoterController.removeFirstPromoter",
   "PUT /firstpromoter/update": "FirstpromoterController.updateFirstPromoter",
   "POST /firstpromoterdata/export":
