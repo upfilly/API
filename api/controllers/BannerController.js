@@ -666,8 +666,7 @@ exports.getAllAffiliateBanner = async (req, res) => {
               req,
               res
             );
-          });
-      });
+     
   } catch (err) {
     return response.failed(null, `${err}`, req, res);
   }
