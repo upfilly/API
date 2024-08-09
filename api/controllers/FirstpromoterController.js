@@ -257,7 +257,7 @@ exports.addFirstPromoter = async (req, res) => {
         if (validation_result && !validation_result.success) {
             throw validation_result.message;
         }
-        let data = req.body;
+        let data = req.body;   
 
         const existedPromoter = await FirstPromoter.findOne({ email: data.email, isDeleted: false });
 
@@ -273,9 +273,11 @@ exports.addFirstPromoter = async (req, res) => {
         const createdPromoter = await FirstPromoter.create(data).fetch();
         if (createdPromoter) {
             let filePath = await Services.scalenutServices.exportScalenutData(data);
+            console.log(filePath.data,"<--------------------->");
             let updatedPromoter = {};
             if(filePath && filePath.success === true ){
-               updatedPromoter = await FirstPromoter.updateOne({id:createdPromoter.id},{filePath:filePath});
+               updatedPromoter = await FirstPromoter.updateOne({id:createdPromoter.id},{filePath:filePath.msg});
+
             }else{
               return response.failed(null,filePath.msg , req, res);  
             }
