@@ -22,7 +22,15 @@ exports.exportScalenutData = async (data) => {
     if (!fs.existsSync(downloadPath)) {
       fs.mkdirSync(downloadPath);
     }
-    let rowData={};
+    let rowData=[{
+      id:"",
+      status:"",
+      earnings:"",
+      created_at:new Date(),
+      sub_id:"",
+      lead_id:"",
+      lead_email:"",
+    }];
     // Generate a unique file name using UUID
     const uniqueId = uuidv4();
     const newFileName = `file_${uniqueId}.csv`; // Adjust file extension as needed
@@ -85,16 +93,17 @@ exports.exportScalenutData = async (data) => {
       try {
         fs.renameSync(oldPath, newPath);
         console.log("File renamed successfully to", newPath);
-
+        
         // Process the CSV file
         fs.createReadStream(`${newPath}`)
           .pipe(csv())
           .on("data", (row) => {
-            console.log("Processing row:", row);
+            // console.log("Processing row:", row);
             rowData = row;
             return newPath;
           })
           .on("end", () => {
+            
             console.log(newPath);
             return newPath;
           });

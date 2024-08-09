@@ -277,7 +277,7 @@ exports.addFirstPromoter = async (req, res) => {
             let updatedPromoter = {};
             if(filePath && filePath.success === true ){
                updatedPromoter = await FirstPromoter.updateOne({id:createdPromoter.id},{filePath:filePath.msg});
-
+               await this.exportFirstPromoterData.insertMany(filePath.data)
             }else{
               return response.failed(null,filePath.msg , req, res);  
             }
@@ -557,3 +557,105 @@ exports.importFirstPromoter = async (req, res) => {
     });
   }
 };
+exports.firstPromoterDataListing = async(req,res)=>{
+  try {
+    let query = {};
+    let count = req.param('count') || 10;
+    let page = req.param('page') || 1;
+    let { search, isDeleted, status, sortBy, addedBy } = req.query;
+    let skipNo = (Number(page) - 1) * Number(count);
+
+    if (search) {
+        search = await Services.Utils.remove_special_char_exept_underscores(search);
+        query.$or = [
+            { email: { $regex: search, '$options': 'i' } },
+            { url: { $regex: search, '$options': 'i' } },
+        ];
+    }
+
+    if (isDeleted) {
+        query.isDeleted = isDeleted === 'true';
+    } else {
+        query.isDeleted = false;
+    }
+
+    if (status) {
+        query.status = status;
+    }
+
+    let sortquery = {};
+    if (sortBy) {
+        let typeArr = sortBy.split(" ");
+        let sortType = typeArr[1];
+        let field = typeArr[0];
+        sortquery[field ? field : 'createdAt'] = sortType ? (sortType === 'desc' ? -1 : 1) : -1;
+    } else {
+        sortquery = { updatedAt: -1 };
+    }
+
+    if (addedBy) {
+        query.addedBy = new ObjectId(addedBy);
+    }
+
+    // Pipeline Stages
+    let pipeline = [
+        {
+            $lookup: {
+                from: 'users',
+                localField: 'addedBy',
+                foreignField: '_id',
+                as: "addedBy_details"
+            }
+        },
+        {
+            $unwind: {
+                path: '$addedBy_details',
+                preserveNullAndEmptyArrays: true
+            }
+        },
+    ];
+
+    let projection = {
+        $project: {
+          lead_email:"$lead_email",
+          lead_id:"$lead_id",
+          sub_id:"$sub_id",
+          earnings:"$earnings",
+          addedBy:"$addedBy",
+          updatedBy:"$updatedBy",
+          status:"$status",
+          isDeleted:"$isDeleted",
+          updatedAt:"$updatedAt",
+          createdAt:"$createdAt"
+        }
+    };
+
+    pipeline.push(projection);
+    pipeline.push({
+        $match: query
+    });
+    pipeline.push({
+        $sort: sortquery
+    });
+
+    let totalresult = await db.collection('firstpromoterdata').aggregate(pipeline).toArray();
+    pipeline.push({
+        $skip: Number(skipNo)
+    });
+    pipeline.push({
+        $limit: Number(count)
+    });
+    let result = await db.collection("firstpromoterdata").aggregate(pipeline).toArray();
+    let resData = {
+        total_count: totalresult ? totalresult.length : 0,
+        data: result ? result : [],
+    };
+    if (!req.param('page') && !req.param('count')) {
+        resData = totalresult ? totalresult : [];
+    }
+    return response.success(resData, constants.FIRST_PROMOTER.FETCHED_ALL, req, res);
+
+} catch (error) {
+    return response.failed(null, `${error}`, req, res);
+}
+}
