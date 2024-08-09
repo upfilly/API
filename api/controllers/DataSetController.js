@@ -859,9 +859,9 @@ exports.listOfEmailMessage = async (req, res) => {
         $sort: sortquery,
       },
     ];
-    db.collection("emailmessagetemplate")
+    let totalResult=await db.collection("emailmessagetemplate")
       .aggregate([...pipeline])
-      .toArray((err, totalResult) => {
+      .toArray();
         if (page && count) {
           var skipNo = (page - 1) * count;
           pipeline.push(
@@ -873,16 +873,15 @@ exports.listOfEmailMessage = async (req, res) => {
             }
           );
         }
-        db.collection("emailmessagetemplate")
+        let result=await db.collection("emailmessagetemplate")
           .aggregate([...pipeline])
-          .toArray((err, result) => {
+          .toArray();
             return res.status(200).json({
               success: true,
               data: result,
               total: totalResult.length,
             });
-          });
-      });
+        
   } catch (err) {
     // (err)
     return res.status(400).json({

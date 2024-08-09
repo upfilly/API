@@ -641,18 +641,18 @@ exports.getAllAffiliateBanner = async (req, res) => {
       $sort: sortquery,
     });
     // Pipeline Stages
-    db.collection("affiliatebanners")
+    let totalresult=await db.collection("affiliatebanners")
       .aggregate(pipeline)
-      .toArray((err, totalresult) => {
+      .toArray();
         pipeline.push({
           $skip: Number(skipNo),
         });
         pipeline.push({
           $limit: Number(count),
         });
-        db.collection("affiliatebanners")
+        let result =await db.collection("affiliatebanners")
           .aggregate(pipeline)
-          .toArray((err, result) => {
+          .toArray();
             let resData = {
               total_count: totalresult ? totalresult.length : 0,
               data: result ? result : [],

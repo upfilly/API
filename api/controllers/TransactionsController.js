@@ -672,14 +672,14 @@ exports.getAllTransactionsContracts = async (req, res) => {
         pipeline.push(group_stage);
 
         // Pipeline Stages
-        db.collection('transactions').aggregate(pipeline).toArray((err, totalresult) => {
+        let totalresult= db.collection('transactions').aggregate(pipeline).toArray();
             pipeline.push({
                 $skip: Number(skipNo)
             });
             pipeline.push({
                 $limit: Number(count)
             });
-            db.collection("transactions").aggregate(pipeline).toArray((err, result) => {
+            let result=await db.collection("transactions").aggregate(pipeline).toArray();
                 let resData = {
                     total_count: totalresult ? totalresult.length : 0,
                     data: result ? result : [],
@@ -689,8 +689,6 @@ exports.getAllTransactionsContracts = async (req, res) => {
                 }
                 return response.success(resData, constants.CONTRACT.USERS_FETCHED, req, res);
 
-            })
-        })
     } catch (err) {
         return response.failed(null, `${err}`, req, res);
     }
