@@ -297,9 +297,7 @@ exports.getAll = async (req, res) => {
     });
 
    let totalresult = await  db.collection('emailtemplate').aggregate(pipeline).toArray();
-      if (err) {
-        return response.failed(null, `${err}`, req, res);
-      }
+     
 
       pipeline.push({
         $skip: Number(skipNo)
@@ -425,9 +423,7 @@ exports.getUserEmailTemplate = async (req, res) => {
     });
 
     let totalresult=await db.collection('emailtemplateaffiliate').aggregate(pipeline).toArray();
-      if (err) {
-        return response.failed(null, `${err}`, req, res);
-      }
+    
 
       pipeline.push({
         $skip: Number(skipNo)

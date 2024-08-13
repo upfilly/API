@@ -354,6 +354,7 @@ exports.sendDataSets = async (req, res) => {
           }
 
           let existingData = await DataFeeds.findOne({
+            ID:item.ID,
             SKU: item.SKU,
             brand_id: req.identity.id,
           });
