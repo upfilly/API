@@ -158,9 +158,7 @@ exports.find = async function (req, res) {
     });
 
     let totalresult = await db.collection('affiliatelink').aggregate(pipeline).toArray();
-      if (err) {
-        return response.failed(null, `${err}`, req, res);
-      }
+    
 
       pipeline.push({
         $skip: Number(skipNo)
