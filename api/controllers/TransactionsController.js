@@ -262,10 +262,7 @@ exports.getAllTransactions = async (req, res) => {
                 $sort: sortquery
             },
         ]).toArray();
-            if (err) {
-                return response.failed(null, `${err}`, req, res)
-
-            }
+           
             let result = await    db.collection('transactions').aggregate([
                 {
                     $lookup: {
@@ -350,9 +347,7 @@ exports.getAllTransactions = async (req, res) => {
                 }
 
             ]).toArray();
-                if (err) {
-                    return response.failed(null, `${err}`, req, res)
-                }
+                
 
                 if (export_to_xls == "yes") {
                     if (totalresult && totalresult.length > 0) {
