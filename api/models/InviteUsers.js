@@ -17,30 +17,28 @@ module.exports = {
     email: {
       type: 'string',
     },
-    role: {
-      type: 'string',
-    },
+    role: { type: 'string', isIn: ["publisher", "operator", "analyzer", "super_user"] },
     description: {
       type: 'string',
     },
     language: {
       type: 'string',
     },
-    invitationAccepted:{
-      type:"boolean",
-      defaultsTo:false
+    invitationAccepted: {
+      type: "boolean",
+      defaultsTo: false
     },
-    user_id:{
-      model:"users"
+    user_id: {
+      model: "users"
     },
-    brand_id:{
-      model:"users"
+    brand_id: {
+      model: "users"
     },
-      // Common Keys
-      addedBy: { model: 'users' },
-      updatedBy: { model: 'users' },
-      isDeleted: { type: 'Boolean', defaultsTo: false },
-      createdAt: { type: 'ref', autoCreatedAt: true },
-      updatedAt: { type: 'ref', autoCreatedAt: true },
+    // Common Keys
+    addedBy: { model: 'users' },
+    updatedBy: { model: 'users' },
+    isDeleted: { type: 'Boolean', defaultsTo: false },
+    createdAt: { type: 'ref', autoCreatedAt: true },
+    updatedAt: { type: 'ref', autoCreatedAt: true },
   }
 };
