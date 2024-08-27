@@ -20,20 +20,20 @@ let Unique = (arr) => {
   //To keep track of the sub arrays
   let itemsFound = {};
 
-  for(let val of arr) {
-      //convert the sub array to the string
-      let stringified = JSON.stringify(val);
+  for (let val of arr) {
+    //convert the sub array to the string
+    let stringified = JSON.stringify(val);
 
-      //If it is already added then skip to next element
-      if(itemsFound[stringified]) { 
-         continue; 
-      }
+    //If it is already added then skip to next element
+    if (itemsFound[stringified]) {
+      continue;
+    }
 
-      //Else add the value to the unique list
-      uniques.push(val);
+    //Else add the value to the unique list
+    uniques.push(val);
 
-      //Mark it as true so that it can tracked
-      itemsFound[stringified] = true;
+    //Mark it as true so that it can tracked
+    itemsFound[stringified] = true;
   }
 
   //Return the unique list
@@ -143,16 +143,16 @@ exports.importCsvDataHttp = async (req, res) => {
   let createdCount = 0;
   try {
     let user_id = req.query.id;
-    let isExists = await DataSet.find({user_id:user_id});
-    if(!isExists) {
+    let isExists = await DataSet.find({ user_id: user_id });
+    if (!isExists) {
       throw "No data found";
     }
     let listOfData = [];
-    for await(let data of isExists){
-      const url = constant.BACK_WEB_URL+"/"+data.filePath; // assume the URL is sent in the request body
+    for await (let data of isExists) {
+      const url = constant.BACK_WEB_URL + "/" + data.filePath; // assume the URL is sent in the request body
       // console.log(url);
       const { fileType1, fileBuffer } = await getFileFromUrl(url);
-      let fileType= url.substr(url.lastIndexOf(".")+1)
+      let fileType = url.substr(url.lastIndexOf(".") + 1)
       if (fileType !== 'csv' && fileType !== 'xlsx' && fileType !== 'xls') {
         throw {
           success: false,
@@ -164,13 +164,13 @@ exports.importCsvDataHttp = async (req, res) => {
       }
       var student_arr;
       if (fileType === 'csv') {
-        student_arr = await parseCSV(fileBuffer.toString('utf8'),data.addedBy);
+        student_arr = await parseCSV(fileBuffer.toString('utf8'), data.addedBy);
       } else {
-        student_arr = await parseExcelFile(fileBuffer,data.addedBy);
+        student_arr = await parseExcelFile(fileBuffer, data.addedBy);
       }
       listOfData.push(student_arr);
     }
-  //  console.log(listOfData);
+    //  console.log(listOfData);
     response.success(
       listOfData,
       constants.CSVDATA.IMPORTED_SUCCESSFULLY,
@@ -212,7 +212,7 @@ async function getFileFromUrl(url) {
 //   return fileType.ext;
 // }
 
-async function parseExcelFile(fileBuffer,addedBy) {
+async function parseExcelFile(fileBuffer, addedBy) {
   const workbook = xlsx.read(fileBuffer, { type: 'buffer' });
   const sheetName = workbook.SheetNames[0];
   const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
@@ -221,7 +221,7 @@ async function parseExcelFile(fileBuffer,addedBy) {
 
 
 
-async function parseCSV(csvData,addedBy) {
+async function parseCSV(csvData, addedBy) {
   // Split the CSV data by lines
   const lines = csvData.trim().split("\n");
   const result = [];
@@ -316,61 +316,61 @@ exports.sendDataSets = async (req, res) => {
 
     let duplicate = 0;
     let createdCount = 0;
-        const url = constant.BACK_WEB_URL+"/"+data.filePath; // assume the URL is sent in the request body
-        console.log(url);
-        const { fileType1, fileBuffer } = await getFileFromUrl(url);
-        let fileType= url.substr(url.lastIndexOf(".")+1)
-        if (fileType !== 'csv' && fileType !== 'xlsx' && fileType !== 'xls') {
-          throw {
-            success: false,
-            error: {
-              code: 404,
-              message: 'Invalid file type',
-            },
-          };
-        }
-        var student_arr;
-        if (fileType === 'csv') {
-          student_arr = await parseCSV(fileBuffer.toString('utf8'));
-        } else {
-          student_arr = await parseExcelFile(fileBuffer);
-        }
-       
-      
-      for (let item of student_arr) {
-          payload = {
-            ID:item.ID,
-            type:item.Type,
-            SKU:item.SKU,
-            Name:item.Name,
-            Published:Boolean(Number(item.Published)),
-            isFeatured:Boolean(Number(item.Is_Featured)),
-            isVisible:Boolean(Number(item.Is_Visible)),
-            shortDescription:item.Short_Description,
-            longDescription:item.Long_Description,
-            brand_name:req.identity.name,
-            brand_id:req.identity.id,
-            url:item.url
-          }
+    const url = constant.BACK_WEB_URL + "/" + data.filePath; // assume the URL is sent in the request body
+    console.log(url);
+    const { fileType1, fileBuffer } = await getFileFromUrl(url);
+    let fileType = url.substr(url.lastIndexOf(".") + 1)
+    if (fileType !== 'csv' && fileType !== 'xlsx' && fileType !== 'xls') {
+      throw {
+        success: false,
+        error: {
+          code: 404,
+          message: 'Invalid file type',
+        },
+      };
+    }
+    var student_arr;
+    if (fileType === 'csv') {
+      student_arr = await parseCSV(fileBuffer.toString('utf8'));
+    } else {
+      student_arr = await parseExcelFile(fileBuffer);
+    }
 
-          let existingData = await DataFeeds.findOne({
-            ID:item.ID,
-            SKU: item.SKU,
-            brand_id: req.identity.id,
-          });
 
-          if (!existingData) {
-            await DataFeeds.create(payload);
-          }else{
-            await DataFeeds.updateOne({ID:item.ID},payload);
-          }
-
+    for (let item of student_arr) {
+      payload = {
+        ID: item.ID,
+        type: item.Type,
+        SKU: item.SKU,
+        Name: item.Name,
+        Published: Boolean(Number(item.Published)),
+        isFeatured: Boolean(Number(item.Is_Featured)),
+        isVisible: Boolean(Number(item.Is_Visible)),
+        shortDescription: item.Short_Description,
+        longDescription: item.Long_Description,
+        brand_name: req.identity.name,
+        brand_id: req.identity.id,
+        url: item.url
       }
-      
+
+      let existingData = await DataFeeds.findOne({
+        ID: item.ID,
+        SKU: item.SKU,
+        brand_id: req.identity.id,
+      });
+
+      if (!existingData) {
+        await DataFeeds.create(payload);
+      } else {
+        await DataFeeds.updateOne({ ID: item.ID }, payload);
+      }
+
+    }
 
 
 
-      response.success(student_arr, constants.DATASET.ADDED, req, res);
+
+    response.success(student_arr, constants.DATASET.ADDED, req, res);
   } catch (err) {
     console.log(err);
     response.failed(err, `${err}`, req, res);
@@ -495,28 +495,28 @@ exports.listOfDataSet = async (req, res) => {
     let totalResult = await db.collection("dataset")
       .aggregate([...pipeline])
       .toArray();
-        if (page && count) {
-          var skipNo = (page - 1) * count;
-          pipeline.push(
-            {
-              $skip: Number(skipNo),
-            },
-            {
-              $limit: Number(count),
-            }
-          );
+    if (page && count) {
+      var skipNo = (page - 1) * count;
+      pipeline.push(
+        {
+          $skip: Number(skipNo),
+        },
+        {
+          $limit: Number(count),
         }
-        
-        let result =await db.collection("dataset")
-          .aggregate([...pipeline])
-          .toArray();
+      );
+    }
 
-            return res.status(200).json({
-              success: true,
-              data: result,
-              total: totalResult.length,
-            });
-         
+    let result = await db.collection("dataset")
+      .aggregate([...pipeline])
+      .toArray();
+
+    return res.status(200).json({
+      success: true,
+      data: result,
+      total: totalResult.length,
+    });
+
   } catch (err) {
     // (err)
     return res.status(400).json({
@@ -541,6 +541,9 @@ exports.sendEmailMessage = async (req, res) => {
 
     let data = req.body;
     if (data.isAllJoined) {
+
+      console.log("In All Joined Condition");
+
       query1 = {
         addedBy: req.identity.id,
         status: "accepted",
@@ -570,32 +573,56 @@ exports.sendEmailMessage = async (req, res) => {
 
       // Combine the two lists
       let combinedList = [...listOfBrandInvite, ...listOfAcceptedInvites];
-      console.log(combinedList);
+      // console.log(combinedList);
       // Remove duplicates based on the 'id' key
       listOfAcceptedInvites = removeDuplicates(combinedList, "affiliate_id");
+      // console.log(listOfAcceptedInvites, "==listOfAcceptedInvites");
 
-      for (let invites of listOfAcceptedInvites) {
+      for await (let invites of listOfAcceptedInvites) {
         let findUser = await Users.findOne({
           id: invites.affiliate_id,
           // status: data.affiliateStatus,
           isDeleted: false,
         });
-       if(findUser) {let emailPayload = {
-          brandFullName: req.identity.fullName,
-          affiliateFullName: findUser.fullName,
-          affiliateEmail: findUser.email,
-          emailMessage: data.description,
-        };
+        if (findUser) {
+          // console.log(findUser, "===findUser");
 
-        await Emails.EmailMessageTemplate.sendEmailMessageTemplate(
-          emailPayload
-        );}
+          data.addedBy = req.identity.id;
+          data.affiliate_id = findUser.id
+          let saved_payload = {
+            addedBy: req.identity.id,
+            affiliate_id: findUser.id,
+            title: data.title,
+            description: data.description,
+            isAllJoined: data.isAllJoined
+          }
+
+          let emailMessage = await EmailMessageTemplate.create(saved_payload).fetch();
+
+          // if (!emailMessage) {
+          //   throw constants.EMAILMESSAGE.ERROR_SENDING_EMAIL;
+          // }
+
+          let emailPayload = {
+            brandFullName: req.identity.fullName,
+            affiliateFullName: findUser.fullName,
+            affiliateEmail: findUser.email,
+            emailMessage: data.description,
+          };
+
+          // await Emails.EmailMessageTemplate.sendEmailMessageTemplate(
+          //   emailPayload
+          // );
+        }
       }
     }
     // if(data.groups && data.groups.length>0){
 
     // }
     if (data.acceptedDate) {
+      let time_interval_payload = {}
+      console.log("In Before Accepted Condition");
+
       if (data.timeInterval === "before") {
         let updatedAt = {
           "<=": new Date(new Date(data.acceptedDate).setHours(0, 0, 0))
@@ -612,6 +639,15 @@ exports.sendEmailMessage = async (req, res) => {
           isDeleted: false,
           updatedAt: updatedAt,
         };
+
+        time_interval_payload = {
+          title: data.title,
+          description: data.description,
+          timeInterval: "before"
+
+        }
+
+
       }
       if (data.timeInterval === "after") {
         let updatedAt = {
@@ -629,6 +665,14 @@ exports.sendEmailMessage = async (req, res) => {
           isDeleted: false,
           updatedAt: updatedAt,
         };
+
+        time_interval_payload = {
+          title: data.title,
+          description: data.description,
+          timeInterval: "after"
+        }
+
+
       }
       // console.log(query1);
       let listOfAcceptedInvites = await AffiliateInvite.find(query1);
@@ -648,7 +692,7 @@ exports.sendEmailMessage = async (req, res) => {
 
       // Combine the two lists
       let combinedList = [...listOfBrandInvite, ...listOfAcceptedInvites];
-      console.log(combinedList);
+      // console.log(combinedList);
       // Remove duplicates based on the 'id' key
       listOfAcceptedInvites = removeDuplicates(combinedList, "affiliate_id");
 
@@ -658,20 +702,35 @@ exports.sendEmailMessage = async (req, res) => {
           // status: data.affiliateStatus,
           isDeleted: false,
         });
-     if(findUser)  { let emailPayload = {
-          brandFullName: req.identity.fullName,
-          affiliateFullName: findUser.fullName,
-          affiliateEmail: findUser.email,
-          emailMessage: data.description,
-        };
+        if (findUser) {
 
-        await Emails.EmailMessageTemplate.sendEmailMessageTemplate(
-          emailPayload
-        );}
+          data.addedBy = req.identity.id;
+          data.affiliate_id = findUser.id
+
+          time_interval_payload.addedBy = req.identity.id
+          time_interval_payload.affiliate_id = findUser.id
+
+          let emailMessage = await EmailMessageTemplate.create(time_interval_payload).fetch();
+
+
+          let emailPayload = {
+            brandFullName: req.identity.fullName,
+            affiliateFullName: findUser.fullName,
+            affiliateEmail: findUser.email,
+            emailMessage: data.description,
+          };
+
+          // await Emails.EmailMessageTemplate.sendEmailMessageTemplate(
+          //   emailPayload
+          // );
+        }
       }
     }
 
     if (data.affiliateStatus) {
+
+      console.log("In After Accepted Condition");
+
       query2 = {
         brand_id: req.identity.id,
         // status: "accepted",
@@ -703,22 +762,24 @@ exports.sendEmailMessage = async (req, res) => {
 
       // Combine the two lists
       let combinedList = [...listOfBrandInvite, ...listOfAcceptedInvites];
-      console.log(combinedList);
+      // console.log(combinedList);
       // Remove duplicates based on the 'id' key
       listOfAcceptedInvites = removeDuplicates(combinedList, "affiliate_id");
 
       for (let invites of listOfAcceptedInvites) {
         let findUser = await Users.findOne({ id: invites.affiliate_id, status: data.affiliateStatus, isDeleted: false });
-        if(findUser){let emailPayload = {
-          brandFullName: req.identity.fullName,
-          affiliateFullName: findUser.fullName,
-          affiliateEmail: findUser.email,
-          emailMessage: data.description,
-        };
+        if (findUser) {
+          let emailPayload = {
+            brandFullName: req.identity.fullName,
+            affiliateFullName: findUser.fullName,
+            affiliateEmail: findUser.email,
+            emailMessage: data.description,
+          };
 
-        await Emails.EmailMessageTemplate.sendEmailMessageTemplate(
-          emailPayload
-        );}
+          await Emails.EmailMessageTemplate.sendEmailMessageTemplate(
+            emailPayload
+          );
+        }
       }
     }
     // let isExists = await Users.findOne({ id: data.user_id, isDeleted: false });
@@ -727,16 +788,7 @@ exports.sendEmailMessage = async (req, res) => {
     //   throw constants.user.USER_NOT_FOUND;
     // }
 
-    data.addedBy = req.identity.id;
-
-    let emailMessage = await EmailMessageTemplate.create(data).fetch();
-
-    if (!emailMessage) {
-      throw constants.EMAILMESSAGE.ERROR_SENDING_EMAIL;
-    }
-
-
-    response.success(emailMessage, constants.EMAILMESSAGE.ADDED, req, res);
+    response.success(null, constants.EMAILMESSAGE.ADDED, req, res);
   } catch (error) {
     console.log(error);
     return res.status(400).json({
@@ -754,7 +806,7 @@ exports.listOfEmailMessage = async (req, res) => {
     var count = parseInt(req.param("count"));
     let sortBy = req.param("sortBy");
     let addedBy = req.param("addedBy");
-    let user_id = req.param("user_id");
+    let affiliate_id = req.param("user_id");
 
     var date = new Date();
 
@@ -780,8 +832,8 @@ exports.listOfEmailMessage = async (req, res) => {
 
     query.isDeleted = false;
 
-    if (user_id) {
-      query.user_id = new ObjectId(user_id);
+    if (affiliate_id) {
+      query.affiliate_id = new ObjectId(affiliate_id);
     }
 
     if (addedBy) {
@@ -807,7 +859,7 @@ exports.listOfEmailMessage = async (req, res) => {
     //   query.submitDateAndTime = { $lte: endDate };
     // }
 
-    console.log(query);
+    // console.log(query);
 
     const pipeline = [
       {
@@ -827,7 +879,7 @@ exports.listOfEmailMessage = async (req, res) => {
       {
         $lookup: {
           from: "users",
-          localField: "user_id",
+          localField: "affiliate_id",
           foreignField: "_id",
           as: "user_details",
         },
@@ -841,10 +893,14 @@ exports.listOfEmailMessage = async (req, res) => {
       {
         $project: {
           title: "$title",
-          user_id: "$user_id",
+          affiliate_id: "$affiliate_id",
           description: "$description",
           user_details: "$user_details",
           addedBy_details: "$addedBy_details",
+
+          isAllJoined: "$isAllJoined",
+          timeInterval: "$timeInterval",
+
           status: "$status",
           isDeleted: "$isDeleted",
           addedBy: "$addedBy",
@@ -860,29 +916,29 @@ exports.listOfEmailMessage = async (req, res) => {
         $sort: sortquery,
       },
     ];
-    let totalResult=await db.collection("emailmessagetemplate")
+    let totalResult = await db.collection("emailmessagetemplate")
       .aggregate([...pipeline])
       .toArray();
-        if (page && count) {
-          var skipNo = (page - 1) * count;
-          pipeline.push(
-            {
-              $skip: Number(skipNo),
-            },
-            {
-              $limit: Number(count),
-            }
-          );
+    if (page && count) {
+      var skipNo = (page - 1) * count;
+      pipeline.push(
+        {
+          $skip: Number(skipNo),
+        },
+        {
+          $limit: Number(count),
         }
-        let result=await db.collection("emailmessagetemplate")
-          .aggregate([...pipeline])
-          .toArray();
-            return res.status(200).json({
-              success: true,
-              data: result,
-              total: totalResult.length,
-            });
-        
+      );
+    }
+    let result = await db.collection("emailmessagetemplate")
+      .aggregate([...pipeline])
+      .toArray();
+    return res.status(200).json({
+      success: true,
+      data: result,
+      total: totalResult.length,
+    });
+
   } catch (err) {
     // (err)
     return res.status(400).json({
@@ -893,11 +949,11 @@ exports.listOfEmailMessage = async (req, res) => {
 };
 
 exports.getDataSets = async (req, res) => {
-  try{
+  try {
     let id = req.identity.id;
-    
-  }catch(error){
-    response.failed(null,`Some thing went wrong`,req,res);
+
+  } catch (error) {
+    response.failed(null, `Some thing went wrong`, req, res);
   }
 }
 exports.getEmailMessage = async (req, res) => {
@@ -929,49 +985,49 @@ exports.getEmailMessage = async (req, res) => {
   }
 };
 
-exports.ListDataSetsBrand = async(req,res)=>{
-  try{
-       let affiliate_id = req.identity.id;
+exports.ListDataSetsBrand = async (req, res) => {
+  try {
+    let affiliate_id = req.identity.id;
 
-       if(affiliate_id){
-        let listAffiliateInvite = await AffiliateInvite.find({affiliate_id:affiliate_id,isDeleted:false});
-        if(listAffiliateInvite){
-          var findBrandList = await DataFeeds.find({brand_id:listAffiliateInvite.brand_id,isDeleted:false})   
-        }
+    if (affiliate_id) {
+      let listAffiliateInvite = await AffiliateInvite.find({ affiliate_id: affiliate_id, isDeleted: false });
+      if (listAffiliateInvite) {
+        var findBrandList = await DataFeeds.find({ brand_id: listAffiliateInvite.brand_id, isDeleted: false })
+      }
 
-        let listOfAffiliateBrandInvite = await AffiliateBrandInvite.find({affiliate_id:affiliate_id,isDeleted:false});
-        if(listOfAffiliateBrandInvite){
-          var findAffiliateBrandInvite = await DataFeeds.find({brand_id:listOfAffiliateBrandInvite.addedBy,isDeleted:false}) 
-        }
+      let listOfAffiliateBrandInvite = await AffiliateBrandInvite.find({ affiliate_id: affiliate_id, isDeleted: false });
+      if (listOfAffiliateBrandInvite) {
+        var findAffiliateBrandInvite = await DataFeeds.find({ brand_id: listOfAffiliateBrandInvite.addedBy, isDeleted: false })
+      }
 
-        let listAllAffiliate
-        if(findBrandList && findAffiliateBrandInvite )  {
-           listAllAffiliate = [...findBrandList, ...findAffiliateBrandInvite];
-        }else if(findBrandList){
-          listAllAffiliate = findBrandList
-         }else if(findAffiliateBrandInvite)  {
-          listAllAffiliate = findAffiliateBrandInvite
-         }else{
-          listAllAffiliate = []
-         }
-
-        
-         let uniquelistAllAffiliate = Unique(listAllAffiliate);
-
-        return res.status(200).json({
-          success: true,
-          data: uniquelistAllAffiliate,
-          total: uniquelistAllAffiliate.length,
-        });
-        
-       }
-
-          
+      let listAllAffiliate
+      if (findBrandList && findAffiliateBrandInvite) {
+        listAllAffiliate = [...findBrandList, ...findAffiliateBrandInvite];
+      } else if (findBrandList) {
+        listAllAffiliate = findBrandList
+      } else if (findAffiliateBrandInvite) {
+        listAllAffiliate = findAffiliateBrandInvite
+      } else {
+        listAllAffiliate = []
+      }
 
 
-    
+      let uniquelistAllAffiliate = Unique(listAllAffiliate);
 
-  }catch(err){
+      return res.status(200).json({
+        success: true,
+        data: uniquelistAllAffiliate,
+        total: uniquelistAllAffiliate.length,
+      });
+
+    }
+
+
+
+
+
+
+  } catch (err) {
     return res.status(400).json({
       success: false,
       error: { code: 400, message: "" + err },

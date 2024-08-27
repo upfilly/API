@@ -55,7 +55,7 @@ exports.addUser = async (req, res, next) => {
         dialCode: Joi.string().optional().allow(""),
         mobileNo: Joi.string().optional().allow("").min(5).max(12),
         image: Joi.string().optional().allow(""),
-        role: Joi.string().required().valid('brand', 'affiliate', 'team', 'customer', 'users', 'affiliate', 'operator', 'analyzer', 'publisher'),
+        role: Joi.string().required().valid('brand', 'affiliate', 'team', 'customer', 'users', 'affiliate', 'operator', 'analyzer', 'publisher', 'staff'),
         category_id: Joi.string().optional().allow(null),
         gender: Joi.string().optional(),
         address: Joi.string().optional().allow(""),
@@ -273,7 +273,7 @@ exports.editProfile = async (req, res, next) => {
         category_id: Joi.string().optional().allow(null),
         sub_category_id: Joi.string().optional().allow(null),
         sub_child_category_id: Joi.string().optional().allow(null),
-        
+
         step: Joi.number().optional().min(1).max(4),
         profile_status: Joi.string().optional().valid('pending', 'completed'),
 
