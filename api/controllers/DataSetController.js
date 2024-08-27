@@ -960,11 +960,11 @@ exports.getEmailMessage = async (req, res) => {
   try {
     const id = req.param("id");
     if (!id) {
-      throw constants.EMAIL_MESSAGE.ID_REQUIRED;
+      throw constants.EMAILMESSAGE.ID_REQUIRED;
     }
     const get_Email = await EmailMessageTemplate.findOne({ id: id })
       .populate("addedBy")
-      .populate("user_id");
+      .populate("affiliate_id");
 
     if (get_Email) {
       return response.success(
