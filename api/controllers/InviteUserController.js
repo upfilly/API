@@ -33,9 +33,9 @@ module.exports = {
         throw "Permission not exists";
       }
 
-      if (!isPermissionExists.user_add) {
-        throw "User not allowed to invite user";
-      }
+      // if (!isPermissionExists.user_add) {
+      //   throw "User not allowed to invite user";
+      // }
       let validation_result = await Validations.InviteUserValidation.addInvite(
         req,
         res
@@ -70,8 +70,8 @@ module.exports = {
       if (existingUser) {
         // throw constants.user.EMAIL_EXIST;
         user = await InviteUsers.create({
-          firstName: firstName,
-          lastName: lastName,
+          firstName: firstName.toLowerCase(),
+          lastName: lastName.toLowerCase(),
           email: email,
           role: role,
           description: description,
