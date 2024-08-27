@@ -104,6 +104,12 @@ module.exports = {
       defaultsTo: false
     },
 
+    coupon_add: { type: "Boolean", defaultsTo: false },
+    coupon_edit: { type: "Boolean", defaultsTo: false },
+    coupon_get: { type: "Boolean", defaultsTo: false },
+    coupon_delete: { type: "Boolean", defaultsTo: false },
+    coupon_complete_access: { type: "Boolean", defaultsTo: false },
+
     addedBy: { model: "Users", },
     updatedBy: { model: "Users", },
     createdAt: { type: "ref", autoCreatedAt: true },
