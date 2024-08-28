@@ -604,7 +604,8 @@ module.exports = {
       }
       if (brand_id) {
         query.brand_id = new ObjectId(brand_id);
-      } else {
+        query.user_id = { $ne: new ObjectId(req.identity.id) }
+      } else if (req.identity.id) {
         query.brand_id = new ObjectId(req.identity.id);
       }
 
@@ -624,6 +625,8 @@ module.exports = {
       }
 
       query.isDeleted = false;
+
+      // console.log(query, "================test");
 
       const pipeline = [
         {

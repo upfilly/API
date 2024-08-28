@@ -207,9 +207,10 @@ exports.getAllRequests = async (req, res) => {
 
     if (brand_id) {
       query.brand_id = new  ObjectId(brand_id);
-    } else {
-      query.brand_id = new  ObjectId(req.identity.id);
-    }
+    } 
+    // else {
+    //   query.brand_id = new  ObjectId(req.identity.id);
+    // }
     if (affiliate_id) {
       query.affiliate_id = new  ObjectId(affiliate_id);
     }
