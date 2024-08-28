@@ -12,6 +12,8 @@ const Emails = require("../Emails");
 const https = require('https');
 // const FileType = require('file-type');
 
+const Services = require('../services/index');
+
 
 let Unique = (arr) => {
   //To store the unique sub arrays
@@ -598,6 +600,11 @@ exports.sendEmailMessage = async (req, res) => {
           }
 
           let emailMessage = await EmailMessageTemplate.create(saved_payload).fetch();
+          if (emailMessage) {
+            if (['operator', 'analyzer', 'publisher', 'customer'].includes(req.identity.role)) {
+              await Services.activityHistoryServices.create_activity_history(req.identity.id, 'emailmessagetemplate', 'created', emailMessage, emailMessage)
+            }
+          }
 
           // if (!emailMessage) {
           //   throw constants.EMAILMESSAGE.ERROR_SENDING_EMAIL;
@@ -711,7 +718,11 @@ exports.sendEmailMessage = async (req, res) => {
           time_interval_payload.affiliate_id = findUser.id
 
           let emailMessage = await EmailMessageTemplate.create(time_interval_payload).fetch();
-
+          if (emailMessage) {
+            if (['operator', 'analyzer', 'publisher', 'customer'].includes(req.identity.role)) {
+              await Services.activityHistoryServices.create_activity_history(req.identity.id, 'emailmessagetemplate', 'created', emailMessage, emailMessage)
+            }
+          }
 
           let emailPayload = {
             brandFullName: req.identity.fullName,
