@@ -485,8 +485,9 @@ module.exports = {
       if (['affiliate', 'brand'].includes(user.role)) {
         permission_query.role = user.role
       } else if (['operator', 'analyzer', 'publisher', 'super_user'].includes(user.role)) {
-        if (user.addedBy) {
-          let get_account_manager_detail = await Users.findOne({ id: user.addedBy, isDeleted: false });
+        // console.log(user, "==user");
+        if (user.addedBy.id) {
+          let get_account_manager_detail = await Users.findOne({ id: user.addedBy.id, isDeleted: false });
           if (get_account_manager_detail.role)
             permission_query.role = user.role
           permission_query.account_manager = get_account_manager_detail.role

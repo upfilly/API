@@ -3,7 +3,7 @@ module.exports = {
   attributes: {
     // user_id: { model: "users" },
     role: { type: 'string', isIn: ['affiliate', 'operator', 'analyzer', 'publisher', 'customer', 'users'], },
-
+    account_manager: { type: 'string', isIn: ['brand', 'affiliate'] },
     offer_add: { type: "Boolean", defaultsTo: false },
     offer_edit: { type: "Boolean", defaultsTo: false },
     offer_get: { type: "Boolean", defaultsTo: false },
