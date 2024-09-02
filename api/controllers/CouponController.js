@@ -49,7 +49,9 @@ exports.addCoupon = async (req, res) => {
             if (['operator', 'super_user'].includes(req.identity.role)) {
 
                 //----------------get main account manager---------------------
-                let get_account_manager = await Users.findOne({ addedBy: req.identity.id, isDeleted: false })
+                let get_account_manager = await Users.findOne({ id: req.identity.addedBy, isDeleted: false })
+                console.log(get_account_manager, "===get_account_manager");
+
                 await Services.activityHistoryServices.create_activity_history(req.identity.id, 'coupon', 'created', coupon, coupon, get_account_manager.id ? get_account_manager.id : null)
 
             } else if (['brand'].includes(req.identity.role)) {
@@ -106,7 +108,7 @@ exports.editCoupon = async function (req, res) {
             if (['operator', 'super_user'].includes(req.identity.role)) {
 
                 //----------------get main account manager---------------------
-                let get_account_manager = await Users.findOne({ addedBy: req.identity.id, isDeleted: false })
+                let get_account_manager = await Users.findOne({ id: req.identity.addedBy, isDeleted: false })
                 await Services.activityHistoryServices.create_activity_history(req.identity.id, 'coupon', 'updated', coupon, couponExists, get_account_manager.id ? get_account_manager.id : null)
 
             } else if (['brand'].includes(req.identity.role)) {

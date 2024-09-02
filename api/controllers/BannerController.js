@@ -149,7 +149,7 @@ exports.addBanner = async (req, res) => {
       if (['operator', 'super_user'].includes(req.identity.role)) {
 
         //----------------get main account manager---------------------
-        let get_account_manager = await Users.findOne({ addedBy: req.identity.id, isDeleted: false })
+        let get_account_manager = await Users.findOne({ id: req.identity.addedBy, isDeleted: false })
         await Services.activityHistoryServices.create_activity_history(req.identity.id, 'banner', 'created', add_detail, add_detail, get_account_manager.id ? get_account_manager.id : null)
 
       } else if (['brand'].includes(req.identity.role)) {
@@ -253,7 +253,7 @@ exports.editBanner = async (req, res) => {
       if (['operator', 'super_user'].includes(req.identity.role)) {
 
         //----------------get main account manager---------------------
-        let get_account_manager = await Users.findOne({ addedBy: req.identity.id, isDeleted: false })
+        let get_account_manager = await Users.findOne({ id: req.identity.addedBy, isDeleted: false })
         await Services.activityHistoryServices.create_activity_history(req.identity.id, 'banner', 'updated', update_detail, get_banner, get_account_manager.id ? get_account_manager.id : null)
 
       } else if (['brand'].includes(req.identity.role)) {
