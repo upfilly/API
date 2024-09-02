@@ -13,7 +13,7 @@ module.exports = {
     lastName: { type: 'string' },
     fullName: { type: 'string' },
     brand_name: { type: 'string' },
-    activeUser:{model:"Users"},
+    activeUser: { model: "Users" },
     email: { type: 'string' },
     dialCode: { type: 'string' },
     cellDialCode: { type: 'string' },
@@ -24,7 +24,7 @@ module.exports = {
     password: { type: 'string', columnName: 'encryptedPassword', minLength: 8 },
     gender: { type: 'string', isIn: ["male", "female", "transgender", "others"] },
     isVerified: { type: 'string', isIn: ['Y', 'N'], defaultsTo: 'N', },
-    role: { type: 'string', isIn: ['brand', 'admin', 'affiliate', 'team', 'operator','analyzer','publisher', 'customer', 'users'], },
+    role: { type: 'string', isIn: ['brand', 'admin', 'affiliate', 'team', 'super_user', 'operator', 'analyzer', 'publisher', 'customer', 'users'], },
     address: { type: "string" },
     country: { type: 'string' },
     state: { type: 'string' },
@@ -133,7 +133,7 @@ module.exports = {
     company_mobile_no: { type: 'string' },
     is_mobile_verified: { type: 'Boolean', defaultsTo: false },
 
-    
+
     //Paypal
     paypal_customer_id: { type: 'string' },
     paypal_subscription_id: { type: 'string' },
@@ -188,7 +188,7 @@ module.exports = {
   },
 
   beforeCreate: function (user, next) {
-    console.log(user,"--------------user");
+    console.log(user, "--------------user");
     if (user.firstName || user.lastName) {
       user.fullName = user.firstName + ' ' + user.lastName;
     }
