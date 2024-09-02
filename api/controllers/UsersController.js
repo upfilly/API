@@ -1722,7 +1722,7 @@ module.exports = {
         let get_permission = await Permissions.findOne(permission_query);
 
         if (get_permission) {
-          user.permission_detail = get_permission;
+          get_user.permission_detail = get_permission;
         }
 
 
