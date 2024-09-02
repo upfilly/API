@@ -42,13 +42,13 @@ exports.addCampaign = async (req, res) => {
 
         let loggedInUser = await Users.findOne({ id: id, isDeleted: false });
 
-        let isPermissionExists = await Permissions.findOne({role:loggedInUser.role});
+        let isPermissionExists = await Permissions.findOne({ role: loggedInUser.role });
 
-        if(!isPermissionExists){
+        if (!isPermissionExists) {
             throw "Permission not exists";
-        }   
+        }
 
-        if(!isPermissionExists.campaign_add){
+        if (!isPermissionExists.campaign_add) {
             throw "User not allowed to create campaign";
         }
         // return;
@@ -64,9 +64,9 @@ exports.addCampaign = async (req, res) => {
             throw constants.CAMPAIGN.ALREADY_EXIST
         }
 
-            req.body.addedBy = req.identity.id;
-            req.body.brand_id = req.body.brand_id;
-        
+        req.body.addedBy = req.identity.id;
+        req.body.brand_id = req.body.brand_id;
+
 
         req.body.campaign_unique_id = generateRandom8DigitNumber();
         var campaign_linkArr = [];
@@ -142,14 +142,17 @@ exports.addCampaign = async (req, res) => {
                 }
             }
 
-            //-------------------- Send Notification ------------------//
+            //------------------------Create Logs here -------------------------------
+            if (['operator', 'analyzer', 'publisher', 'customer'].includes(req.identity.role)) {
+                await Services.activityHistoryServices.create_activity_history(req.identity.id, 'marketplace_product', 'created', emailMessage, emailMessage)
+            }
 
             return response.success(add_campaign, constants.CAMPAIGN.ADDED, req, res);
         }
         throw constants.COMMON.SERVER_ERROR;
 
     } catch (error) {
-        console.log(error, '==error');
+        console.log(error, '==error')
         return response.failed(null, `${error}`, req, res);
     }
 };
@@ -161,13 +164,13 @@ exports.editCampaign = async (req, res) => {
 
         let loggedInUser = await Users.findOne({ id: user_id, isDeleted: false });
 
-        let isPermissionExists = await Permissions.findOne({role:loggedInUser.role});
+        let isPermissionExists = await Permissions.findOne({ role: loggedInUser.role });
 
-        if(!isPermissionExists){
+        if (!isPermissionExists) {
             throw "Permission not exists";
-        }   
+        }
 
-        if(!isPermissionExists.campaign_edit){
+        if (!isPermissionExists.campaign_edit) {
             throw "User not allowed to edit campaign";
         }
 
@@ -207,13 +210,13 @@ exports.getAllCampaigns = async (req, res) => {
 
         let loggedInUser = await Users.findOne({ id: user_id, isDeleted: false });
 
-        let isPermissionExists = await Permissions.findOne({role:loggedInUser.role});
+        let isPermissionExists = await Permissions.findOne({ role: loggedInUser.role });
 
-        if(!isPermissionExists){
+        if (!isPermissionExists) {
             throw "Permission not exists";
-        }   
+        }
 
-        if(!isPermissionExists.campaign_get){
+        if (!isPermissionExists.campaign_get) {
             throw "User not allowed to view campaign";
         }
 
@@ -247,7 +250,7 @@ exports.getAllCampaigns = async (req, res) => {
         if (affiliate_id) {
             // query.affiliate_id = new ObjectId(affiliate_id);
             query.$or = [
-                { affiliate_id: new  ObjectId(affiliate_id) },
+                { affiliate_id: new ObjectId(affiliate_id) },
                 { affiliate_id: null },
             ];
         }
@@ -298,36 +301,36 @@ exports.getAllCampaigns = async (req, res) => {
 
             {
                 $lookup: {
-                  from: "publiccampaigns",
-                  let: {
-                    affiliate_id: "$_id",
-                    isDeleted: false,
-                    addedBy: new ObjectId(req.identity.id),
-                  },
-                  // let: { user_id: "$req.identity.id", fav_user_id: new ObjectId("64d076e86ecebee01af09d8c") },
-                  pipeline: [
-                    {
-                      $match: {
-                        $expr: {
-                          $and: [
-                            { $eq: ["$addedBy", "$$addedBy"] },
-                            { $eq: ["$isDeleted", "$$isDeleted"] },
-                            { $eq: ["$affiliate_id", "$$affiliate_id"] },
-                          ],
-                        },
-                      },
+                    from: "publiccampaigns",
+                    let: {
+                        affiliate_id: "$_id",
+                        isDeleted: false,
+                        addedBy: new ObjectId(req.identity.id),
                     },
-                  ],
-                  as: "campaign_details",
+                    // let: { user_id: "$req.identity.id", fav_user_id: new ObjectId("64d076e86ecebee01af09d8c") },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ["$addedBy", "$$addedBy"] },
+                                        { $eq: ["$isDeleted", "$$isDeleted"] },
+                                        { $eq: ["$affiliate_id", "$$affiliate_id"] },
+                                    ],
+                                },
+                            },
+                        },
+                    ],
+                    as: "campaign_details",
                 },
-              },
+            },
 
-              {
+            {
                 $unwind: {
-                  path: "$campaign_details",
-                  preserveNullAndEmptyArrays: true,
+                    path: "$campaign_details",
+                    preserveNullAndEmptyArrays: true,
                 },
-              },
+            },
 
         ];
 
@@ -339,7 +342,7 @@ exports.getAllCampaigns = async (req, res) => {
                 affiliate_name: "$affiliate_id_details.fullName",
                 brand_id: "$brand_id",
                 brand_name: "$brand_id_details.fullName",
-                group_type:"$group_type",
+                group_type: "$group_type",
                 name: "$name",
                 images: "$images",
                 videos: "$videos",
@@ -367,24 +370,24 @@ exports.getAllCampaigns = async (req, res) => {
             $sort: sortquery
         });
         // Pipeline Stages
-        let totalresult =await   db.collection('campaign').aggregate(pipeline).toArray();
-            pipeline.push({
-                $skip: Number(skipNo)
-            });
-            pipeline.push({
-                $limit: Number(count)
-            });
-            let result =await   db.collection("campaign").aggregate(pipeline).toArray();
-                let resData = {
-                    total_count: totalresult ? totalresult.length : 0,
-                    data: result ? result : [],
-                }
-                if (!req.param('page') && !req.param('count')) {
-                    resData.data = totalresult ? totalresult : [];
-                }
-                return response.success(resData, constants.CAMPAIGN.FETCHED_ALL, req, res);
+        let totalresult = await db.collection('campaign').aggregate(pipeline).toArray();
+        pipeline.push({
+            $skip: Number(skipNo)
+        });
+        pipeline.push({
+            $limit: Number(count)
+        });
+        let result = await db.collection("campaign").aggregate(pipeline).toArray();
+        let resData = {
+            total_count: totalresult ? totalresult.length : 0,
+            data: result ? result : [],
+        }
+        if (!req.param('page') && !req.param('count')) {
+            resData.data = totalresult ? totalresult : [];
+        }
+        return response.success(resData, constants.CAMPAIGN.FETCHED_ALL, req, res);
 
-         
+
     } catch (err) {
         return response.failed(null, `${err}`, req, res);
     }
@@ -396,13 +399,13 @@ exports.getCampaignById = async (req, res) => {
 
         let loggedInUser = await Users.findOne({ id: user_id, isDeleted: false });
 
-        let isPermissionExists = await Permissions.findOne({role:loggedInUser.role});
+        let isPermissionExists = await Permissions.findOne({ role: loggedInUser.role });
 
-        if(!isPermissionExists){
+        if (!isPermissionExists) {
             throw "Permission not exists";
-        }   
+        }
 
-        if(!isPermissionExists.campaign_get){
+        if (!isPermissionExists.campaign_get) {
             throw "User not allowed to view campaign";
         }
 
@@ -411,12 +414,12 @@ exports.getCampaignById = async (req, res) => {
             throw constants.CAMPAIGN.ID_REQUIRED;
         }
         let get_campaign = await Campaign.findOne({ id: id, isDeleted: false }).populate('brand_id').populate('affiliate_id');
-       
+
         if (!get_campaign) {
             throw constants.CAMPAIGN.INVALID_ID;
         }
-        if(get_campaign && get_campaign.access_type === "public"){
-            let listOfAffiliates = await PublicCampaigns.find({where:{campaign_id:get_campaign.id,brand_id:get_campaign.addedBy},select: [ 'affiliate_id']}).populate("affiliate_id");
+        if (get_campaign && get_campaign.access_type === "public") {
+            let listOfAffiliates = await PublicCampaigns.find({ where: { campaign_id: get_campaign.id, brand_id: get_campaign.addedBy }, select: ['affiliate_id'] }).populate("affiliate_id");
             get_campaign.listOfAffiliates = listOfAffiliates;
         }
         return response.success(get_campaign, constants.CAMPAIGN.FETCHED, req, res);
@@ -432,13 +435,13 @@ exports.changeCampaignStatus = async (req, res) => {
 
         let loggedInUser = await Users.findOne({ id: user_id, isDeleted: false });
 
-        let isPermissionExists = await Permissions.findOne({role:loggedInUser.role});
+        let isPermissionExists = await Permissions.findOne({ role: loggedInUser.role });
 
-        if(!isPermissionExists){
+        if (!isPermissionExists) {
             throw "Permission not exists";
-        }   
+        }
 
-        if(!isPermissionExists.campaign_edit){
+        if (!isPermissionExists.campaign_edit) {
             throw "User not allowed to edit campaign status";
         }
 
@@ -456,7 +459,7 @@ exports.changeCampaignStatus = async (req, res) => {
             throw constants.CAMPAIGN.INVALID_ID;
         }
 
-        if(get_campaign && get_campaign.access_type === "public"){
+        if (get_campaign && get_campaign.access_type === "public") {
             if (!['affiliate'].includes(req.identity.role)) {
                 throw constants.COMMON.UNAUTHORIZED;
             }
@@ -466,28 +469,28 @@ exports.changeCampaignStatus = async (req, res) => {
                     break;
                 default:
                     break;
-    
+
             }
             req.body.addedBy = user_id;
-            
 
-            let publicCampaign = await PublicCampaigns.findOne({affiliate_id:req.identity.id,campaign_id:get_campaign.id,brand_id:get_campaign.addedBy,addedBy:req.identity.id});
-            
-            if(publicCampaign){
+
+            let publicCampaign = await PublicCampaigns.findOne({ affiliate_id: req.identity.id, campaign_id: get_campaign.id, brand_id: get_campaign.addedBy, addedBy: req.identity.id });
+
+            if (publicCampaign) {
                 throw "Campaign request already accepted";
             }
 
-            await PublicCampaigns.create({affiliate_id:req.identity.id,campaign_id:get_campaign.id,brand_id:get_campaign.addedBy,addedBy:req.identity.id});
-            
+            await PublicCampaigns.create({ affiliate_id: req.identity.id, campaign_id: get_campaign.id, brand_id: get_campaign.addedBy, addedBy: req.identity.id });
+
             let email_payload = {
                 affiliate_id: req.identity.id,
                 brand_id: get_campaign.brand_id,
                 status: req.body.status,
-                reason: req.body.reason?req.body.reason:"",
+                reason: req.body.reason ? req.body.reason : "",
             };
-            
-            console.log(email_payload,"---------->");
-            
+
+            console.log(email_payload, "---------->");
+
             await Emails.CampaignEmails.changeStatus(email_payload);
 
             let device_token = "";
@@ -510,59 +513,59 @@ exports.changeCampaignStatus = async (req, res) => {
                 await Services.FCM.send_fcm_push_notification(fcm_payload)
             }
             return response.success(null, constants.CAMPAIGN.STATUS_UPDATE, req, res)
-        }else{
-        if (req.body.status == "accepted" && ['accepted'].includes(get_campaign.status)) {
-            throw constants.CAMPAIGN.CANNOT_ACCEPT;
-        }
-
-        if (!['affiliate'].includes(req.identity.role)) {
-            throw constants.COMMON.UNAUTHORIZED;
-        }
-
-        switch (req.body.status) {
-            case "accepted":
-                req.body.accepted_at = new Date()
-                break;
-            default:
-                break;
-
-        }
-
-        req.body.updatedBy = user_id;
-        let update_status = await Campaign.updateOne({ id: req.body.id }, req.body);
-
-        if (update_status) {
-            let email_payload = {
-                affiliate_id: req.identity.id,
-                brand_id: get_campaign.brand_id,
-                status: update_status.status,
-                reason: update_status.reason
-            };
-            console.log(email_payload,"---------->");
-            await Emails.CampaignEmails.changeStatus(email_payload);
-
-            let device_token = "";
-            let notification_payload = {};
-            notification_payload.type = "campaign"
-            notification_payload.addedBy = req.identity.id;
-            notification_payload.title = `Campaign ${await Services.Utils.title_case(update_status.status)} | ${await Services.Utils.title_case(update_status.name)} | ${req.identity.fullName}`;
-            notification_payload.message = `Your campaign request is ${await Services.Utils.title_case(update_status.status)}`;
-            notification_payload.send_to = update_status.brand_id;
-            notification_payload.campaign_id = update_status.id;
-            let brandDetail = await Users.findOne({ id: update_status.brand_id })
-            let create_notification = await Notifications.create(notification_payload).fetch();
-            if (create_notification && brandDetail && brandDetail.device_token) {
-                let fcm_payload = {
-                    device_token: brandDetail.device_token,
-                    title: req.identity.fullName,
-                    message: create_notification.message,
-                }
-
-                await Services.FCM.send_fcm_push_notification(fcm_payload)
+        } else {
+            if (req.body.status == "accepted" && ['accepted'].includes(get_campaign.status)) {
+                throw constants.CAMPAIGN.CANNOT_ACCEPT;
             }
-            return response.success(null, constants.CAMPAIGN.STATUS_UPDATE, req, res)
+
+            if (!['affiliate'].includes(req.identity.role)) {
+                throw constants.COMMON.UNAUTHORIZED;
+            }
+
+            switch (req.body.status) {
+                case "accepted":
+                    req.body.accepted_at = new Date()
+                    break;
+                default:
+                    break;
+
+            }
+
+            req.body.updatedBy = user_id;
+            let update_status = await Campaign.updateOne({ id: req.body.id }, req.body);
+
+            if (update_status) {
+                let email_payload = {
+                    affiliate_id: req.identity.id,
+                    brand_id: get_campaign.brand_id,
+                    status: update_status.status,
+                    reason: update_status.reason
+                };
+                console.log(email_payload, "---------->");
+                await Emails.CampaignEmails.changeStatus(email_payload);
+
+                let device_token = "";
+                let notification_payload = {};
+                notification_payload.type = "campaign"
+                notification_payload.addedBy = req.identity.id;
+                notification_payload.title = `Campaign ${await Services.Utils.title_case(update_status.status)} | ${await Services.Utils.title_case(update_status.name)} | ${req.identity.fullName}`;
+                notification_payload.message = `Your campaign request is ${await Services.Utils.title_case(update_status.status)}`;
+                notification_payload.send_to = update_status.brand_id;
+                notification_payload.campaign_id = update_status.id;
+                let brandDetail = await Users.findOne({ id: update_status.brand_id })
+                let create_notification = await Notifications.create(notification_payload).fetch();
+                if (create_notification && brandDetail && brandDetail.device_token) {
+                    let fcm_payload = {
+                        device_token: brandDetail.device_token,
+                        title: req.identity.fullName,
+                        message: create_notification.message,
+                    }
+
+                    await Services.FCM.send_fcm_push_notification(fcm_payload)
+                }
+                return response.success(null, constants.CAMPAIGN.STATUS_UPDATE, req, res)
+            }
         }
-    }
         throw constants.COMMON.SERVER_ERROR
 
     } catch (error) {
@@ -578,13 +581,13 @@ exports.deleteCampaign = async (req, res) => {
 
         let loggedInUser = await Users.findOne({ id: user_id, isDeleted: false });
 
-        let isPermissionExists = await Permissions.findOne({role:loggedInUser.role});
+        let isPermissionExists = await Permissions.findOne({ role: loggedInUser.role });
 
-        if(!isPermissionExists){
+        if (!isPermissionExists) {
             throw "Permission not exists";
-        }   
+        }
 
-        if(!isPermissionExists.campaign_delete){
+        if (!isPermissionExists.campaign_delete) {
             throw "User not allowed to delete campaign";
         }
 

@@ -1807,7 +1807,7 @@ module.exports = {
       let get_user = await Users.findOne({
         email: email.toLowerCase(),
         isDeleted: false,
-        role: { in: ["brand", "affiliate"] },
+        role: { in: ['brand', 'admin', 'affiliate', 'team', 'super_user', 'operator', 'analyzer', 'publisher', 'customer', 'users'] },
       });
 
       if (!get_user) {

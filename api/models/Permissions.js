@@ -110,6 +110,17 @@ module.exports = {
     coupon_delete: { type: "Boolean", defaultsTo: false },
     coupon_complete_access: { type: "Boolean", defaultsTo: false },
 
+    marketplace_product_add: { type: "Boolean", defaultsTo: false },
+    marketplace_product_edit: { type: "Boolean", defaultsTo: false },
+    marketplace_product_get: { type: "Boolean", defaultsTo: false },
+    marketplace_product_delete: { type: "Boolean", defaultsTo: false },
+    marketplace_product_complete_access: { type: "Boolean", defaultsTo: false },
+
+    make_offer_add: { type: "Boolean", defaultsTo: false },
+    make_offer_get: { type: "Boolean", defaultsTo: false },
+    make_offer_edit: { type: "Boolean", defaultsTo: false },
+
+
     addedBy: { model: "Users", },
     updatedBy: { model: "Users", },
     createdAt: { type: "ref", autoCreatedAt: true },

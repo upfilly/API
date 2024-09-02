@@ -542,4 +542,12 @@ module.exports.routes = {
   "GET /promoters/getAll": "FirstpromoterController.getAllFirstPromoters",
   "DELETE /promoters/delete": "FirstpromoterController.deleteFirstPromoter",
   "POST /promoters/import": "FirstpromoterController.importFirstPromoter",
+
+
+    /**
+   * @ActivityHistory
+   */
+
+    "get /activity-logs": "ActivityHistoryController.getAllActivityHistory",
+    "get /activity-log": "ActivityHistoryController.getActivityHistoryById",
 };   
