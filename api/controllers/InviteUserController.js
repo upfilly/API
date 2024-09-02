@@ -548,7 +548,7 @@ module.exports = {
           let get_all_admin = await Services.UserServices.get_users_with_role(["admin"])
           let get_account_manager = get_all_admin[0].id
 
-          await Services.activityHistoryServices.create_activity_history(req.identity.id, 'users', 'updated', updatedUser, userExists, get_account_manager ? get_account_manager.id : null)
+          await Services.activityHistoryServices.create_activity_history(req.identity.id, 'users', 'updated', updatedUser, userExists, get_account_manager ? get_account_manager : null)
           //----------------get main account manager---------------------
         }
 

@@ -50,14 +50,18 @@ exports.addCoupon = async (req, res) => {
 
                 //----------------get main account manager---------------------
                 let get_account_manager = await Users.findOne({ addedBy: req.identity.id, isDeleted: false })
-                await Services.activityHistoryServices.create_activity_history(req.identity.id, 'banner', 'created', coupon, coupon, get_account_manager.id ? get_account_manager.id : null)
+                await Services.activityHistoryServices.create_activity_history(req.identity.id, 'coupon', 'created', coupon, coupon, get_account_manager.id ? get_account_manager.id : null)
 
             } else if (['brand'].includes(req.identity.role)) {
 
                 //----------------get main account manager---------------------
                 let get_all_admin = await Services.UserServices.get_users_with_role(["admin"])
+                console.log(get_all_admin, "==get_all_admin");
+
                 let get_account_manager = get_all_admin[0].id
-                await Services.activityHistoryServices.create_activity_history(req.identity.id, 'banner', 'created', coupon, coupon, get_account_manager ? get_account_manager.id : null)
+                console.log(get_account_manager, "====get_account_manager");
+
+                await Services.activityHistoryServices.create_activity_history(req.identity.id, 'coupon', 'created', coupon, coupon, get_account_manager ? get_account_manager : null)
 
             }
             return response.success(coupon, constants.COUPON.CREATED, req, res);
@@ -103,14 +107,14 @@ exports.editCoupon = async function (req, res) {
 
                 //----------------get main account manager---------------------
                 let get_account_manager = await Users.findOne({ addedBy: req.identity.id, isDeleted: false })
-                await Services.activityHistoryServices.create_activity_history(req.identity.id, 'banner', 'updated', coupon, couponExists, get_account_manager.id ? get_account_manager.id : null)
+                await Services.activityHistoryServices.create_activity_history(req.identity.id, 'coupon', 'updated', coupon, couponExists, get_account_manager.id ? get_account_manager.id : null)
 
             } else if (['brand'].includes(req.identity.role)) {
 
                 //----------------get main account manager---------------------
                 let get_all_admin = await Services.UserServices.get_users_with_role(["admin"])
                 let get_account_manager = get_all_admin[0].id
-                await Services.activityHistoryServices.create_activity_history(req.identity.id, 'banner', 'updated', coupon, couponExists, get_account_manager ? get_account_manager.id : null)
+                await Services.activityHistoryServices.create_activity_history(req.identity.id, 'coupon', 'updated', coupon, couponExists, get_account_manager ? get_account_manager : null)
 
             }
             return response.success(coupon, constants.COUPON.UPDATED, req, res);
