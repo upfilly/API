@@ -35,29 +35,29 @@ module.exports = {
     updatedAt: { type: "ref", autoUpdatedAt: true },
   },
 
-  afterCreate: async function (newlyInsertedRecord, proceed) {
-    await AuditService.log(
-      'create',
-      'Banners',
-      null,
-      newlyInsertedRecord,
-      newlyInsertedRecord.addedBy// or fetch from the session if available
-    );
-    return proceed();
-  },
-  beforeUpdate: async function (newlyInsertedRecord, proceed) {
-    let isExists = await Banners.findOne({id:newlyInsertedRecord.id,isDeleted:false})
-    if(isExists){
-      await AuditService.log(
-        'update',
-        'Banners',
-        isExists,
-        newlyInsertedRecord,
-        newlyInsertedRecord.addedBy// or fetch from the session if available
-      );
-    }
-    return proceed();
-  },
+  // afterCreate: async function (newlyInsertedRecord, proceed) {
+  //   await AuditService.log(
+  //     'create',
+  //     'Banners',
+  //     null,
+  //     newlyInsertedRecord,
+  //     newlyInsertedRecord.addedBy// or fetch from the session if available
+  //   );
+  //   return proceed();
+  // },
+  // beforeUpdate: async function (newlyInsertedRecord, proceed) {
+  //   let isExists = await Banners.findOne({id:newlyInsertedRecord.id,isDeleted:false})
+  //   if(isExists){
+  //     await AuditService.log(
+  //       'update',
+  //       'Banners',
+  //       isExists,
+  //       newlyInsertedRecord,
+  //       newlyInsertedRecord.addedBy// or fetch from the session if available
+  //     );
+  //   }
+  //   return proceed();
+  // },
 
   // afterDestroy: async function (destroyedRecords, proceed) {
   //   for (let record of destroyedRecords) {

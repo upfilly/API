@@ -143,8 +143,17 @@ exports.addCampaign = async (req, res) => {
             }
 
             //------------------------Create Logs here -------------------------------
-            if (['operator', 'analyzer', 'publisher', 'customer'].includes(req.identity.role)) {
-                await Services.activityHistoryServices.create_activity_history(req.identity.id, 'marketplace_product', 'created', emailMessage, emailMessage)
+            if (add_campaign) {
+                if (['operator', 'super_user'].includes(req.identity.role)) {
+                    let get_account_manager = await Users.findOne({ addedBy: req.identity.id, isDeleted: false })
+                    await Services.activityHistoryServices.create_activity_history(req.identity.id, 'campaign', 'created', add_campaign, add_campaign, get_account_manager.id ? get_account_manager.id : null)
+
+                } else if (['brand'].includes(req.identity.role)) {
+
+                    let get_all_admin = await Services.UserServices.get_users_with_role(["admin"])
+                    let get_account_manager = get_all_admin[0].id
+                    await Services.activityHistoryServices.create_activity_history(req.identity.id, 'campaign', 'created', add_campaign, add_campaign, get_account_manager ? get_account_manager.id : null)
+                }
             }
 
             return response.success(add_campaign, constants.CAMPAIGN.ADDED, req, res);
@@ -194,6 +203,21 @@ exports.editCampaign = async (req, res) => {
         req.body.updatedBy = req.identity.id;
         let edit_campaign = await Campaign.updateOne({ id: id }, req.body);
         if (edit_campaign) {
+            if (edit_campaign) {
+
+                if (['operator', 'super_user'].includes(req.identity.role)) {
+                    let get_account_manager = await Users.findOne({ addedBy: req.identity.id, isDeleted: false })
+
+                    await Services.activityHistoryServices.create_activity_history(req.identity.id, 'campaign', 'created', edit_campaign, get_campaign, get_account_manager.id ? get_account_manager.id : null)
+
+                } else if (['brand'].includes(req.identity.role)) {
+
+                    let get_all_admin = await Services.UserServices.get_users_with_role(["admin"])
+                    let get_account_manager = get_all_admin[0].id
+
+                    await Services.activityHistoryServices.create_activity_history(req.identity.id, 'campaign', 'created', edit_campaign, get_campaign, get_account_manager ? get_account_manager.id : null)
+                }
+            }
             return response.success(null, constants.CAMPAIGN.UPDATED, req, res);
         }
         throw constants.COMMON.SERVER_ERROR;
