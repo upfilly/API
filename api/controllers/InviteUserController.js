@@ -200,7 +200,7 @@ module.exports = {
     try {
       let user_id = req.identity.id;
 
-     
+
       let loggedInUser = await Users.findOne({ id: user_id, isDeleted: false });
       if (loggedInUser.addedBy) {
 
@@ -257,7 +257,7 @@ module.exports = {
     try {
       let user_id = req.identity.id;
 
-     
+
       let loggedInUser = await Users.findOne({ id: user_id, isDeleted: false });
       if (loggedInUser.addedBy) {
 
@@ -503,7 +503,7 @@ module.exports = {
     try {
       let user_id = req.identity.id;
 
-     
+
       let loggedInUser = await Users.findOne({ id: user_id, isDeleted: false });
       if (loggedInUser.addedBy) {
 
@@ -527,12 +527,32 @@ module.exports = {
       if (!userExists) {
         throw constants.user.USER_NOT_FOUND;
       }
-      let updatedUser = {};
+
       delete req.body.id;
-      updatedUser = await InviteUsers.updateOne(
+      let updatedUser = await InviteUsers.updateOne(
         { user_id: req.body.user_id, brand_id: req.body.brand_id },
         req.body
       );
+      if (updatedUser) {
+        if (['super_user'].includes(req.identity.role)) {
+
+          //----------------get main account manager---------------------
+          let get_account_manager = await Users.findOne({ id: req.identity.addedBy, isDeleted: false })
+
+          await Services.activityHistoryServices.create_activity_history(req.identity.id, 'users', 'updated', updatedUser, userExists, get_account_manager ? get_account_manager.id : null)
+          //----------------get main account manager---------------------
+
+        } else if (['brand', 'affiliate'].includes(req.identity.role)) {
+
+          //----------------get main account manager---------------------
+          let get_all_admin = await Services.UserServices.get_users_with_role(["admin"])
+          let get_account_manager = get_all_admin[0].id
+
+          await Services.activityHistoryServices.create_activity_history(req.identity.id, 'users', 'updated', updatedUser, userExists, get_account_manager ? get_account_manager.id : null)
+          //----------------get main account manager---------------------
+        }
+
+      }
 
       // await Users.update({ activeUser: id }, { activeUser: null }); //here we are removing that active user from every other brand where it is active
 

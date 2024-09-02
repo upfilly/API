@@ -12,7 +12,12 @@ module.exports = {
       type: "string",
       isIn: [
         'emailmessagetemplate',
-        'marketplace_product'
+        'marketplace_product',
+        'untrack_sales',
+        'generate_link',
+        'users',
+
+
 
       ]
     },

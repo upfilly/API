@@ -15,48 +15,74 @@ const ObjectId = require('mongodb').ObjectId;
 
 
 exports.generateLink = async (req, res) => {
-    try {
+  try {
 
-        // Generate affiliate link
-        const { base_url, parameters } = req.body;
+    // Generate affiliate link
+    const { base_url, parameters } = req.body;
 
 
-        let get_link = await Services.generateAffiliateLink.generateLink({
-            baseUrl: base_url,
-            parameters: parameters
-        })
+    let get_link = await Services.generateAffiliateLink.generateLink({
+      baseUrl: base_url,
+      parameters: parameters
+    })
 
-        let query = {
-            affiliate_id: req.identity.id
-        }
-        let isExist = await AffiliateLink.findOne(query);
-        if (!isExist) {
-            let create_link = await AffiliateLink.create({ affiliate_id: req.identity.id, link: get_link })
-        } else {
-            let update_link = await AffiliateLink.updateOne({ id: isExist.id, isDeleted: false }, { link: get_link })
-        }
-        return response.success(get_link, constants.TRACKING.LINK, req, res);
-
-    } catch (err) {
-      console.log(err);
-        return response.failed(null, `${err}`, req, res);
+    let query = {
+      affiliate_id: req.identity.id
     }
+    let isExist = await AffiliateLink.findOne(query);
+    if (!isExist) {
+      let create_link = await AffiliateLink.create({ affiliate_id: req.identity.id, link: get_link }).fetch()
+      if (create_link) {
+        if (['operator', 'super_user'].includes(req.identity.role)) {
+          let get_account_manager = await Users.findOne({ addedBy: req.identity.id, isDeleted: false })
+          await Services.activityHistoryServices.create_activity_history(req.identity.id, 'generate_link', 'created', create_link, create_link, get_account_manager.id ? get_account_manager.id : null)
+
+        } else if (['affiliate', 'brand'].includes(req.identity.role)) {
+
+          let get_all_admin = await Services.UserServices.get_users_with_role(["admin"])
+          let get_account_manager = get_all_admin[0].id
+          await Services.activityHistoryServices.create_activity_history(req.identity.id, 'generate_link', 'created', create_link, create_link, get_account_manager ? get_account_manager.id : null)
+        }
+      }
+    } else {
+      let update_link = await AffiliateLink.updateOne({ id: isExist.id, isDeleted: false }, { link: get_link })
+      if (update_link) {
+        if (['operator', 'super_user'].includes(req.identity.role)) {
+          let get_account_manager = await Users.findOne({ addedBy: req.identity.id, isDeleted: false })
+
+          await Services.activityHistoryServices.create_activity_history(req.identity.id, 'generate_link', 'updated', result, isExist, get_account_manager.id ? get_account_manager.id : null)
+
+        } else if (['affiliate', 'brand'].includes(req.identity.role)) {
+
+          let get_all_admin = await Services.UserServices.get_users_with_role(["admin"])
+          let get_account_manager = get_all_admin[0].id
+
+          await Services.activityHistoryServices.create_activity_history(req.identity.id, 'generate_link', 'updated', result, isExist, get_account_manager ? get_account_manager.id : null)
+        }
+      }
+    }
+    return response.success(get_link, constants.TRACKING.LINK, req, res);
+
+  } catch (err) {
+    console.log(err);
+    return response.failed(null, `${err}`, req, res);
+  }
 }
 
 exports.generateLinkOfAffiliate = async (req, res) => {
-    try {
+  try {
 
 
-        let query = {
-            affiliate_id: req.identity.id,
-            isDeleted: false
-        }
-        let get_affilaite_link = await AffiliateLink.findOne(query);
-        return response.success(get_affilaite_link, constants.TRACKING.LINK, req, res);
-
-    } catch (err) {
-        return response.failed(null, `${err}`, req, res);
+    let query = {
+      affiliate_id: req.identity.id,
+      isDeleted: false
     }
+    let get_affilaite_link = await AffiliateLink.findOne(query);
+    return response.success(get_affilaite_link, constants.TRACKING.LINK, req, res);
+
+  } catch (err) {
+    return response.failed(null, `${err}`, req, res);
+  }
 }
 
 
@@ -69,12 +95,12 @@ exports.create = async function (req, res) {
     if (!event || !timestamp || !urlParams || !data) {
       return response.failed(null, constants.AFFILIATELINK.MISSING_FIELDS, req, res);
     }
-    req.body.addedBy=(req.identity?.id)?req.identity.id:null;
-    req.body.updatedBy=(req.identity?.id)?req.identity.id:null;
+    req.body.addedBy = (req.identity?.id) ? req.identity.id : null;
+    req.body.updatedBy = (req.identity?.id) ? req.identity.id : null;
 
     const newAffiliateLink = await AffiliateLink.create(req.body).fetch();
 
-    return response.success(newAffiliateLink,constants.AFFILIATELINK.CREATED,req,res);
+    return response.success(newAffiliateLink, constants.AFFILIATELINK.CREATED, req, res);
 
   } catch (error) {
     return response.failed(null, `${error}`, req, res);
@@ -158,28 +184,28 @@ exports.find = async function (req, res) {
     });
 
     let totalresult = await db.collection('affiliatelink').aggregate(pipeline).toArray();
-    
 
-      pipeline.push({
-        $skip: Number(skipNo)
-      });
-      pipeline.push({
-        $limit: Number(count)
-      });
 
-      let result = await db.collection('affiliatelink').aggregate(pipeline).toArray();
-        
+    pipeline.push({
+      $skip: Number(skipNo)
+    });
+    pipeline.push({
+      $limit: Number(count)
+    });
 
-        let resData = {
-          total_count: totalresult ? totalresult.length : 0,
-          data: result ? result : []
-        };
+    let result = await db.collection('affiliatelink').aggregate(pipeline).toArray();
 
-        if (!req.param('page') && !req.param('count')) {
-          resData.data = totalresult ? totalresult : [];
-        }
 
-        return response.success(resData, constants.AFFILIATELINK.FETCHED, req, res);
+    let resData = {
+      total_count: totalresult ? totalresult.length : 0,
+      data: result ? result : []
+    };
+
+    if (!req.param('page') && !req.param('count')) {
+      resData.data = totalresult ? totalresult : [];
+    }
+
+    return response.success(resData, constants.AFFILIATELINK.FETCHED, req, res);
   } catch (error) {
     return response.failed(null, `${error}`, req, res);
   }
@@ -187,17 +213,17 @@ exports.find = async function (req, res) {
 
 exports.findOne = async function (req, res) {
   try {
-    if(!req.query.id){
-      return response.failed(null,constants.AFFILIATELINK.ID_REQUIRED,req,res);
+    if (!req.query.id) {
+      return response.failed(null, constants.AFFILIATELINK.ID_REQUIRED, req, res);
     }
     const affiliateLink = await AffiliateLink.findOne({
       id: req.query.id,
       isDeleted: false,
     });
     if (!affiliateLink) {
-      return response.failed(null,constants.AFFILIATELINK.INVALID_ID,req,res);
+      return response.failed(null, constants.AFFILIATELINK.INVALID_ID, req, res);
     }
-    return response.success(affiliateLink,constants.AFFILIATELINK.FETCHED,req,res);
+    return response.success(affiliateLink, constants.AFFILIATELINK.FETCHED, req, res);
   } catch (error) {
     return response.failed(null, `${error}`, req, res);
   }
@@ -219,9 +245,9 @@ exports.update = async function (req, res) {
     }).set(req.body);
 
     if (!updatedAffiliateLink) {
-      response.failed(updatedAffiliateLink,constants.AFFILIATELINK.NOT_FOUND,req,res);
+      response.failed(updatedAffiliateLink, constants.AFFILIATELINK.NOT_FOUND, req, res);
     }
-    return response.success(updatedAffiliateLink,constants.AFFILIATELINK.UPDATED,req,res);
+    return response.success(updatedAffiliateLink, constants.AFFILIATELINK.UPDATED, req, res);
   } catch (error) {
     return response.failed(null, `${error}`, req, res);
   }
@@ -229,16 +255,16 @@ exports.update = async function (req, res) {
 
 exports.destroy = async function (req, res) {
   try {
-    if(!req.query.id){
-      return response.failed(null,constants.AFFILIATEINVITE.ID_REQUIRED,req,res);
+    if (!req.query.id) {
+      return response.failed(null, constants.AFFILIATEINVITE.ID_REQUIRED, req, res);
     }
     const updatedAffiliateLink = await AffiliateLink.updateOne({
       id: req.query.id,
     }).set({ isDeleted: true });
     if (!updatedAffiliateLink) {
-      return response.success(null,constants.AFFILIATELINK.NOT_FOUND,req,res);
+      return response.success(null, constants.AFFILIATELINK.NOT_FOUND, req, res);
     }
-    return response.success(null,constants.AFFILIATELINK.DELETED,req,res);
+    return response.success(null, constants.AFFILIATELINK.DELETED, req, res);
   } catch (error) {
     return response.failed(null, `${error}`, req, res);
   }
