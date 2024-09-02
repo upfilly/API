@@ -145,6 +145,22 @@ exports.addBanner = async (req, res) => {
       });
     }
     if (add_detail) {
+
+      if (['operator', 'super_user'].includes(req.identity.role)) {
+
+        //----------------get main account manager---------------------
+        let get_account_manager = await Users.findOne({ addedBy: req.identity.id, isDeleted: false })
+        await Services.activityHistoryServices.create_activity_history(req.identity.id, 'banner', 'created', add_detail, add_detail, get_account_manager.id ? get_account_manager.id : null)
+
+      } else if (['brand'].includes(req.identity.role)) {
+
+        //----------------get main account manager---------------------
+        let get_all_admin = await Services.UserServices.get_users_with_role(["admin"])
+        let get_account_manager = get_all_admin[0].id
+        await Services.activityHistoryServices.create_activity_history(req.identity.id, 'banner', 'created', add_detail, add_detail, get_account_manager ? get_account_manager.id : null)
+        
+      }
+
       return response.success(add_detail, constants.BANNER.ADDED, req, res);
     }
     throw constants.COMMON.SERVER_ERROR;
@@ -233,6 +249,23 @@ exports.editBanner = async (req, res) => {
 
     let update_detail = await Banner.updateOne({ id: id }, req.body);
     if (update_detail) {
+
+      if (['operator', 'super_user'].includes(req.identity.role)) {
+
+        //----------------get main account manager---------------------
+        let get_account_manager = await Users.findOne({ addedBy: req.identity.id, isDeleted: false })
+        await Services.activityHistoryServices.create_activity_history(req.identity.id, 'banner', 'updated', update_detail, get_banner, get_account_manager.id ? get_account_manager.id : null)
+
+      } else if (['brand'].includes(req.identity.role)) {
+
+        //----------------get main account manager---------------------
+        let get_all_admin = await Services.UserServices.get_users_with_role(["admin"])
+        let get_account_manager = get_all_admin[0].id
+        await Services.activityHistoryServices.create_activity_history(req.identity.id, 'banner', 'updated', update_detail, get_banner, get_account_manager ? get_account_manager.id : null)
+        
+      }
+
+
       for (let affiliate of listOfAcceptedInvites) {
         let findUser = await Users.findOne({
           id: affiliate.affiliate_id,
@@ -641,32 +674,32 @@ exports.getAllAffiliateBanner = async (req, res) => {
       $sort: sortquery,
     });
     // Pipeline Stages
-    let totalresult=await db.collection("affiliatebanners")
+    let totalresult = await db.collection("affiliatebanners")
       .aggregate(pipeline)
       .toArray();
-        pipeline.push({
-          $skip: Number(skipNo),
-        });
-        pipeline.push({
-          $limit: Number(count),
-        });
-        let result =await db.collection("affiliatebanners")
-          .aggregate(pipeline)
-          .toArray();
-            let resData = {
-              total_count: totalresult ? totalresult.length : 0,
-              data: result ? result : [],
-            };
-            if (!req.param("page") && !req.param("count")) {
-              resData.data = totalresult ? totalresult : [];
-            }
-            return response.success(
-              resData,
-              constants.BANNER.FETCHED_ALL,
-              req,
-              res
-            );
-     
+    pipeline.push({
+      $skip: Number(skipNo),
+    });
+    pipeline.push({
+      $limit: Number(count),
+    });
+    let result = await db.collection("affiliatebanners")
+      .aggregate(pipeline)
+      .toArray();
+    let resData = {
+      total_count: totalresult ? totalresult.length : 0,
+      data: result ? result : [],
+    };
+    if (!req.param("page") && !req.param("count")) {
+      resData.data = totalresult ? totalresult : [];
+    }
+    return response.success(
+      resData,
+      constants.BANNER.FETCHED_ALL,
+      req,
+      res
+    );
+
   } catch (err) {
     return response.failed(null, `${err}`, req, res);
   }

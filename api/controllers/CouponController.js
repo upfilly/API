@@ -7,118 +7,146 @@
 const response = require("../services/Response");
 const constants = require("../../config/constants").constants;
 const db = sails.getDatastore().manager;
-const  ObjectId = require("mongodb").ObjectId;
+const ObjectId = require("mongodb").ObjectId;
 const Services = require("../services/index");
 const Validations = require("../Validations/index");
 
 exports.addCoupon = async (req, res) => {
-  try {
-    let {media,couponCode,couponType,startDate,expirationDate,commissionType,applicable,visibility,status,url,couponCommission} = req.body;
-    let validation_result = await Validations.CouponValidations.addCoupon(
-      req,
-      res
-    );
+    try {
+        let { media, couponCode, couponType, startDate, expirationDate, commissionType, applicable, visibility, status, url, couponCommission } = req.body;
+        let validation_result = await Validations.CouponValidations.addCoupon(
+            req,
+            res
+        );
 
-    if (validation_result && !validation_result.success) {
-      throw validation_result.message;
-    }
-
-    let couponExists = await Coupon.findOne({couponCode:req.body.couponCode,isDeleted:false})
-
-    if(couponExists){
-        throw constants.COUPON.ALREADY_EXISTS;
-    }
-    let user;
-    if(req.body.visibility!="Public"){
-        user = await Users.findOne({id:req.body.media,isDeleted:false}) //here media refers to affiliate 
-        if(!user){
-            throw constants.user.USER_NOT_FOUND;
+        if (validation_result && !validation_result.success) {
+            throw validation_result.message;
         }
+
+        let couponExists = await Coupon.findOne({ couponCode: req.body.couponCode, isDeleted: false })
+
+        if (couponExists) {
+            throw constants.COUPON.ALREADY_EXISTS;
+        }
+        let user;
+        if (req.body.visibility != "Public") {
+            user = await Users.findOne({ id: req.body.media, isDeleted: false }) //here media refers to affiliate 
+            if (!user) {
+                throw constants.user.USER_NOT_FOUND;
+            }
+        }
+
+
+        if (new Date(startDate) > new Date(expirationDate)) {
+            throw constants.COUPON.START_DATE_OVERLAPED;
+        }
+
+        req.body.addedBy = req.identity.id;
+
+        const coupon = await Coupon.create(req.body).fetch();
+
+        if (coupon) {
+            if (['operator', 'super_user'].includes(req.identity.role)) {
+
+                //----------------get main account manager---------------------
+                let get_account_manager = await Users.findOne({ addedBy: req.identity.id, isDeleted: false })
+                await Services.activityHistoryServices.create_activity_history(req.identity.id, 'banner', 'created', coupon, coupon, get_account_manager.id ? get_account_manager.id : null)
+
+            } else if (['brand'].includes(req.identity.role)) {
+
+                //----------------get main account manager---------------------
+                let get_all_admin = await Services.UserServices.get_users_with_role(["admin"])
+                let get_account_manager = get_all_admin[0].id
+                await Services.activityHistoryServices.create_activity_history(req.identity.id, 'banner', 'created', coupon, coupon, get_account_manager ? get_account_manager.id : null)
+
+            }
+            return response.success(coupon, constants.COUPON.CREATED, req, res);
+        }
+
+        throw constants.COMMON.SERVER_ERROR;
+    } catch (error) {
+        console.log(error)
+        return response.failed(null, `${error}`, req, res);
     }
-    
-
-    if(new Date(startDate)> new Date(expirationDate)){
-        throw constants.COUPON.START_DATE_OVERLAPED;
-    }
-
-    req.body.addedBy = req.identity.id;
-
-    const coupon = await Coupon.create(req.body).fetch();
-
-    if (coupon) {
-      return response.success(coupon, constants.COUPON.CREATED, req, res);
-    }
-
-    throw constants.COMMON.SERVER_ERROR;
-  } catch (error) {
-    console.log(error)
-    return response.failed(null, `${error}`, req, res);
-  }
 };
 exports.editCoupon = async function (req, res) {
-  try {
-    let {media,couponCode,couponType,startDate,expirationDate,commissionType,applicable,visibility,status,url,couponCommission} = req.body;
-    let validation_result = await Validations.CouponValidations.editCoupon(
-        req,
-        res
-      );
-  
-      if (validation_result && !validation_result.success) {
-        throw validation_result.message;
-      }
-      let couponExists = await Coupon.findOne({id:req.body.id,isDeleted:false})
+    try {
+        let { media, couponCode, couponType, startDate, expirationDate, commissionType, applicable, visibility, status, url, couponCommission } = req.body;
+        let validation_result = await Validations.CouponValidations.editCoupon(
+            req,
+            res
+        );
 
-    if(!couponExists){
-        throw constants.COUPON.NOT_EXISTS;
+        if (validation_result && !validation_result.success) {
+            throw validation_result.message;
+        }
+        let couponExists = await Coupon.findOne({ id: req.body.id, isDeleted: false })
+
+        if (!couponExists) {
+            throw constants.COUPON.NOT_EXISTS;
+        }
+
+        let user = await Users.findOne({ id: req.body.media, isDeleted: false }) //here media refers to affiliate 
+
+        if (!user) {
+            throw constants.user.USER_NOT_FOUND;
+        }
+
+        if (new Date(startDate) > new Date(expirationDate)) {
+            throw constants.COUPON.START_DATE_OVERLAPED;
+        }
+
+        const coupon = await Coupon.updateOne({ id: req.body.id }, req.body)
+
+        if (coupon) {
+            if (['operator', 'super_user'].includes(req.identity.role)) {
+
+                //----------------get main account manager---------------------
+                let get_account_manager = await Users.findOne({ addedBy: req.identity.id, isDeleted: false })
+                await Services.activityHistoryServices.create_activity_history(req.identity.id, 'banner', 'updated', coupon, couponExists, get_account_manager.id ? get_account_manager.id : null)
+
+            } else if (['brand'].includes(req.identity.role)) {
+
+                //----------------get main account manager---------------------
+                let get_all_admin = await Services.UserServices.get_users_with_role(["admin"])
+                let get_account_manager = get_all_admin[0].id
+                await Services.activityHistoryServices.create_activity_history(req.identity.id, 'banner', 'updated', coupon, couponExists, get_account_manager ? get_account_manager.id : null)
+
+            }
+            return response.success(coupon, constants.COUPON.UPDATED, req, res);
+        }
+
+        throw constants.COMMON.SERVER_ERROR;
+    } catch (error) {
+        return response.failed(null, `${error}`, req, res);
     }
-
-    let user = await Users.findOne({id:req.body.media,isDeleted:false}) //here media refers to affiliate 
-
-    if(!user){
-        throw constants.user.USER_NOT_FOUND;
-    }
-
-    if(new Date(startDate)> new Date(expirationDate)){
-        throw constants.COUPON.START_DATE_OVERLAPED;
-    }
-
-    const coupon = await Coupon.updateOne({id:req.body.id},req.body)
-
-    if (coupon) {
-      return response.success(coupon, constants.COUPON.UPDATED, req, res);
-    }
-
-    throw constants.COMMON.SERVER_ERROR;
-  } catch (error) {
-    return response.failed(null, `${error}`, req, res);
-  }
 };
 exports.deleteCoupon = async function (req, res) {
     try {
-    //   let validation_result = await Validations.CouponValidations.editCoupon(
-    //       req,
-    //       res
-    //     );
-    
-    //     if (validation_result && !validation_result.success) {
-    //       throw validation_result.message;
-    //     }
-        let couponExists = await Coupon.findOne({id:req.query.id,isDeleted:false})
-  
-      if(!couponExists){
-          throw constants.COUPON.NOT_EXISTS;
-      }
-  
-      const coupon = await Coupon.updateOne({id:req.query.id},{isDeleted:true})
-  
-      if (coupon) {
-        return response.success(null, constants.COUPON.DELETED, req, res);
-      }
-  
-      throw constants.COMMON.SERVER_ERROR;
+        //   let validation_result = await Validations.CouponValidations.editCoupon(
+        //       req,
+        //       res
+        //     );
+
+        //     if (validation_result && !validation_result.success) {
+        //       throw validation_result.message;
+        //     }
+        let couponExists = await Coupon.findOne({ id: req.query.id, isDeleted: false })
+
+        if (!couponExists) {
+            throw constants.COUPON.NOT_EXISTS;
+        }
+
+        const coupon = await Coupon.updateOne({ id: req.query.id }, { isDeleted: true })
+
+        if (coupon) {
+            return response.success(null, constants.COUPON.DELETED, req, res);
+        }
+
+        throw constants.COMMON.SERVER_ERROR;
     } catch (error) {
         console.log(error)
-      return response.failed(null, `${error}`, req, res);
+        return response.failed(null, `${error}`, req, res);
     }
 };
 exports.getAllCoupon = async (req, res) => {
@@ -127,7 +155,7 @@ exports.getAllCoupon = async (req, res) => {
         let count = req.param('count') || 10;
         let page = req.param('page') || 1;
         let skipNo = (Number(page) - 1) * Number(count);
-        let { search, sortBy, status, isDeleted, plan_type,addedBy,media } = req.query;
+        let { search, sortBy, status, isDeleted, plan_type, addedBy, media } = req.query;
         let sortquery = {};
 
         if (search) {
@@ -164,9 +192,9 @@ exports.getAllCoupon = async (req, res) => {
             query.plan_type = plan_type;
         }
         if (addedBy) {
-            query.addedBy =new ObjectId(addedBy);
+            query.addedBy = new ObjectId(addedBy);
         }
-        else{
+        else {
             query.addedBy = new ObjectId(req.identity.id);
         }
 
@@ -179,15 +207,15 @@ exports.getAllCoupon = async (req, res) => {
             $project: {
                 id: '$_id',
                 media: '$media',
-                couponCode:"$couponCode",
-                couponType:"$couponType",
-                startDate:"$startDate",
-                expirationDate:"$expirationDate",
-                commissionType:"$commissionType",
-                applicable:"$applicable",
-                visibility:"$visibility",
-                url:"$url",
-                couponCommission:"$couponCommission",
+                couponCode: "$couponCode",
+                couponType: "$couponType",
+                startDate: "$startDate",
+                expirationDate: "$expirationDate",
+                commissionType: "$commissionType",
+                applicable: "$applicable",
+                visibility: "$visibility",
+                url: "$url",
+                couponCommission: "$couponCommission",
                 isDeleted: "$isDeleted",
                 deletedAt: "$deletedAt",
                 status: "$status",
@@ -214,23 +242,23 @@ exports.getAllCoupon = async (req, res) => {
         // }
         // pipeline.push(unset_stage)
 
-        let totalresult= db.collection('coupon').aggregate(pipeline).toArray();
-            pipeline.push({
-                $skip: Number(skipNo)
-            });
-            pipeline.push({
-                $limit: Number(count)
-            });
-            let result = await db.collection('coupon').aggregate(pipeline).toArray();
-                let resData = {
-                    total_count: totalresult ? totalresult.length : 0,
-                    data: result ? result : [],
-                }
-                if (!req.param('page') && !req.param('count')) {
-                    resData.data = totalresult ? totalresult : [];
-                }
-                return response.success(resData, constants.COUPON.FETCHED, req, res);
-          
+        let totalresult = db.collection('coupon').aggregate(pipeline).toArray();
+        pipeline.push({
+            $skip: Number(skipNo)
+        });
+        pipeline.push({
+            $limit: Number(count)
+        });
+        let result = await db.collection('coupon').aggregate(pipeline).toArray();
+        let resData = {
+            total_count: totalresult ? totalresult.length : 0,
+            data: result ? result : [],
+        }
+        if (!req.param('page') && !req.param('count')) {
+            resData.data = totalresult ? totalresult : [];
+        }
+        return response.success(resData, constants.COUPON.FETCHED, req, res);
+
     } catch (error) {
         return response.failed(null, `${error}`, req, res);
     }

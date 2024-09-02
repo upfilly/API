@@ -33,7 +33,8 @@ exports.generateLink = async (req, res) => {
     if (!isExist) {
       let create_link = await AffiliateLink.create({ affiliate_id: req.identity.id, link: get_link }).fetch()
       if (create_link) {
-        if (['operator', 'super_user'].includes(req.identity.role)) {
+
+        if (['operator', 'super_user', 'publisher'].includes(req.identity.role)) {
           let get_account_manager = await Users.findOne({ addedBy: req.identity.id, isDeleted: false })
           await Services.activityHistoryServices.create_activity_history(req.identity.id, 'generate_link', 'created', create_link, create_link, get_account_manager.id ? get_account_manager.id : null)
 
@@ -50,14 +51,14 @@ exports.generateLink = async (req, res) => {
         if (['operator', 'super_user'].includes(req.identity.role)) {
           let get_account_manager = await Users.findOne({ addedBy: req.identity.id, isDeleted: false })
 
-          await Services.activityHistoryServices.create_activity_history(req.identity.id, 'generate_link', 'updated', result, isExist, get_account_manager.id ? get_account_manager.id : null)
+          await Services.activityHistoryServices.create_activity_history(req.identity.id, 'generate_link', 'updated', update_link, isExist, get_account_manager.id ? get_account_manager.id : null)
 
         } else if (['affiliate', 'brand'].includes(req.identity.role)) {
 
           let get_all_admin = await Services.UserServices.get_users_with_role(["admin"])
           let get_account_manager = get_all_admin[0].id
 
-          await Services.activityHistoryServices.create_activity_history(req.identity.id, 'generate_link', 'updated', result, isExist, get_account_manager ? get_account_manager.id : null)
+          await Services.activityHistoryServices.create_activity_history(req.identity.id, 'generate_link', 'updated', update_link, isExist, get_account_manager ? get_account_manager.id : null)
         }
       }
     }

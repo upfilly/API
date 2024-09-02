@@ -16,9 +16,8 @@ module.exports = {
         'untrack_sales',
         'generate_link',
         'users',
-
-
-
+        'campaign',
+        'banner'
       ]
     },
     type: { type: "string", isIn: ['created', 'updated', 'deleted'] },
