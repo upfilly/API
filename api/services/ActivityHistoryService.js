@@ -83,8 +83,7 @@ exports.create_activity_history = async (user_id, module, type, newObj, oldObj, 
             module: module,
             type: type,
             old_data: {},
-            new_data: newObj,
-            data: [],
+            data: newObj,
             changed_id: newObj.id,
             account_manager_id: account_manager_id ? account_manager_id : null
         }).fetch();

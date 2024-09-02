@@ -27,7 +27,7 @@ module.exports = {
     account_manager_id: { model: "users" },
     changed_id: { type: "string" },
     old_data: { type: "json", },
-    new_data: { type: "json", },
+    // new_data: { type: "json", },
     data: { type: "json", },
     isDeleted: { type: 'Boolean', defaultsTo: false },
     createdAt: { type: "ref", autoCreatedAt: true },
