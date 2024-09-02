@@ -24,7 +24,7 @@ module.exports = {
     password: { type: 'string', columnName: 'encryptedPassword', minLength: 8 },
     gender: { type: 'string', isIn: ["male", "female", "transgender", "others"] },
     isVerified: { type: 'string', isIn: ['Y', 'N'], defaultsTo: 'N', },
-    role: { type: 'string', isIn: ['brand', 'admin', 'affiliate', 'team', 'super_user', 'operator', 'analyzer', 'publisher', 'customer', 'users'], },
+    role: { type: 'string', isIn: ['brand', 'admin', 'affiliate', 'team', 'super_user', 'operator', 'analyzer', 'publisher', 'customer', 'users', 'staff'], },
     address: { type: "string" },
     country: { type: 'string' },
     state: { type: 'string' },

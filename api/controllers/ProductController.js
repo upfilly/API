@@ -52,10 +52,21 @@ module.exports = {
 
             let addProducts = await Product.create(req.body).fetch();
             if (addProducts) {
+
+                if (['operator', 'super_user'].includes(req.identity.role)) {
+
+                    //----------------get main account manager---------------------
+                    let get_account_manager = await Users.findOne({ id: req.identity.addedBy, isDeleted: false })
+                    await Services.activityHistoryServices.create_activity_history(req.identity.id, 'marketplace_product', 'created', addProducts, addProducts, get_account_manager ? get_account_manager.id : null)
+                    //----------------get main account manager---------------------
+                }
+
                 return response.success(null, constants.PRODUCT.ADDED, req, res);
             }
             throw constants.COMMON.SERVER_ERROR;
         } catch (error) {
+            console.log(error, "===err");
+
             return response.failed(null, `${error}`, req, res);
         }
     },
@@ -118,6 +129,11 @@ module.exports = {
 
             let editProduct = await Product.updateOne({ id: req.body.id }, req.body);
             if (editProduct) {
+                if (['operator', 'super_user'].includes(req.identity.role)) {
+                    //----------------get main account manager---------------------
+                    let get_account_manager = await Users.findOne({ addedBy: req.identity.id, isDeleted: false })
+                    await Services.activityHistoryServices.create_activity_history(req.identity.id, 'marketplace_product', 'created', addProducts, addProducts, get_account_manager.id ? get_account_manager.id : null)
+                }
                 return response.success(null, constants.PRODUCT.UPDATED, req, res)
             }
             throw constants.PRODUCT.INVALID_ID;
@@ -293,7 +309,7 @@ module.exports = {
                     price_type: "$price_type",
                     opportunity_type: "$opportunity_type",
                     placement: "$placement",
-                    payment_model:"$payment_model",
+                    payment_model: "$payment_model",
                     start_date: "$start_date",
                     end_date: "$end_date",
 
@@ -323,23 +339,23 @@ module.exports = {
                 $sort: sortquery
             });
 
-            let totalresult =await  db.collection('product').aggregate(pipeline).toArray();
-                pipeline.push({
-                    $skip: Number(skipNo)
-                });
-                pipeline.push({
-                    $limit: Number(count)
-                });
-                let result = await db.collection('product').aggregate(pipeline).toArray();
-                    let resData = {
-                        total_count: totalresult ? totalresult.length : 0,
-                        data: result ? result : [],
-                    }
-                    if (!req.param('page') && !req.param('count')) {
-                        resData.data = totalresult ? totalresult : [];
-                    }
-                    return response.success(resData, constants.PRODUCT.FETCHED_ALL, req, res);
-             
+            let totalresult = await db.collection('product').aggregate(pipeline).toArray();
+            pipeline.push({
+                $skip: Number(skipNo)
+            });
+            pipeline.push({
+                $limit: Number(count)
+            });
+            let result = await db.collection('product').aggregate(pipeline).toArray();
+            let resData = {
+                total_count: totalresult ? totalresult.length : 0,
+                data: result ? result : [],
+            }
+            if (!req.param('page') && !req.param('count')) {
+                resData.data = totalresult ? totalresult : [];
+            }
+            return response.success(resData, constants.PRODUCT.FETCHED_ALL, req, res);
+
         } catch (error) {
             console.log(error, "err");
             return response.failed(null, `${error}`, req, res)

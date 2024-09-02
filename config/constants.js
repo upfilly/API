@@ -620,5 +620,12 @@ module.exports.constants = {
     FETCHED_ALL:"All Promoters fetched",
     MISSING_FIELDS:"Some fields not found",
     INVALID_ID:"First Promoter invalid"
-  }
+  },
+
+  ACTIVITY_HISTORY: {
+    ID_REQUIRED: "Id Required",
+    FETCHED: "Activity log fetched sucessfully",
+    FETCHED_ALL: "Activity logs fetched sucessfully",
+    INVALID_ID: "Invalid id",
+  },
 };

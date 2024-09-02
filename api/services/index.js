@@ -17,6 +17,8 @@ module.exports = {
     Smtp: require('./SmtpServices'),
     PaypalBraintreeServices: require('./PaypalBraintreeServices'),
     generateAffiliateLink: require('./generateLinkServices'),
-    scalenutServices: require('./scalenutServices')
+    scalenutServices: require('./scalenutServices'),
+    activityHistoryServices: require('./ActivityHistoryService')
+
 
 }
