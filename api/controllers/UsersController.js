@@ -367,6 +367,7 @@ module.exports = {
               "analyzer",
               "publisher",
               "users",
+              "super_user",
             ],
           },
         },
@@ -479,7 +480,21 @@ module.exports = {
       delete user.stripe_customer_id;
       delete user.status;
 
-      let get_permission = await Permissions.findOne({ role: user.role });
+      let permission_query = {}
+
+      if (['affiliate', 'brand'].includes(user.role)) {
+        permission_query.role = user.role
+      } else if (['operator', 'analyzer', 'publisher', 'super_user'].includes(user.role)) {
+        if (user.addedBy) {
+          let get_account_manager_detail = await Users.findOne({ id: user.addedBy, isDeleted: false });
+          if (get_account_manager_detail.role)
+            permission_query.role = user.role
+          permission_query.account_manager = get_account_manager_detail.role
+
+        }
+      }
+
+      let get_permission = await Permissions.findOne(permission_query);
 
       if (get_permission) {
         user.permission_detail = get_permission;
@@ -727,24 +742,24 @@ module.exports = {
         query.isDeleted = isDeleted
           ? isDeleted === "true"
           : true
-          ? isDeleted
-          : false;
+            ? isDeleted
+            : false;
       }
 
       if (isTrusted) {
         query.isTrusted = isTrusted
           ? isTrusted === "true"
           : true
-          ? isTrusted
-          : false;
+            ? isTrusted
+            : false;
       }
 
       if (isFeatured) {
         query.isFeatured = isFeatured
           ? isFeatured === "true"
           : true
-          ? isFeatured
-          : false;
+            ? isFeatured
+            : false;
       }
 
       if (createBybrand_id) {
@@ -1024,24 +1039,24 @@ module.exports = {
         query.isDeleted = isDeleted
           ? isDeleted === "true"
           : true
-          ? isDeleted
-          : false;
+            ? isDeleted
+            : false;
       }
 
       if (isTrusted) {
         query.isTrusted = isTrusted
           ? isTrusted === "true"
           : true
-          ? isTrusted
-          : false;
+            ? isTrusted
+            : false;
       }
 
       if (isFeatured) {
         query.isFeatured = isFeatured
           ? isFeatured === "true"
           : true
-          ? isFeatured
-          : false;
+            ? isFeatured
+            : false;
       }
 
       if (createBybrand_id) {
@@ -1211,33 +1226,33 @@ module.exports = {
         });
       }
       console.log(query);
-      let totalResult=await db.collection("users")
+      let totalResult = await db.collection("users")
         .aggregate(pipeline)
         .toArray();
-          pipeline.push({
-            $skip: Number(skipNo),
-          });
-          pipeline.push({
-            $limit: Number(count),
-          });
+      pipeline.push({
+        $skip: Number(skipNo),
+      });
+      pipeline.push({
+        $limit: Number(count),
+      });
 
-          let result =await  db.collection("users")
-            .aggregate(pipeline)
-            .toArray();
-              let resData = {
-                total: totalResult ? totalResult.length : 0,
-                data: result ? result : [],
-              };
-              if (!req.param("page") && !req.param("count")) {
-                resData.data = totalResult ? totalResult : [];
-              }
-              return response.success(
-                resData,
-                constants.user.FETCHED_ALL,
-                req,
-                res
-              );
-           
+      let result = await db.collection("users")
+        .aggregate(pipeline)
+        .toArray();
+      let resData = {
+        total: totalResult ? totalResult.length : 0,
+        data: result ? result : [],
+      };
+      if (!req.param("page") && !req.param("count")) {
+        resData.data = totalResult ? totalResult : [];
+      }
+      return response.success(
+        resData,
+        constants.user.FETCHED_ALL,
+        req,
+        res
+      );
+
     } catch (error) {
       // console.log(error, "---err");
       return response.failed(null, `${error}`, req, res);
@@ -1321,8 +1336,8 @@ module.exports = {
         query.isDeleted = isDeleted
           ? isDeleted === "true"
           : true
-          ? isDeleted
-          : false;
+            ? isDeleted
+            : false;
       }
 
       query.addedBy = new ObjectId(req.identity.id);
@@ -1446,33 +1461,33 @@ module.exports = {
           },
         });
       }
-      let totalResult=await db.collection("users")
+      let totalResult = await db.collection("users")
         .aggregate(pipeline)
         .toArray();
-          pipeline.push({
-            $skip: Number(skipNo),
-          });
-          pipeline.push({
-            $limit: Number(count),
-          });
+      pipeline.push({
+        $skip: Number(skipNo),
+      });
+      pipeline.push({
+        $limit: Number(count),
+      });
 
-          let result = await db.collection("users")
-            .aggregate(pipeline)
-            .toArray();
-              let resData = {
-                total: totalResult ? totalResult.length : 0,
-                data: result ? result : [],
-              };
-              if (!req.param("page") && !req.param("count")) {
-                resData.data = totalResult ? totalResult : [];
-              }
-              return response.success(
-                resData,
-                constants.user.FETCHED_ALL,
-                req,
-                res
-              );
-          
+      let result = await db.collection("users")
+        .aggregate(pipeline)
+        .toArray();
+      let resData = {
+        total: totalResult ? totalResult.length : 0,
+        data: result ? result : [],
+      };
+      if (!req.param("page") && !req.param("count")) {
+        resData.data = totalResult ? totalResult : [];
+      }
+      return response.success(
+        resData,
+        constants.user.FETCHED_ALL,
+        req,
+        res
+      );
+
     } catch (error) {
       // console.log(error, "---err");
       return response.failed(null, `${error}`, req, res);
@@ -1689,11 +1704,26 @@ module.exports = {
         //     }
         //   }
         // }
-        let get_permission = await Permissions.findOne({ role: get_user.role });
+        let permission_query = {}
+
+        if (['affiliate', 'brand'].includes(get_user.role)) {
+          permission_query.role = get_user.role
+        } else if (['operator', 'analyzer', 'publisher', 'super_user'].includes(get_user.role)) {
+          if (get_user.addedBy) {
+            let get_account_manager_detail = await Users.findOne({ id: get_user.addedBy, isDeleted: false });
+            if (get_account_manager_detail.role)
+              permission_query.role = get_user.role
+            permission_query.account_manager = get_account_manager_detail.role
+
+          }
+        }
+
+        let get_permission = await Permissions.findOne(permission_query);
 
         if (get_permission) {
-          get_user.permission_detail = get_permission;
+          user.permission_detail = get_permission;
         }
+
 
         return response.success(get_user, constants.user.FETCHED, req, res);
       }
@@ -2801,7 +2831,7 @@ module.exports = {
               fileExt = typeArr[1];
               if (
                 fileExt ==
-                  "vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+                "vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
                 fileExt == "vnd.ms-excel"
               ) {
                 let name = `${file[index].fd.split("/csv")[1]}`;
@@ -3315,7 +3345,7 @@ module.exports = {
               // console.log(fileExt, '================fileExt');
               if (
                 fileExt ==
-                  "vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+                "vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
                 fileExt == "vnd.ms-excel"
               ) {
                 let name = `${file[index].fd.split("/csv")[1]}`;
@@ -4118,24 +4148,24 @@ module.exports = {
         query.isDeleted = isDeleted
           ? isDeleted === "true"
           : true
-          ? isDeleted
-          : false;
+            ? isDeleted
+            : false;
       }
 
       if (isTrusted) {
         query.isTrusted = isTrusted
           ? isTrusted === "true"
           : true
-          ? isTrusted
-          : false;
+            ? isTrusted
+            : false;
       }
 
       if (isFeatured) {
         query.isFeatured = isFeatured
           ? isFeatured === "true"
           : true
-          ? isFeatured
-          : false;
+            ? isFeatured
+            : false;
       }
 
       if (createBybrand_id) {
@@ -4205,55 +4235,55 @@ module.exports = {
 
         role && role === "brand"
           ? {
-              $lookup: {
-                from: "affiliatebrandinvite",
-                let: {
-                  affiliate_id: "$_id",
-                  isDeleted: false,
-                  brand_id: new ObjectId(req.identity.id),
-                },
-                // let: { user_id: "$req.identity.id", fav_user_id: new ObjectId("64d076e86ecebee01af09d8c") },
-                pipeline: [
-                  {
-                    $match: {
-                      $expr: {
-                        $and: [
-                          { $eq: ["$brand_id", "$$brand_id"] },
-                          { $eq: ["$isDeleted", "$$isDeleted"] },
-                          { $eq: ["$affiliate_id", "$$affiliate_id"] },
-                        ],
-                      },
+            $lookup: {
+              from: "affiliatebrandinvite",
+              let: {
+                affiliate_id: "$_id",
+                isDeleted: false,
+                brand_id: new ObjectId(req.identity.id),
+              },
+              // let: { user_id: "$req.identity.id", fav_user_id: new ObjectId("64d076e86ecebee01af09d8c") },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: {
+                      $and: [
+                        { $eq: ["$brand_id", "$$brand_id"] },
+                        { $eq: ["$isDeleted", "$$isDeleted"] },
+                        { $eq: ["$affiliate_id", "$$affiliate_id"] },
+                      ],
                     },
                   },
-                ],
-                as: "invite_affiliate_details",
-              },
-            }
-          : {
-              $lookup: {
-                from: "affiliatebrandinvite",
-                let: {
-                  affiliate_id: new ObjectId(req.identity.id),
-                  isDeleted: false,
-                  brand_id: "$_id",
                 },
-                // let: { user_id: "$req.identity.id", fav_user_id: new ObjectId("64d076e86ecebee01af09d8c") },
-                pipeline: [
-                  {
-                    $match: {
-                      $expr: {
-                        $and: [
-                          { $eq: ["$brand_id", "$$brand_id"] },
-                          { $eq: ["$isDeleted", "$$isDeleted"] },
-                          { $eq: ["$affiliate_id", "$$affiliate_id"] },
-                        ],
-                      },
-                    },
-                  },
-                ],
-                as: "invite_affiliate_details",
-              },
+              ],
+              as: "invite_affiliate_details",
             },
+          }
+          : {
+            $lookup: {
+              from: "affiliatebrandinvite",
+              let: {
+                affiliate_id: new ObjectId(req.identity.id),
+                isDeleted: false,
+                brand_id: "$_id",
+              },
+              // let: { user_id: "$req.identity.id", fav_user_id: new ObjectId("64d076e86ecebee01af09d8c") },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: {
+                      $and: [
+                        { $eq: ["$brand_id", "$$brand_id"] },
+                        { $eq: ["$isDeleted", "$$isDeleted"] },
+                        { $eq: ["$affiliate_id", "$$affiliate_id"] },
+                      ],
+                    },
+                  },
+                },
+              ],
+              as: "invite_affiliate_details",
+            },
+          },
         {
           $unwind: {
             path: "$invite_affiliate_details",
@@ -4340,33 +4370,33 @@ module.exports = {
           },
         });
       }
-      let totalResult = await   db.collection("users")
+      let totalResult = await db.collection("users")
         .aggregate(pipeline)
         .toArray();
-          pipeline.push({
-            $skip: Number(skipNo),
-          });
-          pipeline.push({
-            $limit: Number(count),
-          });
+      pipeline.push({
+        $skip: Number(skipNo),
+      });
+      pipeline.push({
+        $limit: Number(count),
+      });
 
-          let result = await   db.collection("users")
-            .aggregate(pipeline)
-            .toArray();
-              let resData = {
-                total: totalResult ? totalResult.length : 0,
-                data: result ? result : [],
-              };
-              if (!req.param("page") && !req.param("count")) {
-                resData.data = totalResult ? totalResult : [];
-              }
-              return response.success(
-                resData,
-                constants.user.FETCHED_ALL,
-                req,
-                res
-              );
-            
+      let result = await db.collection("users")
+        .aggregate(pipeline)
+        .toArray();
+      let resData = {
+        total: totalResult ? totalResult.length : 0,
+        data: result ? result : [],
+      };
+      if (!req.param("page") && !req.param("count")) {
+        resData.data = totalResult ? totalResult : [];
+      }
+      return response.success(
+        resData,
+        constants.user.FETCHED_ALL,
+        req,
+        res
+      );
+
     } catch (error) {
       // console.log(error, "---err");
       return response.failed(null, `${error}`, req, res);

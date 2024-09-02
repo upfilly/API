@@ -24,13 +24,19 @@ module.exports = {
       let id = req.identity.id;
 
       let loggedInUser = await Users.findOne({ id: id, isDeleted: false });
+      if (loggedInUser.addedBy) {
 
-      let isPermissionExists = await Permissions.findOne({
-        role: loggedInUser.role,
-      });
+        let get_account_manager_detail = await Users.findOne({ id: loggedInUser.addedBy, isDeleted: false });
+        if (get_account_manager_detail && get_account_manager_detail.role) {
+          let isPermissionExists = await Permissions.findOne({
+            role: loggedInUser.role,
+            account_manager: get_account_manager_detail.role
+          });
 
-      if (!isPermissionExists) {
-        throw "Permission not exists";
+          if (!isPermissionExists) {
+            throw "Permission not exists";
+          }
+        }
       }
 
       // if (!isPermissionExists.user_add) {
@@ -129,19 +135,20 @@ module.exports = {
       let user_id = req.identity.id;
 
       let loggedInUser = await Users.findOne({ id: user_id, isDeleted: false });
+      if (loggedInUser.addedBy) {
 
-      let isPermissionExists = await Permissions.findOne({
-        role: loggedInUser.role,
-      });
+        let get_account_manager_detail = await Users.findOne({ id: loggedInUser.addedBy, isDeleted: false });
+        if (get_account_manager_detail && get_account_manager_detail.role) {
+          let isPermissionExists = await Permissions.findOne({
+            role: loggedInUser.role,
+            account_manager: get_account_manager_detail.role
+          });
 
-      if (!isPermissionExists) {
-        throw "Permission not exists";
+          if (!isPermissionExists) {
+            throw "Permission not exists";
+          }
+        }
       }
-
-      if (!isPermissionExists.user_edit) {
-        throw "User not allowed to change active user";
-      }
-
       const id = req.body.id;
 
       if (!id || id == undefined) {
@@ -193,18 +200,21 @@ module.exports = {
     try {
       let user_id = req.identity.id;
 
+     
       let loggedInUser = await Users.findOne({ id: user_id, isDeleted: false });
+      if (loggedInUser.addedBy) {
 
-      let isPermissionExists = await Permissions.findOne({
-        role: loggedInUser.role,
-      });
+        let get_account_manager_detail = await Users.findOne({ id: loggedInUser.addedBy, isDeleted: false });
+        if (get_account_manager_detail && get_account_manager_detail.role) {
+          let isPermissionExists = await Permissions.findOne({
+            role: loggedInUser.role,
+            account_manager: get_account_manager_detail.role
+          });
 
-      if (!isPermissionExists) {
-        throw "Permission not exists";
-      }
-
-      if (!isPermissionExists.user_delete) {
-        throw "User not allowed to delete invite user";
+          if (!isPermissionExists) {
+            throw "Permission not exists";
+          }
+        }
       }
 
       const id = req.query.id;
@@ -247,18 +257,21 @@ module.exports = {
     try {
       let user_id = req.identity.id;
 
+     
       let loggedInUser = await Users.findOne({ id: user_id, isDeleted: false });
+      if (loggedInUser.addedBy) {
 
-      let isPermissionExists = await Permissions.findOne({
-        role: loggedInUser.role,
-      });
+        let get_account_manager_detail = await Users.findOne({ id: loggedInUser.addedBy, isDeleted: false });
+        if (get_account_manager_detail && get_account_manager_detail.role) {
+          let isPermissionExists = await Permissions.findOne({
+            role: loggedInUser.role,
+            account_manager: get_account_manager_detail.role
+          });
 
-      if (!isPermissionExists) {
-        throw "Permission not exists";
-      }
-
-      if (!isPermissionExists.user_get) {
-        throw "User not allowed to view invite user";
+          if (!isPermissionExists) {
+            throw "Permission not exists";
+          }
+        }
       }
 
       let query = {};
@@ -490,18 +503,21 @@ module.exports = {
     try {
       let user_id = req.identity.id;
 
+     
       let loggedInUser = await Users.findOne({ id: user_id, isDeleted: false });
+      if (loggedInUser.addedBy) {
 
-      let isPermissionExists = await Permissions.findOne({
-        role: loggedInUser.role,
-      });
+        let get_account_manager_detail = await Users.findOne({ id: loggedInUser.addedBy, isDeleted: false });
+        if (get_account_manager_detail && get_account_manager_detail.role) {
+          let isPermissionExists = await Permissions.findOne({
+            role: loggedInUser.role,
+            account_manager: get_account_manager_detail.role
+          });
 
-      if (!isPermissionExists) {
-        throw "Permission not exists";
-      }
-
-      if (!isPermissionExists.user_edit) {
-        throw "User not allowed to edit invite user";
+          if (!isPermissionExists) {
+            throw "Permission not exists";
+          }
+        }
       }
 
       user_id = req.body.user_id;
@@ -537,17 +553,19 @@ module.exports = {
       let user_id = req.identity.id;
 
       let loggedInUser = await Users.findOne({ id: user_id, isDeleted: false });
+      if (loggedInUser.addedBy) {
 
-      let isPermissionExists = await Permissions.findOne({
-        role: loggedInUser.role,
-      });
+        let get_account_manager_detail = await Users.findOne({ id: loggedInUser.addedBy, isDeleted: false });
+        if (get_account_manager_detail && get_account_manager_detail.role) {
+          let isPermissionExists = await Permissions.findOne({
+            role: loggedInUser.role,
+            account_manager: get_account_manager_detail.role
+          });
 
-      if (!isPermissionExists) {
-        throw "Permission not exists";
-      }
-
-      if (!isPermissionExists.user_edit) {
-        throw "User not allowed to edit invite user";
+          if (!isPermissionExists) {
+            throw "Permission not exists";
+          }
+        }
       }
 
       user_id = req.query.user_id;
