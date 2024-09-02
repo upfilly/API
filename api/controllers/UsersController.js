@@ -1719,12 +1719,15 @@ module.exports = {
           }
         }
 
-        let get_permission = await Permissions.findOne(permission_query);
+        if (get_user.role != "admin") {
+          let get_permission = await Permissions.findOne(permission_query);
 
-        if (get_permission) {
-          get_user.permission_detail = get_permission;
+          if (get_permission) {
+            get_user.permission_detail = get_permission;
+          }
+        } else {
+          delete get_user.listOfOtherUsers
         }
-
 
         return response.success(get_user, constants.user.FETCHED, req, res);
       }

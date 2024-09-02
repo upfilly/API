@@ -17,7 +17,9 @@ module.exports = {
         'generate_link',
         'users',
         'campaign',
-        'banner'
+        'banner',
+        'coupon'
+
       ]
     },
     type: { type: "string", isIn: ['created', 'updated', 'deleted'] },
