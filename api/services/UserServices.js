@@ -306,3 +306,8 @@ exports.updating_influencer_profile_images = async (user_id) => {
         console.log(error, '=============error from updating ISMD')
     }
 }
+
+exports.get_users_with_role = async (role) => {
+    let get_users = await Users.find({ role: { in: role }, isDeleted: false, status: "active" });
+    return get_users;
+  }

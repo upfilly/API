@@ -33,6 +33,23 @@ module.exports = {
             if (!result) {
                 let result1 = await UntrackSales.create(req.body).fetch()
                 if (result1) {
+
+                    if (['operator', 'super_user'].includes(req.identity.role)) {
+                        //----------------get main account manager---------------------
+                        let get_account_manager = await Users.findOne({ addedBy: req.identity.id, isDeleted: false })
+                        
+                        await Services.activityHistoryServices.create_activity_history(req.identity.id, 'untrack_sales', 'created', result1, result1, get_account_manager.id ? get_account_manager.id : null)
+
+                    } else if (['affiliate'].includes(req.identity.role)) {
+
+                        //----------------get main account manager---------------------
+                        let get_all_admin = await Services.UserServices.get_users_with_role(["admin"])
+                        let get_account_manager = get_all_admin[0].id
+                        
+                        await Services.activityHistoryServices.create_activity_history(req.identity.id, 'untrack_sales', 'created', result1, result1, get_account_manager ? get_account_manager.id : null)
+
+                    }
+
                     let data = await Users.findOne({ id: result1.brand_id });
                     let get_afiliate = await Users.findOne({ id: result1.addedBy, isDeleted: false })
                     const emailpayload = {
@@ -104,8 +121,24 @@ module.exports = {
             }
 
             let { id } = req.body;
+
+            let result_old = await UntrackSales.findOne({ id: id, isDeleted: false });
+
             let result = await UntrackSales.updateOne({ id: id }, (req.body));
             if (result) {
+                if (['operator', 'super_user'].includes(req.identity.role)) {
+                    let get_account_manager = await Users.findOne({ addedBy: req.identity.id, isDeleted: false })
+
+                    await Services.activityHistoryServices.create_activity_history(req.identity.id, 'untrack_sales', 'updated', result, result_old, get_account_manager.id ? get_account_manager.id : null)
+
+                } else if (['affiliate'].includes(req.identity.role)) {
+
+                    let get_all_admin = await Services.UserServices.get_users_with_role(["admin"])
+                    let get_account_manager = get_all_admin[0].id
+
+                    await Services.activityHistoryServices.create_activity_history(req.identity.id, 'untrack_sales', 'updated', result, result_old, get_account_manager ? get_account_manager.id : null)
+                }
+
                 return response.success(result, constants.UNTRACKSALES.UPDATED, req, res);
             }
             else {

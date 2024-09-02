@@ -4214,9 +4214,9 @@ module.exports = {
           $in: await string_ids_toObjectIds_array(affiliate_group_id),
         };
       }
-      if (role != "users") {
-        query.addedBy = { $eq: null };
-      }
+      // if (role != "users") {
+      //   query.addedBy = { $eq: null };
+      // }
       // console.log(JSON.stringify(query), '===========query');
       let pipeline = [
         {

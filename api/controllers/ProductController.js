@@ -59,6 +59,14 @@ module.exports = {
                     let get_account_manager = await Users.findOne({ id: req.identity.addedBy, isDeleted: false })
                     await Services.activityHistoryServices.create_activity_history(req.identity.id, 'marketplace_product', 'created', addProducts, addProducts, get_account_manager ? get_account_manager.id : null)
                     //----------------get main account manager---------------------
+
+                } else if (['brand'].includes(req.identity.role)) {
+
+                    //----------------get main account manager---------------------
+                    let get_all_admin = await Services.UserServices.get_users_with_role(["admin"])
+                    let get_account_manager = get_all_admin[0].id
+                    await Services.activityHistoryServices.create_activity_history(req.identity.id, 'marketplace_product', 'created', addProducts, addProducts, get_account_manager ? get_account_manager.id : null)
+                    //----------------get main account manager---------------------
                 }
 
                 return response.success(null, constants.PRODUCT.ADDED, req, res);
@@ -132,7 +140,15 @@ module.exports = {
                 if (['operator', 'super_user'].includes(req.identity.role)) {
                     //----------------get main account manager---------------------
                     let get_account_manager = await Users.findOne({ addedBy: req.identity.id, isDeleted: false })
-                    await Services.activityHistoryServices.create_activity_history(req.identity.id, 'marketplace_product', 'created', addProducts, addProducts, get_account_manager.id ? get_account_manager.id : null)
+                    await Services.activityHistoryServices.create_activity_history(req.identity.id, 'marketplace_product', 'updated', addProducts, get_product, get_account_manager.id ? get_account_manager.id : null)
+
+                } else if (['brand'].includes(req.identity.role)) {
+
+                    //----------------get main account manager---------------------
+                    let get_all_admin = await Services.UserServices.get_users_with_role(["admin"])
+                    let get_account_manager = get_all_admin[0].id
+                    await Services.activityHistoryServices.create_activity_history(req.identity.id, 'marketplace_product', 'updated', addProducts, get_product, get_account_manager ? get_account_manager.id : null)
+                    //----------------get main account manager---------------------
                 }
                 return response.success(null, constants.PRODUCT.UPDATED, req, res)
             }
