@@ -36,7 +36,7 @@ module.exports = {
 
                     if (['operator', 'super_user'].includes(req.identity.role)) {
                         //----------------get main account manager---------------------
-                        let get_account_manager = await Users.findOne({ addedBy: req.identity.id, isDeleted: false })
+                        let get_account_manager = await Users.findOne({ id: req.identity.addedBy, isDeleted: false })
 
                         await Services.activityHistoryServices.create_activity_history(req.identity.id, 'untrack_sales', 'created', result1, result1, get_account_manager.id ? get_account_manager.id : null)
 
@@ -127,7 +127,7 @@ module.exports = {
             let result = await UntrackSales.updateOne({ id: id }, (req.body));
             if (result) {
                 if (['operator', 'super_user'].includes(req.identity.role)) {
-                    let get_account_manager = await Users.findOne({ addedBy: req.identity.id, isDeleted: false })
+                    let get_account_manager = await Users.findOne({ id: req.identity.addedBy, isDeleted: false })
 
                     await Services.activityHistoryServices.create_activity_history(req.identity.id, 'untrack_sales', 'updated', result, result_old, get_account_manager.id ? get_account_manager.id : null)
 

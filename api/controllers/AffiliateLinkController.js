@@ -35,7 +35,7 @@ exports.generateLink = async (req, res) => {
       if (create_link) {
 
         if (['operator', 'super_user', 'publisher'].includes(req.identity.role)) {
-          let get_account_manager = await Users.findOne({ addedBy: req.identity.id, isDeleted: false })
+          let get_account_manager = await Users.findOne({ id: req.identity.addedBy, isDeleted: false })
           await Services.activityHistoryServices.create_activity_history(req.identity.id, 'generate_link', 'created', create_link, create_link, get_account_manager.id ? get_account_manager.id : null)
 
         } else if (['affiliate', 'brand'].includes(req.identity.role)) {
@@ -49,7 +49,7 @@ exports.generateLink = async (req, res) => {
       let update_link = await AffiliateLink.updateOne({ id: isExist.id, isDeleted: false }, { link: get_link })
       if (update_link) {
         if (['operator', 'super_user'].includes(req.identity.role)) {
-          let get_account_manager = await Users.findOne({ addedBy: req.identity.id, isDeleted: false })
+          let get_account_manager = await Users.findOne({ id: req.identity.addedBy, isDeleted: false })
 
           await Services.activityHistoryServices.create_activity_history(req.identity.id, 'generate_link', 'updated', update_link, isExist, get_account_manager.id ? get_account_manager.id : null)
 
