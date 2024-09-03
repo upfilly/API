@@ -150,7 +150,7 @@ exports.addCampaign = async (req, res) => {
             //------------------------Create Logs here -------------------------------
             if (add_campaign) {
                 if (['operator', 'super_user'].includes(req.identity.role)) {
-                    let get_account_manager = await Users.findOne({ addedBy: req.identity.id, isDeleted: false })
+                    let get_account_manager = await Users.findOne({ id: req.identity.addedBy, isDeleted: false })
                     await Services.activityHistoryServices.create_activity_history(req.identity.id, 'campaign', 'created', add_campaign, add_campaign, get_account_manager.id ? get_account_manager.id : null)
 
                 } else if (['brand'].includes(req.identity.role)) {
@@ -216,7 +216,7 @@ exports.editCampaign = async (req, res) => {
             if (edit_campaign) {
 
                 if (['operator', 'super_user'].includes(req.identity.role)) {
-                    let get_account_manager = await Users.findOne({ addedBy: req.identity.id, isDeleted: false })
+                    let get_account_manager = await Users.findOne({ id: req.identity.addedBy, isDeleted: false })
 
                     await Services.activityHistoryServices.create_activity_history(req.identity.id, 'campaign', 'created', edit_campaign, get_campaign, get_account_manager.id ? get_account_manager.id : null)
 
