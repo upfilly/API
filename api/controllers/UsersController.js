@@ -488,9 +488,10 @@ module.exports = {
         // console.log(user, "==user");
         if (user.addedBy.id) {
           let get_account_manager_detail = await Users.findOne({ id: user.addedBy.id, isDeleted: false });
-          if (get_account_manager_detail.role)
+          if (get_account_manager_detail.role) {
             permission_query.role = user.role
-          permission_query.account_manager = get_account_manager_detail.role
+            permission_query.account_manager = get_account_manager_detail.role
+          }
 
         }
       }
@@ -630,7 +631,6 @@ module.exports = {
    */
   userDetails: async function (req, res) {
     var id = req.param("id");
-    console.log("reached here");
     if (!id || typeof id == undefined) {
       return res.status(400).json({
         success: false,
@@ -1712,9 +1712,10 @@ module.exports = {
         } else if (['operator', 'analyzer', 'publisher', 'super_user'].includes(get_user.role)) {
           if (get_user.addedBy) {
             let get_account_manager_detail = await Users.findOne({ id: get_user.addedBy, isDeleted: false });
-            if (get_account_manager_detail.role)
+            if (get_account_manager_detail.role) {
               permission_query.role = get_user.role
-            permission_query.account_manager = get_account_manager_detail.role
+              permission_query.account_manager = get_account_manager_detail.role
+            }
 
           }
         }
@@ -2196,7 +2197,7 @@ module.exports = {
           await Services.activityHistoryServices.create_activity_history(req.identity.id, 'users', 'updated', update_user, get_user, get_account_manager ? get_account_manager : null)
 
         }
-        
+
         return response.success(null, constants.user.UPDATED_USER, req, res);
       }
 
@@ -2531,13 +2532,27 @@ module.exports = {
       delete update_user.isVerified;
       delete update_user.status;
 
-      let get_permission = await Permissions.findOne({
-        role: update_user.role,
-      });
+      let permission_query = {};
+
+      if (['affiliate', 'brand'].includes(update_user.role)) {
+        permission_query.role = update_user.role
+      } else if (['operator', 'analyzer', 'publisher', 'super_user'].includes(update_user.role)) {
+        if (update_user.addedBy) {
+          let get_account_manager_detail = await Users.findOne({ id: update_user.addedBy, isDeleted: false });
+          if (get_account_manager_detail.role) {
+            permission_query.role = update_user.role
+            permission_query.account_manager = get_account_manager_detail.role
+          }
+
+        }
+      }
+
+      let get_permission = await Permissions.findOne(permission_query);
 
       if (get_permission) {
         update_user.permission_detail = get_permission;
       }
+
 
       return response.success(
         update_user,

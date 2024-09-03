@@ -92,10 +92,12 @@ exports.editCoupon = async function (req, res) {
             throw constants.COUPON.NOT_EXISTS;
         }
 
-        let user = await Users.findOne({ id: req.body.media, isDeleted: false }) //here media refers to affiliate 
-
-        if (!user) {
-            throw constants.user.USER_NOT_FOUND;
+        if(media){
+            let user = await Users.findOne({ id: req.body.media, isDeleted: false }) //here media refers to affiliate 
+    
+            if (!user) {
+                throw constants.user.USER_NOT_FOUND;
+            }
         }
 
         if (new Date(startDate) > new Date(expirationDate)) {
@@ -124,6 +126,8 @@ exports.editCoupon = async function (req, res) {
 
         throw constants.COMMON.SERVER_ERROR;
     } catch (error) {
+        console.log(error, "==err");
+
         return response.failed(null, `${error}`, req, res);
     }
 };

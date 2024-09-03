@@ -93,6 +93,7 @@ exports.getAllActivityHistory = async (req, res) => {
                 new_data: "$new_data",
 
                 fullName: "$user_id_details.fullName",
+                role: "$user_id_details.role",
                 email: "$user_id_details.email",
                 isDeleted: "$isDeleted",
                 createdAt: "$createdAt",
