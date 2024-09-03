@@ -10,15 +10,7 @@ module.exports = {
   attributes: {
     module: {
       type: "string",
-      isIn: [
-        'emailmessagetemplate',
-        'marketplace_product',
-        'untrack_sales',
-        'generate_link',
-        'users',
-        'campaign',
-        'banner',
-        'coupon'
+      isIn: ['emailmessagetemplate', 'marketplace_product', 'untrack_sales', 'generate_link', 'users', 'campaign', 'banner', 'coupon', 'affiliate_group', 'affiliate_invite'
 
       ]
     },

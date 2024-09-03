@@ -22,7 +22,7 @@ exports.addAffiliateGroup = async (req, res) => {
             throw validation_result.message;
         }
 
-        let { group_name, group_code,group_type, isDefaultAffiliateGroup } = req.body;
+        let { group_name, group_code, group_type, isDefaultAffiliateGroup } = req.body;
 
         if (!['admin', 'brand'].includes(req.identity.role)) {
             throw constants.COMMON.UNAUTHORIZED;
@@ -57,6 +57,22 @@ exports.addAffiliateGroup = async (req, res) => {
         }
         let add_group = await AffiliateManagement.create(req.body).fetch();
         if (add_group) {
+
+            if (['operator', 'super_user'].includes(req.identity.role)) {
+
+                //----------------get main account manager---------------------
+                let get_account_manager = await Users.findOne({ id: req.identity.addedBy, isDeleted: false })
+                await Services.activityHistoryServices.create_activity_history(req.identity.id, 'affiliate_group', 'created', add_group, add_group, get_account_manager.id ? get_account_manager.id : null)
+
+            } else if (['brand'].includes(req.identity.role)) {
+
+                //----------------get main account manager---------------------
+                let get_all_admin = await Services.UserServices.get_users_with_role(["admin"])
+                let get_account_manager = get_all_admin[0].id
+                await Services.activityHistoryServices.create_activity_history(req.identity.id, 'affiliate_group', 'created', add_group, add_group, get_account_manager ? get_account_manager.id : null)
+
+            }
+
             if (isDefaultAffiliateGroup && isDefaultAffiliateGroup == true) {
                 let update_Group = await AffiliateManagement.update({
                     isDefaultAffiliateGroup: true,
@@ -105,6 +121,21 @@ exports.editAffiliateGroup = async (req, res) => {
         let edit_affiliate_group = await AffiliateManagement.updateOne({ id: id }, req.body);
         if (edit_affiliate_group) {
 
+            if (['operator', 'super_user'].includes(req.identity.role)) {
+
+                //----------------get main account manager---------------------
+                let get_account_manager = await Users.findOne({ id: req.identity.addedBy, isDeleted: false })
+                await Services.activityHistoryServices.create_activity_history(req.identity.id, 'affiliate_group', 'updated', edit_affiliate_group, get_affiliate_group, get_account_manager.id ? get_account_manager.id : null)
+
+            } else if (['brand'].includes(req.identity.role)) {
+
+                //----------------get main account manager---------------------
+                let get_all_admin = await Services.UserServices.get_users_with_role(["admin"])
+                let get_account_manager = get_all_admin[0].id
+                await Services.activityHistoryServices.create_activity_history(req.identity.id, 'affiliate_group', 'updated', edit_affiliate_group, get_affiliate_group, get_account_manager ? get_account_manager.id : null)
+
+            }
+
             if (isDefaultAffiliateGroup && isDefaultAffiliateGroup == true) {
                 let update_Group = await AffiliateManagement.update({
                     isDefaultAffiliateGroup: true,
@@ -130,13 +161,13 @@ exports.getAllAffiliateGroup = async (req, res) => {
         let count = req.param('count') || 10;
         let page = req.param('page') || 1;
         let {
-          search,
-          isDeleted,
-          status,
-          sortBy,
-          addedBy,
-          group_name,
-          group_type,
+            search,
+            isDeleted,
+            status,
+            sortBy,
+            addedBy,
+            group_name,
+            group_type,
         } = req.query;
         let skipNo = (Number(page) - 1) * Number(count);
 
@@ -157,7 +188,7 @@ exports.getAllAffiliateGroup = async (req, res) => {
             query.status = status;
         }
         if (group_type) {
-          query.group_type = group_type;
+            query.group_type = group_type;
         }
         if (group_name) {
             query.group_name = group_name;
@@ -241,7 +272,7 @@ exports.getAllAffiliateGroup = async (req, res) => {
                 isArchive: "$isArchive",
                 commision: "$commision",
                 status: "$status",
-                group_type:"$group_type",
+                group_type: "$group_type",
                 isPreRegisterLeads: "$isPreRegisterLeads",
                 affiliate_group_details: "$affiliate_group_details._id",
                 number_of_affiliate_added: { $size: "$affiliate_group_details" },
@@ -263,23 +294,23 @@ exports.getAllAffiliateGroup = async (req, res) => {
         });
         // Pipeline Stages
         let totalresult = await db.collection('affiliatemanagement').aggregate(pipeline).toArray();
-            pipeline.push({
-                $skip: Number(skipNo)
-            });
-            pipeline.push({
-                $limit: Number(count)
-            });
-           let result = await db.collection("affiliatemanagement").aggregate(pipeline).toArray(); 
-                let resData = {
-                    total_count: totalresult ? totalresult.length : 0,
-                    data: result ? result : [],
-                }
-                if (!req.param('page') && !req.param('count')) {
-                    resData.data = totalresult ? totalresult : [];
-                }
-                return response.success(resData, constants.CAMPAIGN.FETCHED_ALL, req, res);
+        pipeline.push({
+            $skip: Number(skipNo)
+        });
+        pipeline.push({
+            $limit: Number(count)
+        });
+        let result = await db.collection("affiliatemanagement").aggregate(pipeline).toArray();
+        let resData = {
+            total_count: totalresult ? totalresult.length : 0,
+            data: result ? result : [],
+        }
+        if (!req.param('page') && !req.param('count')) {
+            resData.data = totalresult ? totalresult : [];
+        }
+        return response.success(resData, constants.CAMPAIGN.FETCHED_ALL, req, res);
 
-          
+
     } catch (err) {
         return response.failed(null, `${err}`, req, res);
     }

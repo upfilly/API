@@ -38,19 +38,24 @@ exports.addCampaign = async (req, res) => {
         //     throw constants.COMMON.UNAUTHORIZED;
         // }
 
-        let id = req.identity.id;
+        let user_id = req.identity.id;
 
-        let loggedInUser = await Users.findOne({ id: id, isDeleted: false });
+        let loggedInUser = await Users.findOne({ id: user_id, isDeleted: false });
+        if (loggedInUser.addedBy) {
 
-        let isPermissionExists = await Permissions.findOne({ role: loggedInUser.role });
+            let get_account_manager_detail = await Users.findOne({ id: loggedInUser.addedBy, isDeleted: false });
+            if (get_account_manager_detail && get_account_manager_detail.role) {
+                let isPermissionExists = await Permissions.findOne({
+                    role: loggedInUser.role,
+                    account_manager: get_account_manager_detail.role
+                });
 
-        if (!isPermissionExists) {
-            throw "Permission not exists";
+                if (!isPermissionExists) {
+                    throw "Permission not exists";
+                }
+            }
         }
 
-        if (!isPermissionExists.campaign_add) {
-            throw "User not allowed to create campaign";
-        }
         // return;
         let validation_result = await Validations.CampaignValidations.addCampaign(req, res);
 
@@ -171,16 +176,21 @@ exports.editCampaign = async (req, res) => {
 
         let user_id = req.identity.id;
 
+
         let loggedInUser = await Users.findOne({ id: user_id, isDeleted: false });
+        if (loggedInUser.addedBy) {
 
-        let isPermissionExists = await Permissions.findOne({ role: loggedInUser.role });
+            let get_account_manager_detail = await Users.findOne({ id: loggedInUser.addedBy, isDeleted: false });
+            if (get_account_manager_detail && get_account_manager_detail.role) {
+                let isPermissionExists = await Permissions.findOne({
+                    role: loggedInUser.role,
+                    account_manager: get_account_manager_detail.role
+                });
 
-        if (!isPermissionExists) {
-            throw "Permission not exists";
-        }
-
-        if (!isPermissionExists.campaign_edit) {
-            throw "User not allowed to edit campaign";
+                if (!isPermissionExists) {
+                    throw "Permission not exists";
+                }
+            }
         }
 
         let validation_result = await Validations.CampaignValidations.editCampaign(req, res);
@@ -230,18 +240,24 @@ exports.editCampaign = async (req, res) => {
 
 exports.getAllCampaigns = async (req, res) => {
     try {
+
         let user_id = req.identity.id;
 
+
         let loggedInUser = await Users.findOne({ id: user_id, isDeleted: false });
+        if (loggedInUser.addedBy) {
 
-        let isPermissionExists = await Permissions.findOne({ role: loggedInUser.role });
+            let get_account_manager_detail = await Users.findOne({ id: loggedInUser.addedBy, isDeleted: false });
+            if (get_account_manager_detail && get_account_manager_detail.role) {
+                let isPermissionExists = await Permissions.findOne({
+                    role: loggedInUser.role,
+                    account_manager: get_account_manager_detail.role
+                });
 
-        if (!isPermissionExists) {
-            throw "Permission not exists";
-        }
-
-        if (!isPermissionExists.campaign_get) {
-            throw "User not allowed to view campaign";
+                if (!isPermissionExists) {
+                    throw "Permission not exists";
+                }
+            }
         }
 
         let query = {};
@@ -422,16 +438,21 @@ exports.getCampaignById = async (req, res) => {
         let user_id = req.identity.id;
 
         let loggedInUser = await Users.findOne({ id: user_id, isDeleted: false });
+        if (loggedInUser.addedBy) {
 
-        let isPermissionExists = await Permissions.findOne({ role: loggedInUser.role });
+            let get_account_manager_detail = await Users.findOne({ id: loggedInUser.addedBy, isDeleted: false });
+            if (get_account_manager_detail && get_account_manager_detail.role) {
+                let isPermissionExists = await Permissions.findOne({
+                    role: loggedInUser.role,
+                    account_manager: get_account_manager_detail.role
+                });
 
-        if (!isPermissionExists) {
-            throw "Permission not exists";
+                if (!isPermissionExists) {
+                    throw "Permission not exists";
+                }
+            }
         }
 
-        if (!isPermissionExists.campaign_get) {
-            throw "User not allowed to view campaign";
-        }
 
         let id = req.param("id")
         if (!id) {
@@ -458,17 +479,20 @@ exports.changeCampaignStatus = async (req, res) => {
         let user_id = req.identity.id;
 
         let loggedInUser = await Users.findOne({ id: user_id, isDeleted: false });
+        if (loggedInUser.addedBy) {
 
-        let isPermissionExists = await Permissions.findOne({ role: loggedInUser.role });
+            let get_account_manager_detail = await Users.findOne({ id: loggedInUser.addedBy, isDeleted: false });
+            if (get_account_manager_detail && get_account_manager_detail.role) {
+                let isPermissionExists = await Permissions.findOne({
+                    role: loggedInUser.role,
+                    account_manager: get_account_manager_detail.role
+                });
 
-        if (!isPermissionExists) {
-            throw "Permission not exists";
+                if (!isPermissionExists) {
+                    throw "Permission not exists";
+                }
+            }
         }
-
-        if (!isPermissionExists.campaign_edit) {
-            throw "User not allowed to edit campaign status";
-        }
-
 
         let validation_result = await Validations.CampaignValidations.changeCampaignStatus(req, res);
         if (validation_result && !validation_result.success) {
@@ -603,17 +627,23 @@ exports.deleteCampaign = async (req, res) => {
 
         let user_id = req.identity.id;
 
+
         let loggedInUser = await Users.findOne({ id: user_id, isDeleted: false });
+        if (loggedInUser.addedBy) {
 
-        let isPermissionExists = await Permissions.findOne({ role: loggedInUser.role });
+            let get_account_manager_detail = await Users.findOne({ id: loggedInUser.addedBy, isDeleted: false });
+            if (get_account_manager_detail && get_account_manager_detail.role) {
+                let isPermissionExists = await Permissions.findOne({
+                    role: loggedInUser.role,
+                    account_manager: get_account_manager_detail.role
+                });
 
-        if (!isPermissionExists) {
-            throw "Permission not exists";
+                if (!isPermissionExists) {
+                    throw "Permission not exists";
+                }
+            }
         }
 
-        if (!isPermissionExists.campaign_delete) {
-            throw "User not allowed to delete campaign";
-        }
 
 
         let id = req.param("id");
