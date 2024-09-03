@@ -2152,19 +2152,6 @@ module.exports = {
         // await Emails.updatePasswordEmail(emailPayload);
       }
 
-      // if (!req.body.password) {
-      //   password = await generatePassword();
-      //   req.body.password = password
-      //   // console.log(req.body.password,"------------------req.body.password");
-      // }
-      // else {
-      //   const encryptedPassword = bcrypt.hashSync(
-      //     req.body.password,
-      //     bcrypt.genSaltSync(10)
-      //   );
-      //   req.body.password = encryptedPassword;
-      // }
-
       let update_user = await Users.updateOne({ id: id }, req.body);
       if (update_user) {
         var tax_payload = {
@@ -2190,31 +2177,26 @@ module.exports = {
           });
         }
 
-        if (["brand", "affiliate"].includes(req.identity.role)) {
-          await Services.AuditTrial.create_audit_trial(
-            req.identity.id,
-            "users",
-            "updated",
-            update_user,
-            get_user
-          );
+        // if (["brand", "affiliate"].includes(req.identity.role)) {
+        //   await Services.AuditTrial.create_audit_trial(
+        //     req.identity.id,
+        //     "users",
+        //     "updated",
+        //     update_user,
+        //     get_user
+        //   );
+        // }
+
+        //Now we story logs in activity history api.
+        if (['brand', 'affiliate'].includes(req.identity.role)) {
+
+          //----------------get main account manager---------------------
+          let get_all_admin = await Services.UserServices.get_users_with_role(["admin"])
+          let get_account_manager = get_all_admin[0].id
+          await Services.activityHistoryServices.create_activity_history(req.identity.id, 'users', 'updated', update_user, get_user, get_account_manager ? get_account_manager : null)
+
         }
-
-        // if (update_user && update_user.isSendActivationEmail && update_user.isSendActivationEmail == true && update_user.profile_status == "completed") {
-        //   console.log("in if");
-        //   let email_payload_new = {
-        //     email: update_user.email,
-        //     fullName: update_user.fullName,
-        //     password: password
-        //   };
-        //   await Emails.OnboardingEmails.notification_to_partnerManager(email_payload_new);
-        // }
-
-        // if (["influencers"].includes(update_user.role)) {
-        //   //------------------- Fetching data from creator db --------------//
-        //   Services.UserServices.updating_influencer_social_media_data(update_user.id);
-        //   //------------------- Fetching data from creator db --------------//
-        // }
+        
         return response.success(null, constants.user.UPDATED_USER, req, res);
       }
 
