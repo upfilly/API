@@ -52,6 +52,18 @@ module.exports = {
           });
 
           if (result1) {
+            
+            if (['operator', 'super_user'].includes(req.identity.role)) {
+              let get_account_manager = await Users.findOne({ addedBy: req.identity.id, isDeleted: false })
+              await Services.activityHistoryServices.create_activity_history(req.identity.id, 'affiliate_invite', 'created', result1, result1, get_account_manager.id ? get_account_manager.id : null)
+
+          } else if (['brand'].includes(req.identity.role)) {
+
+              let get_all_admin = await Services.UserServices.get_users_with_role(["admin"])
+              let get_account_manager = get_all_admin[0].id
+              await Services.activityHistoryServices.create_activity_history(req.identity.id, 'affiliate_invite', 'created', result1, result1, get_account_manager ? get_account_manager.id : null)
+          }
+
             let brand_detail = await Users.findOne({
               id: result1.addedBy,
               isDeleted: false,

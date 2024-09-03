@@ -617,9 +617,9 @@ exports.sendEmailMessage = async (req, res) => {
             emailMessage: data.description,
           };
 
-          // await Emails.EmailMessageTemplate.sendEmailMessageTemplate(
-          //   emailPayload
-          // );
+          await Emails.EmailMessageTemplate.sendEmailMessageTemplate(
+            emailPayload
+          );
         }
       }
     }
@@ -731,17 +731,14 @@ exports.sendEmailMessage = async (req, res) => {
             emailMessage: data.description,
           };
 
-          // await Emails.EmailMessageTemplate.sendEmailMessageTemplate(
-          //   emailPayload
-          // );
+          await Emails.EmailMessageTemplate.sendEmailMessageTemplate(
+            emailPayload
+          );
         }
       }
     }
 
     if (data.affiliateStatus) {
-
-      console.log("In After Accepted Condition");
-
       query2 = {
         brand_id: req.identity.id,
         // status: "accepted",
