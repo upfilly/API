@@ -5,7 +5,7 @@ const moment = require('moment');
 
 exports.invite_user_email = async (options) => {
     let email = options.email;
-    // let firstName = options.firstName;
+    let user_id = options.user_id;
     let full_name = options.full_name;
     let password = options.password;
     let logged_in_user = options.logged_in_user;
@@ -40,7 +40,7 @@ exports.invite_user_email = async (options) => {
 <a style="font-size: 12px;    background: #0260A5;
 border: none;
 color: #fff;
-padding: 10px 20px;border-radius: 30px;cursor: pointer;  "href=`+ `${credentials.FRONT_WEB_URL}` + `?id=${logged_in_user.id}>Login into your account</a>
+padding: 10px 20px;border-radius: 30px;cursor: pointer;  "href=`+ `${credentials.FRONT_WEB_URL}` + `?id=${user_id}>Login into your account</a>
 </div>
 
 <div style="margin-bottom: 2rem;">

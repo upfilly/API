@@ -118,6 +118,7 @@ module.exports = {
           full_name: firstName + " " + lastName,
           password: password,
           logged_in_user: user,
+          user_id: newUser.id
         };
 
         await Emails.InviteUser.invite_user_email(emailpayload);
@@ -629,7 +630,7 @@ module.exports = {
       var page = req.param("page");
       var count = parseInt(req.param("count"));
       let sortBy = req.param("sortBy");
-      let addedBy = req.param("addedBy");
+      let status = req.param("status");
       let brand_id = req.param("brand_id");
 
       var date = new Date();
@@ -662,7 +663,18 @@ module.exports = {
         sortquery = { updatedAt: -1 };
       }
 
-      query.isDeleted = false;
+      if (isDeleted) {
+        query.isDeleted = isDeleted
+          ? isDeleted === "true"
+          : true
+            ? isDeleted
+            : false;
+      }
+
+
+      if (status) {
+        query.status = status;
+      }
 
       // console.log(query, "================test");
 
@@ -714,6 +726,7 @@ module.exports = {
             invitationAccepted: "$invitationAccepted",
             brand_id: "$brand_id",
             isDeleted: "$isDeleted",
+            status: "$status",
           },
         },
         {
