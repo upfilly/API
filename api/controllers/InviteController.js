@@ -55,7 +55,7 @@ exports.addInvite = async (req, res) => {
     }
     throw constants.COMMON.SERVER_ERROR;
   } catch (error) {
-    console.log(error, "==error");
+    // console.log(error, "==error");
     return response.failed(null, `${error}`, req, res);
   }
 };
@@ -239,6 +239,55 @@ exports.getAllAffiliateListing = async (req, res) => {
     }
     
     return response.success(ListOfAffiliates, "List of all affiliates fetched successfully", req, res);
+  } catch (error) {
+    return response.failed(null, `${error}`, req, res);
+  }
+};
+exports.getAllAssociatedBrandListing = async (req, res) => {
+  try {
+    let offerAffiliateListings = await MakeOffer.find({
+      affiliate_id: req.identity.id,
+      status: "accepted",
+    });
+    let affiliateBrandInvites = await AffiliateBrandInvite.find({
+      affiliate_id: req.identity.id,
+      status: "accepted",
+    });
+    let campaignListing = await Campaign.find({
+      affiliate_id: req.identity.id,
+      status: "accepted",
+    });
+    // let affiliateInviteListing = await AffiliateInvite.find({
+    //   brand_id: req.identity.id,
+    //   status: "accepted",
+    // });
+
+    const combinedResults = [
+      ...offerAffiliateListings,
+      ...affiliateBrandInvites,
+      ...campaignListing,
+    ];
+
+    // Use a dictionary to remove duplicates and ensure unique affiliate_ids
+    const uniquebrands = {};
+
+    combinedResults.forEach((item) => {
+
+      if (!uniquebrands[item.brand_id]) {
+  
+        uniquebrands[item.brand_id] = item;
+      }
+    });
+  
+    const uniquebrandsList = Object.values(uniquebrands);
+    let ListOfbrands = [];
+    // Print the combined and unique results
+    for await (let affiliateId of uniquebrandsList) {
+      user = await Users.findOne({ id: affiliateId.brand_id, isDeleted: false });
+      ListOfbrands.push(user);
+    }
+
+    return response.success(ListOfbrands, "List of all brands fetched successfully", req, res);
   } catch (error) {
     return response.failed(null, `${error}`, req, res);
   }

@@ -385,7 +385,7 @@ module.exports.routes = {
   "get /invites": "InviteController.getAllInvite",
   "get /invite": "InviteController.getById",
   "get /getallaffiliatelisting": "InviteController.getAllAffiliateListing",
-
+  "get /associated/brands": "InviteController.getAllAssociatedBrandListing",
   /**
    * @AffiliateLink
    */
