@@ -183,7 +183,10 @@ module.exports = {
     account_number: { type: "string" },
     dob: { type: "json" },
     front_image: { type: "string" },
-    back_image: { type: "string" }
+    back_image: { type: "string" },
+
+    request_status: { type: 'string', isIn: ['pending', 'accepted', "rejected"], defaultsTo: 'pending' },
+    reason: { type: "string" },
 
   },
 

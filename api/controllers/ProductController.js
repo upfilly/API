@@ -96,6 +96,10 @@ module.exports = {
                     let get_sub_category = await CommonCategories.findOne({ id: get_product.sub_category_id, isDeleted: false });
                     get_product.sub_category_name = get_sub_category.name
                 }
+                if (get_product.addedBy) {
+                    let get_addedBy_detail = await Users.findOne({ id: get_product.addedBy, isDeleted: false });
+                    get_product.addedBy_name = get_addedBy_detail.fullName
+                }
                 return response.success(get_product, constants.PRODUCT.FETCHED_ALL, req, res);
             }
             throw constants.PRODUCT.INVALID_ID;
