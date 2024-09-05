@@ -980,6 +980,7 @@ module.exports = {
         category_id,
         sub_child_category_id,
         addedBy,
+        request_status
       } = req.query;
       let skipNo = (Number(page) - 1) * Number(count);
       let query = { isDeleted: false };
@@ -1102,6 +1103,9 @@ module.exports = {
         query.addedBy = { $eq: null };
       }
 
+      if (request_status) {
+        query.request_status = request_status
+      }
       let pipeline = [
         {
           $lookup: {
@@ -1205,6 +1209,7 @@ module.exports = {
           cat_type: "$categories_details.cat_type",
           sub_category_id: "$sub_category_id",
           sub_child_category_id: "$sub_child_category_id",
+          request_status: "$request_status"
         },
       };
       pipeline.push(projection);
@@ -4356,7 +4361,7 @@ module.exports = {
           cat_type: "$categories_details.cat_type",
           sub_category_id: "$sub_category_id",
           sub_child_category_id: "$sub_child_category_id",
-          request_status:"$request_status"
+          request_status: "$request_status"
         },
       };
       pipeline.push(projection);
