@@ -4403,4 +4403,42 @@ module.exports = {
       return response.failed(null, `${error}`, req, res);
     }
   },
+
+  //This api is used in admin side because now affiliate and brand request is sent to admin
+  updateRequestStatus: async (req, res) => {
+    try {
+      var id = req.param("id");
+      var status = req.param("status");
+      var reason = req.body.reason;
+
+      if (!id) {
+        throw constants.user.ID_REQUIRED;
+      }
+
+      let updateStatus = await Users.updateOne({ id: id }, { request_status: status, reason: reason });
+      if (updateStatus) {
+        let email_payload = {
+          id: updateStatus.id,
+          reason: updateStatus.reason,
+          status: updateStatus.request_status,
+        };
+
+        await Emails.OnboardingEmails.changeRequestStatus(email_payload);
+
+        return res.status(200).json({
+          success: true,
+          message: `Request ${updateStatus.request_status} successfully`,
+          data: updateStatus
+        });
+      }
+      throw constants.user.INVALID_ID;
+
+    } catch (err) {
+      console.log(err);
+      return res.status(400).json({
+        success: false,
+        error: { message: err },
+      });
+    }
+  }
 };

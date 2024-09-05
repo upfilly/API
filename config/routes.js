@@ -65,9 +65,10 @@ module.exports.routes = {
   "get /user/reverify": "UsersController.reverifyUser",
   "delete /remove/user": "UsersController.deleteUser",
   "delete /destroy/user": "UsersController.deleteUserWithoutAuth",
-  "get /google/login/authentication":
-    "UsersController.googleLoginAuthentication",
+  "get /google/login/authentication": "UsersController.googleLoginAuthentication",
   "post /google/login": "UsersController.googleLogin",
+  "put /user/account-request-status": "UsersController.updateRequestStatus",
+
 
   /**
    * @CommonAPIs
@@ -544,10 +545,10 @@ module.exports.routes = {
   "POST /promoters/import": "FirstpromoterController.importFirstPromoter",
 
 
-    /**
-   * @ActivityHistory
-   */
+  /**
+ * @ActivityHistory
+ */
 
-    "get /activity-logs": "ActivityHistoryController.getAllActivityHistory",
-    "get /activity-log": "ActivityHistoryController.getActivityHistoryById",
+  "get /activity-logs": "ActivityHistoryController.getAllActivityHistory",
+  "get /activity-log": "ActivityHistoryController.getActivityHistoryById",
 };   
