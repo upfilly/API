@@ -1533,7 +1533,7 @@ exports.webhook = async (request, response) => {
                             transaction_payload.transaction_status = "successful";
                         }
 
-                        let create_transacton = await Transactions.create(transaction_payload).fetch();
+                        // let create_transacton = await Transactions.create(transaction_payload).fetch();
                         // console.log(create_transacton, "---create_transacton");
 
                         // if (create_transacton) {
