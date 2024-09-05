@@ -56,8 +56,14 @@ exports.makeOfferToAffiliate = async (req, res) => {
             req.body.affiliate_id = get_product.addedBy;
         }
 
-        console.log(req.body);
-        let get_campaign = await MakeOffer.findOne({ product_id: product_id, brand_id: brand_id, affiliate_id: req.body.affiliate_id, isDeleted: false });
+        let offer_query = {
+            product_id: product_id,
+            brand_id: req.identity.id,
+            affiliate_id: req.body.affiliate_id,
+            isDeleted: false
+        }
+
+        let get_campaign = await MakeOffer.findOne(offer_query);
         if (get_campaign) {
             throw constants.MAKE_OFFER.ALREADY_EXIST
         }
@@ -252,24 +258,24 @@ exports.getAllOffers = async (req, res) => {
             $sort: sortquery
         });
         // Pipeline Stages
-        let totalresult = await  db.collection('makeoffer').aggregate(pipeline).toArray();
-            pipeline.push({
-                $skip: Number(skipNo)
-            });
-            pipeline.push({
-                $limit: Number(count)
-            });
-            let result = await   db.collection("makeoffer").aggregate(pipeline).toArray();
-                let resData = {
-                    total_count: totalresult ? totalresult.length : 0,
-                    data: result ? result : [],
-                }
-                if (!req.param('page') && !req.param('count')) {
-                    resData.data = totalresult ? totalresult : [];
-                }
-                return response.success(resData, constants.MAKE_OFFER.FETCHED_ALL, req, res);
+        let totalresult = await db.collection('makeoffer').aggregate(pipeline).toArray();
+        pipeline.push({
+            $skip: Number(skipNo)
+        });
+        pipeline.push({
+            $limit: Number(count)
+        });
+        let result = await db.collection("makeoffer").aggregate(pipeline).toArray();
+        let resData = {
+            total_count: totalresult ? totalresult.length : 0,
+            data: result ? result : [],
+        }
+        if (!req.param('page') && !req.param('count')) {
+            resData.data = totalresult ? totalresult : [];
+        }
+        return response.success(resData, constants.MAKE_OFFER.FETCHED_ALL, req, res);
 
-            
+
     } catch (err) {
         return response.failed(null, `${err}`, req, res);
     }

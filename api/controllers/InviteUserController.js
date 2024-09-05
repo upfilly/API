@@ -632,6 +632,7 @@ module.exports = {
       let sortBy = req.param("sortBy");
       let status = req.param("status");
       let brand_id = req.param("brand_id");
+      let role = req.param("role")
 
       var date = new Date();
       var current_date = date.toISOString().substring(0, 10);
@@ -674,6 +675,10 @@ module.exports = {
 
       if (status) {
         query.status = status;
+      }
+
+      if (role) {
+        query.role = role;
       }
 
       // console.log(query, "================test");
