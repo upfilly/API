@@ -93,7 +93,7 @@ exports.create = async function (req, res) {
   try {
     const { event, timestamp, urlParams, data } = req.body;
 
-    if (!event || !timestamp || !urlParams || !data) {
+    if (!event || !timestamp) {
       return response.failed(null, constants.AFFILIATELINK.MISSING_FIELDS, req, res);
     }
     req.body.addedBy = (req.identity?.id) ? req.identity.id : null;
