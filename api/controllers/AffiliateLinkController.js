@@ -163,6 +163,12 @@ exports.find = async function (req, res) {
 
     let projection = {
       $project: {
+        affiliate_id: "$affiliate_id",
+        brand_id: "$brand_id",
+        order_id: "$order_id",
+        currency: "$currency",
+        price: "$price",
+
         event: '$event',
         timestamp: '$timestamp',
         urlParams: '$urlParams',

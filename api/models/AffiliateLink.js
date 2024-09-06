@@ -10,7 +10,12 @@ module.exports = {
   schema: true,
   attributes: {
     affiliate_id: { model: "users" },
+    brand_id: { model: "users" },
+
     link: { type: "string" },
+    order_id: { type: "string" },
+    currency: { type: "string" },
+    price: { type: "number" },
 
     event: {
       type: 'string',
@@ -20,12 +25,12 @@ module.exports = {
     },
     urlParams: {
       type: 'json',
-      
+
     },
     data: {
       type: 'json',
     },
-    addedBy:{ model: "users" },
+    addedBy: { model: "users" },
     updatedBy: { model: "users" },
     createdAt: { type: "ref", autoCreatedAt: true, },
     updatedAt: { type: "ref", autoUpdatedAt: true, },
