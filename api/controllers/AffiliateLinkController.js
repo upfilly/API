@@ -98,12 +98,15 @@ exports.create = async function (req, res) {
     }
     req.body.addedBy = (req.identity?.id) ? req.identity.id : null;
     req.body.updatedBy = (req.identity?.id) ? req.identity.id : null;
+    console.log(req.body, "==req.body");
 
     const newAffiliateLink = await AffiliateLink.create(req.body).fetch();
 
     return response.success(newAffiliateLink, constants.AFFILIATELINK.CREATED, req, res);
 
   } catch (error) {
+    console.log(error, "==error");
+
     return response.failed(null, `${error}`, req, res);
   }
 };
@@ -114,7 +117,7 @@ exports.find = async function (req, res) {
     let count = req.param('count') || 10;
     let page = req.param('page') || 1;
     let skipNo = (Number(page) - 1) * Number(count);
-    let { search, sortBy, status, isDeleted, format, addedBy } = req.query;
+    let { search, sortBy, status, isDeleted, format, addedBy, affiliate_id, brand_id } = req.query;
     let sortquery = {};
 
     // Handle search
@@ -153,13 +156,47 @@ exports.find = async function (req, res) {
     if (addedBy) {
       query.addedBy = new ObjectId(addedBy);
     }
-
+    if (brand_id) {
+      query.brand_id = new ObjectId(brand_id);
+    }
+    if (affiliate_id) {
+      query.affiliate_id = new ObjectId(affiliate_id);
+    }
     // Handle format
     if (format) {
       query.format = format;
     }
 
-    let pipeline = [];
+    let pipeline = [
+      {
+        $lookup: {
+          from: "users",
+          localField: "affiliate_id",
+          foreignField: "_id",
+          as: "affiliate_details",
+        },
+      },
+      {
+        $unwind: {
+          path: "$affiliate_details",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "brand_id",
+          foreignField: "_id",
+          as: "brand_details",
+        },
+      },
+      {
+        $unwind: {
+          path: "$brand_details",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+    ];
 
     let projection = {
       $project: {
@@ -173,6 +210,8 @@ exports.find = async function (req, res) {
         timestamp: '$timestamp',
         urlParams: '$urlParams',
         data: '$data',
+        affiliate_name: "$affiliate_details.fullName",
+        brand_name: "$brand_details.fullName",
         isDeleted: '$isDeleted',
         status: '$status',
         addedBy: '$addedBy',
