@@ -551,4 +551,12 @@ module.exports.routes = {
 
   "get /activity-logs": "ActivityHistoryController.getAllActivityHistory",
   "get /activity-log": "ActivityHistoryController.getActivityHistoryById",
+
+  /**
+   * @Analytics
+   */
+
+  "get /analytics-sales": "AnalyticsController.salesAnalytics",
+
+
 };   
