@@ -483,7 +483,7 @@ module.exports = {
 
       let permission_query = {}
 
-      if (['affiliate', 'brand'].includes(user.role)) {
+      if (['affiliate', 'brand','staff'].includes(user.role)) {
         permission_query.role = user.role
       } else if (['operator', 'analyzer', 'publisher', 'super_user'].includes(user.role)) {
         // console.log(user, "==user");
