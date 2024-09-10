@@ -368,6 +368,7 @@ module.exports = {
               "publisher",
               "users",
               "super_user",
+              "staff"
             ],
           },
         },
@@ -836,7 +837,7 @@ module.exports = {
         },
         {
           $lookup: {
-            from: "affiliatebrandinvite",
+            from: "affiliateinvite",
             let: {
               affiliate_id: "$_id",
               isDeleted: false,
@@ -1712,7 +1713,7 @@ module.exports = {
         // }
         let permission_query = {}
 
-        if (['affiliate', 'brand'].includes(get_user.role)) {
+        if (['affiliate', 'brand', 'staff'].includes(get_user.role)) {
           permission_query.role = get_user.role
         } else if (['operator', 'analyzer', 'publisher', 'super_user'].includes(get_user.role)) {
           if (get_user.addedBy) {
@@ -1933,7 +1934,12 @@ module.exports = {
         return res.redirect(`${credentials.FRONT_WEB_URL}`);
       } else if (get_user.isVerified == "Y" && get_user.role == "publisher") {
         return res.redirect(`${credentials.FRONT_WEB_URL}`);
+      } else if (get_user.isVerified == "Y" && get_user.role == "staff") {
+        return res.redirect(`${credentials.FRONT_WEB_URL}`);
+      } else {
+        return res.redirect(`${credentials.FRONT_WEB_URL}`);
       }
+
       update_user = await Users.updateOne({ id: id }, { isVerified: "Y" });
       if (update_user) {
         if (update_user && update_user.role == "brand") {
@@ -1965,6 +1971,14 @@ module.exports = {
         } else if (update_user && update_user.role == "publisher") {
           return res.redirect(
             `${credentials.FRONT_WEB_URL}/dashboard?id=${get_user.id}`
+          );
+        } else if (update_user && update_user.role == "staff") {
+          return res.redirect(
+            `${credentials.FRONT_WEB_URL}/dashboard?id=${get_user.id}`
+          );
+        } else {
+          return res.redirect(
+            `${credentials.FRONT_WEB_URL}`
           );
         }
       }
@@ -2539,7 +2553,7 @@ module.exports = {
 
       let permission_query = {};
 
-      if (['affiliate', 'brand'].includes(update_user.role)) {
+      if (['affiliate', 'brand', 'staff'].includes(update_user.role)) {
         permission_query.role = update_user.role
       } else if (['operator', 'analyzer', 'publisher', 'super_user'].includes(update_user.role)) {
         if (update_user.addedBy) {
