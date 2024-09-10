@@ -2353,6 +2353,10 @@ module.exports = {
         signature: signature,
         signature_date: new Date(signature_date),
       };
+
+      if (req.identity.role == "admin") {
+        req.body.request_status = "accepted"
+      }
       var newUser = await Users.create(req.body).fetch();
       if (newUser) {
         if (newUser.role == "affiliate") {
