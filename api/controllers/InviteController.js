@@ -103,8 +103,8 @@ exports.getAllInvite = async (req, res) => {
       query.isDeleted = isDeleted
         ? isDeleted == "true"
         : true
-        ? isDeleted
-        : false;
+          ? isDeleted
+          : false;
     } else {
       query.isDeleted = false;
     }
@@ -170,27 +170,27 @@ exports.getAllInvite = async (req, res) => {
     pipeline.push({
       $sort: sortquery,
     });
-    let totalresult=await db.collection("invite")
+    let totalresult = await db.collection("invite")
       .aggregate(pipeline)
       .toArray();
-        pipeline.push({
-          $skip: Number(skipNo),
-        });
-        pipeline.push({
-          $limit: Number(count),
-        });
-        let result =await db.collection("invite")
-          .aggregate(pipeline)
-          .toArray();
-            let resData = {
-              data: result ? result : [],
-              total_count: totalresult ? totalresult.length : 0,
-            };
-            if (!req.param("page") && !req.param("count")) {
-              resData.data = totalresult ? totalresult : [];
-            }
-            return response.success(resData, constants.BLOG.FETCHED, req, res);
-          
+    pipeline.push({
+      $skip: Number(skipNo),
+    });
+    pipeline.push({
+      $limit: Number(count),
+    });
+    let result = await db.collection("invite")
+      .aggregate(pipeline)
+      .toArray();
+    let resData = {
+      data: result ? result : [],
+      total_count: totalresult ? totalresult.length : 0,
+    };
+    if (!req.param("page") && !req.param("count")) {
+      resData.data = totalresult ? totalresult : [];
+    }
+    return response.success(resData, constants.BLOG.FETCHED, req, res);
+
   } catch (error) {
     return response.failed(null, `${error}`, req, res);
   }
@@ -211,7 +211,7 @@ exports.getAllAffiliateListing = async (req, res) => {
       status: "accepted",
     });
     let affiliateInviteListing = await AffiliateInvite.find({
-      brand_id: req.identity.id,
+      addedBy: req.identity.id,
       status: "accepted",
     });
 
@@ -231,13 +231,13 @@ exports.getAllAffiliateListing = async (req, res) => {
     });
 
     const uniqueAffiliatesList = Object.values(uniqueAffiliates);
-    let ListOfAffiliates=[];
+    let ListOfAffiliates = [];
     // Print the combined and unique results
-    for await(let affiliateId of uniqueAffiliatesList){
-        user = await Users.findOne({id:affiliateId.affiliate_id,isDeleted:false});
-        ListOfAffiliates.push(user);
+    for await (let affiliateId of uniqueAffiliatesList) {
+      user = await Users.findOne({ id: affiliateId.affiliate_id, isDeleted: false });
+      ListOfAffiliates.push(user);
     }
-    
+
     return response.success(ListOfAffiliates, "List of all affiliates fetched successfully", req, res);
   } catch (error) {
     return response.failed(null, `${error}`, req, res);
@@ -274,11 +274,11 @@ exports.getAllAssociatedBrandListing = async (req, res) => {
     combinedResults.forEach((item) => {
 
       if (!uniquebrands[item.brand_id]) {
-  
+
         uniquebrands[item.brand_id] = item;
       }
     });
-  
+
     const uniquebrandsList = Object.values(uniquebrands);
     let ListOfbrands = [];
     // Print the combined and unique results
