@@ -1936,8 +1936,6 @@ module.exports = {
         return res.redirect(`${credentials.FRONT_WEB_URL}`);
       } else if (get_user.isVerified == "Y" && get_user.role == "staff") {
         return res.redirect(`${credentials.FRONT_WEB_URL}`);
-      } else {
-        return res.redirect(`${credentials.FRONT_WEB_URL}`);
       }
 
       update_user = await Users.updateOne({ id: id }, { isVerified: "Y" });
