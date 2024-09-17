@@ -62,7 +62,7 @@ exports.makeOfferToAffiliate = async (req, res) => {
             affiliate_id: req.body.affiliate_id,
             isDeleted: false
         }
-
+        console.log(offer_query)
         let get_campaign = await MakeOffer.findOne(offer_query);
         if (get_campaign) {
             throw constants.MAKE_OFFER.ALREADY_EXIST
@@ -99,7 +99,6 @@ exports.makeOfferToAffiliate = async (req, res) => {
 
                 await Services.FCM.send_fcm_push_notification(fcm_payload)
             }
-
             //-------------------- Send Notification ------------------//
 
             return response.success(null, constants.MAKE_OFFER.ADDED, req, res);
