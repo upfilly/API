@@ -33,7 +33,6 @@ generateRandom8DigitNumber = function () {
 
 exports.makeOfferToAffiliate = async (req, res) => {
     try {
-
         if (req.identity.role !== "brand") {
             throw constants.COMMON.UNAUTHORIZED;
         }
@@ -74,7 +73,7 @@ exports.makeOfferToAffiliate = async (req, res) => {
             // let get_brand = await Users.findOne({ id: add_campaign.brand_id });
             let email_payload = {
                 affiliate_id: sent_offer.affiliate_id,
-                brand_id: req.body.brand_id,
+                brand_id: req.identity.id,
 
             };
             await Emails.MakeOfferEmails.offerSent(email_payload)
