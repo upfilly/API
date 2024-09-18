@@ -408,7 +408,7 @@ exports.getAllSubsCommonCategory = async (req, res) => {
             pipeline.push({
                 $limit: Number(count)
             });
-            let result= db.collection("commoncategories").aggregate(pipeline).toArray();
+            let result= await db.collection("commoncategories").aggregate(pipeline).toArray();
                 let resData = {
                     total_count: totalresult ? totalresult.length : 0,
                     data: result ? result : [],
