@@ -129,7 +129,7 @@ exports.salesAnalytics = async (req, res) => {
         let count = req.param('count') || 10;
         let page = req.param('page') || 1;
         let skipNo = (Number(page) - 1) * Number(count);
-        let { search, sortBy, status, isDeleted, format, brand_id, affiliate_id } = req.query;
+        let { search, sortBy, status, isDeleted, format, brand_id, affiliate_id, campaignId } = req.query;
         let sortquery = {};
 
         // Handle search
@@ -179,6 +179,12 @@ exports.salesAnalytics = async (req, res) => {
             query.affiliate_id = new ObjectId(affiliate_id);
         }
 
+        if(campaignId) {
+            group_query = {
+                campaignId: "$campaignId"
+            }
+            query.campaignId = new ObjectId(campaignId);
+        }
 
         // Handle format
         if (format) {
@@ -195,7 +201,8 @@ exports.salesAnalytics = async (req, res) => {
                     order_id: "$order_id",
                     currency: "$currency",
                     price: "$price",
-
+                    campaignId: "$campaignId",
+                    discount: "$discount",
                     event: '$event',
                     timestamp: '$timestamp',
                     urlParams: '$urlParams',

@@ -12,6 +12,8 @@ module.exports = {
     affiliate_id: { model: "users" },
     brand_id: { model: "users" },
 
+    campaignId: {model: "campaign"},
+    discount: {type: "number"},
     link: { type: "string" },
     order_id: { type: "string" },
     currency: { type: "string" },
