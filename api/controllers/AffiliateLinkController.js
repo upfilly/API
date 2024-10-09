@@ -117,7 +117,7 @@ exports.find = async function (req, res) {
     let count = req.param('count') || 10;
     let page = req.param('page') || 1;
     let skipNo = (Number(page) - 1) * Number(count);
-    let { search, sortBy, status, isDeleted, format, addedBy, affiliate_id, brand_id } = req.query;
+    let { search, sortBy, status, isDeleted, format, addedBy, affiliate_id, brand_id, campaignId } = req.query;
     let sortquery = {};
 
     // Handle search
@@ -162,6 +162,10 @@ exports.find = async function (req, res) {
     if (affiliate_id) {
       query.affiliate_id = new ObjectId(affiliate_id);
     }
+    if(campaignId) {
+      query.campaignId = new ObjectId(campaignId);
+    }
+    
     // Handle format
     if (format) {
       query.format = format;
@@ -205,7 +209,8 @@ exports.find = async function (req, res) {
         order_id: "$order_id",
         currency: "$currency",
         price: "$price",
-
+        campaignId: "$campaignId",
+        discount: "$discount",
         event: '$event',
         timestamp: '$timestamp',
         urlParams: '$urlParams',
