@@ -13,7 +13,7 @@ module.exports = {
     brand_id: { model: "users" },
 
     campaignId: {model: "campaign"},
-    discount: {type: "number"},
+    discount: {type: "json"},
     link: { type: "string" },
     order_id: { type: "string" },
     currency: { type: "string" },
