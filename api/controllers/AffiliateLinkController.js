@@ -78,7 +78,7 @@ exports.generateLinkOfAffiliate = async (req, res) => {
       affiliate_id: req.identity.id,
       isDeleted: false
     }
-    let get_affilaite_link = await AffiliateLink.findOne(query);
+    let get_affilaite_link = await AffiliateLink.find(query);
     return response.success(get_affilaite_link, constants.TRACKING.LINK, req, res);
 
   } catch (err) {
