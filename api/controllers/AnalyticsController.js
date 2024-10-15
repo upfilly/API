@@ -129,7 +129,7 @@ exports.salesAnalytics = async (req, res) => {
         let count = req.param('count') || 10;
         let page = req.param('page') || 1;
         let skipNo = (Number(page) - 1) * Number(count);
-        let { search, sortBy, status, isDeleted, format, brand_id, affiliate_id, campaignId } = req.query;
+        let { search, sortBy, status, isDeleted, format, brand_id, affiliate_id, campaignId, startDate, endDate } = req.query;
         let sortquery = {};
 
         // Handle search
@@ -190,7 +190,13 @@ exports.salesAnalytics = async (req, res) => {
         if (format) {
             query.format = format;
         }
-      
+        
+        if(startDate && endDate) {
+            startDate = new Date(startDate);
+            endDate = new Date(endDate);
+            query.createdAt = { $gte: startDate, $lte: endDate };
+        }
+
         let pipeline = [
 
             {
