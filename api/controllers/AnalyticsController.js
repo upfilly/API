@@ -169,20 +169,16 @@ exports.salesAnalytics = async (req, res) => {
             group_query = {
                 brand_id: "$brand_id",
             }
-            query.brand_id = new ObjectId(brand_id);
+            query.brand_id = {$in: brand_id.split(",").map(ObjectId)};
         }
 
         if (affiliate_id) {
-            group_query = {
-                affiliate_id: "$affiliate_id",
-            }
-            query.affiliate_id = new ObjectId(affiliate_id);
+            group_query.affiliate_id = "$affiliate_id";
+            query.affiliate_id = {$in: affiliate_id.split(",").map(ObjectId)};
         }
 
         if(campaignId) {
-            group_query = {
-                campaignId: "$campaignId"
-            }
+            group_query.campaignId = "$campaignId";
             query.campaignId = new ObjectId(campaignId);
         }
 
@@ -196,6 +192,7 @@ exports.salesAnalytics = async (req, res) => {
             endDate = new Date(endDate);
             query.createdAt = { $gte: startDate, $lte: endDate };
         }
+        console.log(group_query);
 
         let pipeline = [
 
@@ -254,15 +251,16 @@ exports.salesAnalytics = async (req, res) => {
                         {
                             $group: {
                                 _id: {
-                                    month: "$month",
+                                    month: "$month"
                                 },
-                                price: { $sum: '$price' }
+                                price: { $sum: '$price' },
+                                click_count: {$sum: 1}
                             },
 
                         },
-                        {
-                            $unset: ['_id']
-                        },
+                        // {
+                        //     $unset: ['_id']
+                        // },
                         {
                             $skip: Number(skipNo)
                         },
@@ -275,12 +273,13 @@ exports.salesAnalytics = async (req, res) => {
                         {
                             $group: {
                                 _id: group_query,
-                                price: { $sum: '$price' }
+                                price: { $sum: '$price' },
+                                click_count: { $sum: 1}
                             }
                         },
-                        {
-                            $unset: ['_id']
-                        }
+                        // {
+                        //     $unset: ['_id']
+                        // }
                     ]
 
                 }
