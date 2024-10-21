@@ -12,7 +12,6 @@ const response = require("../services/Response");
 const db = sails.getDatastore().manager;
 const ObjectId = require('mongodb').ObjectId;
 
-
 // exports.salesAnalytics = async function (req, res) {
 //     try {
 //         let query = {};
@@ -164,17 +163,15 @@ exports.salesAnalytics = async (req, res) => {
             query.status = status;
         }
 
-        let group_query;
+        let group_query = {};
         if (brand_id) {
-            group_query = {
-                brand_id: "$brand_id",
-            }
-            query.brand_id = {$in: brand_id.split(",").map(ObjectId)};
+            group_query.brand_id = "$brand_id";
+            query.brand_id = {$in: brand_id.split(",").map(id=>new ObjectId(id))};
         }
 
         if (affiliate_id) {
             group_query.affiliate_id = "$affiliate_id";
-            query.affiliate_id = {$in: affiliate_id.split(",").map(ObjectId)};
+            query.affiliate_id = {$in: affiliate_id.split(",").map(id=>new ObjectId(id))};
         }
 
         if(campaignId) {
