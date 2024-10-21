@@ -525,6 +525,7 @@ module.exports.routes = {
   "GET /affiliatelink": "AffiliateLinkController.findOne",
   "PUT /affiliatelink": "AffiliateLinkController.update",
   "DELETE /affiliatelink": "AffiliateLinkController.destroy",
+  "get /affiliatelink/report": "AffiliateLinkController.report",
 
   /**
    * @FirstPromoter

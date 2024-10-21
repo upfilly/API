@@ -322,6 +322,211 @@ exports.destroy = async function (req, res) {
 };
 
 
+exports.report = async function (req, res) {
+  let query = {};
+      let count = req.param('count') || 10;
+      let page = req.param('page') || 1;
+      let skipNo = (Number(page) - 1) * Number(count);
+      let { search, sortBy, status, isDeleted, format, campaignId, affiliate_id, brand_id, startDate, endDate } = req.query;
+      let sortquery = {};
 
+      // Handle search
+      if (search) {
+          search = await Services.Utils.remove_special_char_exept_underscores(search);
+          query.$or = [
+              { event: { $regex: search, '$options': 'i' } },
+              { 'urlParams.page': { $regex: search, '$options': 'i' } },
+              { 'data.page': { $regex: search, '$options': 'i' } }
+          ];
+      }
+
+      // Handle isDeleted
+      if (isDeleted) {
+          query.isDeleted = isDeleted === 'true';
+      } else {
+          query.isDeleted = false;
+      }
+
+      // Handle sorting
+      if (sortBy) {
+          let typeArr = sortBy.split(" ");
+          let sortType = typeArr[1];
+          let field = typeArr[0];
+          sortquery[field ? field : 'createdAt'] = sortType === 'desc' ? -1 : 1;
+      } else {
+          sortquery = { createdAt: -1 };
+      }
+
+      // Handle status
+      if (status) {
+          query.status = status;
+      }
+
+      let group_query = {};
+      group_query.campaignId = "$campaignId";
+      group_query.affiliate_id = "$affiliate_id";
+      group_query.brand_id = "$brand_id";
+      if(campaignId) {
+          query.campaignId = {$in: campaignId.split(",").map(id=>new ObjectId(id))};
+      }else if(affiliate_id) {
+          query.affiliate_id = {$in: affiliate_id.split(",").map(id=>new ObjectId(id))};
+      }else if(brand_id) {
+          query.brand_id = {$in: brand_id.split(",").map(id=>new ObjectId(id))};
+      }
+
+      // Handle format
+      if (format) {
+          query.format = format;
+      }
+      
+      if(startDate && endDate) {
+          startDate = new Date(startDate);
+          endDate = new Date(endDate);
+          query.createdAt = { $gte: startDate, $lte: endDate };
+      }
+      console.log(group_query);
+
+      let pipeline = [
+
+          {
+              $project: {
+                  id: "$_id",
+                  affiliate_id: "$affiliate_id",
+                  brand_id: "$brand_id",
+                  order_id: "$order_id",
+                  currency: "$currency",
+                  price: "$price",
+                  campaignId: "$campaignId",
+                  discount: "$discount",
+                  event: '$event',
+                  timestamp: '$timestamp',
+                  urlParams: '$urlParams',
+                  data: '$data',
+                  isDeleted: '$isDeleted',
+                  status: '$status',
+                  addedBy: '$addedBy',
+                  updatedBy: '$updatedBy',
+                  updatedAt: '$updatedAt',
+                  createdAt: '$createdAt',
+                  month: { $month: "$createdAt" },
+              }
+          },
+          {
+              $match: query
+          },
+          {
+              $facet: {
+                  data: [
+                      {
+                          $group: {
+                              _id: group_query,
+                              revenue: { $sum: '$price' },
+                              click_count: { $sum: 1}
+                          }
+
+                      },
+                      // {
+                      //     $unset: ['_id']
+                      // },
+                      {
+                          $skip: Number(skipNo)
+                      },
+                      {
+
+                          $limit: Number(count)
+                      },
+                      {
+                          $project: {
+                              affiliate_id: "$_id.affiliate_id",
+                              campaignId: "$_id.campaignId",
+                              brand_id: "$_id.brand_id",
+                              revenue: "$revenue",
+                              click_count: "$click_count"
+                          }
+                      },
+                      {
+                          $lookup: {
+                              from: "users",
+                              localField: "affiliate_id",
+                              foreignField: "_id",
+                              as: "affiliate_details"
+                          }
+                      },
+                      {
+                          $unwind: {
+                              path: '$affiliate_details',
+                              preserveNullAndEmptyArrays: true
+                          }
+                      },
+                      {
+                          $lookup: {
+                              from: "campaign",
+                              localField: "campaignId",
+                              foreignField: "_id",
+                              as: "campaign_details"
+                          }
+                      },
+                      {
+                          $unwind: {
+                              path: '$campaign_details',
+                              preserveNullAndEmptyArrays: true
+                          }
+                      },
+                      {
+                          $lookup: {
+                              from: "users",
+                              localField: "brand_id",
+                              foreignField: "_id",
+                              as: "brand_details"
+                          }
+                      },
+                      {
+                          $unwind: {
+                              path: '$brand_details',
+                              preserveNullAndEmptyArrays: true
+                          }
+                      },
+                      {
+                          $unset: ["_id", "brand_id", "affiliate_id", "campaignId"]
+                      }
+                  ]
+
+              }
+          },
+      ];
+
+      let projection = {
+          $project: {
+              data: "$data"
+          }
+
+      };
+
+      pipeline.push(projection);
+
+      pipeline.push({ $sort: sortquery });
+      try {
+          // pipeline.push({
+          //     $skip: Number(skipNo)
+          // });
+          // pipeline.push({
+          //     $limit: Number(count)
+          // });
+
+          let result = await db.collection('affiliatelink').aggregate(pipeline, { allowDiskUse: true }).toArray()
+          console.log(result);
+          let resData = {
+              total: result[0] ? result[0].data.length : 0,
+              data: result[0] ? result[0].data: []
+          }
+          if (!req.param('page') && !req.param('count')) {
+              resData.data = result[0].data ? result[0].data : []
+          }
+          return Response.success(resData, constants.COMMON.SUCCESS, req, res);
+      } catch (error) {
+      console.error(error, "=================err");
+      return Response.failed(null, `${error}`, req, res);
+  }
+}
 
 
