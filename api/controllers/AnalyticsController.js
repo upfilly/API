@@ -176,7 +176,7 @@ exports.salesAnalytics = async (req, res) => {
 
         if(campaignId) {
             group_query.campaignId = "$campaignId";
-            query.campaignId = new ObjectId(campaignId);
+            query.campaignId = {$in: campaignId.split(",").map(id=>new ObjectId(id))};;
         }
 
         // Handle format
