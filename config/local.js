@@ -24,7 +24,8 @@ module.exports = {
   DB_NAME: "db_upfilly",
   // GOOGLE_API_KEY :"AIzaSyDmvz3A-BAjR77dy4PsaoHJC15mUdffLSA"
   PAYMENT_INFO:{
-    SECREATKEY: "sk_test_51KyZElEGnmCJcey2JMo2oBLuISg88GktUVg2TxqaflQCYQKChZJr7xdF0MbrgV5Ibv4oJiEioHXVvVcb0j4M1oXD00vK4r7PVl",
+    //SECREATKEY: "sk_test_51KyZElEGnmCJcey2JMo2oBLuISg88GktUVg2TxqaflQCYQKChZJr7xdF0MbrgV5Ibv4oJiEioHXVvVcb0j4M1oXD00vK4r7PVl",
+    SECREATKEY: "sk_test_51QFGQTJxGbRkVkhLtB7Fbap8SmjgUwqNHxFY6CgMOtKzg5K2g6McjO7VTfulmRU6vqMs3n6nxLExFKPRFDbzM7DV00m4fig7dH"
   },
    GOOGLE_LOGIN: {
     GOOGLE_CLIENT_ID: "73803748125-15asfa91rsrldv4e49438dkt6dddqmit.apps.googleusercontent.com",
