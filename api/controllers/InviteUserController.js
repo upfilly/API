@@ -28,10 +28,18 @@ module.exports = {
 
         let get_account_manager_detail = await Users.findOne({ id: loggedInUser.addedBy, isDeleted: false });
         if (get_account_manager_detail && get_account_manager_detail.role) {
-          let isPermissionExists = await Permissions.findOne({
-            role: loggedInUser.role,
-            account_manager: get_account_manager_detail.role
-          });
+          if(loggedInUser.role === 'brand' || loggedInUser.role === 'affiliate') {
+            var isPermissionExists = await Permissions.findOne({
+              role: loggedInUser.role,
+              //account_manager: get_account_manager_detail.role
+            });
+          }
+        else {
+            var isPermissionExists = await Permissions.findOne({
+                role: loggedInUser.role,
+                account_manager: get_account_manager_detail.role
+        });
+        }
 
           if (!isPermissionExists) {
             throw "Permission not exists";
@@ -140,11 +148,19 @@ module.exports = {
 
         let get_account_manager_detail = await Users.findOne({ id: loggedInUser.addedBy, isDeleted: false });
         if (get_account_manager_detail && get_account_manager_detail.role) {
-          let isPermissionExists = await Permissions.findOne({
-            role: loggedInUser.role,
-            account_manager: get_account_manager_detail.role
-          });
-
+          if(loggedInUser.role === 'brand' || loggedInUser.role === 'affiliate') {
+            var isPermissionExists = await Permissions.findOne({
+              role: loggedInUser.role,
+              //account_manager: get_account_manager_detail.role
+            });
+          }
+          else {
+            var isPermissionExists = await Permissions.findOne({
+              role: loggedInUser.role,
+              account_manager: get_account_manager_detail.role
+            });
+          }
+          
           if (!isPermissionExists) {
             throw "Permission not exists";
           }
@@ -207,10 +223,18 @@ module.exports = {
 
         let get_account_manager_detail = await Users.findOne({ id: loggedInUser.addedBy, isDeleted: false });
         if (get_account_manager_detail && get_account_manager_detail.role) {
-          let isPermissionExists = await Permissions.findOne({
-            role: loggedInUser.role,
-            account_manager: get_account_manager_detail.role
-          });
+          if(loggedInUser.role === 'brand' || loggedInUser.role === 'affiliate') {
+            var isPermissionExists = await Permissions.findOne({
+              role: loggedInUser.role,
+              //account_manager: get_account_manager_detail.role
+            });
+          }
+        else {
+            var isPermissionExists = await Permissions.findOne({
+                role: loggedInUser.role,
+                account_manager: get_account_manager_detail.role
+        });
+        }
 
           if (!isPermissionExists) {
             throw "Permission not exists";
@@ -264,10 +288,18 @@ module.exports = {
 
         let get_account_manager_detail = await Users.findOne({ id: loggedInUser.addedBy, isDeleted: false });
         if (get_account_manager_detail && get_account_manager_detail.role) {
-          let isPermissionExists = await Permissions.findOne({
-            role: loggedInUser.role,
-            account_manager: get_account_manager_detail.role
-          });
+          if(loggedInUser.role === 'brand' || loggedInUser.role === 'affiliate') {
+            var isPermissionExists = await Permissions.findOne({
+              role: loggedInUser.role,
+              //account_manager: get_account_manager_detail.role
+            });
+          }
+          else {
+              var isPermissionExists = await Permissions.findOne({
+                  role: loggedInUser.role,
+                  account_manager: get_account_manager_detail.role
+              });
+        }
 
           if (!isPermissionExists) {
             throw "Permission not exists";
@@ -510,11 +542,18 @@ module.exports = {
 
         let get_account_manager_detail = await Users.findOne({ id: loggedInUser.addedBy, isDeleted: false });
         if (get_account_manager_detail && get_account_manager_detail.role) {
-          let isPermissionExists = await Permissions.findOne({
-            role: loggedInUser.role,
-            account_manager: get_account_manager_detail.role
+          if(loggedInUser.role === 'brand' || loggedInUser.role === 'affiliate') {
+            var isPermissionExists = await Permissions.findOne({
+              role: loggedInUser.role,
+              //account_manager: get_account_manager_detail.role
+            });
+          }
+          else {
+              var isPermissionExists = await Permissions.findOne({
+                  role: loggedInUser.role,
+                  account_manager: get_account_manager_detail.role
           });
-
+        }
           if (!isPermissionExists) {
             throw "Permission not exists";
           }
@@ -578,10 +617,18 @@ module.exports = {
 
         let get_account_manager_detail = await Users.findOne({ id: loggedInUser.addedBy, isDeleted: false });
         if (get_account_manager_detail && get_account_manager_detail.role) {
-          let isPermissionExists = await Permissions.findOne({
-            role: loggedInUser.role,
-            account_manager: get_account_manager_detail.role
+          if(loggedInUser.role === 'brand' || loggedInUser.role === 'affiliate') {
+            var isPermissionExists = await Permissions.findOne({
+              role: loggedInUser.role,
+              //account_manager: get_account_manager_detail.role
+            });
+          }
+          else {
+              var isPermissionExists = await Permissions.findOne({
+                  role: loggedInUser.role,
+                  account_manager: get_account_manager_detail.role
           });
+        }
 
           if (!isPermissionExists) {
             throw "Permission not exists";
