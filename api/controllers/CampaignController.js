@@ -45,10 +45,18 @@ exports.addCampaign = async (req, res) => {
 
             let get_account_manager_detail = await Users.findOne({ id: loggedInUser.addedBy, isDeleted: false });
             if (get_account_manager_detail && get_account_manager_detail.role) {
-                let isPermissionExists = await Permissions.findOne({
-                    role: loggedInUser.role,
-                    account_manager: get_account_manager_detail.role
+                if(loggedInUser.role === 'brand' || loggedInUser.role === 'affiliate') {
+                    var isPermissionExists = await Permissions.findOne({
+                      role: loggedInUser.role,
+                      //account_manager: get_account_manager_detail.role
+                    });
+                  }
+                else {
+                    var isPermissionExists = await Permissions.findOne({
+                        role: loggedInUser.role,
+                        account_manager: get_account_manager_detail.role
                 });
+                }
 
                 if (!isPermissionExists) {
                     throw "Permission not exists";
@@ -182,10 +190,18 @@ exports.editCampaign = async (req, res) => {
 
             let get_account_manager_detail = await Users.findOne({ id: loggedInUser.addedBy, isDeleted: false });
             if (get_account_manager_detail && get_account_manager_detail.role) {
-                let isPermissionExists = await Permissions.findOne({
-                    role: loggedInUser.role,
-                    account_manager: get_account_manager_detail.role
+                if(loggedInUser.role === 'brand' || loggedInUser.role === 'affiliate') {
+                    var isPermissionExists = await Permissions.findOne({
+                      role: loggedInUser.role,
+                      //account_manager: get_account_manager_detail.role
+                    });
+                  }
+                else {
+                    var isPermissionExists = await Permissions.findOne({
+                        role: loggedInUser.role,
+                        account_manager: get_account_manager_detail.role
                 });
+                }
 
                 if (!isPermissionExists) {
                     throw "Permission not exists";
@@ -249,11 +265,18 @@ exports.getAllCampaigns = async (req, res) => {
 
             let get_account_manager_detail = await Users.findOne({ id: loggedInUser.addedBy, isDeleted: false });
             if (get_account_manager_detail && get_account_manager_detail.role) {
-                let isPermissionExists = await Permissions.findOne({
-                    role: loggedInUser.role,
-                    account_manager: get_account_manager_detail.role
+                if(loggedInUser.role === 'brand' || loggedInUser.role === 'affiliate') {
+                    var isPermissionExists = await Permissions.findOne({
+                      role: loggedInUser.role,
+                      //account_manager: get_account_manager_detail.role
+                    });
+                  }
+                else {
+                    var isPermissionExists = await Permissions.findOne({
+                        role: loggedInUser.role,
+                        account_manager: get_account_manager_detail.role
                 });
-                console.log(isPermissionExists);
+                }
                 if (!isPermissionExists) {
                     throw "Permission not exists";
                 }
@@ -442,11 +465,18 @@ exports.getCampaignById = async (req, res) => {
 
             let get_account_manager_detail = await Users.findOne({ id: loggedInUser.addedBy, isDeleted: false });
             if (get_account_manager_detail && get_account_manager_detail.role) {
-                let isPermissionExists = await Permissions.findOne({
-                    role: loggedInUser.role,
-                    account_manager: get_account_manager_detail.role
+                if(loggedInUser.role === 'brand' || loggedInUser.role === 'affiliate') {
+                    var isPermissionExists = await Permissions.findOne({
+                      role: loggedInUser.role,
+                      //account_manager: get_account_manager_detail.role
+                    });
+                  }
+                else {
+                    var isPermissionExists = await Permissions.findOne({
+                        role: loggedInUser.role,
+                        account_manager: get_account_manager_detail.role
                 });
-
+                }
                 if (!isPermissionExists) {
                     throw "Permission not exists";
                 }
@@ -483,10 +513,18 @@ exports.changeCampaignStatus = async (req, res) => {
 
             let get_account_manager_detail = await Users.findOne({ id: loggedInUser.addedBy, isDeleted: false });
             if (get_account_manager_detail && get_account_manager_detail.role) {
-                let isPermissionExists = await Permissions.findOne({
-                    role: loggedInUser.role,
-                    account_manager: get_account_manager_detail.role
+                if(loggedInUser.role === 'brand' || loggedInUser.role === 'affiliate') {
+                    var isPermissionExists = await Permissions.findOne({
+                      role: loggedInUser.role,
+                      //account_manager: get_account_manager_detail.role
+                    });
+                  }
+                else {
+                    var isPermissionExists = await Permissions.findOne({
+                        role: loggedInUser.role,
+                        account_manager: get_account_manager_detail.role
                 });
+                }
 
                 if (!isPermissionExists) {
                     throw "Permission not exists";
@@ -633,10 +671,18 @@ exports.deleteCampaign = async (req, res) => {
 
             let get_account_manager_detail = await Users.findOne({ id: loggedInUser.addedBy, isDeleted: false });
             if (get_account_manager_detail && get_account_manager_detail.role) {
-                let isPermissionExists = await Permissions.findOne({
-                    role: loggedInUser.role,
-                    account_manager: get_account_manager_detail.role
+                if(loggedInUser.role === 'brand' || loggedInUser.role === 'affiliate') {
+                    var isPermissionExists = await Permissions.findOne({
+                      role: loggedInUser.role,
+                      //account_manager: get_account_manager_detail.role
+                    });
+                  }
+                else {
+                    var isPermissionExists = await Permissions.findOne({
+                        role: loggedInUser.role,
+                        account_manager: get_account_manager_detail.role
                 });
+                }
 
                 if (!isPermissionExists) {
                     throw "Permission not exists";
