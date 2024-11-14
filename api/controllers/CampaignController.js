@@ -253,7 +253,7 @@ exports.getAllCampaigns = async (req, res) => {
                     role: loggedInUser.role,
                     account_manager: get_account_manager_detail.role
                 });
-
+                console.log(isPermissionExists);
                 if (!isPermissionExists) {
                     throw "Permission not exists";
                 }
