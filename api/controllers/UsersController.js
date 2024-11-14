@@ -1913,15 +1913,17 @@ module.exports = {
       }
       if (get_user.isVerified == "Y" && get_user.role == "brand") {
         // if (get_user.subscription_id && get_user.subscription_id != "") {
-        //   return res.redirect(
-        //     `${credentials.FRONT_WEB_URL}/dashboard?id=${get_user.id}`
-        //   );
+          // return res.redirect(
+          //   `${credentials.FRONT_WEB_URL}/dashboard?id=${get_user.id}`
+          // );
         // } else {
         //   return res.redirect(
         //     `${credentials.FRONT_WEB_URL}/pricing?id=${get_user.id}`
         //   );
         // }
-        return res.redirect(`${credentials.FRONT_WEB_URL}/pricing?id=${get_user.id}`);
+        return res.redirect(
+          `${credentials.FRONT_WEB_URL}/dashboard?id=${get_user.id}`
+        );
       } else if (get_user.isVerified == "Y" && get_user.role == "affiliate") {
         return res.redirect(`${credentials.FRONT_WEB_URL}`);
       } else if (get_user.isVerified == "Y" && get_user.role == "team") {
@@ -1941,15 +1943,18 @@ module.exports = {
       update_user = await Users.updateOne({ id: id }, { isVerified: "Y" });
       if (update_user) {
         if (update_user && update_user.role == "brand") {
-          if (update_user.subscription_id != "") {
-            return res.redirect(
-              `${credentials.FRONT_WEB_URL}/dashboard?id=${get_user.id}`
-            );
-          } else {
-            return res.redirect(
-              `${credentials.FRONT_WEB_URL}/pricing?id=${get_user.id}`
-            );
-          }
+          // if (update_user.subscription_id != "") {
+          //   return res.redirect(
+          //     `${credentials.FRONT_WEB_URL}/dashboard?id=${get_user.id}`
+          //   );
+          // } else {
+          //   return res.redirect(
+          //     `${credentials.FRONT_WEB_URL}/pricing?id=${get_user.id}`
+          //   );
+          // }
+          return res.redirect(
+            `${credentials.FRONT_WEB_URL}/dashboard?id=${get_user.id}`
+          );
         } else if (update_user && update_user.role == "affiliate") {
           return res.redirect(
             `${credentials.FRONT_WEB_URL}/dashboard?id=${get_user.id}`
