@@ -802,9 +802,9 @@ module.exports = {
           $in: await string_ids_toObjectIds_array(affiliate_group_id),
         };
       }
-      if (role != "users") {
-        query.addedBy = { $eq: null };
-      }
+      // if (role != "users") {
+      //   query.addedBy = { $eq: null };
+      // }
 
       let pipeline = [
         {
@@ -930,7 +930,6 @@ module.exports = {
           },
         });
       }
-      console.log(query);
       let totalResult = await db
         .collection("users")
         .aggregate(pipeline)
