@@ -13,6 +13,7 @@ const Services = require('../services/index');
 const ObjectId = require('mongodb').ObjectId;
 const Emails = require('../Emails/index');
 const credentials = require('../../config/local.js'); //sails.config.env.production;
+const Campaign = require("../models/Campaign.js");
 
 generateName = function () {
     // action are perform to generate random name for every file
@@ -79,7 +80,10 @@ exports.addCampaign = async (req, res) => {
 
         req.body.addedBy = req.identity.id;
         req.body.brand_id = req.body.brand_id;
-
+        if(req.body.isDefault) {
+            //make all other campaigns non-default
+            await Campaign.update({brand_id: new ObjectId(req.body.brand_id), isDefault: true}).set({isDefault: false});
+        }
 
         req.body.campaign_unique_id = generateRandom8DigitNumber();
         var campaign_linkArr = [];
@@ -224,6 +228,11 @@ exports.editCampaign = async (req, res) => {
 
         if (![get_campaign.brand_id].includes(req.identity.id)) {
             throw constants.COMMON.UNAUTHORIZED;
+        }
+
+        if(req.body.isDefault) {
+            //make all other campaigns non-default
+            await Campaign.update({brand_id: new ObjectId(req.body.brand_id), isDefault: true}).set({isDefault: false});
         }
 
         req.body.updatedBy = req.identity.id;
@@ -418,10 +427,10 @@ exports.getAllCampaigns = async (req, res) => {
                 campaign_unique_id: "$campaign_unique_id",
                 addedBy: "$addedBy",
                 updatedBy: "$updatedBy",
+                isDefault: "$isDefault",
                 isDeleted: "$isDeleted",
                 createdAt: "$createdAt",
-                updatedAt: "$updatedAt",
-
+                updatedAt: "$updatedAt"
             }
         };
 
