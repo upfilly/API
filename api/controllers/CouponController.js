@@ -194,9 +194,6 @@ exports.getAllCoupon = async (req, res) => {
         if (status) {
             query.status = status;
         }
-        // if (media) {
-        //     query.media = new ObjectId(media);
-        // }
 
         if (plan_type) {
             query.plan_type = plan_type;
@@ -211,10 +208,13 @@ exports.getAllCoupon = async (req, res) => {
             query.couponType = couponType;
         }
 
-        if(visibility) {
-            query.visibility = visibility;
+        if (visibility || media) {
+            query.$or = [
+                { visibility: "Public" },
+                ...(media ? [{ media: new ObjectId(media) }] : [])
+            ];
         }
-
+        console.log(query);
         // console.log(sortquery, "-----------------sortquery");
         let pipeline = [
 
