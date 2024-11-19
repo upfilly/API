@@ -13,7 +13,7 @@ const Services = require('../services/index');
 const ObjectId = require('mongodb').ObjectId;
 const Emails = require('../Emails/index');
 const credentials = require('../../config/local.js'); //sails.config.env.production;
-const Campaign = require("../models/Campaign.js");
+// const Campaign = require("../models/Campaign.js");
 
 generateName = function () {
     // action are perform to generate random name for every file
@@ -155,8 +155,13 @@ exports.addCampaign = async (req, res) => {
                         message: create_notification.message,
                     }
 
-                    await Services.FCM.send_fcm_push_notification(fcm_payload)
+                    // await Services.FCM.send_fcm_push_notification(fcm_payload)
                 }
+            }else
+            {
+               for(let id of req.body.affiliate_id){
+                   await PublicCampaigns.create({ affiliate_id: id, campaign_id: add_campaign.id, brand_id: req.identity.id, addedBy: req.identity.id });
+               }
             }
 
             //------------------------Create Logs here -------------------------------
@@ -339,7 +344,6 @@ exports.getAllCampaigns = async (req, res) => {
         } else {
             sortquery = { updatedAt: -1 }
         }
-
         // Pipeline Stages
         let pipeline = [
             {
@@ -370,42 +374,39 @@ exports.getAllCampaigns = async (req, res) => {
                     preserveNullAndEmptyArrays: true
                 }
             },
-
-            {
-                $lookup: {
-                    from: "publiccampaigns",
-                    let: {
-                        affiliate_id: "$_id",
-                        isDeleted: false,
-                        addedBy: new ObjectId(req.identity.id),
-                    },
-                    // let: { user_id: "$req.identity.id", fav_user_id: new ObjectId("64d076e86ecebee01af09d8c") },
-                    pipeline: [
-                        {
-                            $match: {
-                                $expr: {
-                                    $and: [
-                                        { $eq: ["$addedBy", "$$addedBy"] },
-                                        { $eq: ["$isDeleted", "$$isDeleted"] },
-                                        { $eq: ["$affiliate_id", "$$affiliate_id"] },
-                                    ],
-                                },
-                            },
-                        },
-                    ],
-                    as: "campaign_details",
-                },
-            },
-
-            {
-                $unwind: {
-                    path: "$campaign_details",
-                    preserveNullAndEmptyArrays: true,
-                },
-            },
-
         ];
-
+if(role==="affiliate"){
+    pipeline.push( {
+        $lookup: {
+            from: "publiccampaigns",
+            let: {
+                isDeleted: false,
+                addedBy: new ObjectId(req.identity.id),
+                campaign_id:"$_id"
+            },
+            pipeline: [
+                {
+                    $match: {
+                        $expr: {
+                            $and: [
+                                { $eq: ["$addedBy", "$$addedBy"] },
+                                { $eq: ["$isDeleted", "$$isDeleted"] },
+                                { $eq: ["$campaign_id", "$$campaign_id"] },
+                            ],
+                        },
+                    },
+                },
+            ],
+            as: "campaign_details",
+        },
+    },
+    {
+        $unwind: {
+            path: "$campaign_details",
+            preserveNullAndEmptyArrays: true,
+        },
+    })
+}
         let projection = {
             $project: {
                 id: "$_id",
@@ -417,9 +418,10 @@ exports.getAllCampaigns = async (req, res) => {
                 group_type: "$group_type",
                 name: "$name",
                 images: "$images",
+                campaign_details:"$campaign_details",
                 videos: "$videos",
                 description: "$description",
-                status: "$status",
+                status: (req.identity.role === "affiliate")?"$campaign_details.status":"$status",
                 reason: "$reason",
                 amount: "$amount",
                 event_type: "$event_type",

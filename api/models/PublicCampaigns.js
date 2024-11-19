@@ -21,6 +21,9 @@ module.exports = {
       type: 'Boolean',
       defaultsTo: false
     },
+    status: {
+      type: 'string',
+    },
     deletedBy: {
       model: 'users'
     },
