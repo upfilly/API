@@ -468,7 +468,7 @@ module.exports.routes = {
   "get /getAllInvitedUsers": "InviteUserController.getAllInvitedUsers",
 
   /**
-   * @AffiliateBrandInviteController
+   * @AffiliateBrandInviteController //possible deprecation
    *
    */
 

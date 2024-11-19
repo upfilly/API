@@ -1,0 +1,10 @@
+const response = require("../services/Response")
+const constants = require('../../config/constants').constants;
+const db = sails.getDatastore().manager
+const Validations = require("../Validations/index");
+const Services = require('../services/index');
+const ObjectId = require('mongodb').ObjectId;
+const Emails = require('../Emails/index');
+const credentials = require('../../config/local.js'); //sails.config.env.production;
+const Campaign = require("../models/Campaign.js");
+const CampaignAffiliate = require("../models/CampaignAffiliate.js");

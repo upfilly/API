@@ -14,8 +14,8 @@ module.exports = {
     schema: true,
     attributes: {
         brand_id: { model: "users" },
-        parent_id:{model:'users'},
-        parent_role:{type: "string" },
+        parent_id:{model:'users'},      //seems to be useless
+        parent_role:{type: "string" },  //seems to be useless
         affiliate_id: { model: "users" },
         name: { type: "string" },
         description: { type: "string" },
@@ -23,9 +23,9 @@ module.exports = {
         documents: { type: "json", columnType: "array" },
         videos: { type: "json", columnType: "array" },
         access_type: { type: 'string', isIn: ['public', 'private'], defaultsTo: 'private' },
-        status: { type: 'string', isIn: ['pending', 'accepted', "rejected"], defaultsTo: 'pending' },
+        // status: { type: 'string', isIn: ['pending', 'accepted', "rejected"], defaultsTo: 'pending' },
         reason: { type: "string" },
-        accepted_at: { type: 'ref', columnType: 'datetime' },
+        // accepted_at: { type: 'ref', columnType: 'datetime' },
         amount: { type: 'number', defaultsTo: 0 },
         event_type: { type: "json", defaultsTo: [] },
         campaign_unique_id: { type: "string" },

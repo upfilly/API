@@ -91,7 +91,6 @@ exports.addCampaign = async (req, res) => {
         for await (let event_typeObj of event_type) {
 
             if (event_typeObj == "lead") {
-                console.log("in lead");
                 let campaignObj = {}
 
                 let campaign_link = credentials.FRONT_WEB_URL + "/signup/affiliate" + "?event_type=" + event_typeObj + "&campaign_code=" + req.body.campaign_unique_id;
