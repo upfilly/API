@@ -165,7 +165,7 @@ exports.getAllCoupon = async (req, res) => {
         let count = req.param('count') || 10;
         let page = req.param('page') || 1;
         let skipNo = (Number(page) - 1) * Number(count);
-        let { search, sortBy, status, isDeleted, plan_type, addedBy, media } = req.query;
+        let { search, sortBy, status, isDeleted, plan_type, couponType, addedBy, visibility, media } = req.query;
         let sortquery = {};
 
         if (search) {
@@ -204,10 +204,16 @@ exports.getAllCoupon = async (req, res) => {
         if (addedBy) {
             query.addedBy = new ObjectId(addedBy);
         }
-        else {
-            query.addedBy = new ObjectId(req.identity.id);
+        // else {
+        //     query.addedBy = new ObjectId(req.identity.id);
+        // }
+        if(couponType) {
+            query.couponType = couponType;
         }
 
+        if(visibility) {
+            query.visibility = visibility;
+        }
 
         // console.log(sortquery, "-----------------sortquery");
         let pipeline = [
