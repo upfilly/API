@@ -34,6 +34,7 @@ module.exports = {
         updatedBy: { model: "users", },
         createdAt: { type: "ref", autoCreatedAt: true, },
         updatedAt: { type: "ref", autoUpdatedAt: true, },
+        isDefault: {type: 'Boolean', defaultsTo: false},
         isDeleted: { type: 'Boolean', defaultsTo: false }
     },
 };

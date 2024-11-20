@@ -165,7 +165,7 @@ exports.getAllCoupon = async (req, res) => {
         let count = req.param('count') || 10;
         let page = req.param('page') || 1;
         let skipNo = (Number(page) - 1) * Number(count);
-        let { search, sortBy, status, isDeleted, plan_type, addedBy, media } = req.query;
+        let { search, sortBy, status, isDeleted, plan_type, couponType, addedBy, visibility, media } = req.query;
         let sortquery = {};
 
         if (search) {
@@ -194,9 +194,6 @@ exports.getAllCoupon = async (req, res) => {
         if (status) {
             query.status = status;
         }
-        // if (media) {
-        //     query.media = new ObjectId(media);
-        // }
 
         if (plan_type) {
             query.plan_type = plan_type;
@@ -204,11 +201,20 @@ exports.getAllCoupon = async (req, res) => {
         if (addedBy) {
             query.addedBy = new ObjectId(addedBy);
         }
-        else {
-            query.addedBy = new ObjectId(req.identity.id);
+        // else {
+        //     query.addedBy = new ObjectId(req.identity.id);
+        // }
+        if(couponType) {
+            query.couponType = couponType;
         }
 
-
+        if (visibility || media) {
+            query.$or = [
+                { visibility: "Public" },
+                ...(media ? [{ media: new ObjectId(media) }] : [])
+            ];
+        }
+        console.log(query);
         // console.log(sortquery, "-----------------sortquery");
         let pipeline = [
 

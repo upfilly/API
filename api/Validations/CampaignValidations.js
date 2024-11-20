@@ -29,6 +29,7 @@ exports.addCampaign = async (req, res, next) => {
                 url: Joi.string().required(),
             }).optional()
         ),
+        isDefault: Joi.boolean().optional(),
         access_type: Joi.string().required().valid('public', 'private')
     });
     return await Validate(schema, req, res);
@@ -60,6 +61,7 @@ exports.editCampaign = async (req, res, next) => {
                 url: Joi.string().required(),
             }).optional()
         ),
+        isDefault: Joi.boolean().optional(),
         access_type: Joi.string().required().valid('public', 'private')
     });
     return await Validate(schema, req, res);
