@@ -272,8 +272,7 @@ exports.getAllCampaigns = async (req, res) => {
     try {
 
         let user_id = req.identity.id;
-
-
+        console.log(req.identity);
         let loggedInUser = await Users.findOne({ id: user_id, isDeleted: false });
         if (loggedInUser.addedBy) {
 
@@ -375,7 +374,7 @@ exports.getAllCampaigns = async (req, res) => {
                 }
             },
         ];
-if(role==="affiliate"){
+if(req.identity.role==="affiliate"){
     pipeline.push( {
         $lookup: {
             from: "publiccampaigns",
@@ -406,7 +405,8 @@ if(role==="affiliate"){
             preserveNullAndEmptyArrays: true,
         },
     })
-}
+}   
+
         let projection = {
             $project: {
                 id: "$_id",
@@ -463,6 +463,7 @@ if(role==="affiliate"){
 
 
     } catch (err) {
+        console.log(err);
         return response.failed(null, `${err}`, req, res);
     }
 }
