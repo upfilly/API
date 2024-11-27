@@ -278,10 +278,10 @@ module.exports.routes = {
   /**
    * @Proposals
    */
-  "post /proposal": "ProposalController.addproposal",
-  "get /proposal": "ProposalController.findSingleProposal",
-  "get /proposals": "ProposalController.getAllProposals",
-  "put /update/proposal/status": "ProposalController.changeStatus",
+  // "post /proposal": "ProposalController.addproposal",
+  // "get /proposal": "ProposalController.findSingleProposal",
+  // "get /proposals": "ProposalController.getAllProposals",
+  // "put /update/proposal/status": "ProposalController.changeStatus",
 
   /**
    * @AffiliateManagementController
