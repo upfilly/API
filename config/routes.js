@@ -559,5 +559,12 @@ module.exports.routes = {
 
   "get /analytics-sales": "AnalyticsController.salesAnalytics",
 
+   /**
+   * @GeneralPurposeTracking
+   */
 
+   "post /gptrack": "GeneralPurposeTrackingController.addGPT",
+   "get /gptrack": "GeneralPurposeTrackingController.getGPTById",
+   "get /gptrack/list": "GeneralPurposeTrackingController.getAllGPT",
+   "delete /gptrack/delete": "GeneralPurposeTrackingController.deleteGPTById"
 };   

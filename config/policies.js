@@ -8,6 +8,7 @@
  * https://sailsjs.com/docs/concepts/policies
  */
 
+
 module.exports.policies = {
 
   /***************************************************************************
@@ -39,7 +40,7 @@ module.exports.policies = {
     deleteUserWithoutAuth: true,
     userDetail: true,
     googleLoginAuthentication: true,
-    googleLogin: true
+    googleLogin: true,
   },
   SubscriptionPlansController: {
     getAllSubscriptionPlans: true,
@@ -102,5 +103,8 @@ module.exports.policies = {
     removeFirstPromoter:true,
     updateFirstPromoter:true,
     exportScalenutData:true
+  },
+  GeneralPurposeTrackingController: {
+    addGPT: true
   }
 };
