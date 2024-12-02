@@ -628,4 +628,14 @@ module.exports.constants = {
     FETCHED_ALL: "Activity logs fetched sucessfully",
     INVALID_ID: "Invalid id",
   },
+
+  GENERAL_PURPOSE_TRACKING: {
+    ADDED: "Tracking data added successfully",
+    FAILED_ADDING: "Encountered an issue while adding tracking data",
+    ID_REQUIRED: "Id Required",
+    DELETED_SUCCESSFULLY: "General Purpose Tracking data deleted successfully!",
+    FETCHED: "General Purpose Tracking data fetched sucessfully",
+    FETCHED_ALL: "General Purpose Tracking data fetched sucessfully",
+    INVALID_ID: "Invalid id",
+  }
 };

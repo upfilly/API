@@ -278,10 +278,10 @@ module.exports.routes = {
   /**
    * @Proposals
    */
-  "post /proposal": "ProposalController.addproposal",
-  "get /proposal": "ProposalController.findSingleProposal",
-  "get /proposals": "ProposalController.getAllProposals",
-  "put /update/proposal/status": "ProposalController.changeStatus",
+  // "post /proposal": "ProposalController.addproposal",
+  // "get /proposal": "ProposalController.findSingleProposal",
+  // "get /proposals": "ProposalController.getAllProposals",
+  // "put /update/proposal/status": "ProposalController.changeStatus",
 
   /**
    * @AffiliateManagementController
@@ -559,5 +559,12 @@ module.exports.routes = {
 
   "get /analytics-sales": "AnalyticsController.salesAnalytics",
 
+   /**
+   * @GeneralPurposeTracking
+   */
 
+   "post /gptrack": "GeneralPurposeTrackingController.addGPT",
+   "get /gptrack": "GeneralPurposeTrackingController.getGPTById",
+   "get /gptrack/list": "GeneralPurposeTrackingController.getAllGPT",
+   "delete /gptrack/delete": "GeneralPurposeTrackingController.deleteGPTById"
 };   
