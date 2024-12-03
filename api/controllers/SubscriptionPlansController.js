@@ -597,8 +597,8 @@ exports.subscribe = async (req, res) => {
 
                 //         let notification_payload = {};
                 //         notification_payload.send_to = get_brand.id;
-                //         notification_payload.title = `Referral | Subscription Purchased | ${await Services.Utils.title_case(get_user.fullName)}`;
-                //         notification_payload.message = `${await Services.Utils.title_case(get_user.fullName)} purchased subscription`;
+                //         notification_payload.title = `Referral | Subscription Purchased | ${Services.Utils.title_case(get_user.fullName)}`;
+                //         notification_payload.message = `${Services.Utils.title_case(get_user.fullName)} purchased subscription`;
                 //         notification_payload.type = "referral"
                 //         notification_payload.addedBy = req.identity.id;
                 //         notification_payload.referral_id = update_referral_status.id;

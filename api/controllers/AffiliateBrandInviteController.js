@@ -123,8 +123,8 @@ exports.sendApplyRequest = async (req, res) => {
       //-------------------- Send Notification ------------------//
       let notification_payload = {};
       // notification_payload.send_to = add_campaign.affiliate_id;
-      notification_payload.title = `Affiliate Request | ${await Services.Utils.title_case(find_brand.fullName)} | ${await Services.Utils.title_case(req.identity.fullName)}`;
-      notification_payload.message = `You have a new affiliate request from ${await Services.Utils.title_case(req.identity.fullName)}`;
+      notification_payload.title = `Affiliate Request | ${Services.Utils.title_case(find_brand.fullName)} | ${Services.Utils.title_case(req.identity.fullName)}`;
+      notification_payload.message = `You have a new affiliate request from ${Services.Utils.title_case(req.identity.fullName)}`;
       notification_payload.type = "affilite_request"
       notification_payload.addedBy = req.identity.id;
       notification_payload.send_to = find_brand.id;

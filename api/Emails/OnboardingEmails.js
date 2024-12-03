@@ -21,7 +21,7 @@ exports.userVerifyLink = async (options) => {
             text-align: center;  display: -webkit-flex; border: 5px solid #00BAFF; background: #fff; margin: auto;  border-radius: 50%; display: flex; justify-content: center;align-items: center;">
                 <div>
                          <img src="${credentials.BACK_WEB_URL}/images/upfilly.png"style="width:115px; height: 40px; object-fit: contain;">
-                 <h1 style="  margin-bottom: 0px;  margin-top: 10px; font-size: 18px;"><span style="font-weight: 400;color:#373737;">Hi </span>${await Services.Utils.title_case(get_user.fullName)}, </h1>
+                 <h1 style="  margin-bottom: 0px;  margin-top: 10px; font-size: 18px;"><span style="font-weight: 400;color:#373737;">Hi </span>${Services.Utils.title_case(get_user.fullName)}, </h1>
                  <p style="margin-top: 0px;    font-size: 14px; color:#373737; margin-bottom: 0;">Just a friendly reminder to verify your email address.
                  </p>
                  </div>
@@ -364,7 +364,7 @@ exports.notification_to_partnerManager = async (options) => {
             text-align: center;  display: -webkit-flex; border: 5px solid #00BAFF; background: #fff; margin: auto;  border-radius: 50%; display: flex; justify-content: center;align-items: center;">
                 <div>
                          <img src="${credentials.BACK_WEB_URL}/images/upfilly.png"style="width:115px; height: 40px; object-fit: contain;">
-                 <h1 style="  margin-bottom: 0px;  margin-top: 10px; font-size: 18px;"><span style="font-weight: 400;color:#373737;">Hi </span>${await Services.Utils.title_case(partner_fullName)}, </h1>
+                 <h1 style="  margin-bottom: 0px;  margin-top: 10px; font-size: 18px;"><span style="font-weight: 400;color:#373737;">Hi </span>${Services.Utils.title_case(partner_fullName)}, </h1>
                  <p style="margin-top: 0px;    font-size: 14px; color:#373737; margin-bottom: 0;">This is notification email to let you know about affliate account creation.
                  </p>
                  </div>
@@ -372,7 +372,7 @@ exports.notification_to_partnerManager = async (options) => {
                  </div>
                  <div style="max-width: 308px; margin: auto; padding-bottom: 2rem;">
      <img src="${credentials.BACK_WEB_URL}/images/Daco.png" style="width: 60px;margin-top: 2rem;">
-    <p style="margin-bottom: 8px;color: #747474;font-size: 13px;    line-height: 18px; "><b>${await Services.Utils.title_case(affiliate_fullName)}</b> is added by <b>${await Services.Utils.title_case(createdBy_brand)}</b></p>
+    <p style="margin-bottom: 8px;color: #747474;font-size: 13px;    line-height: 18px; "><b>${Services.Utils.title_case(affiliate_fullName)}</b> is added by <b>${Services.Utils.title_case(createdBy_brand)}</b></p>
 <div style="margin: 2rem 0px;">
 
 </div>
@@ -702,7 +702,7 @@ exports.subscribe_email_old = async (options) => {
                     </div>
                     <div class="center2">
                         <h4 class="below" style=" font-size: 35px; font-family: sans-serif; font-weight: 600;  text-align: center; color: #000000;    margin-bottom: 0px;">
-                            ${await Services.Utils.title_case(subscribed_by_details.fullName)}
+                            ${Services.Utils.title_case(subscribed_by_details.fullName)}
                         </h4>
                         <p class="below" style=" font-size: 27px; font-family: sans-serif; font-weight: 300;  text-align: center; color: #000000;margin-top: 10px;">
                             ${get_subscription_details.name} <b> $${get_subscription_details.amount}</b> Per month
@@ -905,7 +905,7 @@ exports.subscription_canncelled_old = async (options) => {
                     </div>
                     <div class="center2">
                         <h4 class="below" style=" font-size: 35px; font-family: sans-serif; font-weight: 600;  text-align: center; color: #000000;    margin-bottom: 0px;">
-                            ${await Services.Utils.title_case(subscribed_by_details.fullName)}
+                            ${Services.Utils.title_case(subscribed_by_details.fullName)}
                         </h4>
                         <p class="below" style=" font-size: 27px; font-family: sans-serif; font-weight: 300;  text-align: center; color: #000000;margin-top: 10px;">
                             ${get_subscription_details.name} <b> $${get_subscription_details.amount}</b> Per month
@@ -1036,7 +1036,7 @@ exports.subscription_canncelled = async (options) => {
     //                     </div>
     //                     <div class="center2">
     //                         <h4 class="below" style=" font-size: 35px; font-family: sans-serif; font-weight: 600;  text-align: center; color: #000000;    margin-bottom: 0px;">
-    //                             ${await Services.Utils.title_case(subscribed_by_details.fullName)}
+    //                             ${Services.Utils.title_case(subscribed_by_details.fullName)}
     //                         </h4>
     //                         <p class="below" style=" font-size: 27px; font-family: sans-serif; font-weight: 300;  text-align: center; color: #000000;margin-top: 10px;">
     //                             ${get_subscription_details.name} <b> $${get_subscription_details.amount}</b> Per month
@@ -1220,7 +1220,7 @@ exports.trial_will_end_email_old = async (options) => {
                     </div>
                     <div class="center2">
                         <h4 class="below" style=" font-size: 35px; font-family: sans-serif; font-weight: 600;  text-align: center; color: #000000;    margin-bottom: 0px;">
-                            ${await Services.Utils.title_case(subscribed_by_details.fullName)}
+                            ${Services.Utils.title_case(subscribed_by_details.fullName)}
                         </h4>
                         <p class="below" style=" font-size: 27px; font-family: sans-serif; font-weight: 300;  text-align: center; color: #000000;margin-top: 10px;">
                             ${get_subscription_details.name} <b> $${get_subscription_details.amount}</b> Per month
@@ -1352,7 +1352,7 @@ exports.trial_will_end_email = async (options) => {
     //                     </div>
     //                     <div class="center2">
     //                         <h4 class="below" style=" font-size: 35px; font-family: sans-serif; font-weight: 600;  text-align: center; color: #000000;    margin-bottom: 0px;">
-    //                             ${await Services.Utils.title_case(subscribed_by_details.fullName)}
+    //                             ${Services.Utils.title_case(subscribed_by_details.fullName)}
     //                         </h4>
     //                         <p class="below" style=" font-size: 27px; font-family: sans-serif; font-weight: 300;  text-align: center; color: #000000;margin-top: 10px;">
     //                             ${get_subscription_details.name} <b> $${get_subscription_details.amount}</b> Per month
@@ -1542,7 +1542,7 @@ exports.subscription_transaction_email_old = async (options) => {
                     </div>
                     <div class="center2">
                         <h4 class="below" style=" font-size: 35px; font-family: sans-serif; font-weight: 600;  text-align: center; color: #000000;    margin-bottom: 0px;">
-                            ${await Services.Utils.title_case(subscribed_by_details.fullName)}
+                            ${Services.Utils.title_case(subscribed_by_details.fullName)}
                         </h4>
                         <p class="below" style=" font-size: 27px; font-family: sans-serif; font-weight: 300;  text-align: center; color: #000000;margin-top: 10px;">
                             ${get_subscription_details.name} <b> $${get_subscription_details.amount}</b> Per month
@@ -1675,7 +1675,7 @@ exports.subscription_transaction_email = async (options) => {
     //                     </div>
     //                     <div class="center2">
     //                         <h4 class="below" style=" font-size: 35px; font-family: sans-serif; font-weight: 600;  text-align: center; color: #000000;    margin-bottom: 0px;">
-    //                             ${await Services.Utils.title_case(subscribed_by_details.fullName)}
+    //                             ${Services.Utils.title_case(subscribed_by_details.fullName)}
     //                         </h4>
     //                         <p class="below" style=" font-size: 27px; font-family: sans-serif; font-weight: 300;  text-align: center; color: #000000;margin-top: 10px;">
     //                             ${get_subscription_details.name} <b> $${get_subscription_details.amount}</b> Per month
@@ -1863,7 +1863,7 @@ exports.upcomming_invoice_email_old = async (options) => {
                     </div>
                     <div class="center2">
                         <h4 class="below" style=" font-size: 35px; font-family: sans-serif; font-weight: 600;  text-align: center; color: #000000;    margin-bottom: 0px;">
-                            ${await Services.Utils.title_case(subscribed_by_details.fullName)}
+                            ${Services.Utils.title_case(subscribed_by_details.fullName)}
                         </h4>
                         <p class="below" style=" font-size: 27px; font-family: sans-serif; font-weight: 300;  text-align: center; color: #000000;margin-top: 10px;">
                             ${get_subscription_details.name} <b> $${get_subscription_details.amount}</b> Per month
@@ -1994,7 +1994,7 @@ exports.upcomming_invoice_email = async (options) => {
     //                     </div>
     //                     <div class="center2">
     //                         <h4 class="below" style=" font-size: 35px; font-family: sans-serif; font-weight: 600;  text-align: center; color: #000000;    margin-bottom: 0px;">
-    //                             ${await Services.Utils.title_case(subscribed_by_details.fullName)}
+    //                             ${Services.Utils.title_case(subscribed_by_details.fullName)}
     //                         </h4>
     //                         <p class="below" style=" font-size: 27px; font-family: sans-serif; font-weight: 300;  text-align: center; color: #000000;margin-top: 10px;">
     //                             ${get_subscription_details.name} <b> $${get_subscription_details.amount}</b> Per month
@@ -2122,7 +2122,7 @@ exports.send_invite = async (options) => {
                   </div>
                   <div style="max-width: 308px; margin: auto; padding-bottom: 2rem;">
       <img src="${credentials.BACK_WEB_URL}/images/Daco.png" style="width: 60px;margin-top: 2rem;">
-     <p style="margin-bottom: 8px;color: #747474;font-size: 13px;    line-height: 18px; ">You have a new invite request from <b>${await Services.Utils.title_case(get_brand.fullName)}</b> brand.</p>
+     <p style="margin-bottom: 8px;color: #747474;font-size: 13px;    line-height: 18px; ">You have a new invite request from <b>${Services.Utils.title_case(get_brand.fullName)}</b> brand.</p>
   
  <div style="margin: 2rem 0px;">
  <a style="font-size: 12px;    background: #0260A5;
@@ -2169,7 +2169,7 @@ exports.send_mail_to_brand = async (options) => {
             text-align: center;  display: -webkit-flex; border: 5px solid #00BAFF; background: #fff; margin: auto;  border-radius: 50%; display: flex; justify-content: center;align-items: center;">
                 <div>
                          <img src="${credentials.BACK_WEB_URL}/images/upfilly.png"style="width:115px; height: 40px; object-fit: contain;">
-                 <h1 style="  margin-bottom: 0px;  margin-top: 10px; font-size: 18px;"><span style="font-weight: 400;color:#373737;">Hi ${await Services.Utils.title_case(name)},</h1>
+                 <h1 style="  margin-bottom: 0px;  margin-top: 10px; font-size: 18px;"><span style="font-weight: 400;color:#373737;">Hi ${Services.Utils.title_case(name)},</h1>
                  <p style="margin-top: 0px;    font-size: 14px; color:#373737; margin-bottom: 0;">This is an notification email to let you know about Untrack sales.
                  </p>
                  </div>
@@ -2177,7 +2177,7 @@ exports.send_mail_to_brand = async (options) => {
                  </div>
                  <div style="max-width: 308px; margin: auto; padding-bottom: 2rem;">
      <img src="${credentials.BACK_WEB_URL}/images/Daco.png" style="width: 60px;margin-top: 2rem;">
-    <p style="margin-bottom: 8px;color: #747474;font-size: 13px;    line-height: 18px; ">Ticket raised by ${await Services.Utils.title_case(affiliate_name)}.</b></p>
+    <p style="margin-bottom: 8px;color: #747474;font-size: 13px;    line-height: 18px; ">Ticket raised by ${Services.Utils.title_case(affiliate_name)}.</b></p>
  
 <div style="margin: 2rem 0px;">
 <a style="font-size: 12px;    background: #0260A5;
@@ -2224,15 +2224,15 @@ exports.send_request_mail_to_brand = async (options) => {
             text-align: center;  display: -webkit-flex; border: 5px solid #00BAFF; background: #fff; margin: auto;  border-radius: 50%; display: flex; justify-content: center;align-items: center;">
                 <div>
                          <img src="${credentials.BACK_WEB_URL}/images/upfilly.png"style="width:115px; height: 40px; object-fit: contain;">
-                 <h1 style="  margin-bottom: 0px;  margin-top: 10px; font-size: 18px;"><span style="font-weight: 400;color:#373737;">Hi ${await Services.Utils.title_case(name)},</h1>
-                 <p style="margin-top: 0px;    font-size: 14px; color:#373737; margin-bottom: 0;">This is an notification email to let you know about Invitation from ${await Services.Utils.title_case(affiliate_name)} .
+                 <h1 style="  margin-bottom: 0px;  margin-top: 10px; font-size: 18px;"><span style="font-weight: 400;color:#373737;">Hi ${Services.Utils.title_case(name)},</h1>
+                 <p style="margin-top: 0px;    font-size: 14px; color:#373737; margin-bottom: 0;">This is an notification email to let you know about Invitation from ${Services.Utils.title_case(affiliate_name)} .
                  </p>
                  </div>
                  </div>
                  </div>
                  <div style="max-width: 308px; margin: auto; padding-bottom: 2rem;">
      <img src="${credentials.BACK_WEB_URL}/images/Daco.png" style="width: 60px;margin-top: 2rem;">
-    <p style="margin-bottom: 8px;color: #747474;font-size: 13px;    line-height: 18px; ">Ticket raised by ${await Services.Utils.title_case(affiliate_name)}.</b></p>
+    <p style="margin-bottom: 8px;color: #747474;font-size: 13px;    line-height: 18px; ">Ticket raised by ${Services.Utils.title_case(affiliate_name)}.</b></p>
 <div style="margin-bottom: 2rem;">
    <span  > <img src="${credentials.BACK_WEB_URL}/images/Image1.png"style="width: 40px;"></span>
     <span ><img src="${credentials.BACK_WEB_URL}/images/Image2.png"style="width: 40px;"></span>
@@ -2333,7 +2333,7 @@ exports.send_mail_to_affiliate = async (options) => {
              text-align: center;  display: -webkit-flex; border: 5px solid #00BAFF; background: #fff; margin: auto;  border-radius: 50%; display: flex; justify-content: center;align-items: center;">
                  <div>
                           <img src="${credentials.BACK_WEB_URL}/images/upfilly.png"style="width:115px; height: 40px; object-fit: contain;">
-                  <h1 style="  margin-bottom: 0px;  margin-top: 10px; font-size: 18px;"><span style="font-weight: 400;color:#373737;">Hi ${await Services.Utils.title_case(affiliate_name)},</h1>
+                  <h1 style="  margin-bottom: 0px;  margin-top: 10px; font-size: 18px;"><span style="font-weight: 400;color:#373737;">Hi ${Services.Utils.title_case(affiliate_name)},</h1>
                   <p style="margin-top: 0px;    font-size: 14px; color:#373737; margin-bottom: 0;">This is an notification email to let you know about Invite request.
                   </p>
                   </div>
@@ -2341,7 +2341,7 @@ exports.send_mail_to_affiliate = async (options) => {
                   </div>
                   <div style="max-width: 308px; margin: auto; padding-bottom: 2rem;">
       <img src="${credentials.BACK_WEB_URL}/images/Daco.png" style="width: 60px;margin-top: 2rem;">
-     <p style="margin-bottom: 8px;color: #747474;font-size: 13px;    line-height: 18px; ">You have a new invite request from <b>${await Services.Utils.title_case(brand_name)}</b> brand.</p>
+     <p style="margin-bottom: 8px;color: #747474;font-size: 13px;    line-height: 18px; ">You have a new invite request from <b>${Services.Utils.title_case(brand_name)}</b> brand.</p>
   
  <div style="margin: 2rem 0px;">
  <a style="font-size: 12px;    background: #0260A5;
@@ -2439,11 +2439,11 @@ exports.changeRequestStatus = async (options) => {
     // let name_variable = (await Services.Utils.get_first_letter_from_each_word(get_user ? get_user.fullName : ""));
     let matter;
     if (status == 'rejected') {
-        matter = `Regret to inform you that the request you have sent to ${await Services.Utils.title_case(get_admin[0].fullName)} is rejected.
+        matter = `Regret to inform you that the request you have sent to ${Services.Utils.title_case(get_admin[0].fullName)} is rejected.
           <br><br>
           <b> Reason : </b>${reason} <br><br>Better luck for the next time. Thanks for the business.`
     } else {
-        matter = `Congratulations,<br> The request you have sent to ${await Services.Utils.title_case(get_admin[0].fullName)} has been accepted. We wish good luck for the future venture. Thanks for your business.`
+        matter = `Congratulations,<br> The request you have sent to ${Services.Utils.title_case(get_admin[0].fullName)} has been accepted. We wish good luck for the future venture. Thanks for your business.`
     }
     message = '';
     message += `

@@ -54,7 +54,7 @@ exports.AddCommission = async (options) => {
                         </tr>
                         <tr>
                             <td style="text-align:center;">
-                                <p style="font-size: 14px;max-width: 400px;margin:0 auto;font-weight: 600;padding: 0 20px;color: #393C3D;line-height: 21px; margin-bottom: 10px;">Hi ${await Services.Utils.title_case(affiliate_name)},
+                                <p style="font-size: 14px;max-width: 400px;margin:0 auto;font-weight: 600;padding: 0 20px;color: #393C3D;line-height: 21px; margin-bottom: 10px;">Hi ${Services.Utils.title_case(affiliate_name)},
                                 </p>
                             </td>
                         </tr>
@@ -65,7 +65,7 @@ exports.AddCommission = async (options) => {
                         </tr>
                         <tr>
                             <td style="text-align:center;">
-                                <p style="font-size: 14px;max-width: 400px;margin:0 auto;font-weight: 600;padding: 0 20px;color: #393C3D;line-height: 21px;" class="fz-20">This is an notification email to let you know about commission detail send by ${await Services.Utils.title_case(brand_name)} Brand.</p>
+                                <p style="font-size: 14px;max-width: 400px;margin:0 auto;font-weight: 600;padding: 0 20px;color: #393C3D;line-height: 21px;" class="fz-20">This is an notification email to let you know about commission detail send by ${Services.Utils.title_case(brand_name)} Brand.</p>
                             </td>
                         </tr>
 
@@ -119,11 +119,11 @@ exports.AddCommission = async (options) => {
                                                     <tbody>
                                                         <tr>
                                                             <td style="border-right: 1px solid #000;  border-top: 1px solid #000; border-bottom: 1px solid #000; padding:  8px;font-size: 13px;text-align: left;font-weight: 500;">
-                                                                <span>${await Services.Utils.title_case(commission_detail.upload_method)}</span></td>
+                                                                <span>${Services.Utils.title_case(commission_detail.upload_method)}</span></td>
                                                         </tr>
                                                         <tr>
 
-                                                            <td style="border-right: 1px solid #000; border-bottom: 1px solid #000;padding: 8px;font-size: 13px;text-align: left;font-weight: 500;"> <span>${await Services.Utils.title_case(commission_detail.commission_type)}</span></td>
+                                                            <td style="border-right: 1px solid #000; border-bottom: 1px solid #000;padding: 8px;font-size: 13px;text-align: left;font-weight: 500;"> <span>${Services.Utils.title_case(commission_detail.commission_type)}</span></td>
                                                         </tr>
                                                         <tr>
 
@@ -146,12 +146,12 @@ exports.AddCommission = async (options) => {
 
                                                         <tr>
                                                             <td style="border-right: 1px solid #000; border-bottom: 1px solid #000;padding: 8px;font-size: 13px;text-align: left;font-weight: 500;">
-                                                                <span>${await Services.Utils.title_case(commission_detail.status)}</span>
+                                                                <span>${Services.Utils.title_case(commission_detail.status)}</span>
                                                         </tr>
                                                         <tr>
 
                                                             <td style="border-right: 1px solid #000; border-bottom: 1px solid #000;padding: 8px;font-size: 13px;text-align: left;font-weight: 500;">
-                                                                <span>${await Services.Utils.title_case(commission_detail.order_reference)}<</span>
+                                                                <span>${Services.Utils.title_case(commission_detail.order_reference)}<</span>
                                                             </td>
                                                         </tr>
                                                         <tr>
