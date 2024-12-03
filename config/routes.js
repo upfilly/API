@@ -473,12 +473,12 @@ module.exports.routes = {
    *
    */
 
-  "post /brand/applyrequest": "AffiliateBrandInviteController.sendApplyRequest",
-  "get /brand/getallrequests": "AffiliateBrandInviteController.getAllRequests",
-  "get /brand/getrequestdetails":
-    "AffiliateBrandInviteController.getRequestDetail",
-  "put /brand/changerequeststatus":
-    "AffiliateBrandInviteController.changeRequestStatus",
+  // "post /brand/applyrequest": "AffiliateBrandInviteController.sendApplyRequest",
+  // "get /brand/getallrequests": "AffiliateBrandInviteController.getAllRequests",
+  // "get /brand/getrequestdetails":
+  //   "AffiliateBrandInviteController.getRequestDetail",
+  // "put /brand/changerequeststatus":
+  //   "AffiliateBrandInviteController.changeRequestStatus",
 
   /**
    * @CouponController
