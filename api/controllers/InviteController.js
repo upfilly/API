@@ -198,6 +198,7 @@ exports.getAllInvite = async (req, res) => {
 
 exports.getAllAffiliateListing = async (req, res) => {
   try {
+    let brand_id = req.param('brand_id');
     let offerAffiliateListings = await MakeOffer.find({
       brand_id: req.identity.id,
       status: "accepted",
@@ -213,8 +214,9 @@ exports.getAllAffiliateListing = async (req, res) => {
     let affiliateInviteListing = await AffiliateInvite.find({
       addedBy: req.identity.id,
       status: "accepted",
-    });
+      });
 
+    let affiliates = await PublicPrivateCampaigns.find({isActive: true, brand_id: brand_id})
     const combinedResults = [
       ...offerAffiliateListings,
       ...affiliateBrandInvites,
@@ -243,6 +245,54 @@ exports.getAllAffiliateListing = async (req, res) => {
     return response.failed(null, `${error}`, req, res);
   }
 };
+
+// exports.getAllAffiliateListing = async (req, res) => {
+//   try {
+//     let offerAffiliateListings = await MakeOffer.find({
+//       brand_id: req.identity.id,
+//       status: "accepted",
+//     });
+//     let affiliateBrandInvites = await AffiliateBrandInvite.find({
+//       brand_id: req.identity.id,
+//       status: "accepted",
+//     });
+//     let campaignListing = await Campaign.find({
+//       brand_id: req.identity.id,
+//       status: "accepted",
+//     });
+//     let affiliateInviteListing = await AffiliateInvite.find({
+//       addedBy: req.identity.id,
+//       status: "accepted",
+//     });
+
+//     const combinedResults = [
+//       ...offerAffiliateListings,
+//       ...affiliateBrandInvites,
+//       ...campaignListing,
+//       ...affiliateInviteListing,
+//     ];
+
+//     // Use a dictionary to remove duplicates and ensure unique affiliate_ids
+//     const uniqueAffiliates = {};
+//     combinedResults.forEach((item) => {
+//       if (!uniqueAffiliates[item.affiliate_id]) {
+//         uniqueAffiliates[item.affiliate_id] = item;
+//       }
+//     });
+
+//     const uniqueAffiliatesList = Object.values(uniqueAffiliates);
+//     let ListOfAffiliates = [];
+//     // Print the combined and unique results
+//     for await (let affiliateId of uniqueAffiliatesList) {
+//       user = await Users.findOne({ id: affiliateId.affiliate_id, isDeleted: false });
+//       ListOfAffiliates.push(user);
+//     }
+
+//     return response.success(ListOfAffiliates, "List of all affiliates fetched successfully", req, res);
+//   } catch (error) {
+//     return response.failed(null, `${error}`, req, res);
+//   }
+// };
 exports.getAllAssociatedBrandListing = async (req, res) => {
   try {
     let offerAffiliateListings = await MakeOffer.find({

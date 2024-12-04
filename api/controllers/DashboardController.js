@@ -53,26 +53,27 @@ exports.myTotalUsers = async (req, res) => {
 exports.totalCampaigns = async (req, res) => {
     try {
 
-        let query1 = { isDeleted: false };
-        let query2 = { isDeleted: false, addedBy: req.identity.id };
-        let query3 = { isDeleted: false, status: "pending", addedBy: req.identity.id };
-        let query4 = { isDeleted: false, status: "accepted", addedBy: req.identity.id };
-        let query5 = { isDeleted: false, status: "rejected", addedBy: req.identity.id };
-
-        let get_total_campaigns = await Campaign.count(query1);
-        let get_my_total_campaigns = await Campaign.count(query2);
-        let pending_campaigns = await Campaign.count(query3);
-        let accepted_campaigns = await Campaign.count(query4);
-        let rejected_campaigns = await Campaign.count(query5);
+        let get_total_campaigns = await Campaign.count({isDeleted: false});
+        let get_my_total_campaigns = 0;
+        let associated_affiliates_count = 0;
+        if(req.param('brand_id')) {
+            get_my_total_campaigns = await Campaign.count({ isDeleted: false, brand_id: req.param('brand_id') });
+            let campaigns = await PublicPrivateCampaigns.find({
+                isActive: true,
+                brand_id: req.param('brand_id')
+            }).populate('affiliate_id');
+            
+            let filteredCampaigns = campaigns.filter(c => c.affiliate_id && !c.affiliate_id.isDeleted);
+            associated_affiliates_count = filteredCampaigns.length;
+        }
+            
 
         return res.status(200).json({
             sucess: true,
             totalCampaigns: get_total_campaigns ? get_total_campaigns : 0,
             myTotalCampaigns: get_my_total_campaigns ? get_my_total_campaigns : 0,
-            pendingCampaigns: pending_campaigns ? pending_campaigns : 0,
-            acceptedCampaigns: accepted_campaigns ? accepted_campaigns : 0,
-            rejectedCampaigns: rejected_campaigns ? rejected_campaigns : 0
-        })
+            associatedAffiliatesCount: associated_affiliates_count? associated_affiliates_count: 0
+        });
 
     } catch (error) {
         return response.failed(null, `${error}`, req, res);
@@ -179,28 +180,17 @@ exports.recentUser = async (req, res) => {
 
 exports.totalCampaignsRequests = async (req, res) => {
     try {
-
-
-        let query1 = { isDeleted: false, event_type: "lead", affiliate_id: req.identity.id };
-        let query2 = { isDeleted: false, event_type: "visitor", affiliate_id: req.identity.id };
-        let query3 = { isDeleted: false, event_type: "purchase", affiliate_id: req.identity.id };
-        let query4 = { isDeleted: false, event_type: "line-item", affiliate_id: req.identity.id };
-
-        let lead_campaigns = await Campaign.count(query1);
-        let visitor_campaigns = await Campaign.count(query2);
-        let purchase_campaigns = await Campaign.count(query3);
-        let lineItems_campaigns = await Campaign.count(query4);
-
-
+        let acceptedRequestsCount = await PublicPrivateCampaigns.count({isDeleted: false, status: 'accepted', affiliate_id: req.param('affiliate_id')});
+        let rejectedRequestsCount = await PublicPrivateCampaigns.count({isDeleted: false, status: 'rejected', affiliate_id: req.param('affiliate_id')});
+        let pendingRequestsCount = await PublicPrivateCampaigns.count({isDeleted: false, status: 'pending', affiliate_id: req.param('affiliate_id'), source: "campaign"});
+        let brandsAssociatedCount = await PublicPrivateCampaigns.count({isDeleted: false, isActive: true, affiliate_id: req.param('affiliate_id')});
         return res.status(200).json({
             sucess: true,
-            leadCampaigns: lead_campaigns ? lead_campaigns : 0,
-            visitor_campaigns: visitor_campaigns ? visitor_campaigns : 0,
-            purchase_campaigns: purchase_campaigns ? purchase_campaigns : 0,
-            lineItems_campaigns: lineItems_campaigns ? lineItems_campaigns : 0,
-
-
-        })
+            acceptedRequestCount: acceptedRequestsCount? acceptedRequestsCount: 0,
+            rejectedRequestsCount: rejectedRequestsCount? rejectedRequestsCount: 0,
+            pendingRequestsCount: pendingRequestsCount? pendingRequestsCount: 0,
+            brandsAssociatedCount: brandsAssociatedCount? brandsAssociatedCount: 0
+        });
 
     } catch (error) {
         return response.failed(null, `${error}`, req, res);

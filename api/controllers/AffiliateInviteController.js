@@ -34,8 +34,7 @@ module.exports = {
         brand_id: data.brand_id,
         isDeleted: false,
       });
-
-      console.log(result, "================");
+      
       if (result.length === 0) {
         let brand_detail = await Users.findOne({
           id: data.brand_id,
