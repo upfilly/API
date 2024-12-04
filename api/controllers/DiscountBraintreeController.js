@@ -93,7 +93,7 @@ exports.getAllDiscount = async (req, res) => {
         let sortquery = {};
 
         if (search) {
-            search = await Services.Utils.remove_special_char_exept_underscores(search);
+            search = Services.Utils.remove_special_char_exept_underscores(search);
             query.$or = [
                 { name: { $regex: search, '$options': 'i' } }
             ]

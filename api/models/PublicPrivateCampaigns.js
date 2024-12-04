@@ -59,6 +59,10 @@ module.exports = {
       type: 'Boolean',
       defaultsTo: false
     },
+    source: {
+      type: "string",
+      default: "campaign"
+    },
     campaign_link: { type: "json", defaultsTo: [] }
   },
 

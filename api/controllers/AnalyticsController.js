@@ -23,7 +23,7 @@ const ObjectId = require('mongodb').ObjectId;
 
 //         // Handle search
 //         if (search) {
-//             search = await Services.Utils.remove_special_char_exept_underscores(search);
+//             search = Services.Utils.remove_special_char_exept_underscores(search);
 //             query.$or = [
 //                 { event: { $regex: search, '$options': 'i' } },
 //                 { 'urlParams.page': { $regex: search, '$options': 'i' } },
@@ -133,7 +133,7 @@ exports.salesAnalytics = async (req, res) => {
 
         // Handle search
         if (search) {
-            search = await Services.Utils.remove_special_char_exept_underscores(search);
+            search = Services.Utils.remove_special_char_exept_underscores(search);
             query.$or = [
                 { event: { $regex: search, '$options': 'i' } },
                 { 'urlParams.page': { $regex: search, '$options': 'i' } },

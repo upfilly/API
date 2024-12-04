@@ -689,7 +689,7 @@ module.exports = {
       let query = { isDeleted: false };
 
       if (search) {
-        search = await Services.Utils.remove_special_char_exept_underscores(
+        search = Services.Utils.remove_special_char_exept_underscores(
           search
         );
         query.$or = [
@@ -986,7 +986,7 @@ module.exports = {
       let query = { isDeleted: false };
 
       if (search) {
-        search = await Services.Utils.remove_special_char_exept_underscores(
+        search = Services.Utils.remove_special_char_exept_underscores(
           search
         );
         query.$or = [
@@ -1292,7 +1292,7 @@ module.exports = {
       let query = { isDeleted: false };
 
       if (search) {
-        search = await Services.Utils.remove_special_char_exept_underscores(
+        search = Services.Utils.remove_special_char_exept_underscores(
           search
         );
         query.$or = [
@@ -4058,7 +4058,7 @@ module.exports = {
       let query = { isDeleted: false };
 
       if (search) {
-        search = await Services.Utils.remove_special_char_exept_underscores(
+        search = Services.Utils.remove_special_char_exept_underscores(
           search
         );
         query.$or = [

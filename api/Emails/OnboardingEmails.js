@@ -2313,7 +2313,7 @@ exports.change_status = async (options) => {
     SmtpController.sendEmail(email, 'Untracksale request', message)
 };
 
-exports.send_mail_to_affiliate = async (options) => {
+exports.send_mail_to_affiliate = (options) => {
     // console.log(options, "==options");
     let email = options.email
     let brand_name = options.brand_name

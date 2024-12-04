@@ -356,7 +356,7 @@ exports.getAllFirstPromoters = async (req, res) => {
         let skipNo = (Number(page) - 1) * Number(count);
 
         if (search) {
-            search = await Services.Utils.remove_special_char_exept_underscores(search);
+            search = Services.Utils.remove_special_char_exept_underscores(search);
             query.$or = [
                 { email: { $regex: search, '$options': 'i' } },
                 { url: { $regex: search, '$options': 'i' } },
@@ -566,7 +566,7 @@ exports.firstPromoterDataListing = async(req,res)=>{
     let skipNo = (Number(page) - 1) * Number(count);
 
     if (search) {
-        search = await Services.Utils.remove_special_char_exept_underscores(search);
+        search = Services.Utils.remove_special_char_exept_underscores(search);
         query.$or = [
             { email: { $regex: search, '$options': 'i' } },
             { url: { $regex: search, '$options': 'i' } },

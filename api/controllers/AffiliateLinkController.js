@@ -122,7 +122,7 @@ exports.find = async function (req, res) {
 
     // Handle search
     if (search) {
-      search = await Services.Utils.remove_special_char_exept_underscores(search);
+      search = Services.Utils.remove_special_char_exept_underscores(search);
       query.$or = [
         { event: { $regex: search, '$options': 'i' } },
         { 'urlParams.page': { $regex: search, '$options': 'i' } },
@@ -332,7 +332,7 @@ exports.report = async function (req, res) {
 
       // Handle search
       if (search) {
-          search = await Services.Utils.remove_special_char_exept_underscores(search);
+          search = Services.Utils.remove_special_char_exept_underscores(search);
           query.$or = [
               { event: { $regex: search, '$options': 'i' } },
               { 'urlParams.page': { $regex: search, '$options': 'i' } },

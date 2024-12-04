@@ -177,7 +177,7 @@ module.exports = {
 
             var query = {}
             if (search) {
-                search = await Services.Utils.remove_special_char_exept_underscores(search);
+                search = Services.Utils.remove_special_char_exept_underscores(search);
                 query.$or = [{ brand_fullName: { $regex: search, '$options': 'i' } }];
             }
             query.isDeleted = false;

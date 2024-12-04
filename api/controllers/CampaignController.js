@@ -171,7 +171,6 @@ exports.addCampaign = async (req, res) => {
         throw constants.COMMON.SERVER_ERROR;
 
     } catch (error) {
-        console.log(error, '==error')
         return response.failed(null, `${error}`, req, res);
     }
 };
@@ -250,8 +249,6 @@ exports.editCampaign = async (req, res) => {
         }
         throw constants.COMMON.SERVER_ERROR;
     } catch (error) {
-        console.log(error, '==error');
-
         return response.failed(null, `${error}`, req, res);
     }
 }
@@ -440,7 +437,6 @@ exports.getAllCampaignsForBrand = async (req, res) => {
         if (brand_id) {
             query.brand_id = new ObjectId(brand_id);
         }
-        console.log(query);
         let sortquery = {};
         if (sortBy) {
             let typeArr = [];
@@ -484,7 +480,6 @@ exports.getAllCampaignsForBrand = async (req, res) => {
             }
         ];
         let totalresult = await db.collection('campaign').aggregate(pipeline).toArray();
-        console.log(totalresult);
         pipeline.push({
             $skip: Number(skipNo)
         });
@@ -740,7 +735,6 @@ exports.getCampaignById = async (req, res) => {
         if (!id) {
             throw constants.CAMPAIGN.ID_REQUIRED;
         }
-        console.log("HELLO");
         let get_campaign = await Campaign.findOne({ id: id, isDeleted: false }).populate('brand_id');//.populate('affiliate_id');
         if (!get_campaign) {
             throw constants.CAMPAIGN.INVALID_ID;
@@ -827,9 +821,6 @@ exports.changeCampaignStatus = async (req, res) => {
                 status: req.body.status,
                 reason: req.body.reason ? req.body.reason : "",
             };
-
-            console.log(email_payload, "---------->");
-
             await Emails.CampaignEmails.changeStatus(email_payload);
 
             let notification_payload = {};
@@ -855,7 +846,6 @@ exports.changeCampaignStatus = async (req, res) => {
            return response.failed(null, constants.CAMPAIGN.NOT_FOUND);
         }
     } catch (error) {
-        console.log(error);
         return response.failed(null, `${error}`, req, res)
     }
 }
@@ -1059,7 +1049,6 @@ exports.deleteCampaign = async (req, res) => {
         let campaign = await Campaign.findOne({id: id});
         if(campaign.isDefault) {
             let campaignsForBrand = await Campaign.find({brand_id: campaign.brand_id, isDeleted: false}).sort({updatedAt: -1});
-            console.log(campaignsForBrand);
             if(campaignsForBrand && campaignsForBrand.length > 0) {
                 await Campaign.updateOne({id: campaignsForBrand[0].id}).set({isDefault: true});
             }

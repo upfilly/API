@@ -19,7 +19,7 @@ exports.getAllActivityHistory = async (req, res) => {
         let skipNo = (Number(page) - 1) * Number(count);
         let query = { isDeleted: false };
         if (search) {
-            search = await Services.Utils.remove_special_char_exept_underscores(search);
+            search = Services.Utils.remove_special_char_exept_underscores(search);
             query.$or = [
                 { fullName: { $regex: search, $options: "i" } },
                 { email: { $regex: search, $options: "i" } },

@@ -21,7 +21,7 @@ exports.getAllRoles = async (req, res) => {
         let query = {};
 
         if (search) {
-            search = await Services.Utils.remove_special_char_exept_underscores(search);
+            search = Services.Utils.remove_special_char_exept_underscores(search);
             query.$or = [
                 { role: { $regex: search, '$options': 'i' } },
             ]

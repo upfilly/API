@@ -13,8 +13,10 @@ const Joi = require("joi");
 const Validations = require("../Validations/AffiliateInviteValidations.js");
 const response = require("../services/Response");
 const Emails = require("../Emails/index");
+const AffiliateInvite = require("../models/AffiliateInvite.js");
 
 module.exports = {
+
   addInvite: async (req, res) => {
     try {
       let validation_result = await Validations.addinvite(req, res);
@@ -29,27 +31,31 @@ module.exports = {
 
       let result = await AffiliateInvite.find({
         affiliate_id: { in: data.affiliate_id },
-        campaign_id: data.campaign_id,
-        addedBy: req.identity.id,
+        brand_id: data.brand_id,
         isDeleted: false,
       });
 
       console.log(result, "================");
       if (result.length === 0) {
+        let brand_detail = await Users.findOne({
+          id: data.brand_id,
+          isDeleted: false,
+        });
         for await (let affiliate_id of data.affiliate_id) {
           let result1 = await AffiliateInvite.create({
-            affiliate_id: affiliate_id,
+            affiliate_id: affiliate_id,                                                                                                                                                                                                                                                                                        
             message: data.message,
             campaign_id: data.campaign_id,
+            brand_id: data.brand_id,
             tags: data.tags,
             addedBy: data.addedBy,
           }).fetch();
 
-          await AffiliateBrandInvite.create({
-            affiliate_id: affiliate_id,
-            brand_id: req.identity.id,
-            addedBy:req.identity.id
-          });
+          // await AffiliateBrandInvite.create({
+          //   affiliate_id: affiliate_id,
+          //   brand_id: req.identity.id,
+          //   addedBy:req.identity.id
+          // });
 
           if (result1) {
             
@@ -64,33 +70,38 @@ module.exports = {
               await Services.activityHistoryServices.create_activity_history(req.identity.id, 'affiliate_invite', 'created', result1, result1, get_account_manager ? get_account_manager.id : null)
           }
 
-            let brand_detail = await Users.findOne({
-              id: result1.addedBy,
-              isDeleted: false,
-            });
-            let data = await Users.findOne({
+            
+            let affiliateInfo = await Users.findOne({
               id: result1.affiliate_id,
               isDeleted: false,
             });
             const emailpayload = {
-              email: data.email,
+              email: affiliateInfo.email,
               brand_name: brand_detail.fullName,
-              affiliate_name: brand_detail.fullName,
+              affiliate_name: affiliateInfo.fullName,
             };
-            await Emails.OnboardingEmails.send_mail_to_affiliate(emailpayload);
-            return response.success(
-              null,
-              constants.AFFILIATEINVITE.ADDED,
-              req,
-              res
-            );
+            Emails.OnboardingEmails.send_mail_to_affiliate(emailpayload);
           }
         }
+        await Promise.all(data.affiliate_id.map((affiliate_id) => {
+          return PublicPrivateCampaigns.create({
+            campaign_id: data.campaign_id,
+            affiliate_id: affiliate_id,
+            brand_id: data.brand_id, 
+            addedBy: req.identity.id,
+            source: "invite"
+          });
+        }));
+        return response.success(
+          null,
+          constants.AFFILIATEINVITE.ADDED,
+          req,
+          res
+        );
       } else {
         throw constants.AFFILIATEINVITE.ALREADY_EXIST;
       }
     } catch (error) {
-      console.log(error);
       return response.failed(null, `${error}`, req, res);
     }
   },
@@ -109,7 +120,8 @@ module.exports = {
       })
         .populate("affiliate_id")
         .populate("addedBy")
-        .populate("campaign_id");
+        .populate("campaign_id")
+        .populate('brand_id');
       if (result) {
         return response.success(
           result,
@@ -153,10 +165,15 @@ module.exports = {
   deleteInvite: async (req, res) => {
     try {
       let { id } = req.query;
+      let existingInvite = await AffiliateInvite({id: id, isDeleted: false, status: 'pending'}); //assuming only pending invitation can be deleted
+      if(!existingInvite) {
+        return response.failed(null, constants.AFFILIATEINVITE.INVALID_ID, req, res);
+      }
       let result = await AffiliateInvite.updateOne(
         { id: id },
         { isDeleted: true }
       );
+      await PublicPrivateCampaigns.updateOne({campaign_id: existingInvite.campaign_id, affiliate_id: existingInvite.affiliate_id}, {isDeleted: true});
       if (result) {
         return response.success(
           null,
@@ -174,18 +191,19 @@ module.exports = {
 
   getAllInviteDetails: async (req, res) => {
     try {
-      let { search, sortBy, status, addedBy, affiliate_id } = req.query;
+      let { search, sortBy, status, addedBy, brand_id, affiliate_id } = req.query;
       let page = req.param("page") || 1;
       let count = req.param("count") || 10;
 
       var query = {};
       if (search) {
-        search = await Services.Utils.remove_special_char_exept_underscores(
+        search = Services.Utils.remove_special_char_exept_underscores(
           search
         );
         query.$or = [
-          { affiliate_id: { $regex: search, $options: "i" } },
-          { addedBy: { $regex: search, $options: "i" } },
+          { "affiliate_details.fullName": { $regex: search, $options: "i" } },
+          { "addedBy_details.fullName": { $regex: search, $options: "i" } },
+          { "brand_details.fullName": { $regex: search, $options: "i" } },
         ];
       }
       query.isDeleted = false;
@@ -208,11 +226,15 @@ module.exports = {
       }
 
       if (addedBy) {
-        query.addedBy = new  ObjectId(addedBy);
+        query.addedBy_details.id = new ObjectId(addedBy);
       }
 
       if (affiliate_id) {
-        query.affiliate_id = new  ObjectId(affiliate_id);
+        query.affiliate_details.id = new ObjectId(affiliate_id);
+      }
+
+      if (brand_id) {
+        query.brand_details.id = new ObjectId(brand_id);
       }
 
       const pipeline = [
@@ -259,6 +281,20 @@ module.exports = {
           },
         },
         {
+          $lookup: {
+            from: "users",
+            localField: "brand_id",
+            foreignField: "_id",
+            as: "brand_details",
+          },
+        },
+        {
+          $unwind: {
+            path: "$brand_details",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
           $project: {
             affiliate_id: "$affiliate_id",
             campaign_id: "$campaign_id",
@@ -268,6 +304,7 @@ module.exports = {
             affiliate_details: "$affiliate_details",
             addedBy: "$addedBy_details",
             campaign_detail: "$campaign_details",
+            brand_details: "$brand_details",
             updatedBy: "$updatedBy",
             isDeleted: "$isDeleted",
             status: "$status",
@@ -326,7 +363,7 @@ module.exports = {
 
       let { id } = req.body;
 
-      let data = await AffiliateInvite.findOne({ id: id, isDeleted: false });
+      let data = await AffiliateInvite.findOne({ id: id, isDeleted: false, status: "pending" });
       if (!data) {
         throw constants.AFFILIATEINVITE.INVALID_ID;
       }
@@ -336,11 +373,16 @@ module.exports = {
       }
 
       req.body.updatedBy = req.identity.id;
-
       let update_status = await AffiliateInvite.updateOne(
         { id: req.body.id },
         req.body
       );
+      if(req.body.status === 'accepted') {
+        await PublicPrivateCampaigns.updateOne({campaign_id: data.campaign_id, affiliate_id: data.affiliate_id}, {status: 'accepted'});
+      } else {
+        await PublicPrivateCampaigns.updateOne({campaign_id: data.campaign_id, affiliate_id: data.affiliate_id}, {status: 'rejected'});
+      }
+      
       if (update_status.addedBy) {
         let data1 = await Users.findOne({
           id: update_status.addedBy,
