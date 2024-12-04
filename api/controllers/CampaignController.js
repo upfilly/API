@@ -295,7 +295,19 @@ exports.getAllCampaignsForAffiliate = async (req, res) => {
         query.isDeleted = false;
 
         if (status) {
-            query.status = status;
+            if(status != 'accepted') {
+                query.$or = [
+                    {source: "campaign", status: status}
+                ];
+            }
+        } else {
+            query.$or = [
+                {source: "campaign", status: "accepted"},
+                {source: "campaign", status: "rejected"},
+                {source: "campaign", status: "pending"},
+                {source: "invite", status: "accepted"},
+                {source: "make_offer", status: "accepted"},
+            ]
         }
 
         if (brand_id) {
