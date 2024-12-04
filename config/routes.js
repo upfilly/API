@@ -271,7 +271,8 @@ module.exports.routes = {
   "post /campaign": "CampaignController.addCampaign",
   "get /campaign": "CampaignController.getCampaignById",
   "put /campaign": "CampaignController.editCampaign",
-  "get /campaign/all": "CampaignController.getAllCampaigns",
+  "get /campaign/affiliate/all": "CampaignController.getAllCampaignsForAffiliate",
+  "get /campaign/brand/all": "CampaignController.getAllCampaignsForBrand",
   "put /campaign/change-status": "CampaignController.changeCampaignStatus",
   "delete /campaign": "CampaignController.deleteCampaign",
 
@@ -472,12 +473,12 @@ module.exports.routes = {
    *
    */
 
-  "post /brand/applyrequest": "AffiliateBrandInviteController.sendApplyRequest",
-  "get /brand/getallrequests": "AffiliateBrandInviteController.getAllRequests",
-  "get /brand/getrequestdetails":
-    "AffiliateBrandInviteController.getRequestDetail",
-  "put /brand/changerequeststatus":
-    "AffiliateBrandInviteController.changeRequestStatus",
+  // "post /brand/applyrequest": "AffiliateBrandInviteController.sendApplyRequest",
+  // "get /brand/getallrequests": "AffiliateBrandInviteController.getAllRequests",
+  // "get /brand/getrequestdetails":
+  //   "AffiliateBrandInviteController.getRequestDetail",
+  // "put /brand/changerequeststatus":
+  //   "AffiliateBrandInviteController.changeRequestStatus",
 
   /**
    * @CouponController

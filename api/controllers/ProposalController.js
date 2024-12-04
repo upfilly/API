@@ -123,7 +123,7 @@
 //       let skipNo = (Number(page) - 1) * Number(count);
 
 //       if (search) {
-//         search = await Services.Utils.remove_special_char_exept_underscores(
+//         search = Services.Utils.remove_special_char_exept_underscores(
 //           search
 //         );
 //         query.$or = [

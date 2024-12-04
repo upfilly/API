@@ -25,7 +25,7 @@ exports.AddCampaign = async (options) => {
             text-align: center;  display: -webkit-flex; border: 5px solid #00BAFF; background: #fff; margin: auto;  border-radius: 50%; display: flex; justify-content: center;align-items: center;">
                 <div>
                          <img src="${credentials.BACK_WEB_URL}/images/upfilly.png"style="width:115px; height: 40px; object-fit: contain;">
-                 <h1 style="  margin-bottom: 0px;  margin-top: 10px; font-size: 18px;"><span style="font-weight: 400;color:#373737;">Hi </span>${await Services.Utils.title_case(get_affiliate.fullName)}, </h1>
+                 <h1 style="  margin-bottom: 0px;  margin-top: 10px; font-size: 18px;"><span style="font-weight: 400;color:#373737;">Hi </span>${Services.Utils.title_case(get_affiliate.fullName)}, </h1>
                  <p style="margin-top: 0px;    font-size: 14px; color:#373737; margin-bottom: 0;">This is an notification email to let you know about campaign request.
                  </p>
                  </div>
@@ -33,12 +33,7 @@ exports.AddCampaign = async (options) => {
                  </div>
                  <div style="max-width: 308px; margin: auto; padding-bottom: 2rem;">
      <img src="${credentials.BACK_WEB_URL}/images/Daco.png" style="width: 60px;margin-top: 2rem;">
-    <p style="margin-bottom: 8px;color: #747474;font-size: 13px;    line-height: 18px; ">You have a new campaign request from <b>${await Services.Utils.title_case(get_brand.fullName)}</b> brand.</p>
-    <p style="margin-bottom: 8px;color: #747474;font-size: 13px;    line-height: 18px; ">To get started, Click on below link -`
-   for await (let linkObj of options.campaign_link) {
-      message += `</br><span style="font-weight: 400;color:#373737;">${await Services.Utils.title_case(linkObj.event_type)}</span> : <a href="${linkObj.event_link}">${linkObj.event_link}</a>`
-   }
-   `and share it on your social media platforms
+    <p style="margin-bottom: 8px;color: #747474;font-size: 13px;    line-height: 18px; ">You have a new campaign request from <b>${Services.Utils.title_case(get_brand.fullName)}</b> brand.</p>
 <div style="margin: 2rem 0px;">
 <a style="font-size: 12px;    background: #0260A5;
 border: none;

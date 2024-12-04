@@ -280,6 +280,8 @@ module.exports.constants = {
     CANNOT_ACCEPT: "This campaign already accepted",
     STATUS_UPDATE: "Status updated successfully",
     INVALID_INFLUENCER_ID: "Invaild influencer Id",
+    INVALID_BRAND_ID: "Invaild Brand ID",
+    INVALID_AFFILIATE_ID: "Invaild Affiliate ID"
   },
   NOTIFICATION: {
     FETCHED: "Notification fetched successfully",
@@ -403,6 +405,9 @@ module.exports.constants = {
     CANNOT_ACCEPT: "This campaign already accepted",
     STATUS_UPDATE: "Status updated successfully",
     INVALID_INFLUENCER_ID: "Invaild influencer Id",
+    NOT_FOUND: "Campaign not found!",
+    INVALID_STATUS: "Invalid status",
+    NOT_ALLOWED_AFFS_EXIST: "Deletion denied as affiliates are part of this campaign!"
   },
 
   PROPOSAL: {

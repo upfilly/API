@@ -51,7 +51,7 @@ exports.get_admin = async () => {
     return get_admin;
 }
 
-exports.title_case = async (string) => {
+exports.title_case = (string) => {
     string = string.toLowerCase()
     string = string.split(' ');
     for (let i in string) {
@@ -150,7 +150,7 @@ exports.get_hour_and_minutes = async (start_date, end_date) => {
     }
 }
 
-exports.remove_special_char_exept_underscores = async (string) => {
+exports.remove_special_char_exept_underscores = (string) => {
     string = string.replace(/[^a-zA-Z0-9_. -]/g, "");
     return string;
 }

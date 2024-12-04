@@ -108,7 +108,7 @@ exports.getAllCommission = async (req, res) => {
         let skipNo = (Number(page) - 1) * Number(count);
 
         if (search) {
-            search = await Services.Utils.remove_special_char_exept_underscores(search);
+            search = Services.Utils.remove_special_char_exept_underscores(search);
             query.$or = [
                 { title: { $regex: search, '$options': 'i' } },
                 { destination_url: { $regex: search, '$options': 'i' } },
