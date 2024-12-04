@@ -378,9 +378,10 @@ module.exports = {
         req.body
       );
       if(req.body.status === 'accepted') {
-        await PublicPrivateCampaigns.updateOne({campaign_id: data.campaign_id, affiliate_id: data.affiliate_id}, {status: 'accepted'});
+        await PublicPrivateCampaigns.update({brand_id: data.brand_id, affiliate_id: data.affiliate_id}).set({isActive: false});
+        await PublicPrivateCampaigns.updateOne({campaign_id: data.campaign_id, affiliate_id: data.affiliate_id}).set({status: 'accepted', isActive: true});
       } else {
-        await PublicPrivateCampaigns.updateOne({campaign_id: data.campaign_id, affiliate_id: data.affiliate_id}, {status: 'rejected'});
+        await PublicPrivateCampaigns.updateOne({campaign_id: data.campaign_id, affiliate_id: data.affiliate_id}).set({status: 'rejected'});
       }
       
       if (update_status.addedBy) {
