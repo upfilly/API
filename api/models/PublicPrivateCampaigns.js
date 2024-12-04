@@ -61,7 +61,7 @@ module.exports = {
     },
     source: {
       type: "string",
-      default: "campaign"
+      defaultsTo: "campaign"
     },
     campaign_link: { type: "json", defaultsTo: [] }
   },
