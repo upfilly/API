@@ -2368,7 +2368,7 @@ exports.send_mail_to_affiliate = (options) => {
     SmtpController.sendEmail(email, 'Invite', message)
 };
 
-exports.change_status_affiliateInvite = async (options) => {
+exports.change_status_affiliateInvite = (options) => {
 
     let status = options.status;
     let reason = options.reason;

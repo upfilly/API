@@ -22,15 +22,14 @@ const readXlsxFile = require("read-excel-file/node");
 const { google } = require("googleapis");
 const OAuth2Client = google.auth.OAuth2;
 
-async function string_ids_toObjectIds_array(string) {
+function string_ids_toObjectIds_array(string) {
   // console.log(string, "string");
   if (string) {
     let string_arr = string.split(",");
     let string_arr2 = [];
-    for await (let item of string_arr) {
+    for(let item of string_arr) {
       string_arr2.push(new ObjectId(item));
     }
-    console.log(string_arr2);
     return string_arr2;
   }
   return [];
@@ -741,27 +740,21 @@ module.exports = {
       }
 
       if (isDeleted) {
-        query.isDeleted = isDeleted
-          ? isDeleted === "true"
-          : true
-            ? isDeleted
-            : false;
+        query.isDeleted = isDeleted === 'true'
+        ? true
+        : false;
       }
 
       if (isTrusted) {
-        query.isTrusted = isTrusted
-          ? isTrusted === "true"
-          : true
-            ? isTrusted
-            : false;
+        query.isTrusted = isTrusted === "true"
+          ? true
+          : false;
       }
 
       if (isFeatured) {
-        query.isFeatured = isFeatured
-          ? isFeatured === "true"
-          : true
-            ? isFeatured
-            : false;
+        query.isFeatured = isFeatured === "true"
+          ? true
+          : false;
       }
 
       if (createBybrand_id) {
@@ -787,19 +780,20 @@ module.exports = {
       }
 
       if (start_date && end_date) {
-        var date = new Date(start_date);
-        date.setDate(date.getDate());
-        var Enddate = new Date(end_date);
-        Enddate.setDate(Enddate.getDate() + 1);
+        const date = new Date(start_date);
+        const endDate = new Date(end_date);
+        // Set endDate to the end of the day for better inclusiveness
+        endDate.setHours(23, 59, 59, 999);
+        
         query.$and = [
-          { createdAt: { $gte: date } },
-          { createdAt: { $lte: Enddate } },
+            { createdAt: { $gte: date } },
+            { createdAt: { $lte: endDate } }
         ];
       }
 
       if (affiliate_group_id) {
         query.affiliate_group = {
-          $in: await string_ids_toObjectIds_array(affiliate_group_id),
+          $in: string_ids_toObjectIds_array(affiliate_group_id),
         };
       }
       // if (role != "users") {
@@ -842,6 +836,7 @@ module.exports = {
               affiliate_id: "$_id",
               isDeleted: false,
               addedBy: new ObjectId(req.identity.id),
+              brand_id: new ObjectId(req.identity.id)
             },
             // let: { user_id: "$req.identity.id", fav_user_id: new ObjectId("64d076e86ecebee01af09d8c") },
             pipeline: [
@@ -852,6 +847,7 @@ module.exports = {
                       { $eq: ["$addedBy", "$$addedBy"] },
                       { $eq: ["$isDeleted", "$$isDeleted"] },
                       { $eq: ["$affiliate_id", "$$affiliate_id"] },
+                      { $eq: ["$brand_id", "$$brand_id"] }
                     ],
                   },
                 },

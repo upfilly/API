@@ -394,7 +394,7 @@ module.exports = {
             reason: update_status.reason,
             email: data1.email,
           };
-          await Emails.OnboardingEmails.change_status_affiliateInvite(
+          Emails.OnboardingEmails.change_status_affiliateInvite(
             email_payload
           );
           return response.success(
