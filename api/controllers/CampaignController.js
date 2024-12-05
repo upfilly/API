@@ -80,18 +80,17 @@ exports.addCampaign = async (req, res) => {
         }
 
         req.body.addedBy = req.identity.id;
-        req.body.brand_id = req.body.brand_id;
         let get_brand = await Users.findOne({id: req.body.brand_id, isDeleted: false});
         if(!get_brand) {
             return response.failed(null, constants.CAMPAIGN.INVALID_BRAND_ID, req, res);
         }
-
+        console.log("After fetching brand - ", req.body.brand_id, typeof req.body.brand_id);
         if(req.body.isDefault) {
             //make all other campaigns non-default
             req.body.isDefault = req.body.isDefault === 'true'? true: false;
             if(req.body.isDefault)
                 await Campaign.update({brand_id: (req.body.brand_id), isDefault: true}).set({isDefault: false});
-            
+            console.log("If isDefault is true - ", req.body.brand_id, typeof req.body.brand_id);
         }
 
         req.body.campaign_unique_id = generateRandom8DigitNumber();
@@ -103,6 +102,8 @@ exports.addCampaign = async (req, res) => {
             affiliate_id_list = affiliate_id_list.map(affiliate => affiliate.id);
         }
         let add_campaign = await Campaign.create(req.body).fetch();
+        console.log("After campaign add ---", add_campaign);
+        console.log("After campaign add - ", req.body.brand_id, typeof req.body.brand_id);
         if (add_campaign) {
             //Create entries for all these affiliates in PublicPrivateCampaigns table
             let createPPCampaignsPromises = affiliate_id_list.map(id => {
@@ -116,7 +117,7 @@ exports.addCampaign = async (req, res) => {
             
             // Wait for all the promises to resolve
             await Promise.all(createPPCampaignsPromises);
-            
+            console.log("After ppc add - ", req.body.brand_id, typeof req.body.brand_id);
             for(let current_affiliate_id of affiliate_id_list) {
                 let notification_payload = {};
                 notification_payload.send_to = current_affiliate_id;
@@ -128,7 +129,7 @@ exports.addCampaign = async (req, res) => {
                 let create_notification = await Notifications.create(notification_payload).fetch();
 
             }
-
+            console.log("After notification creation - ", req.body.brand_id, typeof req.body.brand_id);
             //------------------------Create Logs here -------------------------------
             if (add_campaign) {
                 if (['operator', 'super_user'].includes(req.identity.role)) {
@@ -142,7 +143,8 @@ exports.addCampaign = async (req, res) => {
                     await Services.activityHistoryServices.create_activity_history(req.identity.id, 'campaign', 'created', add_campaign, add_campaign, get_account_manager ? get_account_manager.id : null)
                 }
             }
-            return response.success(add_campaign, constants.CAMPAIGN.ADDED, req, res);
+            console.log("At the end - ", req.body.brand_id, typeof req.body.brand_id);
+            return response.success(null, constants.CAMPAIGN.ADDED, req, res);
         }
         throw constants.COMMON.SERVER_ERROR;
 
