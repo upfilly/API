@@ -67,11 +67,11 @@ exports.addCampaign = async (req, res) => {
         }
 
         // return;
-        let validation_result = await Validations.CampaignValidations.addCampaign(req, res);
+        // let validation_result = await Validations.CampaignValidations.addCampaign(req, res);
 
-        if (validation_result && !validation_result.success) {
-            throw validation_result.message;
-        }
+        // if (validation_result && !validation_result.success) {
+        //     throw validation_result.message;
+        // }
         let { event_type } = req.body;
 
         let get_campaign = await Campaign.findOne({ name: req.body.name, isDeleted: false });
@@ -127,20 +127,6 @@ exports.addCampaign = async (req, res) => {
                 notification_payload.campaign_id = add_campaign.id;
                 let create_notification = await Notifications.create(notification_payload).fetch();
 
-                // let affiliate_detail = await Users.findOne({ id: current_affiliate_id, isDeleted: false });
-                // if(!affiliate_detail) {
-                //     return response.failed(null, constants.CAMPAIGN.INVALID_AFFILIATE_ID, req, res);
-                // }
-                // if (create_notification && affiliate_detail.device_token) 
-                // {
-                //     let fcm_payload = {
-                //         device_token: affiliate_detail.device_token,
-                //         title: req.identity.fullName,
-                //         message: create_notification.message,
-                //     }
-
-                //     // await Services.FCM.send_fcm_push_notification(fcm_payload)
-                // }
             }
 
             //------------------------Create Logs here -------------------------------
