@@ -7,8 +7,8 @@ exports.addinvite = async (req, res) => {
         affiliate_id: Joi.array().required(),
         message: Joi.string().optional().allow(""),
         tags: Joi.array().default([]),
-        campaign_id: Joi.string().required()
-
+        campaign_id: Joi.string().required(),
+        brand_id: Joi.string().required()
     })
     return await Validate(schema, req, res);
 
@@ -27,8 +27,8 @@ exports.addinvite = async (req, res) => {
             message: Joi.string().optional(),
             commission: Joi.string().optional(),
             tags: Joi.string().optional(),
-            campaign_id: Joi.string().optional().allow(null)
-
+            campaign_id: Joi.string().optional().allow(null),
+            brand_id: Joi.string().optional()
         })
         return await Validate(schema, req, res);
 
