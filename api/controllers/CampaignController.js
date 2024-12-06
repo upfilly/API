@@ -14,7 +14,6 @@ const ObjectId = require('mongodb').ObjectId;
 const Emails = require('../Emails/index');
 const credentials = require('../../config/local.js'); //sails.config.env.production;
 const { pipeline } = require("form-data");
-// const Campaign = require("../models/Campaign.js");
 
 generateName = function () {
     // action are perform to generate random name for every file
@@ -85,13 +84,12 @@ exports.addCampaign = async (req, res) => {
         if(!get_brand) {
             return response.failed(null, constants.CAMPAIGN.INVALID_BRAND_ID, req, res);
         }
-        console.log("After fetching brand - ", brand_id, typeof brand_id);
+
         if(req.body.isDefault) {
             //make all other campaigns non-default
             req.body.isDefault = req.body.isDefault === 'true'? true: false;
             if(req.body.isDefault)
                 await Campaign.update({brand_id: brand_id, isDefault: true}).set({isDefault: false});
-            console.log("If isDefault is true - ", req.body.brand_id, typeof req.body.brand_id);
         }
 
         req.body.campaign_unique_id = generateRandom8DigitNumber();
@@ -103,15 +101,11 @@ exports.addCampaign = async (req, res) => {
             affiliate_id_list = affiliate_id_list.map(affiliate => affiliate.id);
         }
         let add_campaign = await Campaign.create(req.body).fetch();
-        console.log("After campaign add ---", add_campaign);
-        console.log("After campaign add - ", req.body.brand_id, typeof req.body.brand_id);
-        // if (typeof req.body.brand_id === 'object' && x !== null) {
-        //     x = x.toString();
-        // }
+
         if (add_campaign) {
             //Create entries for all these affiliates in PublicPrivateCampaigns table
             let createPPCampaignsPromises = affiliate_id_list.map(id => {
-                return PublicPrivateCampaigns.create({
+                return BrandAffiliateAssociation.create({
                     affiliate_id: id,
                     campaign_id: add_campaign.id,
                     brand_id: brand_id,
@@ -121,7 +115,6 @@ exports.addCampaign = async (req, res) => {
             
             // Wait for all the promises to resolve
             await Promise.all(createPPCampaignsPromises);
-            console.log("After ppc add - ", req.body.brand_id, typeof req.body.brand_id);
             for(let current_affiliate_id of affiliate_id_list) {
                 let notification_payload = {};
                 notification_payload.send_to = current_affiliate_id;
@@ -133,7 +126,6 @@ exports.addCampaign = async (req, res) => {
                 let create_notification = await Notifications.create(notification_payload).fetch();
 
             }
-            console.log("After notification creation - ", req.body.brand_id, typeof req.body.brand_id);
             //------------------------Create Logs here -------------------------------
             if (add_campaign) {
                 if (['operator', 'super_user'].includes(req.identity.role)) {
@@ -147,7 +139,6 @@ exports.addCampaign = async (req, res) => {
                     await Services.activityHistoryServices.create_activity_history(req.identity.id, 'campaign', 'created', add_campaign, add_campaign, get_account_manager ? get_account_manager.id : null)
                 }
             }
-            console.log("At the end - ", req.body.brand_id, typeof req.body.brand_id);
             return response.success(null, constants.CAMPAIGN.ADDED, req, res);
         }
         throw constants.COMMON.SERVER_ERROR;
@@ -236,7 +227,16 @@ exports.editCampaign = async (req, res) => {
     }
 }
 
-exports.getAllCampaignsForAffiliate = async (req, res) => {
+exports.listPublicCampaignsOfAllBrands = async (req, res) => {
+    try {
+        let campaigns = await Campaign.find({access_type: 'public', isDeleted: false}).populate('brand_id');
+        return response.success(campaigns, constants.CAMPAIGN.FETCHED_ALL, req, res);
+    } catch(err) {
+        return response.failed(null, `${err}`, req, res);
+    }
+}
+
+exports.getAllCampaignRequestsForAffiliate = async (req, res) => {
     try {
         let user_id = req.identity.id;
         let loggedInUser = await Users.findOne({ id: user_id, isDeleted: false });
@@ -365,14 +365,14 @@ exports.getAllCampaignsForAffiliate = async (req, res) => {
             }
         ];
 
-        let totalresult = await db.collection('publicprivatecampaigns').aggregate(pipeline).toArray();
+        let totalresult = await db.collection('brandaffiliateassociation').aggregate(pipeline).toArray();
         pipeline.push({
             $skip: Number(skipNo)
         });
         pipeline.push({
             $limit: Number(count)
         });
-        let result = await db.collection("publicprivatecampaigns").aggregate(pipeline).toArray();
+        let result = await db.collection("brandaffiliateassociation").aggregate(pipeline).toArray();
         let resData = {
             total_count: totalresult ? totalresult.length : 0,
             data: result ? result : [],
@@ -699,6 +699,7 @@ if(req.identity.role==="affiliate"){
 }
 */
 exports.getCampaignById = async (req, res) => {
+    //From brand's perspective
     try {
         let user_id = req.identity.id;
 
@@ -734,7 +735,7 @@ exports.getCampaignById = async (req, res) => {
         if (!get_campaign) {
             throw constants.CAMPAIGN.INVALID_ID;
         }
-        let listOfAffiliates = await PublicPrivateCampaigns.find({ where: { campaign_id: get_campaign.id, brand_id: get_campaign.brand_id.id, isDeleted: false, isActive: true }, select: ['affiliate_id', 'status', 'reason', 'campaign_link'] }).populate("affiliate_id");
+        let listOfAffiliates = await BrandAffiliateAssociation.find({ where: { campaign_id: get_campaign.id, brand_id: get_campaign.brand_id.id, isDeleted: false, isActive: true }, select: ['affiliate_id', 'status', 'reason', 'campaign_link'] }).populate("affiliate_id");
         get_campaign.affiliate_id = listOfAffiliates;
         return response.success(get_campaign, constants.CAMPAIGN.FETCHED, req, res);
     } catch (error) {
@@ -745,7 +746,7 @@ exports.getCampaignById = async (req, res) => {
 
 exports.changeCampaignStatus = async (req, res) => {
     try {
-
+        //To approve or reject campaign requests
         let user_id = req.identity.id;
 
         let loggedInUser = await Users.findOne({ id: user_id, isDeleted: false });
@@ -779,7 +780,7 @@ exports.changeCampaignStatus = async (req, res) => {
         }
         let { id } = req.body;
 
-        let get_campaign = await PublicPrivateCampaigns.findOne({ id: id, isDeleted: false, status: "pending" }).populate('campaign_id');
+        let get_campaign = await BrandAffiliateAssociation.findOne({ id: id, isDeleted: false, status: "pending" }).populate('campaign_id');
 
         if (!get_campaign) {
             throw constants.CAMPAIGN.INVALID_ID;
@@ -799,17 +800,17 @@ exports.changeCampaignStatus = async (req, res) => {
             }
             req.body.addedBy = user_id;
             if(req.body.status === 'accepted') {
-                await PublicPrivateCampaigns.update({affiliate_id: req.body.affiliate_id, brand_id: get_campaign.brand_id}).set({isActive: false});
-                await PublicPrivateCampaigns.updateOne({id: id}).set({status: req.body.status, isActive: true});
+                await BrandAffiliateAssociation.update({affiliate_id: req.body.affiliate_id, brand_id: get_campaign.brand_id}).set({isActive: false});
+                await BrandAffiliateAssociation.updateOne({id: id}).set({status: req.body.status, isActive: true});
                 
             } else if(req.body.status === 'rejected'){
-                await PublicPrivateCampaigns.updateOne({id: get_campaign.id}).set({status: req.body.status});
+                await BrandAffiliateAssociation.updateOne({id: get_campaign.id}).set({status: "rejected"});
             } else {
                 return response.failed(null, constants.CAMPAIGN.INVALID_STATUS, req, res);
             }
             
             // await PublicCampaigns.create({ affiliate_id: req.identity.id, campaign_id: get_campaign.id, brand_id: get_campaign.addedBy, addedBy: req.identity.id });
-
+            //Email to brand when status of a campaign changes
             let email_payload = {
                 affiliate_id: req.body.affiliate_id,
                 brand_id: get_campaign.brand_id,
@@ -827,15 +828,15 @@ exports.changeCampaignStatus = async (req, res) => {
             notification_payload.campaign_id = get_campaign.id;
             let brandDetail = await Users.findOne({ id: get_campaign.brand_id, isDeleted: false });
             let create_notification = await Notifications.create(notification_payload).fetch();
-            if (create_notification && brandDetail && brandDetail.device_token) {
-                let fcm_payload = {
-                    device_token: brandDetail.device_token,
-                    title: req.identity.fullName,
-                    message: create_notification.message,
-                }
+            // if (create_notification && brandDetail && brandDetail.device_token) {
+            //     let fcm_payload = {
+            //         device_token: brandDetail.device_token,
+            //         title: req.identity.fullName,
+            //         message: create_notification.message,
+            //     }
 
-                await Services.FCM.send_fcm_push_notification(fcm_payload)
-            }
+            //     await Services.FCM.send_fcm_push_notification(fcm_payload)
+            // }
             return response.success(null, constants.CAMPAIGN.STATUS_UPDATE, req, res)    
         } else {
            return response.failed(null, constants.CAMPAIGN.NOT_FOUND);
@@ -880,7 +881,7 @@ exports.deleteCampaign = async (req, res) => {
         if (!id) {
             throw constants.CAMPAIGN.ID_REQUIRED;
         }
-        let publicpvtcampaigns = await PublicPrivateCampaigns.find({campaign_id: id, isActive: true, status: "accepted"});
+        let brandAffiliateAssociation = await BrandAffiliateAssociation.find({campaign_id: id, isActive: true, status: "accepted"});
         if(publicpvtcampaigns && publicpvtcampaigns.length > 0) {
             return response.failed(null, constants.CAMPAIGN.NOT_ALLOWED_AFFS_EXIST, req, res);
         }
@@ -892,7 +893,7 @@ exports.deleteCampaign = async (req, res) => {
             }
         }
         const update_campaign = await Campaign.updateOne({ id: id }).set({ isDefault: false, isDeleted: true, updatedBy: req.identity.id });
-        await PublicPrivateCampaigns.update({campaign_id: id}).set({isDeleted: true});
+        await BrandAffiliateAssociation.update({campaign_id: id}).set({isDeleted: true});
         if (update_campaign) {
             return response.success(null, constants.CAMPAIGN.DELETED, req, res);
         }

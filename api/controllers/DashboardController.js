@@ -58,7 +58,7 @@ exports.totalCampaigns = async (req, res) => {
         let associated_affiliates_count = 0;
         if(req.param('brand_id')) {
             get_my_total_campaigns = await Campaign.count({ isDeleted: false, brand_id: req.param('brand_id') });
-            let campaigns = await PublicPrivateCampaigns.find({
+            let campaigns = await BrandAffiliateAssociation.find({
                 isActive: true,
                 brand_id: req.param('brand_id')
             }).populate('affiliate_id');
@@ -180,10 +180,10 @@ exports.recentUser = async (req, res) => {
 
 exports.totalCampaignsRequests = async (req, res) => {
     try {
-        let acceptedRequestsCount = await PublicPrivateCampaigns.count({isDeleted: false, status: 'accepted', affiliate_id: req.param('affiliate_id')});
-        let rejectedRequestsCount = await PublicPrivateCampaigns.count({isDeleted: false, status: 'rejected', affiliate_id: req.param('affiliate_id')});
-        let pendingRequestsCount = await PublicPrivateCampaigns.count({isDeleted: false, status: 'pending', affiliate_id: req.param('affiliate_id'), source: "campaign"});
-        let brandsAssociatedCount = await PublicPrivateCampaigns.count({isDeleted: false, isActive: true, affiliate_id: req.param('affiliate_id')});
+        let acceptedRequestsCount = await BrandAffiliateAssociation.count({isDeleted: false, status: 'accepted', affiliate_id: req.param('affiliate_id')});
+        let rejectedRequestsCount = await BrandAffiliateAssociation.count({isDeleted: false, status: 'rejected', affiliate_id: req.param('affiliate_id')});
+        let pendingRequestsCount = await BrandAffiliateAssociation.count({isDeleted: false, status: 'pending', affiliate_id: req.param('affiliate_id'), source: "campaign"});
+        let brandsAssociatedCount = await BrandAffiliateAssociation.count({isDeleted: false, isActive: true, affiliate_id: req.param('affiliate_id')});
         return res.status(200).json({
             sucess: true,
             acceptedRequestCount: acceptedRequestsCount? acceptedRequestsCount: 0,
