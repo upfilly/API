@@ -13,7 +13,6 @@ const Joi = require("joi");
 const Validations = require("../Validations/AffiliateInviteValidations.js");
 const response = require("../services/Response");
 const Emails = require("../Emails/index");
-const AffiliateInvite = require("../models/AffiliateInvite.js");
 
 module.exports = {
 
@@ -101,6 +100,7 @@ module.exports = {
         throw constants.AFFILIATEINVITE.ALREADY_EXIST;
       }
     } catch (error) {
+      console.log(error);
       return response.failed(null, `${error}`, req, res);
     }
   },
