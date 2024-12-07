@@ -96,56 +96,51 @@ exports.addCampaign = async (req, res) => {
 
         req.body.campaign_unique_id = generateRandom8DigitNumber();
         let affiliate_id_list;
-        if(req.body.affiliate_id) {
+        if(req.body.affiliate_id && req.body.access_type === 'private') {
             affiliate_id_list = [...req.body.affiliate_id]; 
+        } else {
+            affiliate_id_list = await Users.find({role: "affiliate", isDeleted: false});
+            affiliate_id_list = affiliate_id_list.map(affiliate => affiliate.id);
         }
         let add_campaign = await Campaign.create(req.body).fetch();
         if (add_campaign) {
-            if (add_campaign.access_type == "private") {
-
-                //Create entries for all these affiliates in PublicPrivateCampaigns table
-                for(let id of req.body.affiliate_id) {
-                    await PublicPrivateCampaigns.create({ affiliate_id: id, campaign_id: add_campaign.id, brand_id: req.body.brand_id, addedBy: req.identity.id });
-                }
-
-                //Change this to send emails to multiple affiliates
-
-                const emailTasks = req.body.affiliate_id.map(current_affiliate_id => {
-                    let email_payload = {
-                        affiliate_id: current_affiliate_id,
-                        brand_id: req.body.brand_id,
-                    };
-                    return Emails.CampaignEmails.AddCampaign(email_payload);
+            //Create entries for all these affiliates in PublicPrivateCampaigns table
+            let createPPCampaignsPromises = affiliate_id_list.map(id => {
+                return PublicPrivateCampaigns.create({
+                    affiliate_id: id,
+                    campaign_id: add_campaign.id,
+                    brand_id: req.body.brand_id,
+                    addedBy: req.identity.id
                 });
+            });
             
-                // Execute all email tasks concurrently
-                await Promise.all(emailTasks);
-                for(let current_affiliate_id of req.body.affiliate_id) {
-                    let notification_payload = {};
-                    notification_payload.send_to = current_affiliate_id;
-                    notification_payload.title = `Campaign | ${Services.Utils.title_case(add_campaign.name)} | ${Services.Utils.title_case(req.identity.fullName)}`;
-                    notification_payload.message = `You have a new campaign request from ${Services.Utils.title_case(req.identity.fullName)}`;
-                    notification_payload.type = "campaign"
-                    notification_payload.addedBy = req.identity.id;
-                    notification_payload.campaign_id = add_campaign.id;
-                    let create_notification = await Notifications.create(notification_payload).fetch();
+            // Wait for all the promises to resolve
+            await Promise.all(createPPCampaignsPromises);
+            
+            for(let current_affiliate_id of affiliate_id_list) {
+                let notification_payload = {};
+                notification_payload.send_to = current_affiliate_id;
+                notification_payload.title = `Campaign | ${Services.Utils.title_case(add_campaign.name)} | ${Services.Utils.title_case(req.identity.fullName)}`;
+                notification_payload.message = `You have a new campaign request from ${Services.Utils.title_case(req.identity.fullName)}`;
+                notification_payload.type = "campaign"
+                notification_payload.addedBy = req.identity.id;
+                notification_payload.campaign_id = add_campaign.id;
+                let create_notification = await Notifications.create(notification_payload).fetch();
 
-                    let affiliate_detail = await Users.findOne({ id: current_affiliate_id, isDeleted: false });
-                    if(!affiliate_detail) {
-                        return response.failed(null, constants.CAMPAIGN.INVALID_AFFILIATE_ID, req, res);
-                    }
-                    if (create_notification && affiliate_detail.device_token) 
-                    {
-                        let fcm_payload = {
-                            device_token: affiliate_detail.device_token,
-                            title: req.identity.fullName,
-                            message: create_notification.message,
-                        }
+                // let affiliate_detail = await Users.findOne({ id: current_affiliate_id, isDeleted: false });
+                // if(!affiliate_detail) {
+                //     return response.failed(null, constants.CAMPAIGN.INVALID_AFFILIATE_ID, req, res);
+                // }
+                // if (create_notification && affiliate_detail.device_token) 
+                // {
+                //     let fcm_payload = {
+                //         device_token: affiliate_detail.device_token,
+                //         title: req.identity.fullName,
+                //         message: create_notification.message,
+                //     }
 
-                        // await Services.FCM.send_fcm_push_notification(fcm_payload)
-                    }
-                }
-                
+                //     // await Services.FCM.send_fcm_push_notification(fcm_payload)
+                // }
             }
 
             //------------------------Create Logs here -------------------------------
@@ -161,12 +156,12 @@ exports.addCampaign = async (req, res) => {
                     await Services.activityHistoryServices.create_activity_history(req.identity.id, 'campaign', 'created', add_campaign, add_campaign, get_account_manager ? get_account_manager.id : null)
                 }
             }
-
             return response.success(add_campaign, constants.CAMPAIGN.ADDED, req, res);
         }
         throw constants.COMMON.SERVER_ERROR;
 
     } catch (error) {
+        console.log(error);
         return response.failed(null, `${error}`, req, res);
     }
 };
