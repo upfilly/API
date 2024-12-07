@@ -67,11 +67,11 @@ exports.addCampaign = async (req, res) => {
         }
 
         // return;
-        // let validation_result = await Validations.CampaignValidations.addCampaign(req, res);
+        let validation_result = await Validations.CampaignValidations.addCampaign(req, res);
 
-        // if (validation_result && !validation_result.success) {
-        //     throw validation_result.message;
-        // }
+        if (validation_result && !validation_result.success) {
+            throw validation_result.message;
+        }
         let { event_type } = req.body;
 
         let get_campaign = await Campaign.findOne({ name: req.body.name, isDeleted: false });
@@ -214,7 +214,7 @@ exports.editCampaign = async (req, res) => {
         }
 
         req.body.updatedBy = req.identity.id;
-        let edit_campaign = await Campaign.updateOne({ id: id }, req.body);
+        let edit_campaign = await Campaign.updateOne({ id: id }).set(req.body);
         if (edit_campaign) {
             if (['operator', 'super_user'].includes(req.identity.role)) {
                 let get_account_manager = await Users.findOne({ id: req.identity.addedBy, isDeleted: false })

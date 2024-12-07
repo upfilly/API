@@ -145,7 +145,7 @@ module.exports = {
       }
 
       let { id } = req.body;
-      let result = await AffiliateInvite.updateOne({ id: id }, req.body);
+      let result = await AffiliateInvite.updateOne({ id: id }).set(req.body);
       if (result) {
         return response.success(
           null,
@@ -168,11 +168,8 @@ module.exports = {
       if(!existingInvite) {
         return response.failed(null, constants.AFFILIATEINVITE.INVALID_ID, req, res);
       }
-      let result = await AffiliateInvite.updateOne(
-        { id: id },
-        { isDeleted: true }
-      );
-      await PublicPrivateCampaigns.updateOne({campaign_id: existingInvite.campaign_id, affiliate_id: existingInvite.affiliate_id}, {isDeleted: true});
+      let result = await AffiliateInvite.updateOne({ id: id }).set({ isDeleted: true });
+      await PublicPrivateCampaigns.updateOne({campaign_id: existingInvite.campaign_id, affiliate_id: existingInvite.affiliate_id}).set({isDeleted: true});
       if (result) {
         return response.success(
           null,
@@ -372,10 +369,7 @@ module.exports = {
       }
 
       req.body.updatedBy = req.identity.id;
-      let update_status = await AffiliateInvite.updateOne(
-        { id: req.body.id },
-        req.body
-      );
+      let update_status = await AffiliateInvite.updateOne({ id: req.body.id }).set(req.body);
       if(req.body.status === 'accepted') {
         await PublicPrivateCampaigns.update({brand_id: data.brand_id, affiliate_id: data.affiliate_id}).set({isActive: false});
         await PublicPrivateCampaigns.updateOne({campaign_id: data.campaign_id, affiliate_id: data.affiliate_id}).set({status: 'accepted', isActive: true});
