@@ -80,16 +80,17 @@ exports.addCampaign = async (req, res) => {
         }
 
         req.body.addedBy = req.identity.id;
-        let get_brand = await Users.findOne({id: req.body.brand_id, isDeleted: false});
+        let brand_id = req.body.brand_id;
+        let get_brand = await Users.findOne({id: brand_id, isDeleted: false});
         if(!get_brand) {
             return response.failed(null, constants.CAMPAIGN.INVALID_BRAND_ID, req, res);
         }
-        console.log("After fetching brand - ", req.body.brand_id, typeof req.body.brand_id);
+        console.log("After fetching brand - ", brand_id, typeof brand_id);
         if(req.body.isDefault) {
             //make all other campaigns non-default
             req.body.isDefault = req.body.isDefault === 'true'? true: false;
             if(req.body.isDefault)
-                await Campaign.update({brand_id: (req.body.brand_id), isDefault: true}).set({isDefault: false});
+                await Campaign.update({brand_id: brand_id, isDefault: true}).set({isDefault: false});
             console.log("If isDefault is true - ", req.body.brand_id, typeof req.body.brand_id);
         }
 
@@ -104,13 +105,16 @@ exports.addCampaign = async (req, res) => {
         let add_campaign = await Campaign.create(req.body).fetch();
         console.log("After campaign add ---", add_campaign);
         console.log("After campaign add - ", req.body.brand_id, typeof req.body.brand_id);
+        // if (typeof req.body.brand_id === 'object' && x !== null) {
+        //     x = x.toString();
+        // }
         if (add_campaign) {
             //Create entries for all these affiliates in PublicPrivateCampaigns table
             let createPPCampaignsPromises = affiliate_id_list.map(id => {
                 return PublicPrivateCampaigns.create({
                     affiliate_id: id,
                     campaign_id: add_campaign.id,
-                    brand_id: req.body.brand_id,
+                    brand_id: brand_id,
                     addedBy: req.identity.id
                 });
             });
