@@ -95,15 +95,16 @@ exports.addCampaign = async (req, res) => {
         }
 
         req.body.campaign_unique_id = generateRandom8DigitNumber();
-        let affiliate_id_list = [...req.body.affiliate_id];
-        req.body.affiliate_id = [];
+        let affiliate_id_list;
+        if(req.body.affiliate_id) {
+            affiliate_id_list = [...req.body.affiliate_id]; 
+        }
         let add_campaign = await Campaign.create(req.body).fetch();
-        req.body.affiliate_id = [...affiliate_id_list];
         if (add_campaign) {
             if (add_campaign.access_type == "private") {
 
                 //Create entries for all these affiliates in PublicPrivateCampaigns table
-                for(let id of req.body.affiliate_id){
+                for(let id of req.body.affiliate_id) {
                     await PublicPrivateCampaigns.create({ affiliate_id: id, campaign_id: add_campaign.id, brand_id: req.body.brand_id, addedBy: req.identity.id });
                 }
 
@@ -145,11 +146,6 @@ exports.addCampaign = async (req, res) => {
                     }
                 }
                 
-            }else
-            {
-               for(let id of req.body.affiliate_id){
-                   await PublicPrivateCampaigns.create({ affiliate_id: id, campaign_id: add_campaign.id, brand_id: req.body.brand_id, addedBy: req.identity.id });
-               }
             }
 
             //------------------------Create Logs here -------------------------------
