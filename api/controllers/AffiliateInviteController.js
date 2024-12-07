@@ -225,15 +225,15 @@ module.exports = {
       }
 
       if (addedBy) {
-        query.addedBy_details.id = new ObjectId(addedBy);
+        query["addedBy_details._id"] = new ObjectId(addedBy);
       }
 
       if (affiliate_id) {
-        query.affiliate_details.id = new ObjectId(affiliate_id);
+        query["affiliate_details._id"] = new ObjectId(affiliate_id);
       }
 
       if (brand_id) {
-        query.brand_details.id = new ObjectId(brand_id);
+        query["brand_details._id"] = new ObjectId(brand_id);
       }
 
       const pipeline = [
