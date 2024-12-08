@@ -12,6 +12,7 @@ module.exports = {
     message: { type: "string" },
     // commission:{type:"string"},
     campaign_id: { model: "campaign" },
+    association: {model: "brandaffiliateassociation"},
     tags: { type: "json" },
     status: { type: 'string', isIn: ['accepted', 'rejected'], defaultsTo: 'pending', },
     reason: {type: 'string', defaultsTo: ''},

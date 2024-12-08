@@ -271,10 +271,11 @@ module.exports.routes = {
   "post /campaign": "CampaignController.addCampaign",
   "get /campaign": "CampaignController.getCampaignById",
   "put /campaign": "CampaignController.editCampaign",
-  "get /campaign/affiliate/all": "CampaignController.getAllCampaignsForAffiliate",
+  "get /campaign/affiliate/all": "CampaignController.getAllCampaignRequestsForAffiliate",
   "get /campaign/brand/all": "CampaignController.getAllCampaignsForBrand",
   "put /campaign/change-status": "CampaignController.changeCampaignStatus",
   "delete /campaign": "CampaignController.deleteCampaign",
+  "get /campaign/public/all": "CampaignController.listPublicCampaignsOfAllBrands",
 
   /**
    * @Proposals

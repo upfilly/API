@@ -39,6 +39,22 @@ module.exports = {
           id: data.brand_id,
           isDeleted: false,
         });
+        let associations = await Promise.all(data.affiliate_id.map((affiliate_id) => {
+          return BrandAffiliateAssociation.create({
+            campaign_id: data.campaign_id,
+            affiliate_id: affiliate_id,
+            brand_id: data.brand_id, 
+            addedBy: req.identity.id,
+            source: "invite"
+          }).fetch();
+        }));
+
+        let mp = new Map();
+
+        for(let i = 0;i < associations.length; i++) {
+          mp[associations[i].affiliate_id.toString()] = associations[i].id.toString();  
+        }
+
         for await (let affiliate_id of data.affiliate_id) {
           let result1 = await AffiliateInvite.create({
             affiliate_id: affiliate_id,                                                                                                                                                                                                                                                                                        
@@ -47,6 +63,7 @@ module.exports = {
             brand_id: data.brand_id,
             tags: data.tags,
             addedBy: data.addedBy,
+            association: mp[affiliate_id]
           }).fetch();
 
           // await AffiliateBrandInvite.create({
@@ -81,15 +98,7 @@ module.exports = {
             Emails.OnboardingEmails.send_mail_to_affiliate(emailpayload);
           }
         }
-        await Promise.all(data.affiliate_id.map((affiliate_id) => {
-          return PublicPrivateCampaigns.create({
-            campaign_id: data.campaign_id,
-            affiliate_id: affiliate_id,
-            brand_id: data.brand_id, 
-            addedBy: req.identity.id,
-            source: "invite"
-          });
-        }));
+        
         return response.success(
           null,
           constants.AFFILIATEINVITE.ADDED,
@@ -169,7 +178,7 @@ module.exports = {
         return response.failed(null, constants.AFFILIATEINVITE.INVALID_ID, req, res);
       }
       let result = await AffiliateInvite.updateOne({ id: id }).set({ isDeleted: true });
-      await PublicPrivateCampaigns.updateOne({campaign_id: existingInvite.campaign_id, affiliate_id: existingInvite.affiliate_id}).set({isDeleted: true});
+      await BrandAffiliateAssociation.updateOne({id: result.association}).set({isDeleted: true, isActive: false, isDefault: false});
       if (result) {
         return response.success(
           null,
@@ -371,10 +380,10 @@ module.exports = {
       req.body.updatedBy = req.identity.id;
       let update_status = await AffiliateInvite.updateOne({ id: req.body.id }).set(req.body);
       if(req.body.status === 'accepted') {
-        await PublicPrivateCampaigns.update({brand_id: data.brand_id, affiliate_id: data.affiliate_id}).set({isActive: false});
-        await PublicPrivateCampaigns.updateOne({campaign_id: data.campaign_id, affiliate_id: data.affiliate_id}).set({status: 'accepted', isActive: true});
+        await BrandAffiliateAssociation.update({brand_id: data.brand_id, affiliate_id: data.affiliate_id}).set({isActive: false});
+        await BrandAffiliateAssociation.updateOne({id: update_status.association}).set({status: 'accepted', isActive: true});
       } else {
-        await PublicPrivateCampaigns.updateOne({campaign_id: data.campaign_id, affiliate_id: data.affiliate_id}).set({status: 'rejected'});
+        await BrandAffiliateAssociation.updateOne({id: update_status.association}).set({status: 'rejected', isActive: false});
       }
       
       if (update_status.addedBy) {
