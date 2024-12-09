@@ -101,7 +101,7 @@ module.exports = {
                     let get_addedBy_detail = await Users.findOne({ id: get_product.addedBy, isDeleted: false });
                     get_product.addedBy_name = get_addedBy_detail.fullName
                 }
-                let makeOfferDetails = await MakeOffer.find({product_id: get_product.id.toString(), isDeleted: false});
+                let makeOfferDetails = await MakeOffer.find({product_id: get_product.id.toString(), brand_id: req.identity.id, isDeleted: false});
                 get_product.makeOfferDetails = makeOfferDetails;
                 return response.success(get_product, constants.PRODUCT.FETCHED_ALL, req, res);
             }
