@@ -492,6 +492,7 @@ module.exports.constants = {
     CANNOT_ACCEPT: "This request is already accepted",
     STATUS_UPDATE: "Status updated successfully",
     INVALID_INFLUENCER_ID: "Invaild influencer Id",
+    NO_DEFAULT_CAMPAIGN: "No default campaign"
   },
 
   INVITE: {

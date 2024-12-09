@@ -201,7 +201,6 @@ exports.getAllAffiliateListing = async (req, res) => {
     let brand_id = req.param('brand_id');
     let affiliates = await BrandAffiliateAssociation.find({isActive: true, brand_id: brand_id, isDeleted: false}).populate('affiliate_id');
     let ListOfAffiliates = affiliates;
-    console.log(ListOfAffiliates);
     ListOfAffiliates = ListOfAffiliates.filter((c)=> c.affiliate_id && !c.affiliate_id.isDeleted).map((c) => c.affiliate_id);
     return response.success(ListOfAffiliates, "List of all affiliates fetched successfully", req, res);
   } catch (error) {

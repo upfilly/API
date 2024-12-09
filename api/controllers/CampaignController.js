@@ -84,12 +84,15 @@ exports.addCampaign = async (req, res) => {
         if(!get_brand) {
             return response.failed(null, constants.CAMPAIGN.INVALID_BRAND_ID, req, res);
         }
-
+        req.body.isDefault = req.body.isDefault === 'true'? true: false;
         if(req.body.isDefault) {
             //make all other campaigns non-default
-            req.body.isDefault = req.body.isDefault === 'true'? true: false;
-            if(req.body.isDefault)
-                await Campaign.update({brand_id: brand_id, isDefault: true}).set({isDefault: false});
+            await Campaign.update({brand_id: brand_id, isDefault: true}).set({isDefault: false});
+        } else {
+            let defaultCampaign = await Campaign.findOne({brand_id: brand_id, isDefault: true, isDeleted: false});
+            if(!defaultCampaign) {
+                req.body.isDefault = true;
+            }
         }
 
         req.body.campaign_unique_id = generateRandom8DigitNumber();
@@ -882,7 +885,7 @@ exports.deleteCampaign = async (req, res) => {
             throw constants.CAMPAIGN.ID_REQUIRED;
         }
         let brandAffiliateAssociation = await BrandAffiliateAssociation.find({campaign_id: id, isActive: true, status: "accepted"});
-        if(publicpvtcampaigns && publicpvtcampaigns.length > 0) {
+        if(brandAffiliateAssociation && brandAffiliateAssociation.length > 0) {
             return response.failed(null, constants.CAMPAIGN.NOT_ALLOWED_AFFS_EXIST, req, res);
         }
         let campaign = await Campaign.findOne({id: id});

@@ -14,6 +14,7 @@ module.exports = {
 
     name: { type: "string" },
     description: { type: "string" },
+    association: { model: 'brandaffiliateassociation' },
     // sent_from: { type: "string" },
     // sent_to: { type: "string" },
     comments: { type: "string" },
