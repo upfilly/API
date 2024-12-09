@@ -62,7 +62,7 @@ exports.makeOfferToAffiliate = async (req, res) => {
         let offer_query = {
             product_id: product_id,
             brand_id: brand_id,
-            affiliate_id: get_product.affiliate_id,
+            affiliate_id: req.body.affiliate_id,
             isDeleted: false
         }
         // console.log(offer_query)
@@ -72,7 +72,7 @@ exports.makeOfferToAffiliate = async (req, res) => {
         }
 
         req.body.addedBy = req.identity.id;
-        let association = await BrandAffiliateAssociation.create({brand_id: brand_id, affiliate_id: get_product.affiliate_id, status: "pending", source: "make_offer"}).fetch();
+        let association = await BrandAffiliateAssociation.create({brand_id: brand_id, affiliate_id: req.body.affiliate_id, status: "pending", source: "make_offer"}).fetch();
         req.body.association = association.id.toString();
         let sent_offer = await MakeOffer.create(req.body).fetch();
 
@@ -356,16 +356,16 @@ exports.changeOfferStatus = async (req, res) => {
             };
             await Emails.MakeOfferEmails.changeStatus(email_payload);
 
-            // let device_token = "";
-            // let notification_payload = {};
-            // notification_payload.type = "campaign"
-            // notification_payload.addedBy = req.identity.id;
-            // notification_payload.title = `Campaign ${Services.Utils.title_case(update_status.status)} | ${Services.Utils.title_case(update_status.name)} | ${req.identity.fullName}`;
-            // notification_payload.message = `Your campaign request is ${Services.Utils.title_case(update_status.status)}`;
-            // notification_payload.send_to = update_status.brand_id;
-            // notification_payload.campaign_id = update_status.id;
-            // let brandDetail = await Users.findOne({ id: update_status.brand_id })
-            // let create_notification = await Notifications.create(notification_payload).fetch();
+            let device_token = "";
+            let notification_payload = {};
+            notification_payload.type = "campaign"
+            notification_payload.addedBy = req.identity.id;
+            notification_payload.title = `Campaign ${Services.Utils.title_case(update_status.status)} | ${Services.Utils.title_case(update_status.name)} | ${req.identity.fullName}`;
+            notification_payload.message = `Your campaign request is ${Services.Utils.title_case(update_status.status)}`;
+            notification_payload.send_to = update_status.brand_id;
+            notification_payload.campaign_id = update_status.id;
+            let brandDetail = await Users.findOne({ id: update_status.brand_id })
+            let create_notification = await Notifications.create(notification_payload).fetch();
             // if (create_notification && brandDetail && brandDetail.device_token) {
             //     let fcm_payload = {
             //         device_token: brandDetail.device_token,
