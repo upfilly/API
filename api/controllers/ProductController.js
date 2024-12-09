@@ -11,6 +11,7 @@ const db = sails.getDatastore().manager
 const Validations = require("../Validations/index");
 const ObjectId = require('mongodb').ObjectId;
 const Services = require('../services/index');
+const { get } = require("grunt");
 
 module.exports = {
 
@@ -86,7 +87,7 @@ module.exports = {
                 throw constants.PRODUCT.ID_REQUIRED;
             }
 
-            let get_product = await Product.findOne({ id: id });
+            let get_product = await Product.findOne({ id: id, isDeleted: false });
             if (get_product) {
                 if (get_product.category_id) {
                     let get_category = await CommonCategories.findOne({ id: get_product.category_id, isDeleted: false });
@@ -100,6 +101,8 @@ module.exports = {
                     let get_addedBy_detail = await Users.findOne({ id: get_product.addedBy, isDeleted: false });
                     get_product.addedBy_name = get_addedBy_detail.fullName
                 }
+                let makeOfferDetails = await MakeOffer.find({product_id: get_product.id.toString(), isDeleted: false});
+                get_product.makeOfferDetails = makeOfferDetails;
                 return response.success(get_product, constants.PRODUCT.FETCHED_ALL, req, res);
             }
             throw constants.PRODUCT.INVALID_ID;

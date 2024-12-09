@@ -42,9 +42,14 @@ exports.makeOfferToAffiliate = async (req, res) => {
         if (validation_result && !validation_result.success) {
             throw validation_result.message;
         }
+        let campaign = await Campaign.findOne({isDefault: true, brand_id: brand_id});
+        if(!campaign) {
+            return response.failed(null, constants.MAKE_OFFER.NO_DEFAULT_CAMPAIGN, req, res);
+        }
         let { name, product_id, brand_id } = req.body;
 
-        req.body.brand_id = req.identity.id;
+        if(!brand_id)
+            brand_id = req.identity.id;
 
         if (req.body.name) {
             req.body.name = name.toLowerCase();
@@ -57,24 +62,26 @@ exports.makeOfferToAffiliate = async (req, res) => {
 
         let offer_query = {
             product_id: product_id,
-            brand_id: req.identity.id,
-            affiliate_id: req.body.affiliate_id,
+            brand_id: brand_id,
+            affiliate_id: get_product.affiliate_id,
             isDeleted: false
         }
-        console.log(offer_query)
-        let get_campaign = await MakeOffer.findOne(offer_query);
-        if (get_campaign) {
+        // console.log(offer_query)
+        let get_offer = await MakeOffer.findOne(offer_query);
+        if (get_offer) {
             throw constants.MAKE_OFFER.ALREADY_EXIST
         }
 
         req.body.addedBy = req.identity.id;
+        let association = await BrandAffiliateAssociation.create({brand_id: brand_id, affiliate_id: get_product.affiliate_id, status: "pending", source: "make_offer"}).fetch();
+        req.body.association = association.id.toString();
         let sent_offer = await MakeOffer.create(req.body).fetch();
+
         if (sent_offer) {
             // let get_brand = await Users.findOne({ id: add_campaign.brand_id });
             let email_payload = {
                 affiliate_id: sent_offer.affiliate_id,
-                brand_id: req.identity.id,
-
+                brand_id: brand_id
             };
             await Emails.MakeOfferEmails.offerSent(email_payload)
 
@@ -88,16 +95,16 @@ exports.makeOfferToAffiliate = async (req, res) => {
             notification_payload.product_id = sent_offer.id;
             let create_notification = await Notifications.create(notification_payload).fetch();
 
-            let affiliate_detail = await Users.findOne({ id: sent_offer.affiliate_id })
-            if (create_notification && affiliate_detail.device_token) {
-                let fcm_payload = {
-                    device_token: affiliate_detail.device_token,
-                    title: req.identity.fullName,
-                    message: create_notification.message,
-                }
+            // let affiliate_detail = await Users.findOne({ id: sent_offer.affiliate_id })
+            // if (create_notification && affiliate_detail.device_token) {
+            //     let fcm_payload = {
+            //         device_token: affiliate_detail.device_token,
+            //         title: req.identity.fullName,
+            //         message: create_notification.message,
+            //     }
 
-                await Services.FCM.send_fcm_push_notification(fcm_payload)
-            }
+            //     await Services.FCM.send_fcm_push_notification(fcm_payload)
+            // }
             //-------------------- Send Notification ------------------//
 
             return response.success(null, constants.MAKE_OFFER.ADDED, req, res);
@@ -115,7 +122,7 @@ exports.getAllOffers = async (req, res) => {
         let query = {};
         let count = req.param('count') || 10;
         let page = req.param('page') || 1;
-        let { search, isDeleted, status, sortBy, brand_id, affiliate_id } = req.query;
+        let { search, isDeleted, status, sortBy, brand_id, affiliate_id, product_id } = req.query;
         let skipNo = (Number(page) - 1) * Number(count);
 
         if (search) {
@@ -124,9 +131,9 @@ exports.getAllOffers = async (req, res) => {
                 { name: { $regex: search, '$options': 'i' } }
             ]
         }
-
+        
         if (isDeleted) {
-            query.isDeleted = isDeleted ? isDeleted === 'true' : true ? isDeleted : false;
+            query.isDeleted = isDeleted === 'true' ? true : false;
         } else {
             query.isDeleted = false;
         }
@@ -145,6 +152,10 @@ exports.getAllOffers = async (req, res) => {
             if (req.identity.role == "affiliate") {
                 query.affiliate_id = new ObjectId(req.identity.id);
             }
+        }
+
+        if(product_id) {
+            query.product_id = new ObjectId(product_id);
         }
 
         let sortquery = {};
@@ -330,8 +341,13 @@ exports.changeOfferStatus = async (req, res) => {
         }
 
         req.body.updatedBy = req.identity.id;
-        let update_status = await MakeOffer.updateOne({ id: req.body.id }, req.body);
-
+        let update_status = await MakeOffer.updateOne({ id: req.body.id }).set(req.body);
+        if(req.body.status === 'accepted') {
+            await BrandAffiliateAssociation.update({brand_id: get_make_offer.brand_id, affiliate_id: get_make_offer.affiliate_id}).set({isActive: false});
+            await BrandAffiliateAssociation.updateOne({id: update_status.association}).set({status: "accepted", isActive: true});
+        } else if(req.body.status === 'rejected') {
+            await BrandAffiliateAssociation.updateOne({id: update_status.association}).set({status: "rejected"});
+        }
         if (update_status) {
             let email_payload = {
                 affiliate_id: get_make_offer.affiliate_id,
