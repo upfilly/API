@@ -72,7 +72,7 @@ exports.makeOfferToAffiliate = async (req, res) => {
         }
 
         req.body.addedBy = req.identity.id;
-        let association = await BrandAffiliateAssociation.create({brand_id: brand_id, affiliate_id: req.body.affiliate_id, status: "pending", source: "make_offer"}).fetch();
+        let association = await BrandAffiliateAssociation.create({brand_id: brand_id, affiliate_id: req.body.affiliate_id, campaign_id: campaign.id, status: "pending", source: "make_offer"}).fetch();
         req.body.association = association.id.toString();
         let sent_offer = await MakeOffer.create(req.body).fetch();
 
