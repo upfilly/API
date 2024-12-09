@@ -42,15 +42,14 @@ exports.makeOfferToAffiliate = async (req, res) => {
         if (validation_result && !validation_result.success) {
             throw validation_result.message;
         }
+        let { name, product_id, brand_id } = req.body;
+        if(!brand_id)
+            brand_id = req.identity.id;
         let campaign = await Campaign.findOne({isDefault: true, brand_id: brand_id});
         if(!campaign) {
             return response.failed(null, constants.MAKE_OFFER.NO_DEFAULT_CAMPAIGN, req, res);
         }
-        let { name, product_id, brand_id } = req.body;
-
-        if(!brand_id)
-            brand_id = req.identity.id;
-
+        
         if (req.body.name) {
             req.body.name = name.toLowerCase();
         }
