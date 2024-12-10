@@ -5,12 +5,14 @@ exports.assign = async (req, res, next) => {
 
     const schema = Joi.object({
         name: Joi.string().optional().allow(""),
-        // affiliate_id: Joi.string().required().allow(null),
+        affiliate_id: Joi.string().optional(),
         product_id: Joi.string().required().allow(null),
         description: Joi.string().optional().allow(""),
         comments: Joi.string().optional().allow(""),
-        // sent_from: Joi.string().required().allow(""),
-        // sent_to: Joi.string().required().allow(""),
+        brand_id: Joi.string().required(),
+        sent_from: Joi.string().optional().allow(""),
+        sent_to: Joi.string().optional().allow("")
+
         // amount: Joi.number().required().min(0),
     });
     return await Validate(schema, req, res);
