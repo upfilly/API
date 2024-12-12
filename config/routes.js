@@ -360,7 +360,7 @@ module.exports.routes = {
   "get /my-total-users": "DashboardController.myTotalUsers",
   "get /total-campaigns": "DashboardController.totalCampaigns",
   "get /recent-users": "DashboardController.recentUser",
-  "get /campaign-request": "DashboardController.totalCampaignsRequests",
+  "get dashboard/campaign-request": "DashboardController.totalCampaignsRequests",
 
   /**
    * @Product
