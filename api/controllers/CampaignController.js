@@ -293,6 +293,7 @@ exports.getAllCampaignRequestsForAffiliate = async (req, res) => {
                 {source: "campaign", status: "pending"},
                 {source: "invite", status: "accepted"},
                 {source: "make_offer", status: "accepted"},
+                {source: "affiliate_request", status: "accepted"}
             ]
         }
 
