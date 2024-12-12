@@ -568,5 +568,15 @@ module.exports.routes = {
    "post /gptrack": "GeneralPurposeTrackingController.addGPT",
    "get /gptrack": "GeneralPurposeTrackingController.getGPTById",
    "get /gptrack/list": "GeneralPurposeTrackingController.getAllGPT",
-   "delete /gptrack/delete": "GeneralPurposeTrackingController.deleteGPTById"
+   "delete /gptrack/delete": "GeneralPurposeTrackingController.deleteGPTById",
+
+   /**
+    * @CampaignRequestByAffiliate
+    */
+   "post /campaign-request": "CampaignRequestByAffiliateController.sendCampaignRequestToBrand",
+   "get /campaign-request": "CampaignRequestByAffiliateController.getRequestById",
+   "get /campaign-requests": "CampaignRequestByAffiliateController.getAllRequestsForBrand",
+   "get /campaign-request/public-campaigns": "CampaignRequestByAffiliateController.getAllPublicCampaigns",
+   "put /campaign-request/change-status": "CampaignRequestByAffiliateController.changeRequestStatus",
+
 };   
