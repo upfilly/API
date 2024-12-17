@@ -111,7 +111,7 @@ exports.editAffiliateGroup = async (req, res) => {
         }
 
         let affiliate_group = await AffiliateManagement.findOne({
-            addeBy: req.identity.id,
+            addedBy: req.identity.id,
             name: req.body.name,
             isDeleted: false,
             id: { "!=": id }
