@@ -573,10 +573,10 @@ module.exports.routes = {
    /**
     * @CampaignRequestByAffiliate
     */
-   "post /campaign-request": "CampaignRequestByAffiliateController.sendCampaignRequestToBrand",
-   "get /campaign-request": "CampaignRequestByAffiliateController.getRequestById",
-   "get /campaign-requests": "CampaignRequestByAffiliateController.getAllRequestsForBrand",
-   "get /campaign-request/public-campaigns": "CampaignRequestByAffiliateController.getAllPublicCampaigns",
-   "put /campaign-request/change-status": "CampaignRequestByAffiliateController.changeRequestStatus",
+  //  "post /campaign-request": "CampaignRequestByAffiliateController.sendCampaignRequestToBrand",
+  //  "get /campaign-request": "CampaignRequestByAffiliateController.getRequestById",
+  //  "get /campaign-requests": "CampaignRequestByAffiliateController.getAllRequestsForBrand",
+  //  "get /campaign-request/public-campaigns": "CampaignRequestByAffiliateController.getAllPublicCampaigns",
+  //  "put /campaign-request/change-status": "CampaignRequestByAffiliateController.changeRequestStatus",
 
 };   

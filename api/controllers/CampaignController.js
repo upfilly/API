@@ -127,7 +127,6 @@ exports.addCampaign = async (req, res) => {
                 notification_payload.addedBy = req.identity.id;
                 notification_payload.campaign_id = add_campaign.id;
                 let create_notification = await Notifications.create(notification_payload).fetch();
-
             }
             //------------------------Create Logs here -------------------------------
             if (add_campaign) {
