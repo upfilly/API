@@ -4453,6 +4453,21 @@ module.exports = {
         };
 
         await Emails.OnboardingEmails.changeRequestStatus(email_payload);
+        if(status === 'accepted') {
+          //get all public campaigns on the platform and send requests to this affiliate for them
+          let allPublicCampaigns = await Campaign.find({isDeleted: false, access_type: "public"});
+          if(allPublicCampaigns && allPublicCampaigns.length > 0) {
+            let createPPCampaignsPromises = allPublicCampaigns.map(campaign => {
+              return BrandAffiliateAssociation.create({
+                  affiliate_id: id,
+                  campaign_id: campaign.id,
+                  brand_id: campaign.brand_id,
+                  addedBy: req.identity.id
+              });
+          });
+          await Promise.all(createPPCampaignsPromises);
+          }
+        }
 
         return res.status(200).json({
           success: true,
