@@ -2363,6 +2363,19 @@ module.exports = {
         if (newUser.role == "affiliate") {
           tax_payload.user_id = newUser.id;
           let create_tax = await Tax.create(tax_payload).fetch();
+          //Add prev campaign requests
+          let allPublicCampaigns = await Campaign.find({isDeleted: false, access_type: "public"});
+          if(allPublicCampaigns && allPublicCampaigns.length > 0) {
+            let createPPCampaignsPromises = allPublicCampaigns.map(campaign => {
+              return BrandAffiliateAssociation.create({
+                  affiliate_id: newUser.id,
+                  campaign_id: campaign.id,
+                  brand_id: campaign.brand_id,
+                  addedBy: req.identity.id
+              });
+          });
+          await Promise.all(createPPCampaignsPromises);
+          }
         }
         // let affiliate_link = credentials.FRONT_WEB_URL + "/affiliate/status/" + newUser.id + "?" + newUser.affilaite_unique_id
         // let update_user = await Users.updateOne({ id: newUser.id }, { affiliate_link: affiliate_link });
