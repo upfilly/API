@@ -54,12 +54,8 @@ exports.addSubscriptionPlan = async (req, res) => {
                 nickname: name,
                 amount: amount,
                 interval: req.body.interval ? req.body.interval : "month",
-                // interval: "day",
-
                 interval_count: req.body.interval_count ? req.body.interval_count : 1,
-                trial_period_days: req.body.trial_period_days ? req.body.trial_period_days : 0,         // Set to 1 day instant of 7 day on 5 july for testing        // Clients Requirement
-                // trial_period_days: 0,         // Clients Requirement
-
+                trial_period_days: req.body.trial_period_days ? req.body.trial_period_days : 0,
                 product_id: created_product.id,
                 currency: "USD",
             }
@@ -156,7 +152,7 @@ exports.getAllSubscriptionPlans = async (req, res) => {
         let count = req.param('count') || 10;
         let page = req.param('page') || 1;
         let skipNo = (Number(page) - 1) * Number(count);
-        let { search, sortBy, status, isDeleted, plan_type, userId } = req.query;
+        let { search, sortBy, status, isDeleted, plan_type, userId, category } = req.query;
         let sortquery = {};
 
         if (search) {
@@ -164,6 +160,10 @@ exports.getAllSubscriptionPlans = async (req, res) => {
             query.$or = [
                 { name: { $regex: search, '$options': 'i' } }
             ]
+        }
+
+        if(category) {
+            query.category = category;
         }
 
         if (isDeleted) {
@@ -240,6 +240,7 @@ exports.getAllSubscriptionPlans = async (req, res) => {
                 features: '$features',
                 number_of_affiliate: "$number_of_affiliate",
                 trial_period_days: "$trial_period_days",
+                category: "$category",
                 isUpcoming: "$isUpcoming",
                 upcoming_date: "$upcoming_date",
                 plan_type: "$plan_type",
@@ -296,6 +297,7 @@ exports.getAllSubscriptionPlans = async (req, res) => {
                 interval: { $first: "$interval" },
                 interval_count: { $first: "$interval_count" },
                 discount_details: { $first: "$discount_details" },
+                category: {$first: "$category"},
                 features: {
                     $push: {
                         feature_name: "$feature_name",
@@ -453,9 +455,7 @@ exports.deleteSubscriptionPlan = async (req, res) => {
 
 exports.subscribe = async (req, res) => {
     try {
-
         let validation_result = await Validations.SubscriptionPlansValidations.subscribe(req, res);
-
         if (validation_result && !validation_result.success) {
             throw validation_result.message;
         }

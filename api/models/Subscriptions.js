@@ -20,6 +20,7 @@ module.exports = {
         interval_count: { type: 'number', defaultsTo: 1 },
         trial_period_days: { type: 'number', defaultsTo: 0 },
         valid_upto: { type: 'ref', columnType: "datetime" },
+        special_plan_id: { model: "subscriptionplans" },
         // trial_period_end_date: { type: 'ref', columnType: "datetime" },
 
 

@@ -6,6 +6,7 @@ exports.addSubscriptionPlan = async (req, res, next) => {
         name: Joi.string().required().max(30).min(3),
         amount: Joi.number().required().min(0),
         recommended: Joi.string().optional().valid('Y', 'N'),
+        category: Joi.string().optional().valid('Network','Managed Services').default('Network'),
         interval: Joi.string().required().valid("month"),
         interval_count: Joi.number().required().min(0),
         currency: Joi.string().required(),
@@ -20,7 +21,7 @@ exports.addSubscriptionPlan = async (req, res, next) => {
             isChecked: Joi.boolean().required()
         }).required()),
         discount_id: Joi.string().optional().allow(null),
-        number_of_affiliate: Joi.number().required().min(0),
+        // number_of_affiliate: Joi.number().required().min(0),
         plan_type: Joi.string().required().valid("paid", "free"),
         payment_type: Joi.string().required().valid('trial', 'recurring'),
         trial_period_days: Joi.number().when('payment_type', {
@@ -68,7 +69,7 @@ exports.editSubscriptionPlan = async (req, res, next) => {
 exports.subscribe = async (req, res, next) => {
 
     const schema = Joi.object({
-        id: Joi.string().required(),
+        id: Joi.string().required(),    //plan id
         card_id: Joi.string().required(),
         user_id: Joi.string().required()
     });
