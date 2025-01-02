@@ -69,21 +69,19 @@ exports.addSubscriptionPlan = async (req, res) => {
 
                 let create_subscription_plan = await SubscriptionPlans.create(req.body).fetch();
                 if (create_subscription_plan) {
-                    if (create_subscription_plan) {
-                        if (make_recommend && make_recommend == true) {
-                            let update_recommend_plan = await SubscriptionPlans.update({
-                                recommended: 'Y',
-                                status: 'active',
-                                isDeleted: false,
-                                id: { "!=": create_subscription_plan.id },
-                            },
-                                {
-                                    recommended: "N",
-                                }).fetch();
-                        }
-
-                        return response.success(null, constants.SUBSCRIPTION_PLAN.ADDED, req, res);
+                    if (make_recommend && make_recommend == true) {
+                        let update_recommend_plan = await SubscriptionPlans.update({
+                            recommended: 'Y',
+                            status: 'active',
+                            isDeleted: false,
+                            id: { "!=": create_subscription_plan.id },
+                        },
+                            {
+                                recommended: "N",
+                            }).fetch();
                     }
+
+                    return response.success(null, constants.SUBSCRIPTION_PLAN.ADDED, req, res);
                 }
                 throw constants.COMMON.SERVER_ERROR;
             }
@@ -254,6 +252,10 @@ exports.getAllSubscriptionPlans = async (req, res) => {
                 feature_name: "$features_details.name",
                 discount_name: "$discount_details.name",
                 discount_details: "$discount_details",
+                basket_value_charge: "$basket_value_charge",
+                commission_override: "$commission_override",
+                bonus_override: "$bonus_override",
+                allowed_total_revenue: "$allowed_total_revenue",
                 amount: '$amount',
                 isChecked: "$isChecked",
                 isActive: "$isActive",
@@ -304,7 +306,11 @@ exports.getAllSubscriptionPlans = async (req, res) => {
                         id: "$features_id",
                         isChecked: "$features.isChecked",
                     }
-                }
+                },
+                basket_value_charge: {$first: "$basket_value_charge"},
+                commission_override: {$first: "$commission_override"},
+                bonus_override: {$first: "$bonus_override"},
+                allowed_total_revenue: {$first: "$allowed_total_revenue"}
             },
         };
 
