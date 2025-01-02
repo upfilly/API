@@ -45,7 +45,8 @@ module.exports.policies = {
   SubscriptionPlansController: {
     getAllSubscriptionPlans: true,
     subscribe: true,
-    subscribeOnBraintree: true
+    subscribeOnBraintree: true,
+    webhook: true
   },
   StripeController: {
     webhook: true,

@@ -115,7 +115,7 @@ module.exports.routes = {
   "get /subscription/graph":
     "SubscriptionPlansController.getSubscriptionsGraphData",
   "get /recommend-plans": "SubscriptionPlansController.getRecommendedPlans",
-
+  "post /hook": "SubscriptionPlansController.webhook",
   /**
    * @Braintree
    */
@@ -146,7 +146,7 @@ module.exports.routes = {
   "get /card/all": "StripeController.getAllCards",
   "get /card": "StripeController.getCardById",
   "delete /card": "StripeController.deleteCard",
-  "post /hook": "StripeController.webhook",
+  // "post /hook": "StripeController.webhook",
   "post /create/session": "StripeController.createCheckoutSession",
 
   /**

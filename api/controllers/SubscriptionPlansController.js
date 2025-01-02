@@ -505,7 +505,6 @@ exports.payNowOnStripe = async (req, res) => {
 
     transaction_payload.plan_id = find_plan.id;
     if (req.body.isSpecial == true) {
-        console.log("djhfsdj,++++++++++++++++++++++++++++++++++++++++++++++++");
         let special_plan = await SubscriptionPlans.findOne({id: data.special_plan_id, isDeleted: false});
         let product2 = await stripe.products.create({
             name: special_plan?.name
@@ -548,12 +547,24 @@ exports.payNowOnStripe = async (req, res) => {
 
             email: email,
             metadata: {
-            plan_id: transaction_payload.plan_id,
-            user_id: req.identity.id,
-            amount: Number(req.body.specialAmount),
-            interval_count: req.body.interval_count,
-            special_plan_id: req.body.special_plan_id,
-            promoId:req.body.promoId?req.body.promoId: "",
+                plan_id: transaction_payload.plan_id,
+                special_plan_id: data.special_plan_id,
+                user_id: req.identity.id,
+                network_plan_amount: data.network_plan_amount,
+                managed_services_plan_amount: 0,
+                interval_count: req.body.interval_count,
+                promoId:req.body.promoId?req.body.promoId: "",
+            },
+            subscription_data: {
+                metadata: {
+                    plan_id: transaction_payload.plan_id,
+                    special_plan_id: data.special_plan_id,
+                    user_id: req.identity.id,
+                    network_plan_amount: data.network_plan_amount,
+                    managed_services_plan_amount: 0,
+                    interval_count: req.body.interval_count,
+                    promoId:req.body.promoId?req.body.promoId: "",
+                },
             },
             discounts: data.promoId ? [{ coupon: data.promoId }] : [],
             // trial_period_days: find_plan.trial_period_days
@@ -596,11 +607,23 @@ exports.payNowOnStripe = async (req, res) => {
         email: email,
         metadata: {
             plan_id: transaction_payload.plan_id,
+            special_plan_id: data.special_plan_id,
             user_id: req.identity.id,
-            amount: Number(req.body.specialAmount),
+            network_plan_amount: data.network_plan_amount,
+            managed_services_plan_amount: 0,
             interval_count: req.body.interval_count,
-            special_plan_id: req.body.special_plan_id,
             promoId:req.body.promoId?req.body.promoId: "",
+        },
+        subscription_data: {
+            metadata: {
+                plan_id: transaction_payload.plan_id,
+                special_plan_id: data.special_plan_id,
+                user_id: req.identity.id,
+                network_plan_amount: data.network_plan_amount,
+                managed_services_plan_amount: 0,
+                interval_count: req.body.interval_count,
+                promoId:req.body.promoId?req.body.promoId: "",
+            },
         },
         discounts: data.promoId ? [{ coupon: data.promoId }] : []
 
@@ -1316,6 +1339,574 @@ exports.getRecommendedPlans = async (req, res) => {
     }
 }
 
+
+exports.webhook = async (request, response) => {
+    try {
+      const event = request.body;
+      // Handle the event
+      switch (event.type) {
+        case "customer.subscription.updated":
+          console.log(
+            "------------customer.subscription.updated------------------"
+          );
+
+          var event_object = event.data.object;
+          console.log(event_object, "------------event_object");
+          if (event_object.status == "active") {
+            let update_subscription = await Subscriptions.updateOne(
+              { stripe_subscription_id: event_object.id },
+              {
+                valid_upto: new Date(event_object.current_period_end * 1000),
+                status: "active",
+                updatedAt: new Date(),
+              }
+            );
+            let find_paln = await SubscriptionPlans.findOne({
+              id: event_object.metadata.plan_id,
+            });
+            // let transaction_payload = {}
+
+            // transaction_payload.user_id = event_object.metadata.user_id;
+            // transaction_payload.plan_id = find_paln._id;
+            // transaction_payload.transaction_status = "successful";
+            // let get_admin = await Services.usersService.get_users_with_role();
+            // transaction_payload.paid_to = get_admin[0].id;
+            // // transaction_payload.amount = event_object.metadata.amount;
+            // transaction_payload.name = find_paln.name;
+            // transaction_payload.planAmount = event_object.metadata.planAmount;
+
+            // let findTransaction = await db.transaction.findOne({
+            //   plan_id: find_paln._id,
+            //   user_id: event_object.metadata.user_id
+            // })
+
+            // if (!findTransaction) {
+            //   let create_transaction = await db.transaction.create(
+            //     transaction_payload
+            //   );
+
+            //   console.log(create_transaction, "-----------create_transaction")
+
+            // }
+          }
+          break;
+        case "invoice.created":
+          var event_object = event.data.object;
+          console.log("--------------invoice.created");
+
+          if (
+            event_object.subscription_details &&
+            event_object.subscription_details.metadata
+          ) {
+            let metadata = event_object.subscription_details.metadata;
+            let transactionQuery = {};
+            let findTransaction = await Transactions
+              .findOne(transactionQuery)
+              .sort({ createdAt: -1 });
+            let find_paln = await Subscriptionplans.findOne({
+              _id: metadata.plan_id,
+            });
+            console.log(find_paln, "+++++++++++++++++++++++++++++find_paln");
+            if (findTransaction) {
+              let query = {
+                user_id: metadata.user_id,
+                plan_id: metadata.plan_id,
+                planAmount: metadata.planAmount,
+                amount: event_object.amount_paid / 100,
+                payment_intent_id: event_object.id,
+                transaction_status: "successful",
+                name: find_paln.name,
+              };
+              let get_admin = await Services.usersService.get_users_with_role();
+              query.paid_to = get_admin ? get_admin[0].id : null;
+
+              console.log(query, "------------query");
+
+              let createTransaction = await Transactions.create(query);
+            }
+          }
+
+          // if (event_object.status == "active") {
+          //   let update_subscription = await db.subscription.updateOne(
+          //     { stripe_subscription_id: event_object.id },
+          //     {
+          //       valid_upto: new Date(event_object.current_period_end * 1000),
+          //       status: "active",
+          //       updatedAt: new Date()
+          //     }
+          //   );
+          //   let find_paln = await db.plans.findOne({
+          //     _id: event_object.metadata.plan_id,
+          //   });
+
+          //   console.log(find_paln, "-------------find_paln")
+
+          //   let transaction_payload = {}
+
+          //   transaction_payload.user_id = event_object.metadata.user_id;
+          //   transaction_payload.plan_id = find_paln._id;
+          //   transaction_payload.payment_intent_id = event_object.invoice;
+          //   transaction_payload.transaction_status = "successful";
+          //   transaction_payload.amount = event_object.metadata.amount;
+          //   transaction_payload.name = find_paln.name;
+
+          //   let create_transaction = await db.transaction.create(
+          //     transaction_payload
+          //   );
+
+          //   console.log(create_transaction, "-----------create_transaction")
+
+          // }
+          break;
+
+        case "invoice.payment_succeeded":
+          var event_object = event.data.object;
+
+          if (event_object.subscription) {
+            let get_subscription_data = await Subscriptions.findOne({
+              stripe_subscription_id: event_object.subscription,
+            });
+
+            if (get_subscription_data) {
+              let get_subscription_plan = await SubscriptionPlans.findOne({
+                id: get_subscription_data.subscription_plan_id,
+              });
+
+              let transaction_payload = {
+                user_id: get_subscription_data.user_id,
+                paid_to: get_subscription_plan
+                  ? get_subscription_plan.addedBy
+                  : null,
+                transaction_type: "buy_subscription",
+                subscription_plan_id: get_subscription_plan.id,
+                payment_intent_id: event_object.id,
+                subscription_id: get_subscription_data.id,
+                stripe_charge_id: event_object.id,
+                currency: event_object.currency,
+                amount: event_object.amount_paid ? event_object.amount_paid : 0,
+                stripe_subscription_id: event_object.subscription,
+                transaction_status: event_object.status,
+              };
+
+              if (event_object.status == "paid") {
+                transaction_payload.transaction_status = "successful";
+              }
+
+              let create_transacton = await Transactions.create(
+                transaction_payload
+              );
+              if (create_transacton) {
+                if (create_transacton.transaction_type == "buy_subscription") {
+                  //----------- update dashboard ----------//
+                  let total_subscription_payment =
+                    await Services.Dashboard.get_key(
+                      create_transacton.user_id,
+                      "total_subscription_payment"
+                    );
+                  total_subscription_payment =
+                    total_subscription_payment > 0
+                      ? Number(total_subscription_payment) +
+                        Number(create_transacton.amount)
+                      : Number(create_transacton.amount);
+                  let update_dashboard =
+                    await Services.Dashboard.update_dashboard(
+                      create_transacton.user_id,
+                      { total_subscription_payment: total_subscription_payment }
+                    );
+                  //----------- update dashboard ----------//
+
+                  let get_plan_added_by = await Users.findOne({
+                    id: get_subscription_plan.addedBy,
+                  });
+                  let get_subscriber = await Users.findOne({
+                    id: get_subscription_data.user_id,
+                  });
+                  let email_payload_to_admin = {
+                    email: get_plan_added_by.email,
+                    subscription_id: get_subscription_data.id,
+                    user_id: get_plan_added_by.id,
+                    subscribed_by: get_subscription_data.user_id,
+                    payment_intent_id: create_transacton.id,
+                  };
+
+                  // let email_payload_to_user = {
+                  //     email: get_subscriber.email,
+                  //     subscription_id: get_subscription_data.id,
+                  //     user_id: get_subscriber.id,
+                  //     subscribed_by: get_subscriber.id,
+                  //     payment_intent_id: create_transacton.id
+                  // }
+
+                  // await Emails.OnboardingEmails.subscription_transaction_email(email_payload_to_admin);
+                  // await Emails.OnboardingEmails.subscription_transaction_email(email_payload_to_user);
+                }
+              }
+            }
+          }
+
+          break;
+
+        case "customer.subscription.trial_will_end":
+          var event_object = event.data.object;
+          if (event_object.id) {
+            let get_subscription_data = await Subscriptions.updateOne(
+              {
+                stripe_subscription_id: event_object.id,
+              },
+              {
+                trial_period_end_date: new Date(event_object.trial_end * 1000),
+              }
+            );
+
+            // if (get_subscription_data) {
+            //     let get_user_notification_email = await Services.usersService.get_user_notification_email(get_subscription_data.user_id)
+            //     let email_payload_to_user = {
+            //         email: get_user_notification_email,
+            //         subscription_id: get_subscription_data.id,
+            //         user_id: get_subscription_data.user_id,
+            //         subscribed_by: get_subscription_data.user_id,
+            //     }
+
+            //     await Emails.OnboardingEmails.trial_will_end_email(email_payload_to_user)
+            // }
+          }
+          break;
+
+        case "customer.subscription.deleted":
+          var event_object = event.data.object;
+          if (event_object.status == "canceled") {
+            let update_subscription = await Subscriptions.updateOne(
+              { stripe_subscription_id: event_object.id },
+              {
+                status: "cancelled",
+              }
+            );
+          }
+          break;
+
+        case "invoice.upcoming":
+          var event_object = event.data.object;
+
+          if (event_object.subscription) {
+            let get_subscription_data = await Subscriptions.findOne({
+              stripe_subscription_id: event_object.subscription,
+            });
+
+            if (get_subscription_data) {
+              let get_subscription_plan = await Subscriptionplans.findOne({
+                id: get_subscription_data.subscription_plan_id,
+              });
+
+              let get_plan_added_by = await Users.findOne({
+                id: get_subscription_plan.addedBy,
+              });
+              let get_subscriber = await Users.findOne({
+                id: get_subscription_data.user_id,
+              });
+
+              // let email_payload_to_user = {
+              //     email: get_subscriber.email,
+              //     subscription_id: get_subscription_data.id,
+              //     user_id: get_subscriber.id,
+              //     subscribed_by: get_subscriber.id,
+              //     amount_due: event_object.amount_due,
+              //     period_end: event_object.period_end,
+              // }
+              // // await Emails.OnboardingEmails.subscriptiohn_transaction_email(email_payload_to_admin);
+              // await Emails.OnboardingEmails.upcomming_invoice_email(email_payload_to_user);
+            }
+          }
+          break;
+        case "checkout.session.completed":
+          var event_object = event.data.object;
+          console.log(
+            event_object.metadata,
+            "+++++++++++++++++event_object.metadata"
+          );
+          console.log(event_object.metadata.promoId,"++++++++++++++++++++++++++event_object.metadata.promoId")
+
+          if (event_object) {
+            // let find_transacton
+            // if (event_object.payment_status == "paid") {
+            let transaction_payload = {};
+
+            let find_paln = await Subscriptionplans.findOne({
+              _id: event_object.metadata.plan_id,
+            });
+            // subscription create
+
+            subscription_obj = {};
+
+            subscription_obj.subscription_plan_id = find_paln._id;
+            subscription_obj.user_id = event_object.metadata.user_id;
+            subscription_obj.stripe_subscription_id = event_object.subscription;
+            subscription_obj.amount = event_object.metadata.amount;
+            subscription_obj.interval_count =
+              event_object.metadata.interval_count;
+
+            console.log(
+              subscription_obj,
+              "+++++++++++++++++++++++subscription_obj"
+            );
+
+            let get_existing_subscription = await Subscriptions.findOne({
+              user_id: event_object.metadata.user_id,
+              status: "active",
+            });
+            console.log(
+              get_existing_subscription,
+              "++++++++++++++++++++++get_existing_subscription"
+            );
+
+            if (get_existing_subscription) {
+              if (
+                get_existing_subscription &&
+                get_existing_subscription.isTrial == false
+              ) {
+                if (
+                  get_existing_subscription &&
+                  get_existing_subscription.stripe_subscription_id
+                ) {
+                  let get_stripe_existing_subscription =
+                    await Services.StripeServices.retrieve_subscrition({
+                      stripe_subscription_id:
+                        get_existing_subscription.stripe_subscription_id,
+                    });
+
+                  if (get_stripe_existing_subscription) {
+                    let delete_old_subscription =
+                      await Services.StripeServices.delete_subscription({
+                        stripe_subscription_id:
+                          get_existing_subscription.stripe_subscription_id,
+                      });
+
+                    if (
+                      delete_old_subscription &&
+                      delete_old_subscription.status == "canceled"
+                    ) {
+                      let updated_payload = {
+                        updatedBy: event_object.metadata.user_id,
+                        status: "cancelled",
+                      };
+                      let updateSubscription = await Subscriptions.updateOne(
+                        { _id: get_existing_subscription._id },
+                        updated_payload
+                      );
+                    }
+                  }
+                }
+              } else {
+                await Subscriptions.updateOne(
+                  { id: get_existing_subscription._id },
+                  { status: "cancelled", isPaid: false }
+                );
+              }
+            }
+
+            let get_stripe_subscription =
+              await Services.StripeServices.retrieve_subscrition({
+                stripe_subscription_id: event_object.subscription,
+              });
+
+            console.log(
+              get_stripe_subscription,
+              "+++++++++++++++++++++++++++++get_stripe_subscription"
+            );
+
+            if (get_stripe_subscription) {
+              subscription_obj.valid_upto = new Date(
+                get_stripe_subscription.current_period_end * 1000
+              );
+            }
+
+            subscription_obj.status = "active";
+            subscription_obj.isPaid = true;
+            subscription_obj.special_plan_id = event_object.metadata
+              .special_plan_id
+              ? event_object.metadata.special_plan_id
+              : null;
+            subscription_obj.promoId = event_object.metadata.promoId
+              ? event_object.metadata.promoId
+              : "";
+
+            let create_subscription = await Subscriptions.create(
+              subscription_obj
+            );
+            console.log(
+              create_subscription,
+              "+++++++++++++++++++create_subscription"
+            );
+
+            transaction_payload.user_id = event_object.metadata.user_id;
+            transaction_payload.plan_id = find_paln._id;
+            transaction_payload.payment_intent_id = event_object.invoice;
+            transaction_payload.transaction_status = "successful";
+            (transaction_payload.amount = event_object.metadata.amount),
+              (transaction_payload.name = find_paln.name);
+
+            let get_admin = await Services.usersService.get_users_with_role();
+            transaction_payload.paid_to = get_admin[0]._id;
+
+            let create_transaction = await Transactions.create(
+              transaction_payload
+            );
+            if (create_transaction) {
+              if (find_paln) {
+                var seats_obj = {};
+                seats_obj.subscription_id = event_object.subscription;
+                seats_obj.plan_id = find_paln._id;
+                seats_obj.promoCode = event_object.metadata.promoId?event_object.metadata.promoId:""
+              }
+              console.log(seats_obj,"++++++++++++++++++++++seats_obj")
+
+              var update_user = await Users.updateOne(
+                { _id: event_object.metadata.user_id },
+                seats_obj
+              );
+
+              var promotion = find_paln.promotion;
+
+              console.log(promotion, "+++++++++++++++++++++++++promotion");
+
+              if (find_paln && promotion.length > 0) {
+                for (let obj of promotion) {
+                  if (obj) {
+                    console.log(obj, "hdfgdjfhggsf");
+                    var subfeatures = obj.subfeatures;
+                    console.log(
+                      subfeatures,
+                      "++++++++++++++++++++++subfeaturessubfeatures"
+                    );
+                    if (subfeatures && subfeatures.length > 0) {
+                      console.log("sdshfg");
+                      for (let subfeaturesObj of subfeatures) {
+                        if (subfeaturesObj) {
+                          console.log(
+                            subfeaturesObj,
+                            "+++++++++++++++++++subfeaturesObjin"
+                          );
+                          var findDocument = await db.documents.findOne({
+                            _id: subfeaturesObj,
+                            isDeleted: false,
+                          });
+
+                          console.log(
+                            findDocument,
+                            "++++++++++++++++++++++findDocumentbefore"
+                          );
+
+                          if (findDocument) {
+                            console.log(
+                              findDocument,
+                              "+++++++++++++++++++++++++++findDocumentd"
+                            );
+                            console.log(
+                              event_object.metadata.user_id,
+                              "+++++++++++++++++++++event_object.metadata.user_id"
+                            );
+                            var findAddedBy = await db.documents.findOne({
+                              document_id: subfeaturesObj,
+                              addedBy: event_object.metadata.user_id,
+                              isDeleted: false,
+                            });
+                            console.log(
+                              findAddedBy,
+                              "+++++++++++++++++++++findAddedByfindAddedBy"
+                            );
+                            if (findAddedBy) {
+                            } else {
+                              // console.log(findDocument, "++++++++++++++++++++++++findDocument");
+
+                              let docInfo = Object.assign(
+                                {},
+                                findDocument._doc
+                              );
+
+                              console.log(
+                                event_object.metadata.user_id,
+                                "++++++++++event_object.metadata.user_id"
+                              );
+
+                              docInfo.addedBy = event_object.metadata.user_id;
+                              docInfo.createdBy = "user";
+                              docInfo.createdFor = "user";
+                              docInfo.document_id = subfeaturesObj; // Assuming subfeaturesObj is the document's ID
+
+                              delete docInfo._id; // Remove the _id field to prevent issues with document creation
+
+                              console.log(
+                                docInfo,
+                                "++++++++++++++++++++++++docInfo"
+                              );
+
+                              let create = await db.documents.create(docInfo);
+
+                              console.log(
+                                create,
+                                "+++++++++++++++++++createfindDocumentfindDocument"
+                              );
+                            }
+                          }
+                          // console.log(findDocument,"+++++++++++++++++++++++++++findDocumentfindDocument")
+                          // if(!findDocument){
+
+                          // }else{
+                          //   // If the document is not found, create a new one
+                          // // Assuming the subfeaturesObj holds the document ID
+                          // console.log(findDocument, "++++++++++++++++++++++++findDocument");
+
+                          // let docInfo = Object.assign({}, findDocument._doc);
+
+                          // console.log(event_object.metadata.user_id, "++++++++++event_object.metadata.user_id");
+
+                          // docInfo.addedBy = event_object.metadata.user_id;
+                          // docInfo.createdBy = "user";
+                          // docInfo.createdFor = "user";
+                          // docInfo.document_id = subfeaturesObj;  // Assuming subfeaturesObj is the document's ID
+
+                          // delete docInfo._id;  // Remove the _id field to prevent issues with document creation
+
+                          // console.log(docInfo, "++++++++++++++++++++++++docInfo");
+
+                          // let create = await db.documents.create(docInfo);
+
+                          // console.log(create, "+++++++++++++++++++createfindDocumentfindDocument");
+                          // }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          break;
+        case "customer.subscription.created":
+            var event_object = event.data.object;
+          console.log(
+            event_object.metadata,
+            "+++++++++++++++++event_object.metadata", "customer.subscription.created"
+          );
+        //   console.log(event_object.metadata.promoId,"++++++++++++++++++++++++++event_object.metadata.promoId")
+
+          if (event_object) {
+            let cancelAt = Math.floor(Date.now() / 1000) + 60;
+            const updatedSubscription = await stripe.subscriptions.update(event_object.id, {
+                cancel_at: cancelAt, // Set the cancel_at timestamp
+              });
+          }
+          break;
+        default:
+          console.log(`Unhandled event type ${event.type}`);
+      }
+      response.json({ received: true });
+    } catch (error) {
+    }
+},
+
+
+
+//////////////////////////////////////NOT IN USE/////////////////////////////////////////////
 //Paypal apis
 
 exports.addSubscriptionPlanBraintree = async (req, res) => {
@@ -1366,7 +1957,6 @@ exports.addSubscriptionPlanBraintree = async (req, res) => {
 
         // let created_product = await Services.StripeServices.create_product({ name: name });
         if (create_plan) {
-            // console.log(create_plan, "----------create_plan");
             req.body.addedBy = req.identity.id;
             req.body.paypal_plan_id = create_plan.plan.id;
             req.body.merchantId = create_plan.plan.merchantId;
@@ -1391,7 +1981,6 @@ exports.addSubscriptionPlanBraintree = async (req, res) => {
         }
 
     } catch (error) {
-        console.log(error, "----------------err");
         return response.failed(null, `${error}`, req, res);
     }
 
@@ -1412,7 +2001,6 @@ exports.subscribeOnBraintree = async (req, res) => {
 
 
         var get_subscription_plan = await SubscriptionPlans.findOne({ id: subscription_plan_id, isDeleted: false, status: "active" });
-        // console.log(get_subscription_plan, "---get_subscription_plan");
         if (!get_subscription_plan) {
             throw constants.SUBSCRIPTION_PLAN.INVALID_ID;
         }
@@ -1434,7 +2022,6 @@ exports.subscribeOnBraintree = async (req, res) => {
         };
 
         let get_existing_subscription = await Subscriptions.findOne(getSubsQuery);
-        // console.log(get_existing_subscription, "-------------------get_existing_subscription");
         if (get_existing_subscription && get_existing_subscription.paypal_subscription_id) {
             try {
                 let get_paypal_existing_subscription = await Services.PaypalBraintreeServices.retrieve_subscrition({
@@ -1454,7 +2041,6 @@ exports.subscribeOnBraintree = async (req, res) => {
                     }
                 }
             } catch (error) {
-                console.log(error);
             }
         }
 
@@ -1466,7 +2052,6 @@ exports.subscribeOnBraintree = async (req, res) => {
         };
 
         let create_subscription_paypal = await gateway.subscription.create(subscriptionData);
-        // console.log(create_subscription_paypal, "-----------------create_subscription_paypal");
 
         if (create_subscription_paypal.subscription.id) {
             let subscription_payload = {
@@ -1493,14 +2078,12 @@ exports.subscribeOnBraintree = async (req, res) => {
             //         "cvv": cvv
             //     },
             // };
-            // console.log('last');
 
             //     return
             //     let create_transaction = await gateway.transaction.sale(transactionData);
             //     console.log(create_transaction, "-----------------create_transaction");
             let findUser = await Users.findOne({ id: req.body.user_id, isDeleted: false, status: "active" });
             if (findUser) {
-                //         console.log(findUser, "-------users");
                 let updateUser = await Users.updateOne({ id: findUser.id }, {
                     paypal_customer_id: get_user.paypal_customer_id,
                     paypal_subscription_id: create_subscription_paypal.subscription.id,
