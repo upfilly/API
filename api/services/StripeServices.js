@@ -270,14 +270,28 @@ exports.one_time_payment = async (options) => {
         //         quantity: options.qty,
         //     }
         // ],
-        line_items: options.lineItems,
+        line_items: options.line_items,
         discounts: options.discounts,
         mode: 'subscription',
+        subscription_data: options.subscription_data,
         success_url: `${credentials.FRONT_WEB_URL}/paymentSuccess?id=${options.metadata.user_id}`,
         cancel_url: `${credentials.FRONT_WEB_URL}/cancel?id=${options.metadata.user_id}`,
         metadata: options.metadata,
         customer_email: options.email
     });
-    // console.log(session, '==========session');
     return session;
 }
+
+// exports.one_time_payment = async (options) => {
+//     const session = await stripe.checkout.sessions.create({
+       
+//         line_items: options.line_items,
+//         mode: 'subscription',
+//         success_url: `${credentials.FRONT_WEB_URL}active-plan?payment=success`,
+//         cancel_url: `${credentials.FRONT_WEB_URL}plans`,
+//         metadata: options.metadata,
+//         customer_email: options.email,
+//         discounts:options.discounts
+//     });
+//     return session;
+// }

@@ -106,7 +106,7 @@ module.exports.routes = {
     "SubscriptionPlansController.getSubscriptionPlanById",
   "delete /subscription-plan":
     "SubscriptionPlansController.deleteSubscriptionPlan",
-  "post /subscribe": "SubscriptionPlansController.subscribe",
+  "post /subscribe": "SubscriptionPlansController.payNowOnStripe",
   "put /cancel-subscription": "SubscriptionPlansController.cancelSubscription",
   "get /active-subscription":
     "SubscriptionPlansController.myActiveSubscription",

@@ -74,6 +74,7 @@ exports.addSubscriptionPlan = async (req, res) => {
                             recommended: 'Y',
                             status: 'active',
                             isDeleted: false,
+                            category: req.body.category,
                             id: { "!=": create_subscription_plan.id },
                         },
                             {
@@ -458,6 +459,181 @@ exports.deleteSubscriptionPlan = async (req, res) => {
         return response.failed(null, `${error}`, req, res);
     }
 }
+
+exports.payNowOnStripe = async (req, res) => {
+    try {
+      let data = req.body;
+      let transaction_payload = {};
+
+      let find_user = await Users.findOne({
+        id: req.identity.id,
+        isDeleted: false,
+      });
+      if (find_user) {
+        var email = find_user.email;
+      }
+      
+      var find_plan = await SubscriptionPlans.findOne({ id: data.planId, isDeleted: false, status: "active" });
+    //   if (req.body.promoId) {
+    //     let findPromo = await db.promocode.findOne({
+    //       coupon_stripe_code: req.body.promoId,isDeleted:false
+    //     });
+    //     if (findPromo.amount && findPromo.amount > req.body.amount) {
+    //       return res.status(400).json({
+    //         success: false,
+    //         message:"Coupon amount exceeds the plan amount."
+    //       });
+    //     }
+    //   }
+    if(!find_plan) {
+        return res.status(404).json({message: "Plan not found!", success: false});
+    }
+
+    let product1 = await stripe.products.create({
+        name: find_plan.name
+      });
+
+    let price1 = await stripe.prices.create({
+        product: product1.id,
+        unit_amount: Number(req.body.network_plan_amount) * 100,
+        currency: "usd",
+        recurring: {
+            interval: "month",
+            interval_count: req.body.interval_count? req.body.interval_count: 1,
+        }
+    });
+
+    transaction_payload.plan_id = find_plan.id;
+    if (req.body.isSpecial == true) {
+        console.log("djhfsdj,++++++++++++++++++++++++++++++++++++++++++++++++");
+        let special_plan = await SubscriptionPlans.findOne({id: data.special_plan_id, isDeleted: false});
+        let product2 = await stripe.products.create({
+            name: special_plan?.name
+        });
+
+        let price2 = await stripe.prices.create({
+            product: product2.id,
+            unit_amount: Number(req.body.managed_services_plan_amount) * 100,
+            currency: "usd",
+            recurring: {
+            interval: "month",
+            interval_count: req.body.interval_count? req.body.interval_count: 1,
+            },
+        });
+        // console.log(price, "++price");
+        // itm.stripe_price_id = price.id;
+
+        let line_items = [
+            {
+                price: price1.id ? price1.id : "",
+                quantity: 1,
+            },
+            {
+                price: price2.id ? price2.id : "",
+                quantity: 1, 
+            }
+        ];
+        console.log(line_items);
+        // console.log(
+        //   find_plan.id,
+        //   req.identity.id,
+        //   transaction_payload.plan_id,
+        //   req.body.specialAmount,
+        //   req.body.interval_count,
+        //   "++++++"
+        // );
+
+        var create_sessions = await Services.StripeServices.one_time_payment({
+            line_items: line_items,
+
+            email: email,
+            metadata: {
+            plan_id: transaction_payload.plan_id,
+            user_id: req.identity.id,
+            amount: Number(req.body.specialAmount),
+            interval_count: req.body.interval_count,
+            special_plan_id: req.body.special_plan_id,
+            promoId:req.body.promoId?req.body.promoId: "",
+            },
+            discounts: data.promoId ? [{ coupon: data.promoId }] : [],
+            // trial_period_days: find_plan.trial_period_days
+            //   ? find_plan.trial_period_days
+            //   : 0,
+        });
+
+        if (create_sessions) {
+            let Data = {
+            url: create_sessions.url,
+            };
+
+            await Users.updateOne(
+            { id: req.identity.id },
+            {
+                isSpecialPlanInclude: true,
+                totalSpecialAmount: req.body.specialAmount,
+            }
+            );
+            return res.status(200).json({
+            success: true,
+            code: 200,
+            data: Data,
+            });
+        }
+    } else {
+      transaction_payload.user_id = req.identity.id;
+
+      let get_admin = await Services.usersService.get_users_with_role();
+      transaction_payload.paid_to = get_admin[0].id;
+      let line_items = [
+        {
+          price: price1.id ? price1.id : "",
+          quantity: 1
+        }
+      ];
+      console.log(line_items);
+      let create_session = await Services.StripeServices.one_time_payment({
+        line_items: line_items,
+        email: email,
+        metadata: {
+            plan_id: transaction_payload.plan_id,
+            user_id: req.identity.id,
+            amount: Number(req.body.specialAmount),
+            interval_count: req.body.interval_count,
+            special_plan_id: req.body.special_plan_id,
+            promoId:req.body.promoId?req.body.promoId: "",
+        },
+        discounts: data.promoId ? [{ coupon: data.promoId }] : []
+
+
+
+        // trial_period_days: find_plan.trial_period_days
+        //   ? find_plan.trial_period_days
+        //   : 0,
+      });
+
+      // console.log(discounts,"++++++++++++++++++")
+
+      if (create_session) {
+        let resData = {
+          url: create_session.url,
+        };
+        return res.status(200).json({
+          success: true,
+          code: 200,
+          data: resData,
+        });
+      }
+    }
+
+      
+    } catch (error) {
+      console.log(error, "======================err");
+      return res.status(400).json({
+        success: false,
+        code: 400,
+      });
+    }
+  },
 
 exports.subscribe = async (req, res) => {
     try {

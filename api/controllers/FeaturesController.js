@@ -53,17 +53,17 @@ module.exports = {
                     featuresArray.push(createFeatures);
                 }
             }
-            let find_all_plans = await SubscriptionPlans.find({ isDeleted: false });
-            if (find_all_plans && find_all_plans.length > 0) {
-                for await (let get_single_plan of find_all_plans) {
-                    if (featuresArray && featuresArray.length > 0) {
-                        for await (let obj of featuresArray) {
-                            get_single_plan.features.push(obj);
-                        }
-                    }
-                    let update_plans = await SubscriptionPlans.updateOne({ id: get_single_plan.id }, { features: get_single_plan.features });
-                }
-            }
+            // let find_all_plans = await SubscriptionPlans.find({ isDeleted: false });
+            // if (find_all_plans && find_all_plans.length > 0) {
+            //     for await (let get_single_plan of find_all_plans) {
+            //         if (featuresArray && featuresArray.length > 0) {
+            //             for await (let obj of featuresArray) {
+            //                 get_single_plan.features.push(obj);
+            //             }
+            //         }
+            //         let update_plans = await SubscriptionPlans.updateOne({ id: get_single_plan.id }, { features: get_single_plan.features });
+            //     }
+            // }
             return response.success(null, constants.features.FEATURES_SAVED, req, res);
         }
         catch (error) {
