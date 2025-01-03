@@ -8,6 +8,7 @@ const Validations = require("../Validations/index");
 const db = sails.getDatastore().manager
 const ObjectId = require('mongodb').ObjectId;
 const Emails = require('../Emails/index');
+const { Subscription } = require('braintree');
 
 // var braintree = require('braintree');
 // // console.log(braintree,"----------------braintree");
@@ -657,7 +658,7 @@ exports.payNowOnStripe = async (req, res) => {
       });
     }
   },
-
+/*
 exports.subscribe = async (req, res) => {
     try {
         let validation_result = await Validations.SubscriptionPlansValidations.subscribe(req, res);
@@ -884,6 +885,7 @@ exports.subscribe = async (req, res) => {
         return response.failed(null, `${error}`, req, res);
     }
 }
+*/
 
 exports.cancelSubscription = async (req, res) => {
     try {
@@ -1890,10 +1892,35 @@ exports.webhook = async (request, response) => {
         //   console.log(event_object.metadata.promoId,"++++++++++++++++++++++++++event_object.metadata.promoId")
 
           if (event_object) {
-            let cancelAt = Math.floor(Date.now() / 1000) + 60;
+            let cancelAt = Math.floor(Date.now() / 1000) + Number(event_object.metadata.interval_count)*30*24*60*60;
             const updatedSubscription = await stripe.subscriptions.update(event_object.id, {
                 cancel_at: cancelAt, // Set the cancel_at timestamp
               });
+            //find any existing subscriptions for the user
+            let existingSubscription = await Subscription.findOne({user_id: event_object.metadata.user_id, status: "active"});
+            //set them as inactive
+            if(existingSubscription) {
+                await Subscription.updateOne({id: existingSubscription.id}).set({status: "inactive"});
+            }
+            //set current subscription as active
+            let subscriptionPayload = {
+                user_id: event_object.metadata.user_id,
+                stripe_subscription_id: event_object.id,
+                subscription_plan_id: event_object.metadata.plan_id,
+                status: "active",
+                amount: { type: 'number', defaultsTo: 0 },
+                network_plan_amount: event_object.metadata.network_plan_amount,
+                managed_services_plan_amount: event_object.metadata.managed_services_plan_amount,
+                interval: event_object.metadata.interval,
+                interval_count: event_object.metadata.interval_count,
+                valid_upto: cancelAt,
+                special_plan_id: event_object.metadata.special_plan_id,
+                // common fields
+                addedBy: event_object.metadata.user_id,
+                updatedBy: event_object.metadata.user_id
+            }
+            await Subscription.create(subscriptionPayload).fetch();
+            await Users.updateOne({id: event_object.metadata.user_id}).set({});
           }
           break;
         default:
@@ -1902,13 +1929,13 @@ exports.webhook = async (request, response) => {
       response.json({ received: true });
     } catch (error) {
     }
-},
+}
 
 
 
 //////////////////////////////////////NOT IN USE/////////////////////////////////////////////
 //Paypal apis
-
+/*
 exports.addSubscriptionPlanBraintree = async (req, res) => {
     try {
         let validation_result = await Validations.BraintreeValidation.addPlanWithBraintree(req, res);
@@ -2111,3 +2138,4 @@ exports.subscribeOnBraintree = async (req, res) => {
     }
 }
 
+*/

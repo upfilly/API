@@ -120,12 +120,12 @@ module.exports.routes = {
    * @Braintree
    */
   //With 3rd party- Braintree
-
+/*
   "post /subscription-plan/braintree":
     "SubscriptionPlansController.addSubscriptionPlanBraintree",
   "post /subscribe/braintree":
     "SubscriptionPlansController.subscribeOnBraintree",
-
+*/
   /**
    * @Transactions
    */
