@@ -8,7 +8,6 @@ const Validations = require("../Validations/index");
 const db = sails.getDatastore().manager
 const ObjectId = require('mongodb').ObjectId;
 const Emails = require('../Emails/index');
-const { Subscription } = require('braintree');
 
 // var braintree = require('braintree');
 // // console.log(braintree,"----------------braintree");
@@ -552,7 +551,7 @@ exports.payNowOnStripe = async (req, res) => {
                 special_plan_id: data.special_plan_id,
                 user_id: req.identity.id,
                 network_plan_amount: data.network_plan_amount,
-                managed_services_plan_amount: 0,
+                managed_services_plan_amount: data.managed_services_plan_amount,
                 interval_count: req.body.interval_count,
                 promoId:req.body.promoId?req.body.promoId: "",
             },
@@ -562,8 +561,9 @@ exports.payNowOnStripe = async (req, res) => {
                     special_plan_id: data.special_plan_id,
                     user_id: req.identity.id,
                     network_plan_amount: data.network_plan_amount,
-                    managed_services_plan_amount: 0,
+                    managed_services_plan_amount: data.managed_services_plan_amount,
                     interval_count: req.body.interval_count,
+                    interval: req.body.interval,
                     promoId:req.body.promoId?req.body.promoId: "",
                 },
             },
@@ -890,6 +890,74 @@ exports.subscribe = async (req, res) => {
 
 exports.cancelSubscription = async (req, res) => {
     try {
+        console.log("HELLOo");
+        let validation_result = await Validations.SubscriptionPlansValidations.cancelSubscription(req, res);
+        console.log("HELLO");
+        if (validation_result && !validation_result.success) {
+            throw validation_result.message;
+        }
+        console.log("HELLO");
+        let user_id = req.identity.id;
+        let subscription_id = req.body.id;
+
+        let get_user = await Users.findOne({ id: user_id });
+        if (!get_user) {
+            throw constants.SUBSCRIPTION_PLAN.INVALID_USER;
+        }
+
+        let getSubsQuery = {
+            status: "active",
+            id: subscription_id
+        };
+
+        let get_existing_subscription = await Subscriptions.findOne(getSubsQuery);
+
+        if (get_existing_subscription && get_existing_subscription.stripe_subscription_id) {
+
+            let get_stripe_existing_subscription = await Services.StripeServices.retrieve_subscrition({
+                stripe_subscription_id: get_existing_subscription.stripe_subscription_id
+            })
+
+            if (get_stripe_existing_subscription) {
+                let delete_old_subscription = await Services.StripeServices.delete_subscription({
+                    stripe_subscription_id: get_existing_subscription.stripe_subscription_id
+                })
+
+                if (delete_old_subscription && delete_old_subscription.status == "canceled") {
+                    console.log(delete_old_subscription);
+                    let updated_payload = {
+                        updatedBy: req.identity.id,
+                        status: "cancelled"
+                    }
+                    if (get_existing_subscription.valid_upto >= new Date()) {
+                        updated_payload.status = "inactive"
+                    }
+
+                    let updateSubscription = await Subscriptions.updateOne({ id: get_existing_subscription.id }, updated_payload);
+
+                    if (updateSubscription && (updateSubscription.status == "cancelled" || updateSubscription.status == "inactive")) {
+                        await Users.updateOne({id: user_id}).set({plan_id: null, special_plan_id: null});
+                        return response.success(null, constants.SUBSCRIPTION_PLAN.SUBSCRIPTION_CANCELLED, req, res);
+                    }
+
+                    throw constants.COMMON.SERVER_ERROR;
+
+                }
+                throw constants.COMMON.SERVER_ERROR;
+            }
+
+            throw "Invalid subscription ID";
+        }
+
+        throw "Invalid subscription ID";
+    } catch (error) {
+        // console.log(error, '=========errir');
+        return response.failed(null, `${error}`, req, res);
+    }
+}
+/*
+exports.cancelSubscription = async (req, res) => {
+    try {
         let validation_result = await Validations.SubscriptionPlansValidations.cancelSubscription(req, res);
 
         if (validation_result && !validation_result.success) {
@@ -1000,7 +1068,7 @@ exports.cancelSubscription = async (req, res) => {
         return response.failed(null, `${error}`, req, res);
     }
 }
-
+*/
 exports.myActiveSubscription = async (req, res) => {
     try {
         const user_id = req.param('user_id');
@@ -1018,17 +1086,17 @@ exports.myActiveSubscription = async (req, res) => {
             status: "active",
         });
 
-        let total_profile_views = await ProfileViews.count({
-            visited_by: user_id
-        })
+        // let total_profile_views = await ProfileViews.count({
+        //     visited_by: user_id
+        // })
 
         if (get_user_active_subscription) {
-            get_user_active_subscription.total_profile_views = total_profile_views;
-            get_user_active_subscription.total_credits = get_user.total_credits;
-            get_user_active_subscription.remaining_credits = get_user.remaining_credits;
+            // get_user_active_subscription.total_profile_views = total_profile_views;
+            // get_user_active_subscription.total_credits = get_user.total_credits;
+            // get_user_active_subscription.remaining_credits = get_user.remaining_credits;
             return response.success(get_user_active_subscription, constants.SUBSCRIPTION_PLAN.ACTIVE_SUBSCRIPTION_FETCHED, req, res);
         }
-
+        /*
         let get_user_inactive_subscription = await Subscriptions.findOne({
             user_id: user_id,
             status: "inactive",
@@ -1040,7 +1108,7 @@ exports.myActiveSubscription = async (req, res) => {
             get_user_inactive_subscription.total_credits = get_user.total_credits;
             get_user_inactive_subscription.remaining_credits = get_user.remaining_credits;
             return response.success(get_user_inactive_subscription, constants.SUBSCRIPTION_PLAN.ACTIVE_SUBSCRIPTION_FETCHED, req, res);
-        }
+        }*/
 
         throw constants.SUBSCRIPTION_PLAN.NO_SUBSCRIPTION_FOUND;
     } catch (error) {
@@ -1407,7 +1475,7 @@ exports.webhook = async (request, response) => {
             let findTransaction = await Transactions
               .findOne(transactionQuery)
               .sort({ createdAt: -1 });
-            let find_paln = await Subscriptionplans.findOne({
+            let find_paln = await SubscriptionPlans.findOne({
               _id: metadata.plan_id,
             });
             console.log(find_paln, "+++++++++++++++++++++++++++++find_paln");
@@ -1634,7 +1702,7 @@ exports.webhook = async (request, response) => {
             // if (event_object.payment_status == "paid") {
             let transaction_payload = {};
 
-            let find_paln = await Subscriptionplans.findOne({
+            let find_paln = await SubscriptionPlans.findOne({
               _id: event_object.metadata.plan_id,
             });
             // subscription create
@@ -1910,19 +1978,24 @@ exports.webhook = async (request, response) => {
                 stripe_subscription_id: event_object.id,
                 subscription_plan_id: event_object.metadata.plan_id,
                 status: "active",
-                amount: { type: 'number', defaultsTo: 0 },
+                amount: Number(event_object.metadata.network_plan_amount)+Number(event_object.metadata.managed_services_plan_amount),
                 network_plan_amount: event_object.metadata.network_plan_amount,
                 managed_services_plan_amount: event_object.metadata.managed_services_plan_amount,
                 interval: event_object.metadata.interval,
                 interval_count: event_object.metadata.interval_count,
-                valid_upto: cancelAt,
+                valid_upto: new Date(cancelAt*1000),
                 special_plan_id: event_object.metadata.special_plan_id,
                 // common fields
                 addedBy: event_object.metadata.user_id,
                 updatedBy: event_object.metadata.user_id
             }
-            await Subscriptions.create(subscriptionPayload).fetch();
-            await Users.updateOne({id: event_object.metadata.user_id}).set({});
+            // console.log(subscriptionPayload);
+            let subscription = await Subscriptions.create(subscriptionPayload).fetch();
+            await Users.updateOne({id: event_object.metadata.user_id}).set({
+                subscription: subscription.id,
+                plan_id: event_object.metadata.plan_id,
+                special_plan_id: event_object.metadata.special_plan_id
+            });
           }
           break;
         default:
@@ -1930,6 +2003,7 @@ exports.webhook = async (request, response) => {
       }
       response.json({ received: true });
     } catch (error) {
+        console.log(error);
     }
 }
 

@@ -34,10 +34,7 @@ module.exports = {
     plan_id: {
       model: 'subscriptionplans'
     },
-    subscription_id: {
-      type: 'string'
-    },
-    subscription: {model: "subscriptionplans"},
+    special_plan_id: {model: 'subscriptionplans'},
     affiliate_group: { model: 'affiliatemanagement' },
     affiliate_type: { type: "string", isIn: ["individual", "business"] },
     social_media_platforms: { type: "json", defaultsTo: [] },
