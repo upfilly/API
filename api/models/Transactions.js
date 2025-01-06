@@ -16,6 +16,7 @@ module.exports = {
         },
 
         subscription_plan_id: { model: "subscriptionplans" },
+        special_plan_id: {model: "subscriptionplans"},
         subscription_id: { model: "subscriptions" },
         transaction_id: { type: "string" },
         stripe_charge_id: { type: "string" },

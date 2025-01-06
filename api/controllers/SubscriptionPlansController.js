@@ -890,13 +890,10 @@ exports.subscribe = async (req, res) => {
 
 exports.cancelSubscription = async (req, res) => {
     try {
-        console.log("HELLOo");
         let validation_result = await Validations.SubscriptionPlansValidations.cancelSubscription(req, res);
-        console.log("HELLO");
         if (validation_result && !validation_result.success) {
             throw validation_result.message;
         }
-        console.log("HELLO");
         let user_id = req.identity.id;
         let subscription_id = req.body.id;
 
@@ -1084,7 +1081,7 @@ exports.myActiveSubscription = async (req, res) => {
         let get_user_active_subscription = await Subscriptions.findOne({
             user_id: user_id,
             status: "active",
-        });
+        }).populate('subscription_plan_id').populate('special_plan_id');
 
         // let total_profile_views = await ProfileViews.count({
         //     visited_by: user_id
@@ -1463,6 +1460,7 @@ exports.webhook = async (request, response) => {
           */
           break;
         case "invoice.created":
+          /*
           var event_object = event.data.object;
           console.log("--------------invoice.created");
 
@@ -1497,7 +1495,7 @@ exports.webhook = async (request, response) => {
               let createTransaction = await Transactions.create(query);
             }
           }
-
+          */
           // if (event_object.status == "active") {
           //   let update_subscription = await db.subscription.updateOne(
           //     { stripe_subscription_id: event_object.id },
@@ -1532,34 +1530,36 @@ exports.webhook = async (request, response) => {
           break;
 
         case "invoice.payment_succeeded":
+            console.log("COME HERE!");
           var event_object = event.data.object;
 
           if (event_object.subscription) {
-            let get_subscription_data = await Subscriptions.findOne({
-              stripe_subscription_id: event_object.subscription,
+            // let get_subscription_data = await Subscriptions.findOne({
+            //   stripe_subscription_id: event_object.subscription,
+            // });
+            let get_subscription_plan = await SubscriptionPlans.findOne({
+                id: event_object.subscription_details.metadata.plan_id
             });
-
-            if (get_subscription_data) {
-              let get_subscription_plan = await SubscriptionPlans.findOne({
-                id: get_subscription_data.subscription_plan_id,
-              });
-
+            if (event_object) {
+            //   let get_subscription_plan = await SubscriptionPlans.findOne({
+            //     id: get_subscription_data.subscription_plan_id,
+            //   });
               let transaction_payload = {
-                user_id: get_subscription_data.user_id,
+                user_id: event_object.subscription_details.metadata.user_id,
                 paid_to: get_subscription_plan
                   ? get_subscription_plan.addedBy
                   : null,
                 transaction_type: "buy_subscription",
-                subscription_plan_id: get_subscription_plan.id,
+                subscription_plan_id: event_object.subscription_details.metadata.plan_id,
+                special_plan_id: event_object.subscription_details.metadata.special_plan_id,
                 payment_intent_id: event_object.id,
-                subscription_id: get_subscription_data.id,
+                // subscription_id: get_subscription_data.id,
                 stripe_charge_id: event_object.id,
                 currency: event_object.currency,
-                amount: event_object.amount_paid ? event_object.amount_paid : 0,
+                amount: event_object.amount_paid ? Number(event_object.amount_paid)/100 : 0,
                 stripe_subscription_id: event_object.subscription,
-                transaction_status: event_object.status,
+                transaction_status: event_object.status
               };
-
               if (event_object.status == "paid") {
                 transaction_payload.transaction_status = "successful";
               }
@@ -1567,6 +1567,7 @@ exports.webhook = async (request, response) => {
               let create_transacton = await Transactions.create(
                 transaction_payload
               );
+              /*
               if (create_transacton) {
                 if (create_transacton.transaction_type == "buy_subscription") {
                   //----------- update dashboard ----------//
@@ -1600,7 +1601,7 @@ exports.webhook = async (request, response) => {
                     subscribed_by: get_subscription_data.user_id,
                     payment_intent_id: create_transacton.id,
                   };
-
+                  
                   // let email_payload_to_user = {
                   //     email: get_subscriber.email,
                   //     subscription_id: get_subscription_data.id,
@@ -1612,10 +1613,9 @@ exports.webhook = async (request, response) => {
                   // await Emails.OnboardingEmails.subscription_transaction_email(email_payload_to_admin);
                   // await Emails.OnboardingEmails.subscription_transaction_email(email_payload_to_user);
                 }
-              }
+              }*/
             }
           }
-
           break;
 
         case "customer.subscription.trial_will_end":
@@ -1657,8 +1657,9 @@ exports.webhook = async (request, response) => {
           break;
 
         case "invoice.upcoming":
-          var event_object = event.data.object;
           /*
+          var event_object = event.data.object;
+          
           if (event_object.subscription) {
             let get_subscription_data = await Subscriptions.findOne({
               stripe_subscription_id: event_object.subscription,
@@ -1690,6 +1691,7 @@ exports.webhook = async (request, response) => {
           }*/
           break;
         case "checkout.session.completed":
+          /*
           var event_object = event.data.object;
           console.log(
             event_object.metadata,
@@ -1952,13 +1954,14 @@ exports.webhook = async (request, response) => {
               }
             }
           }
+          */
           break;
         case "customer.subscription.created":
             var event_object = event.data.object;
-          console.log(
-            event_object.metadata,
-            "+++++++++++++++++event_object.metadata", "customer.subscription.created"
-          );
+        //   console.log(
+        //     event_object.metadata,
+        //     "+++++++++++++++++event_object.metadata", "customer.subscription.created"
+        //   );
         //   console.log(event_object.metadata.promoId,"++++++++++++++++++++++++++event_object.metadata.promoId")
 
           if (event_object) {
@@ -1967,10 +1970,34 @@ exports.webhook = async (request, response) => {
                 cancel_at: cancelAt, // Set the cancel_at timestamp
               });
             //find any existing subscriptions for the user
-            let existingSubscription = await Subscriptions.findOne({user_id: event_object.metadata.user_id, status: "active"});
-            //set them as inactive
-            if(existingSubscription) {
-                await Subscriptions.updateOne({id: existingSubscription.id}).set({status: "inactive"});
+            let get_existing_subscription = await Subscriptions.findOne({user_id: event_object.metadata.user_id, status: "active"});
+
+            if (get_existing_subscription && get_existing_subscription.stripe_subscription_id) {
+    
+                let get_stripe_existing_subscription = await Services.StripeServices.retrieve_subscrition({
+                    stripe_subscription_id: get_existing_subscription.stripe_subscription_id
+                })
+    
+                if (get_stripe_existing_subscription) {
+                    let delete_old_subscription = await Services.StripeServices.delete_subscription({
+                        stripe_subscription_id: get_existing_subscription.stripe_subscription_id
+                    })
+    
+                    if (delete_old_subscription && delete_old_subscription.status == "canceled") {
+                        let updated_payload = {
+                            status: "cancelled"
+                        }
+                        if (get_existing_subscription.valid_upto >= new Date()) {
+                            updated_payload.status = "inactive"
+                        }
+    
+                        let updateSubscription = await Subscriptions.updateOne({ id: get_existing_subscription.id }, updated_payload);
+    
+                        if (updateSubscription && (updateSubscription.status == "cancelled" || updateSubscription.status == "inactive")) {
+                            await Users.updateOne({id: event_object.metadata.user_id}).set({plan_id: null, special_plan_id: null});
+                        }
+                    }
+                }
             }
             //set current subscription as active
             let subscriptionPayload = {
@@ -1985,7 +2012,6 @@ exports.webhook = async (request, response) => {
                 interval_count: event_object.metadata.interval_count,
                 valid_upto: new Date(cancelAt*1000),
                 special_plan_id: event_object.metadata.special_plan_id,
-                // common fields
                 addedBy: event_object.metadata.user_id,
                 updatedBy: event_object.metadata.user_id
             }
@@ -1999,7 +2025,7 @@ exports.webhook = async (request, response) => {
           }
           break;
         default:
-          console.log(`Unhandled event type ${event.type}`);
+          //console.log(`Unhandled event type ${event.type}`);
       }
       response.json({ received: true });
     } catch (error) {
