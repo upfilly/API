@@ -1899,10 +1899,10 @@ exports.webhook = async (request, response) => {
                 cancel_at: cancelAt, // Set the cancel_at timestamp
               });
             //find any existing subscriptions for the user
-            let existingSubscription = await Subscription.findOne({user_id: event_object.metadata.user_id, status: "active"});
+            let existingSubscription = await Subscriptions.findOne({user_id: event_object.metadata.user_id, status: "active"});
             //set them as inactive
             if(existingSubscription) {
-                await Subscription.updateOne({id: existingSubscription.id}).set({status: "inactive"});
+                await Subscriptions.updateOne({id: existingSubscription.id}).set({status: "inactive"});
             }
             //set current subscription as active
             let subscriptionPayload = {
@@ -1921,7 +1921,7 @@ exports.webhook = async (request, response) => {
                 addedBy: event_object.metadata.user_id,
                 updatedBy: event_object.metadata.user_id
             }
-            await Subscription.create(subscriptionPayload).fetch();
+            await Subscriptions.create(subscriptionPayload).fetch();
             await Users.updateOne({id: event_object.metadata.user_id}).set({});
           }
           break;
