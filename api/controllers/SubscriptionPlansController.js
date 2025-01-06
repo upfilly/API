@@ -472,22 +472,85 @@ exports.payNowOnStripe = async (req, res) => {
       if (find_user) {
         var email = find_user.email;
       }
-      
+
       var find_plan = await SubscriptionPlans.findOne({ id: data.planId, isDeleted: false, status: "active" });
-    //   if (req.body.promoId) {
-    //     let findPromo = await db.promocode.findOne({
-    //       coupon_stripe_code: req.body.promoId,isDeleted:false
-    //     });
-    //     if (findPromo.amount && findPromo.amount > req.body.amount) {
-    //       return res.status(400).json({
-    //         success: false,
-    //         message:"Coupon amount exceeds the plan amount."
-    //       });
-    //     }
-    //   }
-    if(!find_plan) {
-        return res.status(404).json({message: "Plan not found!", success: false});
-    }
+      //   if (req.body.promoId) {
+      //     let findPromo = await db.promocode.findOne({
+      //       coupon_stripe_code: req.body.promoId,isDeleted:false
+      //     });
+      //     if (findPromo.amount && findPromo.amount > req.body.amount) {
+      //       return res.status(400).json({
+      //         success: false,
+      //         message:"Coupon amount exceeds the plan amount."
+      //       });
+      //     }
+      //   }
+      if(!find_plan) {
+          return res.status(404).json({message: "Plan not found!", success: false});
+      }
+
+
+      if(data.network_plan_amount === 0 && data.managed_services_plan_amount === 0) {
+        let get_existing_subscription = await Subscriptions.findOne({user_id: req.identity.id, status: "active"});
+
+            if (get_existing_subscription && get_existing_subscription.stripe_subscription_id) {
+    
+                let get_stripe_existing_subscription = await Services.StripeServices.retrieve_subscrition({
+                    stripe_subscription_id: get_existing_subscription.stripe_subscription_id
+                })
+    
+                if (get_stripe_existing_subscription) {
+                    let delete_old_subscription = await Services.StripeServices.delete_subscription({
+                        stripe_subscription_id: get_existing_subscription.stripe_subscription_id
+                    })
+    
+                    if (delete_old_subscription && delete_old_subscription.status == "canceled") {
+                        let updated_payload = {
+                            status: "cancelled"
+                        }
+                        if (get_existing_subscription.valid_upto >= new Date()) {
+                            updated_payload.status = "inactive"
+                        }
+    
+                        let updateSubscription = await Subscriptions.updateOne({ id: get_existing_subscription.id }, updated_payload);
+    
+                        if (updateSubscription && (updateSubscription.status == "cancelled" || updateSubscription.status == "inactive")) {
+                            await Users.updateOne({id: req.identity.id}).set({plan_id: null, special_plan_id: null});
+                        }
+                    }
+                }
+            }
+            let currentDate = new Date();
+            currentDate.setDate(currentDate.getDate() + Number(data.interval_count)*30);
+            //set current subscription as active
+            let subscriptionPayload = {
+                user_id: req.identity.id,
+                stripe_subscription_id: '',
+                subscription_plan_id: data.planId,
+                status: "active",
+                amount: 0,
+                network_plan_amount: 0,
+                managed_services_plan_amount: 0,
+                interval: data.interval,
+                interval_count: data.interval_count,
+                valid_upto: currentDate,
+                special_plan_id: null,
+                addedBy: req.identity.id,
+                updatedBy: req.identity.id
+            }
+            // console.log(subscriptionPayload);
+            let subscription = await Subscriptions.create(subscriptionPayload).fetch();
+            await Users.updateOne({id: req.identity.id}).set({
+                subscription: subscription.id,
+                plan_id: subscription.plan_id,
+                special_plan_id: subscription.special_plan_id
+            });
+            return res.status(200).json({
+                success: true,
+                code: 200,
+                message: "Subscription successful!",
+              });
+      }
 
     let product1 = await stripe.products.create({
         name: find_plan.name
@@ -908,7 +971,11 @@ exports.cancelSubscription = async (req, res) => {
         };
 
         let get_existing_subscription = await Subscriptions.findOne(getSubsQuery);
-
+        if(get_existing_subscription && get_existing_subscription.amount === 0) {
+            await Subscriptions.updateOne({id: get_existing_subscription.id}).set({status: "cancelled"});
+            await Users.updateOne({id: user_id}).set({plan_id: null, special_plan_id: null});
+            return response.success(null, constants.SUBSCRIPTION_PLAN.SUBSCRIPTION_CANCELLED, req, res);
+        }
         if (get_existing_subscription && get_existing_subscription.stripe_subscription_id) {
 
             let get_stripe_existing_subscription = await Services.StripeServices.retrieve_subscrition({
