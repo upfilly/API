@@ -621,8 +621,9 @@ exports.payNowOnStripe = async (req, res) => {
                 special_plan_id: data.special_plan_id,
                 user_id: req.identity.id,
                 network_plan_amount: data.network_plan_amount,
-                managed_services_plan_amount: 0,
+                managed_services_plan_amount: data.managed_services_plan_amount,
                 interval_count: req.body.interval_count,
+                interval: req.body.interval,
                 promoId:req.body.promoId?req.body.promoId: "",
             },
         },
@@ -1351,7 +1352,7 @@ exports.webhook = async (request, response) => {
           console.log(
             "------------customer.subscription.updated------------------"
           );
-
+          /*
           var event_object = event.data.object;
           console.log(event_object, "------------event_object");
           if (event_object.status == "active") {
@@ -1391,6 +1392,7 @@ exports.webhook = async (request, response) => {
 
             // }
           }
+          */
           break;
         case "invoice.created":
           var event_object = event.data.object;
@@ -1549,6 +1551,7 @@ exports.webhook = async (request, response) => {
           break;
 
         case "customer.subscription.trial_will_end":
+            /*
           var event_object = event.data.object;
           if (event_object.id) {
             let get_subscription_data = await Subscriptions.updateOne(
@@ -1572,23 +1575,22 @@ exports.webhook = async (request, response) => {
             //     await Emails.OnboardingEmails.trial_will_end_email(email_payload_to_user)
             // }
           }
+        */
           break;
 
         case "customer.subscription.deleted":
           var event_object = event.data.object;
           if (event_object.status == "canceled") {
             let update_subscription = await Subscriptions.updateOne(
-              { stripe_subscription_id: event_object.id },
-              {
+              { stripe_subscription_id: event_object.id }).set({
                 status: "cancelled",
-              }
-            );
+              });
           }
           break;
 
         case "invoice.upcoming":
           var event_object = event.data.object;
-
+          /*
           if (event_object.subscription) {
             let get_subscription_data = await Subscriptions.findOne({
               stripe_subscription_id: event_object.subscription,
@@ -1617,7 +1619,7 @@ exports.webhook = async (request, response) => {
               // // await Emails.OnboardingEmails.subscriptiohn_transaction_email(email_payload_to_admin);
               // await Emails.OnboardingEmails.upcomming_invoice_email(email_payload_to_user);
             }
-          }
+          }*/
           break;
         case "checkout.session.completed":
           var event_object = event.data.object;
