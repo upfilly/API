@@ -106,7 +106,7 @@ module.exports.routes = {
     "SubscriptionPlansController.getSubscriptionPlanById",
   "delete /subscription-plan":
     "SubscriptionPlansController.deleteSubscriptionPlan",
-  "post /subscribe": "SubscriptionPlansController.subscribe",
+  "post /subscribe": "SubscriptionPlansController.payNowOnStripe",
   "put /cancel-subscription": "SubscriptionPlansController.cancelSubscription",
   "get /active-subscription":
     "SubscriptionPlansController.myActiveSubscription",
@@ -115,17 +115,17 @@ module.exports.routes = {
   "get /subscription/graph":
     "SubscriptionPlansController.getSubscriptionsGraphData",
   "get /recommend-plans": "SubscriptionPlansController.getRecommendedPlans",
-
+  "post /hook": "SubscriptionPlansController.webhook",
   /**
    * @Braintree
    */
   //With 3rd party- Braintree
-
+/*
   "post /subscription-plan/braintree":
     "SubscriptionPlansController.addSubscriptionPlanBraintree",
   "post /subscribe/braintree":
     "SubscriptionPlansController.subscribeOnBraintree",
-
+*/
   /**
    * @Transactions
    */
@@ -146,7 +146,7 @@ module.exports.routes = {
   "get /card/all": "StripeController.getAllCards",
   "get /card": "StripeController.getCardById",
   "delete /card": "StripeController.deleteCard",
-  "post /hook": "StripeController.webhook",
+  // "post /hook": "StripeController.webhook",
   "post /create/session": "StripeController.createCheckoutSession",
 
   /**
