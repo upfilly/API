@@ -657,7 +657,7 @@ exports.payNowOnStripe = async (req, res) => {
     } else {
       transaction_payload.user_id = req.identity.id;
 
-      let get_admin = await Services.usersService.get_users_with_role();
+      let get_admin = await Services.UserServices.get_users_with_role(["admin"]);
       transaction_payload.paid_to = get_admin[0].id;
       let line_items = [
         {
