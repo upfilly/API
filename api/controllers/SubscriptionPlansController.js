@@ -521,6 +521,10 @@ exports.payNowOnStripe = async (req, res) => {
                         }
                     }
                 }
+            } else if(get_existing_subscription){
+                //cancel existing subscription
+                let updateSubscription = await Subscriptions.updateOne({ id: get_existing_subscription.id, status: "active" }).set({status: "cancelled"});
+                await Users.updateOne({id: req.identity.id}).set({plan_id: null, special_plan_id: null});
             }
             let currentDate = new Date();
             currentDate.setDate(currentDate.getDate() + Number(data.interval_count)*30);
@@ -542,9 +546,8 @@ exports.payNowOnStripe = async (req, res) => {
             }
             // console.log(subscriptionPayload);
             let subscription = await Subscriptions.create(subscriptionPayload).fetch();
-            await Users.updateOne({id: req.identity.id}).set({
-                subscription: subscription.id,
-                plan_id: subscription.plan_id,
+            let user = await Users.updateOne({id: req.identity.id}).set({
+                plan_id: subscription.subscription_plan_id,
                 special_plan_id: subscription.special_plan_id
             });
             return res.status(200).json({
