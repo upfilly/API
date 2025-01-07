@@ -326,52 +326,51 @@ exports.getAllSubscriptionPlans = async (req, res) => {
         // }
         // pipeline.push(unset_stage)
 
-        let totalresult = await   db.collection('subscriptionplans').aggregate(pipeline).toArray();
-            pipeline.push({
-                $skip: Number(skipNo)
-            });
-            pipeline.push({
-                $limit: Number(count)
-            });
-            let result = await db.collection('subscriptionplans').aggregate(pipeline).toArray();
-                if (userId) {
-                    var userDetail = await Users.findOne({ id: userId })
-                }
+        let totalresult = await db.collection('subscriptionplans').aggregate(pipeline).toArray();
+        pipeline.push({
+            $skip: Number(skipNo)
+        });
+        pipeline.push({
+            $limit: Number(count)
+        });
+        let result = await db.collection('subscriptionplans').aggregate(pipeline).toArray();
+        if (userId) {
+            var userDetail = await Users.findOne({ id: userId })
 
-                await (async function () {
-                    let find_subscription = await Subscriptions.findOne({user_id: userDetail.id, status: 'active' });
-                    for await (let data of result) {
-                        // console.log(data._id, "----data");
-                        // console.log(userDetail.plan_id, "--userDetail");
-                        
-                        if (userDetail && ((String(userDetail.plan_id) == String(data._id)) || (String(userDetail?.special_plan_id) === String(data._id))) ) {
-                            // console.log(userDetail, "--------------userDetail");
-                            // console.log("after match");
-                            //let find_subscription = await Subscriptions.findOne({ subscription_plan_id: userDetail.plan_id, user_id: userDetail.id, stripe_subscription_id: userDetail.subscription_id, status: 'active' });
-                            // console.log(find_subscription, "-----------find_subscription");
-                            if (find_subscription) {
-                                // console.log(find_subscription,"-----------find_subscription");
-                                data.isActive = true
-                            } else {
-                                data.isActive = false
-                            }
-                        }
-                        else {
+            await (async function () {
+                let find_subscription = await Subscriptions.findOne({user_id: userDetail.id, status: 'active' });
+                for await (let data of result) {
+                    // console.log(data._id, "----data");
+                    // console.log(userDetail.plan_id, "--userDetail");
+                    
+                    if (userDetail && ((String(userDetail.plan_id) == String(data._id)) || (String(userDetail?.special_plan_id) === String(data._id))) ) {
+                        // console.log(userDetail, "--------------userDetail");
+                        // console.log("after match");
+                        //let find_subscription = await Subscriptions.findOne({ subscription_plan_id: userDetail.plan_id, user_id: userDetail.id, stripe_subscription_id: userDetail.subscription_id, status: 'active' });
+                        // console.log(find_subscription, "-----------find_subscription");
+                        if (find_subscription) {
+                            // console.log(find_subscription,"-----------find_subscription");
+                            data.isActive = true
+                        } else {
                             data.isActive = false
                         }
                     }
-
-                })();
-
-
-                let resData = {
-                    total_count: totalresult ? totalresult.length : 0,
-                    data: result ? result : [],
+                    else {
+                        data.isActive = false
+                    }
                 }
-                if (!req.param('page') && !req.param('count')) {
-                    resData.data = totalresult ? totalresult : [];
-                }
-                return response.success(resData, constants.SUBSCRIPTION_PLAN.FETCHED, req, res);
+
+            })();
+        }
+
+            let resData = {
+                total_count: totalresult ? totalresult.length : 0,
+                data: result ? result : [],
+            }
+            if (!req.param('page') && !req.param('count')) {
+                resData.data = totalresult ? totalresult : [];
+            }
+            return response.success(resData, constants.SUBSCRIPTION_PLAN.FETCHED, req, res);
           
     } catch (error) {
         return response.failed(null, `${error}`, req, res);
