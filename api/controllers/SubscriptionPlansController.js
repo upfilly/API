@@ -8,7 +8,6 @@ const Validations = require("../Validations/index");
 const db = sails.getDatastore().manager
 const ObjectId = require('mongodb').ObjectId;
 const Emails = require('../Emails/index');
-const { Subscription } = require('braintree');
 
 // var braintree = require('braintree');
 // // console.log(braintree,"----------------braintree");
@@ -473,22 +472,85 @@ exports.payNowOnStripe = async (req, res) => {
       if (find_user) {
         var email = find_user.email;
       }
-      
+
       var find_plan = await SubscriptionPlans.findOne({ id: data.planId, isDeleted: false, status: "active" });
-    //   if (req.body.promoId) {
-    //     let findPromo = await db.promocode.findOne({
-    //       coupon_stripe_code: req.body.promoId,isDeleted:false
-    //     });
-    //     if (findPromo.amount && findPromo.amount > req.body.amount) {
-    //       return res.status(400).json({
-    //         success: false,
-    //         message:"Coupon amount exceeds the plan amount."
-    //       });
-    //     }
-    //   }
-    if(!find_plan) {
-        return res.status(404).json({message: "Plan not found!", success: false});
-    }
+      //   if (req.body.promoId) {
+      //     let findPromo = await db.promocode.findOne({
+      //       coupon_stripe_code: req.body.promoId,isDeleted:false
+      //     });
+      //     if (findPromo.amount && findPromo.amount > req.body.amount) {
+      //       return res.status(400).json({
+      //         success: false,
+      //         message:"Coupon amount exceeds the plan amount."
+      //       });
+      //     }
+      //   }
+      if(!find_plan) {
+          return res.status(404).json({message: "Plan not found!", success: false});
+      }
+
+
+      if(data.network_plan_amount === 0 && data.managed_services_plan_amount === 0) {
+        let get_existing_subscription = await Subscriptions.findOne({user_id: req.identity.id, status: "active"});
+
+            if (get_existing_subscription && get_existing_subscription.stripe_subscription_id) {
+    
+                let get_stripe_existing_subscription = await Services.StripeServices.retrieve_subscrition({
+                    stripe_subscription_id: get_existing_subscription.stripe_subscription_id
+                })
+    
+                if (get_stripe_existing_subscription) {
+                    let delete_old_subscription = await Services.StripeServices.delete_subscription({
+                        stripe_subscription_id: get_existing_subscription.stripe_subscription_id
+                    })
+    
+                    if (delete_old_subscription && delete_old_subscription.status == "canceled") {
+                        let updated_payload = {
+                            status: "cancelled"
+                        }
+                        if (get_existing_subscription.valid_upto >= new Date()) {
+                            updated_payload.status = "inactive"
+                        }
+    
+                        let updateSubscription = await Subscriptions.updateOne({ id: get_existing_subscription.id }, updated_payload);
+    
+                        if (updateSubscription && (updateSubscription.status == "cancelled" || updateSubscription.status == "inactive")) {
+                            await Users.updateOne({id: req.identity.id}).set({plan_id: null, special_plan_id: null});
+                        }
+                    }
+                }
+            }
+            let currentDate = new Date();
+            currentDate.setDate(currentDate.getDate() + Number(data.interval_count)*30);
+            //set current subscription as active
+            let subscriptionPayload = {
+                user_id: req.identity.id,
+                stripe_subscription_id: '',
+                subscription_plan_id: data.planId,
+                status: "active",
+                amount: 0,
+                network_plan_amount: 0,
+                managed_services_plan_amount: 0,
+                interval: data.interval,
+                interval_count: data.interval_count,
+                valid_upto: currentDate,
+                special_plan_id: null,
+                addedBy: req.identity.id,
+                updatedBy: req.identity.id
+            }
+            // console.log(subscriptionPayload);
+            let subscription = await Subscriptions.create(subscriptionPayload).fetch();
+            await Users.updateOne({id: req.identity.id}).set({
+                subscription: subscription.id,
+                plan_id: subscription.plan_id,
+                special_plan_id: subscription.special_plan_id
+            });
+            return res.status(200).json({
+                success: true,
+                code: 200,
+                message: "Subscription successful!",
+              });
+      }
 
     let product1 = await stripe.products.create({
         name: find_plan.name
@@ -552,7 +614,7 @@ exports.payNowOnStripe = async (req, res) => {
                 special_plan_id: data.special_plan_id,
                 user_id: req.identity.id,
                 network_plan_amount: data.network_plan_amount,
-                managed_services_plan_amount: 0,
+                managed_services_plan_amount: data.managed_services_plan_amount,
                 interval_count: req.body.interval_count,
                 promoId:req.body.promoId?req.body.promoId: "",
             },
@@ -562,8 +624,9 @@ exports.payNowOnStripe = async (req, res) => {
                     special_plan_id: data.special_plan_id,
                     user_id: req.identity.id,
                     network_plan_amount: data.network_plan_amount,
-                    managed_services_plan_amount: 0,
+                    managed_services_plan_amount: data.managed_services_plan_amount,
                     interval_count: req.body.interval_count,
+                    interval: req.body.interval,
                     promoId:req.body.promoId?req.body.promoId: "",
                 },
             },
@@ -891,6 +954,75 @@ exports.subscribe = async (req, res) => {
 exports.cancelSubscription = async (req, res) => {
     try {
         let validation_result = await Validations.SubscriptionPlansValidations.cancelSubscription(req, res);
+        if (validation_result && !validation_result.success) {
+            throw validation_result.message;
+        }
+        let user_id = req.identity.id;
+        let subscription_id = req.body.id;
+
+        let get_user = await Users.findOne({ id: user_id });
+        if (!get_user) {
+            throw constants.SUBSCRIPTION_PLAN.INVALID_USER;
+        }
+
+        let getSubsQuery = {
+            status: "active",
+            id: subscription_id
+        };
+
+        let get_existing_subscription = await Subscriptions.findOne(getSubsQuery);
+        if(get_existing_subscription && get_existing_subscription.amount === 0) {
+            await Subscriptions.updateOne({id: get_existing_subscription.id}).set({status: "cancelled"});
+            await Users.updateOne({id: user_id}).set({plan_id: null, special_plan_id: null});
+            return response.success(null, constants.SUBSCRIPTION_PLAN.SUBSCRIPTION_CANCELLED, req, res);
+        }
+        if (get_existing_subscription && get_existing_subscription.stripe_subscription_id) {
+
+            let get_stripe_existing_subscription = await Services.StripeServices.retrieve_subscrition({
+                stripe_subscription_id: get_existing_subscription.stripe_subscription_id
+            })
+
+            if (get_stripe_existing_subscription) {
+                let delete_old_subscription = await Services.StripeServices.delete_subscription({
+                    stripe_subscription_id: get_existing_subscription.stripe_subscription_id
+                })
+
+                if (delete_old_subscription && delete_old_subscription.status == "canceled") {
+                    console.log(delete_old_subscription);
+                    let updated_payload = {
+                        updatedBy: req.identity.id,
+                        status: "cancelled"
+                    }
+                    if (get_existing_subscription.valid_upto >= new Date()) {
+                        updated_payload.status = "inactive"
+                    }
+
+                    let updateSubscription = await Subscriptions.updateOne({ id: get_existing_subscription.id }, updated_payload);
+
+                    if (updateSubscription && (updateSubscription.status == "cancelled" || updateSubscription.status == "inactive")) {
+                        await Users.updateOne({id: user_id}).set({plan_id: null, special_plan_id: null});
+                        return response.success(null, constants.SUBSCRIPTION_PLAN.SUBSCRIPTION_CANCELLED, req, res);
+                    }
+
+                    throw constants.COMMON.SERVER_ERROR;
+
+                }
+                throw constants.COMMON.SERVER_ERROR;
+            }
+
+            throw "Invalid subscription ID";
+        }
+
+        throw "Invalid subscription ID";
+    } catch (error) {
+        // console.log(error, '=========errir');
+        return response.failed(null, `${error}`, req, res);
+    }
+}
+/*
+exports.cancelSubscription = async (req, res) => {
+    try {
+        let validation_result = await Validations.SubscriptionPlansValidations.cancelSubscription(req, res);
 
         if (validation_result && !validation_result.success) {
             throw validation_result.message;
@@ -1000,7 +1132,7 @@ exports.cancelSubscription = async (req, res) => {
         return response.failed(null, `${error}`, req, res);
     }
 }
-
+*/
 exports.myActiveSubscription = async (req, res) => {
     try {
         const user_id = req.param('user_id');
@@ -1016,19 +1148,19 @@ exports.myActiveSubscription = async (req, res) => {
         let get_user_active_subscription = await Subscriptions.findOne({
             user_id: user_id,
             status: "active",
-        });
+        }).populate('subscription_plan_id').populate('special_plan_id');
 
-        let total_profile_views = await ProfileViews.count({
-            visited_by: user_id
-        })
+        // let total_profile_views = await ProfileViews.count({
+        //     visited_by: user_id
+        // })
 
         if (get_user_active_subscription) {
-            get_user_active_subscription.total_profile_views = total_profile_views;
-            get_user_active_subscription.total_credits = get_user.total_credits;
-            get_user_active_subscription.remaining_credits = get_user.remaining_credits;
+            // get_user_active_subscription.total_profile_views = total_profile_views;
+            // get_user_active_subscription.total_credits = get_user.total_credits;
+            // get_user_active_subscription.remaining_credits = get_user.remaining_credits;
             return response.success(get_user_active_subscription, constants.SUBSCRIPTION_PLAN.ACTIVE_SUBSCRIPTION_FETCHED, req, res);
         }
-
+        /*
         let get_user_inactive_subscription = await Subscriptions.findOne({
             user_id: user_id,
             status: "inactive",
@@ -1040,7 +1172,7 @@ exports.myActiveSubscription = async (req, res) => {
             get_user_inactive_subscription.total_credits = get_user.total_credits;
             get_user_inactive_subscription.remaining_credits = get_user.remaining_credits;
             return response.success(get_user_inactive_subscription, constants.SUBSCRIPTION_PLAN.ACTIVE_SUBSCRIPTION_FETCHED, req, res);
-        }
+        }*/
 
         throw constants.SUBSCRIPTION_PLAN.NO_SUBSCRIPTION_FOUND;
     } catch (error) {
@@ -1395,6 +1527,7 @@ exports.webhook = async (request, response) => {
           */
           break;
         case "invoice.created":
+          /*
           var event_object = event.data.object;
           console.log("--------------invoice.created");
 
@@ -1407,7 +1540,7 @@ exports.webhook = async (request, response) => {
             let findTransaction = await Transactions
               .findOne(transactionQuery)
               .sort({ createdAt: -1 });
-            let find_paln = await Subscriptionplans.findOne({
+            let find_paln = await SubscriptionPlans.findOne({
               _id: metadata.plan_id,
             });
             console.log(find_paln, "+++++++++++++++++++++++++++++find_paln");
@@ -1429,7 +1562,7 @@ exports.webhook = async (request, response) => {
               let createTransaction = await Transactions.create(query);
             }
           }
-
+          */
           // if (event_object.status == "active") {
           //   let update_subscription = await db.subscription.updateOne(
           //     { stripe_subscription_id: event_object.id },
@@ -1464,34 +1597,36 @@ exports.webhook = async (request, response) => {
           break;
 
         case "invoice.payment_succeeded":
+            console.log("COME HERE!");
           var event_object = event.data.object;
 
           if (event_object.subscription) {
-            let get_subscription_data = await Subscriptions.findOne({
-              stripe_subscription_id: event_object.subscription,
+            // let get_subscription_data = await Subscriptions.findOne({
+            //   stripe_subscription_id: event_object.subscription,
+            // });
+            let get_subscription_plan = await SubscriptionPlans.findOne({
+                id: event_object.subscription_details.metadata.plan_id
             });
-
-            if (get_subscription_data) {
-              let get_subscription_plan = await SubscriptionPlans.findOne({
-                id: get_subscription_data.subscription_plan_id,
-              });
-
+            if (event_object) {
+            //   let get_subscription_plan = await SubscriptionPlans.findOne({
+            //     id: get_subscription_data.subscription_plan_id,
+            //   });
               let transaction_payload = {
-                user_id: get_subscription_data.user_id,
+                user_id: event_object.subscription_details.metadata.user_id,
                 paid_to: get_subscription_plan
                   ? get_subscription_plan.addedBy
                   : null,
                 transaction_type: "buy_subscription",
-                subscription_plan_id: get_subscription_plan.id,
+                subscription_plan_id: event_object.subscription_details.metadata.plan_id,
+                special_plan_id: event_object.subscription_details.metadata.special_plan_id,
                 payment_intent_id: event_object.id,
-                subscription_id: get_subscription_data.id,
+                // subscription_id: get_subscription_data.id,
                 stripe_charge_id: event_object.id,
                 currency: event_object.currency,
-                amount: event_object.amount_paid ? event_object.amount_paid : 0,
+                amount: event_object.amount_paid ? Number(event_object.amount_paid)/100 : 0,
                 stripe_subscription_id: event_object.subscription,
-                transaction_status: event_object.status,
+                transaction_status: event_object.status
               };
-
               if (event_object.status == "paid") {
                 transaction_payload.transaction_status = "successful";
               }
@@ -1499,6 +1634,7 @@ exports.webhook = async (request, response) => {
               let create_transacton = await Transactions.create(
                 transaction_payload
               );
+              /*
               if (create_transacton) {
                 if (create_transacton.transaction_type == "buy_subscription") {
                   //----------- update dashboard ----------//
@@ -1532,7 +1668,7 @@ exports.webhook = async (request, response) => {
                     subscribed_by: get_subscription_data.user_id,
                     payment_intent_id: create_transacton.id,
                   };
-
+                  
                   // let email_payload_to_user = {
                   //     email: get_subscriber.email,
                   //     subscription_id: get_subscription_data.id,
@@ -1544,10 +1680,9 @@ exports.webhook = async (request, response) => {
                   // await Emails.OnboardingEmails.subscription_transaction_email(email_payload_to_admin);
                   // await Emails.OnboardingEmails.subscription_transaction_email(email_payload_to_user);
                 }
-              }
+              }*/
             }
           }
-
           break;
 
         case "customer.subscription.trial_will_end":
@@ -1589,8 +1724,9 @@ exports.webhook = async (request, response) => {
           break;
 
         case "invoice.upcoming":
-          var event_object = event.data.object;
           /*
+          var event_object = event.data.object;
+          
           if (event_object.subscription) {
             let get_subscription_data = await Subscriptions.findOne({
               stripe_subscription_id: event_object.subscription,
@@ -1622,6 +1758,7 @@ exports.webhook = async (request, response) => {
           }*/
           break;
         case "checkout.session.completed":
+          /*
           var event_object = event.data.object;
           console.log(
             event_object.metadata,
@@ -1634,7 +1771,7 @@ exports.webhook = async (request, response) => {
             // if (event_object.payment_status == "paid") {
             let transaction_payload = {};
 
-            let find_paln = await Subscriptionplans.findOne({
+            let find_paln = await SubscriptionPlans.findOne({
               _id: event_object.metadata.plan_id,
             });
             // subscription create
@@ -1884,13 +2021,14 @@ exports.webhook = async (request, response) => {
               }
             }
           }
+          */
           break;
         case "customer.subscription.created":
             var event_object = event.data.object;
-          console.log(
-            event_object.metadata,
-            "+++++++++++++++++event_object.metadata", "customer.subscription.created"
-          );
+        //   console.log(
+        //     event_object.metadata,
+        //     "+++++++++++++++++event_object.metadata", "customer.subscription.created"
+        //   );
         //   console.log(event_object.metadata.promoId,"++++++++++++++++++++++++++event_object.metadata.promoId")
 
           if (event_object) {
@@ -1899,10 +2037,34 @@ exports.webhook = async (request, response) => {
                 cancel_at: cancelAt, // Set the cancel_at timestamp
               });
             //find any existing subscriptions for the user
-            let existingSubscription = await Subscriptions.findOne({user_id: event_object.metadata.user_id, status: "active"});
-            //set them as inactive
-            if(existingSubscription) {
-                await Subscriptions.updateOne({id: existingSubscription.id}).set({status: "inactive"});
+            let get_existing_subscription = await Subscriptions.findOne({user_id: event_object.metadata.user_id, status: "active"});
+
+            if (get_existing_subscription && get_existing_subscription.stripe_subscription_id) {
+    
+                let get_stripe_existing_subscription = await Services.StripeServices.retrieve_subscrition({
+                    stripe_subscription_id: get_existing_subscription.stripe_subscription_id
+                })
+    
+                if (get_stripe_existing_subscription) {
+                    let delete_old_subscription = await Services.StripeServices.delete_subscription({
+                        stripe_subscription_id: get_existing_subscription.stripe_subscription_id
+                    })
+    
+                    if (delete_old_subscription && delete_old_subscription.status == "canceled") {
+                        let updated_payload = {
+                            status: "cancelled"
+                        }
+                        if (get_existing_subscription.valid_upto >= new Date()) {
+                            updated_payload.status = "inactive"
+                        }
+    
+                        let updateSubscription = await Subscriptions.updateOne({ id: get_existing_subscription.id }, updated_payload);
+    
+                        if (updateSubscription && (updateSubscription.status == "cancelled" || updateSubscription.status == "inactive")) {
+                            await Users.updateOne({id: event_object.metadata.user_id}).set({plan_id: null, special_plan_id: null});
+                        }
+                    }
+                }
             }
             //set current subscription as active
             let subscriptionPayload = {
@@ -1910,26 +2072,31 @@ exports.webhook = async (request, response) => {
                 stripe_subscription_id: event_object.id,
                 subscription_plan_id: event_object.metadata.plan_id,
                 status: "active",
-                amount: { type: 'number', defaultsTo: 0 },
+                amount: Number(event_object.metadata.network_plan_amount)+Number(event_object.metadata.managed_services_plan_amount),
                 network_plan_amount: event_object.metadata.network_plan_amount,
                 managed_services_plan_amount: event_object.metadata.managed_services_plan_amount,
                 interval: event_object.metadata.interval,
                 interval_count: event_object.metadata.interval_count,
-                valid_upto: cancelAt,
+                valid_upto: new Date(cancelAt*1000),
                 special_plan_id: event_object.metadata.special_plan_id,
-                // common fields
                 addedBy: event_object.metadata.user_id,
                 updatedBy: event_object.metadata.user_id
             }
-            await Subscriptions.create(subscriptionPayload).fetch();
-            await Users.updateOne({id: event_object.metadata.user_id}).set({});
+            // console.log(subscriptionPayload);
+            let subscription = await Subscriptions.create(subscriptionPayload).fetch();
+            await Users.updateOne({id: event_object.metadata.user_id}).set({
+                subscription: subscription.id,
+                plan_id: event_object.metadata.plan_id,
+                special_plan_id: event_object.metadata.special_plan_id
+            });
           }
           break;
         default:
-          console.log(`Unhandled event type ${event.type}`);
+          //console.log(`Unhandled event type ${event.type}`);
       }
       response.json({ received: true });
     } catch (error) {
+        console.log(error);
     }
 }
 

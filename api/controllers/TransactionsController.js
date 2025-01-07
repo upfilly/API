@@ -202,6 +202,20 @@ exports.getAllTransactions = async (req, res) => {
             },
             {
                 $lookup: {
+                    from: "subscriptionplans",
+                    localField: "special_plan_id",
+                    foreignField: "_id",
+                    as: "special_plans_details"
+                }
+            },
+            {
+                $unwind: {
+                    path: '$special_plans_details',
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
+                $lookup: {
                     from: "users",
                     localField: "user_id",
                     foreignField: "_id",
@@ -235,6 +249,7 @@ exports.getAllTransactions = async (req, res) => {
                     paid_to: "$paid_to",
                     transaction_type: "$transaction_type",
                     subscription_plan_id: "$subscription_plan_id",
+                    special_plan_id: "$special_plan_id",
                     subscription_id: "$subscription_plan_id",
                     transaction_id: "$transaction_id",
                     stripe_charge_id: "$stripe_charge_id",
@@ -247,6 +262,7 @@ exports.getAllTransactions = async (req, res) => {
                     createdAt: "$createdAt",
                     updatedAt: "$updatedAt",
                     subscription_plan_name: "$subscription_plans_details.name",
+                    special_plan_name: "$special_plans_details.name",
                     user_id_name: "$user_id_details.fullName",
                     role: "$user_id_details.role",
                     paid_to_name: "$paid_to_details.fullName",
@@ -263,7 +279,7 @@ exports.getAllTransactions = async (req, res) => {
             },
         ]).toArray();
            
-            let result = await    db.collection('transactions').aggregate([
+            let result = await db.collection('transactions').aggregate([
                 {
                     $lookup: {
                         from: "subscriptionplans",
@@ -275,6 +291,20 @@ exports.getAllTransactions = async (req, res) => {
                 {
                     $unwind: {
                         path: '$subscription_plans_details',
+                        preserveNullAndEmptyArrays: true
+                    }
+                },
+                {
+                    $lookup: {
+                        from: "subscriptionplans",
+                        localField: "special_plan_id",
+                        foreignField: "_id",
+                        as: "special_plans_details"
+                    }
+                },
+                {
+                    $unwind: {
+                        path: '$special_plans_details',
                         preserveNullAndEmptyArrays: true
                     }
                 },
@@ -325,6 +355,7 @@ exports.getAllTransactions = async (req, res) => {
                         createdAt: "$createdAt",
                         updatedAt: "$updatedAt",
                         subscription_plan_name: "$subscription_plans_details.name",
+                        special_plan_name: "$special_plans_details.name",
                         user_id_name: "$user_id_details.fullName",
                         role: "$user_id_details.role",
                         paid_to_name: "$paid_to_details.fullName",
@@ -426,7 +457,7 @@ exports.getTransactionById = async (req, res) => {
             throw constants.TRANSACTION.ID_REQUIRED;
         }
 
-        let get_transaction = await Transactions.findOne({ id: id }).populate('subscription_plan_id').populate('paid_to').populate('user_id');
+        let get_transaction = await Transactions.findOne({ id: id }).populate('subscription_plan_id').populate('special_plan_id').populate('paid_to').populate('user_id');
         if (get_transaction) {
             return response.success(get_transaction, constants.TRANSACTION.FETCHED, req, res)
         }
