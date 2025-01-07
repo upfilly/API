@@ -332,19 +332,21 @@ exports.getAllSubscriptionPlans = async (req, res) => {
             pipeline.push({
                 $limit: Number(count)
             });
-            let result = await   db.collection('subscriptionplans').aggregate(pipeline).toArray();
+            let result = await db.collection('subscriptionplans').aggregate(pipeline).toArray();
                 if (userId) {
                     var userDetail = await Users.findOne({ id: userId })
                 }
 
                 await (async function () {
+                    let find_subscription = await Subscriptions.findOne({user_id: userDetail.id, status: 'active' });
                     for await (let data of result) {
                         // console.log(data._id, "----data");
                         // console.log(userDetail.plan_id, "--userDetail");
-                        if (userDetail && ((String(userDetail.plan_id) == String(data._id)))) {
+                        
+                        if (userDetail && ((String(userDetail.plan_id) == String(data._id)) || (String(userDetail?.special_plan_id) === String(data._id))) ) {
                             // console.log(userDetail, "--------------userDetail");
                             // console.log("after match");
-                            let find_subscription = await Subscriptions.findOne({ subscription_plan_id: userDetail.plan_id, user_id: userDetail.id, stripe_subscription_id: userDetail.subscription_id, status: 'active' });
+                            //let find_subscription = await Subscriptions.findOne({ subscription_plan_id: userDetail.plan_id, user_id: userDetail.id, stripe_subscription_id: userDetail.subscription_id, status: 'active' });
                             // console.log(find_subscription, "-----------find_subscription");
                             if (find_subscription) {
                                 // console.log(find_subscription,"-----------find_subscription");
@@ -519,6 +521,10 @@ exports.payNowOnStripe = async (req, res) => {
                         }
                     }
                 }
+            } else if(get_existing_subscription){
+                //cancel existing subscription
+                let updateSubscription = await Subscriptions.updateOne({ id: get_existing_subscription.id, status: "active" }).set({status: "cancelled"});
+                await Users.updateOne({id: req.identity.id}).set({plan_id: null, special_plan_id: null});
             }
             let currentDate = new Date();
             currentDate.setDate(currentDate.getDate() + Number(data.interval_count)*30);
@@ -540,9 +546,8 @@ exports.payNowOnStripe = async (req, res) => {
             }
             // console.log(subscriptionPayload);
             let subscription = await Subscriptions.create(subscriptionPayload).fetch();
-            await Users.updateOne({id: req.identity.id}).set({
-                subscription: subscription.id,
-                plan_id: subscription.plan_id,
+            let user = await Users.updateOne({id: req.identity.id}).set({
+                plan_id: subscription.subscription_plan_id,
                 special_plan_id: subscription.special_plan_id
             });
             return res.status(200).json({
