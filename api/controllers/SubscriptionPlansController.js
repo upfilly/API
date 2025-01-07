@@ -332,19 +332,21 @@ exports.getAllSubscriptionPlans = async (req, res) => {
             pipeline.push({
                 $limit: Number(count)
             });
-            let result = await   db.collection('subscriptionplans').aggregate(pipeline).toArray();
+            let result = await db.collection('subscriptionplans').aggregate(pipeline).toArray();
                 if (userId) {
                     var userDetail = await Users.findOne({ id: userId })
                 }
 
                 await (async function () {
+                    let find_subscription = await Subscriptions.findOne({user_id: userDetail.id, status: 'active' });
                     for await (let data of result) {
                         // console.log(data._id, "----data");
                         // console.log(userDetail.plan_id, "--userDetail");
-                        if (userDetail && ((String(userDetail.plan_id) == String(data._id)))) {
+                        
+                        if (userDetail && ((String(userDetail.plan_id) == String(data._id)) || (String(userDetail?.special_plan_id) === String(data._id))) ) {
                             // console.log(userDetail, "--------------userDetail");
                             // console.log("after match");
-                            let find_subscription = await Subscriptions.findOne({ subscription_plan_id: userDetail.plan_id, user_id: userDetail.id, stripe_subscription_id: userDetail.subscription_id, status: 'active' });
+                            //let find_subscription = await Subscriptions.findOne({ subscription_plan_id: userDetail.plan_id, user_id: userDetail.id, stripe_subscription_id: userDetail.subscription_id, status: 'active' });
                             // console.log(find_subscription, "-----------find_subscription");
                             if (find_subscription) {
                                 // console.log(find_subscription,"-----------find_subscription");
