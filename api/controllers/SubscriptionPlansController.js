@@ -8,6 +8,7 @@ const Validations = require("../Validations/index");
 const db = sails.getDatastore().manager
 const ObjectId = require('mongodb').ObjectId;
 const Emails = require('../Emails/index');
+const { Subscription } = require('braintree');
 
 // var braintree = require('braintree');
 // // console.log(braintree,"----------------braintree");
@@ -517,14 +518,14 @@ exports.payNowOnStripe = async (req, res) => {
                         let updateSubscription = await Subscriptions.updateOne({ id: get_existing_subscription.id }, updated_payload);
     
                         if (updateSubscription && (updateSubscription.status == "cancelled" || updateSubscription.status == "inactive")) {
-                            await Users.updateOne({id: req.identity.id}).set({plan_id: null, special_plan_id: null});
+                            await Users.updateOne({id: req.identity.id}).set({plan_id: null, special_plan_id: null, isPayment: false});
                         }
                     }
                 }
             } else if(get_existing_subscription){
                 //cancel existing subscription
                 let updateSubscription = await Subscriptions.updateOne({ id: get_existing_subscription.id, status: "active" }).set({status: "cancelled"});
-                await Users.updateOne({id: req.identity.id}).set({plan_id: null, special_plan_id: null});
+                await Users.updateOne({id: req.identity.id}).set({plan_id: null, special_plan_id: null, isPayment: false});
             }
             let currentDate = new Date();
             currentDate.setDate(currentDate.getDate() + Number(data.interval_count)*30);
@@ -548,7 +549,8 @@ exports.payNowOnStripe = async (req, res) => {
             let subscription = await Subscriptions.create(subscriptionPayload).fetch();
             let user = await Users.updateOne({id: req.identity.id}).set({
                 plan_id: subscription.subscription_plan_id,
-                special_plan_id: subscription.special_plan_id
+                special_plan_id: subscription.special_plan_id,
+                isPayment: true
             });
             return res.status(200).json({
                 success: true,
@@ -670,7 +672,6 @@ exports.payNowOnStripe = async (req, res) => {
           quantity: 1
         }
       ];
-      console.log(line_items);
       let create_session = await Services.StripeServices.one_time_payment({
         line_items: line_items,
         email: email,
@@ -978,7 +979,7 @@ exports.cancelSubscription = async (req, res) => {
         let get_existing_subscription = await Subscriptions.findOne(getSubsQuery);
         if(get_existing_subscription && get_existing_subscription.amount === 0) {
             await Subscriptions.updateOne({id: get_existing_subscription.id}).set({status: "cancelled"});
-            await Users.updateOne({id: user_id}).set({plan_id: null, special_plan_id: null});
+            await Users.updateOne({id: user_id}).set({plan_id: null, special_plan_id: null, isPayment: false});
             return response.success(null, constants.SUBSCRIPTION_PLAN.SUBSCRIPTION_CANCELLED, req, res);
         }
         if (get_existing_subscription && get_existing_subscription.stripe_subscription_id) {
@@ -1005,7 +1006,7 @@ exports.cancelSubscription = async (req, res) => {
                     let updateSubscription = await Subscriptions.updateOne({ id: get_existing_subscription.id }, updated_payload);
 
                     if (updateSubscription && (updateSubscription.status == "cancelled" || updateSubscription.status == "inactive")) {
-                        await Users.updateOne({id: user_id}).set({plan_id: null, special_plan_id: null});
+                        await Users.updateOne({id: user_id}).set({plan_id: null, special_plan_id: null, isPayment: false});
                         return response.success(null, constants.SUBSCRIPTION_PLAN.SUBSCRIPTION_CANCELLED, req, res);
                     }
 
@@ -2066,9 +2067,15 @@ exports.webhook = async (request, response) => {
                         let updateSubscription = await Subscriptions.updateOne({ id: get_existing_subscription.id }, updated_payload);
     
                         if (updateSubscription && (updateSubscription.status == "cancelled" || updateSubscription.status == "inactive")) {
-                            await Users.updateOne({id: event_object.metadata.user_id}).set({plan_id: null, special_plan_id: null});
+                            await Users.updateOne({id: event_object.metadata.user_id}).set({plan_id: null, special_plan_id: null, isPayment: false});
                         }
                     }
+                }
+                else if(get_existing_subscription) {
+                    await Subscriptions.updateOne({id: get_existing_subscription.id}).set({
+                        status: "cancelled"
+                    });
+                    await Users.updateOne({id: event_object.metadata.user_id}).set({plan_id: null, special_plan_id: null, isPayment: false});
                 }
             }
             //set current subscription as active
@@ -2092,7 +2099,8 @@ exports.webhook = async (request, response) => {
             await Users.updateOne({id: event_object.metadata.user_id}).set({
                 subscription: subscription.id,
                 plan_id: event_object.metadata.plan_id,
-                special_plan_id: event_object.metadata.special_plan_id
+                special_plan_id: event_object.metadata.special_plan_id,
+                isPayment: true
             });
           }
           break;
