@@ -2070,12 +2070,12 @@ exports.webhook = async (request, response) => {
                         }
                     }
                 }
-                else if(get_existing_subscription) {
-                    await Subscriptions.updateOne({id: get_existing_subscription.id}).set({
-                        status: "cancelled"
-                    });
-                    await Users.updateOne({id: event_object.metadata.user_id}).set({plan_id: null, special_plan_id: null, isPayment: false});
-                }
+                
+            } else if(get_existing_subscription) {
+                await Subscriptions.updateOne({id: get_existing_subscription.id}).set({
+                    status: "cancelled"
+                });
+                await Users.updateOne({id: event_object.metadata.user_id}).set({plan_id: null, special_plan_id: null, isPayment: false});
             }
             //set current subscription as active
             let subscriptionPayload = {
