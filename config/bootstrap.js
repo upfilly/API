@@ -100,7 +100,6 @@ module.exports.bootstrap = async function () {
             await Users.updateOne({id: item.user_id}).set({plan_id: null,special_plan_id: null});
           }
         } catch (error) {
-          console.log(error, '===eeor');
         }
       }
     }

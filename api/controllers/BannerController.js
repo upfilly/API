@@ -165,7 +165,6 @@ exports.addBanner = async (req, res) => {
     }
     throw constants.COMMON.SERVER_ERROR;
   } catch (err) {
-    console.log(err, "err");
     return response.failed(null, `${err}`, req, res);
   }
 };
@@ -225,7 +224,6 @@ exports.editBanner = async (req, res) => {
       isDeleted: false,
     };
 
-    // console.log(query1);
     let listOfAcceptedInvites = await AffiliateInvite.find(query1);
     let listOfBrandInvite = await AffiliateBrandInvite.find(query2);
 
@@ -296,7 +294,6 @@ exports.editBanner = async (req, res) => {
     }
     throw constants.BANNER.INVALID_ID;
   } catch (err) {
-    console.log(err);
     return response.failed(null, `${err}`, req, res);
   }
 };

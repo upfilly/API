@@ -111,7 +111,6 @@ exports.makeOfferToAffiliate = async (req, res) => {
         throw constants.COMMON.SERVER_ERROR;
 
     } catch (error) {
-        console.log(error, "err");
         return response.failed(null, `${error}`, req, res);
     }
 };
@@ -380,7 +379,6 @@ exports.changeOfferStatus = async (req, res) => {
         throw constants.COMMON.SERVER_ERROR
 
     } catch (error) {
-        console.log(error);
         return response.failed(null, `${error}`, req, res)
     }
 }

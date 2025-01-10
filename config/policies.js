@@ -22,7 +22,8 @@ module.exports.policies = {
 
 
   UsersController: {
-    // 'adminSignin': true,     
+    // 'adminSignin': true,
+    'registerBrandWithPlan': true,    
     'register': true,
     'userSignin': true,
     'verifyUser': true,

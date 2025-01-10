@@ -1710,7 +1710,7 @@ exports.webhook = async (request, response) => {
                 break;
 
             default:
-                console.log(`Unhandled event type ${event.type}`);
+                
         }
 
         // Return a response to acknowledge receipt of the event
@@ -1774,7 +1774,6 @@ exports.createCheckoutSession = async (req, res) => {
             return response.success(resData, constants.COMMON.SUCCESS, req, res);
         }
     } catch (error) {
-        console.log(error, "=============err");
         // Handle errors and respond with an error message
         return res.serverError({
             success: false,

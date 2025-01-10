@@ -28,6 +28,4 @@ exports.send_fcm_push_notification = async (data) => {
 
     const url = `https://fcm.googleapis.com/fcm/send`;
     let { response } = axios.post(url,payload, config);
-    console.log(response, '=======data2222222');
-
 }

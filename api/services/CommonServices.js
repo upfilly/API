@@ -112,7 +112,6 @@ exports.create_cipher = (string) => {
     const hash = crypto.createHmac('sha256', secret)
         .update('Welcome to JavaTpoint')
         .digest('hex');
-    console.log(hash);
 };
 
 exports.generateName = () => {

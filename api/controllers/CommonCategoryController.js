@@ -582,7 +582,6 @@ exports.getCategoryWithSub = async (req, res) => {
                 return response.success(resData, constants.COMMON_CATEGORIES.FETCHED_ALL, req, res);
 
     } catch (err) {
-        console.log(err, "==err");
         return response.failed(null, `${err}`, req, res);
     }
 }

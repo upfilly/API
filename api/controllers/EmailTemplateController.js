@@ -91,7 +91,6 @@ exports.create = async (req, res) => {
     }
     return response.success(newTemplate, constants.EMAILTEMPLATE.CREATED, req, res);
   } catch (err) {
-    console.log(err);
     return response.failed(null, `${err}`, req, res);
   }
 };
@@ -198,7 +197,6 @@ exports.update = async (req, res) => {
     }
     return response.success(newTemplate, constants.EMAILTEMPLATE.UPDATED, req, res);
   } catch (err) {
-    console.log(err);
     return response.failed(null, `${err}`, req, res);
   }
 };

@@ -238,7 +238,6 @@ exports.updating_influencer_social_media_data = async (user_id) => {
         }
 
     } catch (error) {
-        console.log(error, '=============error from updating ISMD')
     }
 }
 
@@ -250,14 +249,12 @@ exports.updating_influencer_social_media_data_with_chunks = async (user_id_array
         let chunkSize = 50;
         for (let i = 0; i < user_id_array.length; i += chunkSize) {
             const chunk = user_id_array.slice(i, i + chunkSize);
-            console.log(chunk)
             for await (let id of chunk) {
                 await this.updating_influencer_social_media_data(id);
             }
         }
         //------------------- Fetching data from creator db --------------//
     } catch (error) {
-        console.log(error, '=============error from updating ISMD')
     }
 }
 
@@ -269,7 +266,6 @@ exports.updating_influencer_profile_images = async (user_id) => {
             update_payload.analytics_fetched = true;
             if (!get_user.image && get_user.instagram_username) {
                 let get_instagram_data = await ApifyServices.get_instagram_profile(get_user.instagram_username);
-                console.log(get_instagram_data, '============get_instagram_data');
                 if (get_instagram_data && get_instagram_data.length > 0) {
                     let instagram_data = get_instagram_data[0];
                     if (instagram_data.profilePicUrlHD) {
@@ -284,7 +280,6 @@ exports.updating_influencer_profile_images = async (user_id) => {
 
             if (!get_user.image && get_user.tiktok_username) {
                 let get_tiktok_data = await ApifyServices.get_tiktok_profile(get_user.tiktok_username);
-                console.log(get_tiktok_data, '============get_tiktok_data');
                 if (get_tiktok_data && get_tiktok_data.length > 0) {
                     let tiktok_data = get_tiktok_data[0];
                     if (tiktok_data.authorMeta && tiktok_data.authorMeta.avatar) {
@@ -303,7 +298,6 @@ exports.updating_influencer_profile_images = async (user_id) => {
 
         }
     } catch (error) {
-        console.log(error, '=============error from updating ISMD')
     }
 }
 

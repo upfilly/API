@@ -55,7 +55,6 @@ exports.addCommission = async (req, res) => {
         throw constants.COMMON.SERVER_ERROR;
 
     } catch (err) {
-        console.log(err, "err");
         return response.failed(null, `${err}`, req, res);
     }
 };

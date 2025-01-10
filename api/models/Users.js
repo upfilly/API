@@ -189,7 +189,6 @@ module.exports = {
   },
 
   beforeCreate: function (user, next) {
-    console.log(user, "--------------user");
     if (user.firstName || user.lastName) {
       user.fullName = user.firstName + ' ' + user.lastName;
     }
@@ -206,7 +205,6 @@ module.exports = {
     }
   },
   authenticate: function (email, password) {
-    console.log('in auth    ');
     var query = {};
     query.email = email;
     query.$or = [{ roles: ['SA', 'A'] }];

@@ -109,7 +109,6 @@ module.exports = {
         throw constants.AFFILIATEINVITE.ALREADY_EXIST;
       }
     } catch (error) {
-      console.log(error);
       return response.failed(null, `${error}`, req, res);
     }
   },
@@ -410,7 +409,6 @@ module.exports = {
       }
       throw constants.COMMON.SERVER_ERROR;
     } catch (error) {
-      console.log(error);
       return response.failed(null, `${error}`, req, res);
     }
   },

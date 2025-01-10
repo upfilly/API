@@ -189,7 +189,6 @@ exports.salesAnalytics = async (req, res) => {
             endDate = new Date(endDate);
             query.createdAt = { $gte: startDate, $lte: endDate };
         }
-        console.log(group_query);
 
         let pipeline = [
 

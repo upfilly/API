@@ -93,7 +93,6 @@ exports.addSubscriptionPlan = async (req, res) => {
         throw constants.SUBSCRIPTION_PLAN.UNABLE_TO_CREATE_PRODUCT;
 
     } catch (error) {
-        console.log(error, "----------------err");
         return response.failed(null, `${error}`, req, res);
     }
 }
@@ -601,7 +600,6 @@ exports.payNowOnStripe = async (req, res) => {
                 quantity: 1, 
             }
         ];
-        console.log(line_items);
         // console.log(
         //   find_plan.id,
         //   req.identity.id,
@@ -2108,7 +2106,6 @@ exports.webhook = async (request, response) => {
       }
       response.json({ received: true });
     } catch (error) {
-        console.log(error);
     }
 }
 

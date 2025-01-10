@@ -98,7 +98,6 @@ exports.editReviews = async (req, res) => {
         }
         throw constants.REVIEWS.UNAUTHORIZED;
     } catch (error) {
-        console.log(error, '==========error');
         return response.failed(null, `${error}`, req, res)
     }
 }
@@ -272,7 +271,6 @@ exports.deleteReviews = async (req, res) => {
         }
         throw constants.REVIEWS.INVALID_ID;
     } catch (error) {
-        console.log(error);
         return response.failed(null, `${error}`, req, res);
 
     }

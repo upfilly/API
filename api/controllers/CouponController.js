@@ -50,7 +50,6 @@ exports.addCoupon = async (req, res) => {
 
                 //----------------get main account manager---------------------
                 let get_account_manager = await Users.findOne({ id: req.identity.addedBy, isDeleted: false })
-                console.log(get_account_manager, "===get_account_manager");
 
                 await Services.activityHistoryServices.create_activity_history(req.identity.id, 'coupon', 'created', coupon, coupon, get_account_manager.id ? get_account_manager.id : null)
 
@@ -58,10 +57,8 @@ exports.addCoupon = async (req, res) => {
 
                 //----------------get main account manager---------------------
                 let get_all_admin = await Services.UserServices.get_users_with_role(["admin"])
-                console.log(get_all_admin, "==get_all_admin");
 
                 let get_account_manager = get_all_admin[0].id
-                console.log(get_account_manager, "====get_account_manager");
 
                 await Services.activityHistoryServices.create_activity_history(req.identity.id, 'coupon', 'created', coupon, coupon, get_account_manager ? get_account_manager : null)
 
@@ -71,7 +68,6 @@ exports.addCoupon = async (req, res) => {
 
         throw constants.COMMON.SERVER_ERROR;
     } catch (error) {
-        console.log(error)
         return response.failed(null, `${error}`, req, res);
     }
 };
@@ -126,7 +122,6 @@ exports.editCoupon = async function (req, res) {
 
         throw constants.COMMON.SERVER_ERROR;
     } catch (error) {
-        console.log(error, "==err");
 
         return response.failed(null, `${error}`, req, res);
     }
@@ -155,7 +150,6 @@ exports.deleteCoupon = async function (req, res) {
 
         throw constants.COMMON.SERVER_ERROR;
     } catch (error) {
-        console.log(error)
         return response.failed(null, `${error}`, req, res);
     }
 };
@@ -214,7 +208,6 @@ exports.getAllCoupon = async (req, res) => {
                 ...(media ? [{ media: new ObjectId(media) }] : [])
             ];
         }
-        console.log(query);
         // console.log(sortquery, "-----------------sortquery");
         let pipeline = [
 

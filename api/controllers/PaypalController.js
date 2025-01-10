@@ -177,8 +177,6 @@ exports.addSubscriptionPlanOnpaypal = async (req, res) => {
         if (error) {
             console.error(error);
         } else {
-            console.log('Created billing plan:');
-            console.log(billingPlan);
             return res.status(200).json({
                 success: true,
                 data: billingPlan,
@@ -258,13 +256,11 @@ exports.createProduct = async (req, res) => {
             value: '10.00',
         },
     };
-    console.log(JSON.stringify(paypal), "-------------in api paypal");
     paypal.product.create(productData, (error, product) => {
         if (error) {
             console.error(error);
             return res.serverError('Error creating product');
         } else {
-            console.log('Created product: ', product);
             return res.ok(product);
         }
     });
@@ -329,7 +325,6 @@ exports.generateToken = async (req, res) => {
         }
         // console.log(`Access Token: ${accessToken}`);
     } catch (error) {
-        console.log(error, "----err");
     }
 };
 
@@ -352,7 +347,6 @@ exports.addProductsAxios = async (req, res) => {
                 'Content-Type': 'application/json',
             },
         });
-        console.log(response);
 
         const accessToken_res = response.data.access_token;
         // console.log(accessToken, "-------aces");
@@ -431,15 +425,12 @@ exports.createSubscriptionPlan = async (req, res) => {
             },
         });
 
-        console.log(response, "----------------response");
-
 
         return res.status(200).json({
             success: true
         })
 
     } catch (error) {
-        console.log(error, "---error");
     }
 }
 
@@ -532,7 +523,6 @@ exports.ProductPlan = async (req, res) => {
             })
         }
     } catch (error) {
-        console.log(error, "---------err");
     }
 }
 
@@ -646,17 +636,14 @@ exports.createSubscription = async (req, res) => {
             },
         })
 
-        console.log(subscriptionResponse, "-------------subscriptionResponse");
-
         const subscriptionId = subscriptionResponse.data;
-        console.log(subscriptionId, "--------------------subscriptionId");
         if (subscriptionResponse) {
             return res.status(200).json({
                 success: true
             })
         }
     } catch (error) {
-        console.log(error, "-----------------error");
+        
     }
 }
 
@@ -707,7 +694,6 @@ exports.createPlanWithCard = async (req, res) => {
             },
         })
         .then((response) => {
-            console.log('Purchase successful:', response.data);
             return res.json(response.data);
         })
         .catch((error) => {
