@@ -126,7 +126,6 @@ exports.importCsvData = async (req, res) => {
       res
     );
   } catch (err) {
-    console.log(err);
     res.status(400).json({
       success: false,
       error: {
@@ -180,7 +179,6 @@ exports.importCsvDataHttp = async (req, res) => {
       res
     );
   } catch (err) {
-    console.log(err);
     res.status(400).json({
       success: false,
       error: {
@@ -319,7 +317,6 @@ exports.sendDataSets = async (req, res) => {
     let duplicate = 0;
     let createdCount = 0;
     const url = constant.BACK_WEB_URL + "/" + data.filePath; // assume the URL is sent in the request body
-    console.log(url);
     const { fileType1, fileBuffer } = await getFileFromUrl(url);
     let fileType = url.substr(url.lastIndexOf(".") + 1)
     if (fileType !== 'csv' && fileType !== 'xlsx' && fileType !== 'xls') {
@@ -374,7 +371,6 @@ exports.sendDataSets = async (req, res) => {
 
     response.success(student_arr, constants.DATASET.ADDED, req, res);
   } catch (err) {
-    console.log(err);
     response.failed(err, `${err}`, req, res);
   }
 };
@@ -441,8 +437,6 @@ exports.listOfDataSet = async (req, res) => {
       endDate = new Date(endDate);
       query.submitDateAndTime = { $lte: endDate };
     }
-
-    console.log(query);
 
     const pipeline = [
       {
@@ -544,8 +538,6 @@ exports.sendEmailMessage = async (req, res) => {
     let data = req.body;
     if (data.isAllJoined) {
 
-      console.log("In All Joined Condition");
-
       query1 = {
         addedBy: req.identity.id,
         status: "accepted",
@@ -627,8 +619,7 @@ exports.sendEmailMessage = async (req, res) => {
 
     // }
     if (data.acceptedDate) {
-      let time_interval_payload = {}
-      console.log("In Before Accepted Condition");
+      let time_interval_payload = {};
 
       if (data.timeInterval === "before") {
         let updatedAt = {
@@ -798,7 +789,6 @@ exports.sendEmailMessage = async (req, res) => {
 
     response.success(null, constants.EMAILMESSAGE.ADDED, req, res);
   } catch (error) {
-    console.log(error);
     return res.status(400).json({
       success: false,
       error: { code: 400, message: "" + error },

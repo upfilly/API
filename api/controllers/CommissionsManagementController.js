@@ -98,7 +98,6 @@ exports.addCommission = async (req, res) => {
     }
     throw constants.COMMON.SERVER_ERROR;
   } catch (error) {
-    console.log(error, "------------------error");
     return response.failed(null, `${error}`, req, res);
   }
 };
@@ -145,8 +144,6 @@ exports.editCommssion = async (req, res) => {
     }
     throw constants.COMMON.SERVER_ERROR;
   } catch (error) {
-    console.log(error, "==error");
-
     return response.failed(null, `${error}`, req, res);
   }
 };

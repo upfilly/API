@@ -8,9 +8,6 @@ const path = require("path");
 const puppeteer = require("puppeteer");
 exports.exportScalenutData = async (data) => {
   try {
-    console.log(data.email);
-    console.log(data.password);
-    console.log(data.url);
     const user_password = data.password;
     const user_email = data.email;
     const url = data.url;
@@ -92,7 +89,6 @@ exports.exportScalenutData = async (data) => {
 
       try {
         fs.renameSync(oldPath, newPath);
-        console.log("File renamed successfully to", newPath);
         
         // Process the CSV file
         fs.createReadStream(`${newPath}`)
@@ -103,15 +99,12 @@ exports.exportScalenutData = async (data) => {
             return newPath;
           })
           .on("end", () => {
-            
-            console.log(newPath);
             return newPath;
           });
       } catch (error) {
         console.error("Error processing the file:", error);
       }
     } else {
-      console.log("No file found to rename.");
     }
 
     await browser.close();

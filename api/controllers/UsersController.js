@@ -21,6 +21,7 @@ const fs = require("fs");
 const readXlsxFile = require("read-excel-file/node");
 const { google } = require("googleapis");
 const OAuth2Client = google.auth.OAuth2;
+const stripe = require("stripe")(credentials.PAYMENT_INFO.SECREATKEY);
 
 function string_ids_toObjectIds_array(string) {
   // console.log(string, "string");
@@ -106,6 +107,347 @@ module.exports = {
    * @returns
    * @description Used to register User
    */
+
+  registerBrandWithPlan: async (req, res) => {
+    try {
+      let validation_result = await Validations.UserValidations.registerBrandWithPlan(
+        req,
+        res
+      );
+
+      if (validation_result && !validation_result.success) {
+        throw validation_result.message;
+      }
+
+      let { firstName, lastName, fullName, email, brand_name, role } = req.body;
+      let data = {
+        plan_id: req.body.plan_id,
+        special_plan_id: req.body.special_plan_id,
+        network_plan_amount: req.body.network_plan_amount,
+        managed_services_plan_amount: req.body.managed_services_plan_amount,
+        interval: req.body.interval,
+        interval_count: req.body.interval_count,
+        isSpecial: req.body.isSpecial,
+        promoId: req.body.promoId
+      };
+      ['plan_id', 'special_plan_id', 'network_plan_amount', 'managed_services_plan_amount',
+        'interval', 'interval_count', 'isSpecial', 'promoId'
+      ].forEach(e => delete req.body[e]);
+      if (req.body.firstName) {
+        req.body.firstName = firstName.toLowerCase();
+      }
+
+      if (req.body.lastName) {
+        req.body.lastName = lastName.toLowerCase();
+      }
+
+      if (req.body.email) {
+        req.body.email = email.toLowerCase();
+      }
+
+      if (req.body.brand_name) {
+        req.body.brand_name = brand_name.toLowerCase();
+      }
+
+      let get_user = await Users.findOne({
+        email: req.body.email.toLowerCase(),
+        isDeleted: false,
+      });
+      if (get_user) {
+        throw constants.user.EMAIL_EXIST;
+      }
+
+      if (req.body.firstName && req.body.lastName) {
+        req.body["fullName"] = `${req.body.firstName} ${req.body.lastName}`;
+      } else if (req.body.fullName) {
+        req.body["firstName"] = req.body.fullName;
+      }
+
+      req.body.isVerified = "Y";
+      //----------saving location------------//
+      // if (req.body.lat && req.body.lng) {
+      //   req.body.lat = Number(req.body.lat);
+      //   req.body.lng = Number(req.body.lng);
+      //   if ((req.body.lat >= -90 && req.body.lat <= 90) && (req.body.lat >= -180 && req.body.lat <= 180)) {
+      //     req.body.location = {
+      //       type: "Point",
+      //       coordinates: [req.body.lng, req.body.lat]
+      //     }
+      //   } else {
+      //     throw constants.COMMON.INVALID_COORDINATES;
+      //   }
+      // }
+      //----------saving location------------//
+      req.body.my_code = Services.Referral.generate_referal_code();
+      // if (["affiliate"].includes(role)) {
+      //   let default_affiliate_group = await AffiliateManagement.findOne({ isDefaultAffiliateGroup: true, isDeleted: false, status: "active" });
+      //   if (default_affiliate_group) {
+      //     req.body.affiliate_group = default_affiliate_group.id;
+      //   }
+      // }
+
+      let add_user = await Users.create(req.body).fetch();
+      if (add_user) {
+        if (req.body.email) {
+          let get_invites = await Invite.findOne({
+            email: req.body.email.toLowerCase(),
+            isDeleted: false,
+          });
+          if (get_invites) {
+            let update_user = await Invite.updateOne(
+              { id: get_invites.id },
+              { invite_status: "onboard" }
+            );
+          }
+        }
+        await Emails.OnboardingEmails.brandVerifyLink({
+          email: add_user.email,
+          fullName: add_user.fullName,
+          id: add_user.id,
+        });
+
+        //Create checkout link for this brand
+      
+            var find_plan = await SubscriptionPlans.findOne({ id: data.plan_id, isDeleted: false, status: "active" });
+            //   if (req.body.promoId) {
+            //     let findPromo = await db.promocode.findOne({
+            //       coupon_stripe_code: req.body.promoId,isDeleted:false
+            //     });
+            //     if (findPromo.amount && findPromo.amount > req.body.amount) {
+            //       return res.status(400).json({
+            //         success: false,
+            //         message:"Coupon amount exceeds the plan amount."
+            //       });
+            //     }
+            //   }
+            if(!find_plan) {
+                return res.status(404).json({message: "Plan not found!", success: false});
+            }
+        
+        
+              if(data.network_plan_amount === 0 && data.managed_services_plan_amount === 0) {
+                let get_existing_subscription = await Subscriptions.findOne({user_id: add_user.id, status: "active"});
+        
+                    if (get_existing_subscription && get_existing_subscription.stripe_subscription_id) {
+            
+                        let get_stripe_existing_subscription = await Services.StripeServices.retrieve_subscrition({
+                            stripe_subscription_id: get_existing_subscription.stripe_subscription_id
+                        })
+            
+                        if (get_stripe_existing_subscription) {
+                            let delete_old_subscription = await Services.StripeServices.delete_subscription({
+                                stripe_subscription_id: get_existing_subscription.stripe_subscription_id
+                            })
+            
+                            if (delete_old_subscription && delete_old_subscription.status == "canceled") {
+                                let updated_payload = {
+                                    status: "cancelled"
+                                }
+                                if (get_existing_subscription.valid_upto >= new Date()) {
+                                    updated_payload.status = "inactive"
+                                }
+            
+                                let updateSubscription = await Subscriptions.updateOne({ id: get_existing_subscription.id }, updated_payload);
+            
+                                if (updateSubscription && (updateSubscription.status == "cancelled" || updateSubscription.status == "inactive")) {
+                                    await Users.updateOne({id: add_user.id}).set({plan_id: null, special_plan_id: null, isPayment: false});
+                                }
+                            }
+                        }
+                    } else if(get_existing_subscription){
+                        //cancel existing subscription
+                        let updateSubscription = await Subscriptions.updateOne({ id: get_existing_subscription.id, status: "active" }).set({status: "cancelled"});
+                        await Users.updateOne({id: add_user.id}).set({plan_id: null, special_plan_id: null, isPayment: false});
+                    }
+                    let currentDate = new Date();
+                    currentDate.setDate(currentDate.getDate() + Number(data.interval_count)*30);
+                    //set current subscription as active
+                    let subscriptionPayload = {
+                        user_id: add_user.id,
+                        stripe_subscription_id: '',
+                        subscription_plan_id: data.plan_id,
+                        status: "active",
+                        amount: 0,
+                        network_plan_amount: 0,
+                        managed_services_plan_amount: 0,
+                        interval: data.interval,
+                        interval_count: data.interval_count,
+                        valid_upto: currentDate,
+                        special_plan_id: null,
+                        addedBy: add_user.id,
+                        updatedBy: add_user.id
+                    }
+                    // console.log(subscriptionPayload);
+                    let subscription = await Subscriptions.create(subscriptionPayload).fetch();
+                    let user = await Users.updateOne({id: add_user.id}).set({
+                        plan_id: subscription.subscription_plan_id,
+                        special_plan_id: subscription.special_plan_id,
+                        isPayment: true
+                    });
+                    return res.status(200).json({
+                        success: true,
+                        code: 200,
+                        message: "Registration successful!",
+                      });
+              }
+        
+            let product1 = await stripe.products.create({
+                name: find_plan.name
+              });
+        
+            let price1 = await stripe.prices.create({
+                product: product1.id,
+                unit_amount: Number(data.network_plan_amount) * 100,
+                currency: "usd",
+                recurring: {
+                    interval: "month",
+                    interval_count: data.interval_count? data.interval_count: 1,
+                }
+            });
+        
+            if (req.body.isSpecial == true) {
+                let special_plan = await SubscriptionPlans.findOne({id: data.special_plan_id, isDeleted: false});
+                let product2 = await stripe.products.create({
+                    name: special_plan?.name
+                });
+        
+                let price2 = await stripe.prices.create({
+                    product: product2.id,
+                    unit_amount: Number(data.managed_services_plan_amount) * 100,
+                    currency: "usd",
+                    recurring: {
+                      interval: "month",
+                      interval_count: data.interval_count? data.interval_count: 1,
+                    },
+                });
+                // console.log(price, "++price");
+                // itm.stripe_price_id = price.id;
+        
+                let line_items = [
+                    {
+                        price: price1.id ? price1.id : "",
+                        quantity: 1,
+                    },
+                    {
+                        price: price2.id ? price2.id : "",
+                        quantity: 1, 
+                    }
+                ];
+                // console.log(
+                //   find_plan.id,
+                //   req.identity.id,
+                //   transaction_payload.plan_id,
+                //   req.body.specialAmount,
+                //   req.body.interval_count,
+                //   "++++++"
+                // );
+        
+                var create_sessions = await Services.StripeServices.one_time_payment({
+                    line_items: line_items,
+        
+                    email: email,
+                    metadata: {
+                        plan_id: data.plan_id,
+                        special_plan_id: data.special_plan_id,
+                        user_id: String(add_user.id),
+                        network_plan_amount: data.network_plan_amount,
+                        managed_services_plan_amount: data.managed_services_plan_amount,
+                        interval_count: data.interval_count,
+                        promoId:data.promoId? data.promoId: "",
+                    },
+                    subscription_data: {
+                        metadata: {
+                            plan_id: data.plan_id,
+                            special_plan_id: data.special_plan_id,
+                            user_id: String(add_user.id),
+                            network_plan_amount: data.network_plan_amount,
+                            managed_services_plan_amount: data.managed_services_plan_amount,
+                            interval_count: data.interval_count,
+                            interval: data.interval,
+                            promoId: data.promoId? data.promoId: ""
+                        },
+                    },
+                    discounts: data.promoId ? [{ coupon: data.promoId }] : [],
+                    // trial_period_days: find_plan.trial_period_days
+                    //   ? find_plan.trial_period_days
+                    //   : 0,
+                });
+        
+                if (create_sessions) {
+                    let Data = {
+                      url: create_sessions.url,
+                    };
+        
+                    await Users.updateOne(
+                    { id: add_user.id },
+                    {
+                        isSpecialPlanInclude: true,
+                        totalSpecialAmount: req.body.specialAmount,
+                    }
+                    );
+                    return res.status(200).json({
+                      success: true,
+                      code: 200,
+                      data: Data,
+                    });
+                }
+            } else {
+        
+              let get_admin = await Services.UserServices.get_users_with_role(["admin"]);
+              let line_items = [
+                {
+                  price: price1.id ? price1.id : "",
+                  quantity: 1
+                }
+              ];
+              let create_session = await Services.StripeServices.one_time_payment({
+                line_items: line_items,
+                email: email,
+                metadata: {
+                    plan_id: data.plan_id,
+                    special_plan_id: data.special_plan_id,
+                    user_id: String(add_user.id),
+                    network_plan_amount: data.network_plan_amount,
+                    managed_services_plan_amount: 0,
+                    interval_count: data.interval_count,
+                    promoId: data.promoId? data.promoId: ""
+                },
+                subscription_data: {
+                    metadata: {
+                        plan_id: data.plan_id,
+                        special_plan_id: data.special_plan_id,
+                        user_id: String(add_user.id),
+                        network_plan_amount: data.network_plan_amount,
+                        managed_services_plan_amount: data.managed_services_plan_amount,
+                        interval_count: data.interval_count,
+                        interval: data.interval,
+                        promoId:data.promoId?data.promoId: "",
+                    },
+                },
+                discounts: data.promoId ? [{ coupon: data.promoId }] : []
+                // trial_period_days: find_plan.trial_period_days
+                //   ? find_plan.trial_period_days
+                //   : 0,
+              });
+        
+              // console.log(discounts,"++++++++++++++++++")
+        
+              if (create_session) {
+                let resData = {
+                  url: create_session.url,
+                };
+                return res.status(200).json({
+                  success: true,
+                  code: 200,
+                  data: resData,
+                });
+              }
+            }
+      }
+    } catch (err) {
+      return response.failed(null, `${err}`, req, res);
+    }
+  },
 
   register: async (req, res) => {
     try {
@@ -202,7 +544,6 @@ module.exports = {
         );
       }
     } catch (err) {
-      console.log(err, "-------err");
       return response.failed(null, `${err}`, req, res);
     }
   },
@@ -328,7 +669,6 @@ module.exports = {
       }
       throw constants.COMMON.SERVER_ERROR;
     } catch (error) {
-      console.log(error);
       return response.failed(null, `${error}`, req, res);
     }
   },
@@ -576,7 +916,6 @@ module.exports = {
 
       throw constants.user.INVALID_ID;
     } catch (error) {
-      console.log(error, "err");
       return response.failed(null, `${error}`, req, res);
     }
   },
@@ -640,7 +979,6 @@ module.exports = {
 
     var userDetail = await Users.find({ where: { id: id } });
 
-    console.log(userDetail);
     let get_permission = await Permissions.findOne({ role: userDetail.role });
 
     if (get_permission) {
@@ -1554,7 +1892,6 @@ module.exports = {
           // get_user = await Users.findOne({id:get_user.addedBy,isDeleted:false});
           //throw msg here if not exists then throw brand not exists
           await Users.updateOne({ id: get_user.id }, { activeUser: id });
-          console.log(get_user.id);
           listOfOtherUsers = await InviteUsers.find({
             addedBy: get_user.id,
             isDeleted: false,
@@ -1735,7 +2072,6 @@ module.exports = {
       }
       throw constants.user.INVALID_ID;
     } catch (error) {
-      console.log(error, "----errr");
       return response.failed(null, `${error}`, req, res);
     }
   },
@@ -2009,7 +2345,6 @@ module.exports = {
       }
       throw constants.user.INVALID_USER;
     } catch (error) {
-      console.log(error, "==err");
       return response.failed(null, `${error}`, req, res);
     }
   },
@@ -2221,7 +2556,6 @@ module.exports = {
 
       throw constants.COMMON.SERVER_ERROR;
     } catch (error) {
-      console.log(error, "==err");
       return response.failed(null, `${error}`, req, res);
     }
   },
@@ -2512,11 +2846,6 @@ module.exports = {
           role: "users",
         });
 
-        console.log(
-          listOfUserExceptActive,
-          "------------------- listOfUserExceptActive"
-        );
-
         let active_user = get_user;
 
         get_user = await Users.findOne({ id: get_user.addedBy });
@@ -2524,8 +2853,6 @@ module.exports = {
         get_user.listOfUserExceptActive = listOfUserExceptActive;
 
         get_user.active_user = active_user;
-
-        console.log(get_user, "-------------- [get_user]");
       }
 
       const new_date = new Date();
@@ -3281,7 +3608,6 @@ module.exports = {
                                         }
                                       }
                                     } catch (err) {
-                                      console.log(err, "err");
                                     }
                                   }
                                 } catch (err) {
@@ -3292,7 +3618,6 @@ module.exports = {
                                   //     message: constants.COMMON.SERVER_ERROR,
                                   //   },
                                   // });
-                                  console.log(err, "err2222");
                                 }
                               }
                             }
@@ -3346,7 +3671,6 @@ module.exports = {
           }
         );
     } catch (err) {
-      console.log(err);
       return res
         .status(500)
         .json({ success: false, error: { code: 500, message: "" + err } });
@@ -3522,11 +3846,9 @@ module.exports = {
                                         }
                                       }
                                     } catch (err) {
-                                      console.log(err, "err");
                                     }
                                   }
                                 } catch (err) {
-                                  console.log(err);
                                 }
                               }
                             }
@@ -3579,7 +3901,6 @@ module.exports = {
           }
         );
     } catch (err) {
-      console.log(err);
       return res
         .status(500)
         .json({ success: false, error: { code: 500, message: "" + err } });
@@ -3804,7 +4125,6 @@ module.exports = {
         data: authUrl,
       });
     } catch (err) {
-      console.log(err, "err");
       return res.status(500).json({
         success: false,
         error: { code: 500, message: "" + err },
@@ -4029,7 +4349,6 @@ module.exports = {
       //   });
       // }
     } catch (err) {
-      console.log(err, "err");
       return res.status(500).json({
         success: false,
         error: { code: 500, message: "" + err },
@@ -4491,7 +4810,6 @@ module.exports = {
       throw constants.user.INVALID_ID;
 
     } catch (err) {
-      console.log(err);
       return res.status(400).json({
         success: false,
         error: { message: err },

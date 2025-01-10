@@ -355,7 +355,6 @@ exports.getDefaultAffiliateGroup = async (req, res) => {
             });
         }
     } catch (error) {
-        // console.log(error);
         return response.failed(null, `${error}`, req, res)
     }
 }

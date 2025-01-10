@@ -53,7 +53,6 @@ exports.addDiscountOnBraintree = async (req, res) => {
 
         let created_on_braintree = await gateway.discount.create(discount);
         if (created_on_braintree) {
-            console.log(created_on_braintree, "--------------------------------created_on_braintree");
             // req.body.stripe_coupon_id = created_on_stripe.id
             let created_discount = await Discount.create(req.body).fetch();
             if (created_discount) {
@@ -62,7 +61,6 @@ exports.addDiscountOnBraintree = async (req, res) => {
         }
         throw constants.COMMON.SERVER_ERROR;
     } catch (error) {
-        console.log(error, "----------------err");
         return response.failed(null, `${error}`, req, res);
     }
 }

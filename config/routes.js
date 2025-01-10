@@ -68,7 +68,7 @@ module.exports.routes = {
   "get /google/login/authentication": "UsersController.googleLoginAuthentication",
   "post /google/login": "UsersController.googleLogin",
   "put /user/account-request-status": "UsersController.updateRequestStatus",
-
+  "post /register/brand": "UsersController.registerBrandWithPlan",
 
   /**
    * @CommonAPIs

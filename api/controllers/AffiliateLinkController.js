@@ -65,7 +65,6 @@ exports.generateLink = async (req, res) => {
     return response.success(get_link, constants.TRACKING.LINK, req, res);
 
   } catch (err) {
-    console.log(err);
     return response.failed(null, `${err}`, req, res);
   }
 }
@@ -98,14 +97,12 @@ exports.create = async function (req, res) {
     }
     req.body.addedBy = (req.identity?.id) ? req.identity.id : null;
     req.body.updatedBy = (req.identity?.id) ? req.identity.id : null;
-    console.log(req.body, "==req.body");
 
     const newAffiliateLink = await AffiliateLink.create(req.body).fetch();
 
     return response.success(newAffiliateLink, constants.AFFILIATELINK.CREATED, req, res);
 
   } catch (error) {
-    console.log(error, "==error");
 
     return response.failed(null, `${error}`, req, res);
   }
@@ -384,7 +381,6 @@ exports.report = async function (req, res) {
           endDate = new Date(endDate);
           query.createdAt = { $gte: startDate, $lte: endDate };
       }
-      console.log(group_query);
 
       let pipeline = [
 
@@ -514,7 +510,6 @@ exports.report = async function (req, res) {
           // });
 
           let result = await db.collection('affiliatelink').aggregate(pipeline, { allowDiskUse: true }).toArray()
-          console.log(result);
           let resData = {
               total: result[0] ? result[0].data.length : 0,
               data: result[0] ? result[0].data: []

@@ -59,7 +59,6 @@ exports.getAllAuditTrials = async (req, res) => {
     if (type) {
       query.type = type;
     }
-    // console.log(JSON.stringify(query), '===========query');
     let pipeline = [
       {
         $lookup: {

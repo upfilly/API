@@ -146,7 +146,6 @@ exports.addCampaign = async (req, res) => {
         throw constants.COMMON.SERVER_ERROR;
 
     } catch (error) {
-        console.log(error);
         return response.failed(null, `${error}`, req, res);
     }
 };

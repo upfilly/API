@@ -44,7 +44,6 @@ exports.addBlog = async (req, res) => {
         throw constants.COMMON.SERVER_ERROR
 
     } catch (error) {
-        console.log(error);
         return response.failed(null, `${error}`, req, res)
     }
 }
@@ -305,7 +304,6 @@ exports.deleteBlog = async (req, res) => {
         let delete_Blog = await Blogs.updateOne({ id: id }, { isDeleted: true, updatedBy: req.identity.id })
         return response.success(null, constants.BLOG.DELETED, req, res);
     } catch (error) {
-        console.log(error);
         return response.failed(null, `${error}`, req, res);
     }
 }

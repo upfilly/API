@@ -9,7 +9,7 @@ exports.register = async (req, res, next) => {
         fullName: Joi.string().optional().allow("").min(3).max(50),
         brand_name: Joi.string().optional().allow("").min(3).max(50),
         email: Joi.string().required(),
-        password: Joi.string().optional(),
+        password: Joi.string().required(),
         role: Joi.string().optional().valid("brand", "affiliate", "admin", "customer"),
         countryCode: Joi.string().optional().allow(""),
         dialCode: Joi.string().optional().allow(""),
@@ -34,6 +34,51 @@ exports.register = async (req, res, next) => {
         device_token: Joi.string().optional().allow(""),
         referral_code: Joi.string().optional().allow(""),
 
+    });
+    return await Validate(schema, req, res);
+
+}
+
+exports.registerBrandWithPlan = async (req, res, next) => {
+
+    const schema = Joi.object({
+        firstName: Joi.string().optional().min(3).max(50).allow(""),
+        lastName: Joi.string().optional().allow("").max(50),
+        fullName: Joi.string().optional().allow("").min(3).max(50),
+        brand_name: Joi.string().optional().allow("").min(3).max(50),
+        email: Joi.string().required(),
+        password: Joi.string().optional(),
+        role: Joi.string().optional().valid("brand"),
+        countryCode: Joi.string().optional().allow(""),
+        dialCode: Joi.string().optional().allow(""),
+        address: Joi.string().optional().allow(""),
+        country: Joi.string().optional().allow(""),
+        state: Joi.string().optional().allow(""),
+        city: Joi.string().optional().allow(""),
+        pincode: Joi.string().optional().allow("").max(12),
+        parter_manager_id: Joi.string().optional().allow(null),
+        account_executive_id: Joi.string().optional().allow(null),
+        refferedBy: Joi.string().optional().valid('active', 'deactive'),
+        status: Joi.string().optional().valid('active', 'deactive'),
+        labels: Joi.string().optional().allow(""),
+        currency: Joi.string().optional().allow(""),
+        allow_notification: Joi.boolean().optional(),
+        is_enable_mediacost: Joi.boolean().optional(),
+        createdByBrand: Joi.string().optional().allow(null),
+        affiliate_group: Joi.string().optional().allow(null),
+        isSetPasswordManually: Joi.boolean().optional(),
+        campaign_unique_id: Joi.string().optional().allow(""),
+        payment_method: Joi.string().optional(),
+        device_token: Joi.string().optional().allow(""),
+        referral_code: Joi.string().optional().allow(""),
+        plan_id: Joi.string().required(),
+        special_plan_id: Joi.string().optional().allow(null),
+        network_plan_amount: Joi.number().required(),
+        managed_services_plan_amount: Joi.number().required(),
+        interval: Joi.string().required(),
+        interval_count: Joi.number().required(),
+        isSpecial: Joi.boolean().required(),
+        promoId: Joi.string().optional().allow("")
     });
     return await Validate(schema, req, res);
 

@@ -21,7 +21,6 @@ module.exports = {
                 throw validation_result.message;
             }
             let { id, status } = req.body;
-            console.log(req.identity.id);
             let update_status = await Notifications.updateOne({ id: id, send_to: req.identity.id }, { status: status, updatedBy: req.identity.id });
             if (update_status) {
                 return response.success(null, constants.NOTIFICATION.UPDATED, req, res);
