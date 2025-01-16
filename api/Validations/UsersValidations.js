@@ -79,7 +79,7 @@ exports.registerBrandWithPlan = async (req, res, next) => {
         interval_count: Joi.number().required(),
         isSpecial: Joi.boolean().required(),
         promoId: Joi.string().optional().allow("")
-    });
+    }).options({ allowUnknown: true });
     return await Validate(schema, req, res);
 
 }
