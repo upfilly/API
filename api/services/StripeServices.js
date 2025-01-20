@@ -1,5 +1,6 @@
 const credentials = require('../../config/local.js'); //sails.config.env.production;
 const stripe = require("stripe")(credentials.PAYMENT_INFO.SECREATKEY);
+const constants = require("../../config/constants.js");
 
 exports.create_product = async (options) => {
     const product = await stripe.products.create({
@@ -295,3 +296,53 @@ exports.one_time_payment = async (options) => {
 //     });
 //     return session;
 // }
+
+///Code to add onboarding link
+
+exports.add_bank_account = async (options) => {
+    const account = await stripe.accounts.create({
+        country: options.country,
+        email: options.email,
+        business_profile: {
+            name: options.businessName,
+        },
+        type: 'express',
+        capabilities: {
+            transfers: { requested: true },
+            card_payments: { requested: true }
+
+        },
+    })
+    return account
+}
+
+exports.create_account_link = async (options) => {
+
+    const accountLink = await stripe.accountLinks.create({
+        account: options.accountId,
+        refresh_url: `${credentials.FRONT_WEB_URL}/gethelp`,
+        return_url: `${credentials.FRONT_WEB_URL}/experiencemarc`,
+        type: 'account_onboarding',
+
+    });
+
+    console.log("accountLink............", accountLink);
+    return accountLink;
+
+}
+
+exports.retrieve_account = async (accountId) => {
+    const accountDetails = await stripe.accounts.retrieve(accountId);
+
+    return accountDetails
+}
+
+exports.transfer_fund = async (options) => {
+    const createPayout = await stripe.transfers.create({
+        amount: Math.round(options.amount),
+        currency: options.currency,
+        destination: options.accountId,
+        description: options.description,
+    })
+    return createPayout
+}
