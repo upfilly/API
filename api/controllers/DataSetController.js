@@ -402,13 +402,9 @@ exports.sendDataSets = async (req, res) => {
       }
 
     }
-
-
-
-
-    response.success(student_arr, constants.DATASET.ADDED, req, res);
+    return response.success(student_arr, constants.DATASET.ADDED, req, res);
   } catch (err) {
-    response.failed(err, `${err}`, req, res);
+    return response.failed(err, `${err}`, req, res);
   }
 };
 
