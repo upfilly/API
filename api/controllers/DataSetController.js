@@ -13,6 +13,8 @@ const https = require('https');
 // const FileType = require('file-type');
 
 const Services = require('../services/index');
+const Papa = require('papaparse');
+
 
 
 let Unique = (arr) => {
@@ -219,8 +221,25 @@ async function parseExcelFile(fileBuffer, addedBy) {
   return data;
 }
 
-
-
+async function parseCSV(csvData, addedBy) {
+  return new Promise((resolve, reject) => {
+    Papa.parse(csvData, {
+      header: true, // Automatically uses the first row as headers
+      skipEmptyLines: true, // Skips empty rows
+      complete: function (results) {
+        const parsedData = results.data.map((row) => ({
+          ...row,
+          addedBy, // Add the `addedBy` field to each row
+        }));
+        resolve(parsedData);
+      },
+      error: function (error) {
+        reject(error);
+      },
+    });
+  });
+}
+/*
 async function parseCSV(csvData, addedBy) {
   // Split the CSV data by lines
   const lines = csvData.trim().split("\n");
@@ -244,7 +263,7 @@ async function parseCSV(csvData, addedBy) {
 
   return result;
 }
-
+*/
 exports.sendDataSets = async (req, res) => {
   try {
     let validation_result = await Validations.DataSetValidation.addDataSet(
