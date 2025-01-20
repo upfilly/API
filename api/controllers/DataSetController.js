@@ -345,7 +345,7 @@ exports.sendDataSets = async (req, res) => {
     } else {
       student_arr = await parseExcelFile(fileBuffer);
     }
-
+    console.log(student_arr);
 
     for await (let item of student_arr) {
       payload = {
@@ -1083,7 +1083,7 @@ exports.ListDataFeedsBrand = async (req, res) => {
         dataFeeds = [];
       }
     } else {
-      dataFeeds = await DataFeeds.find({brand_id: {$in: listOfBrandIds}});
+      dataFeeds = await DataFeeds.find({brand_id: listOfBrandIds});
     }
 
       return res.status(200).json({
@@ -1093,6 +1093,7 @@ exports.ListDataFeedsBrand = async (req, res) => {
       });
 
     } catch (err) {
+      console.log(err);
     return res.status(400).json({
       success: false,
       error: { code: 400, message: "" + err },
