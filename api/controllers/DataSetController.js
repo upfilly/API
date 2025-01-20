@@ -392,9 +392,9 @@ exports.sendDataSets = async (req, res) => {
         occasion: item["Occassion"],
         season: item["Season"],
         badges: item["Badges"],
-        ratingAvg: item["Rating Avg"] === ''?0:item["Rating Avg"],
-        ratingCount: item["Rating Count"] === '' ? 0: item["Rating Count"],
-        inventoryCount: item["Inventory Count"] === ''? 0: item["Inventory Count"],
+        ratingAvg: item["Rating Avg"],
+        ratingCount: item["Rating Count"],
+        inventoryCount: item["Inventory Count"],
         dateCreated: item["Date Created"],
         brand_name: req.identity.name,
         brand_id: req.identity.id
@@ -417,7 +417,7 @@ exports.sendDataSets = async (req, res) => {
       if (!existingData) {
         await DataFeeds.create(payload);
       } else {
-        await DataFeeds.updateOne({ ID: item["Product ID"] }, payload);
+        await DataFeeds.updateOne({ ID: item["Product ID"], SKU: item.SKU, brand_id: req.identity.id }, payload);
       }
 
     }
@@ -1094,6 +1094,7 @@ exports.ListDataFeedsBrand = async (req, res) => {
       isActive: true
     });
     let listOfBrandIds = BrandAffiliateAssociations.map((cur)=>String(cur.brand_id));
+    console.log(listOfBrandIds);
     let dataFeeds;
     if(brand_id) {
       if(listOfBrandIds.includes(brand_id)) {
