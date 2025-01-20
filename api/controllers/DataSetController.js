@@ -373,9 +373,9 @@ exports.sendDataSets = async (req, res) => {
         occasion: item["Occassion"],
         season: item["Season"],
         badges: item["Badges"],
-        ratingAvg: item["Rating Avg"],
-        ratingCount: item["Rating Count"],
-        inventoryCount: item["Inventory Count"],
+        ratingAvg: item["Rating Avg"] === ''?0:item["Rating Avg"],
+        ratingCount: item["Rating Count"] === '' ? 0: item["Rating Count"],
+        inventoryCount: item["Inventory Count"] === ''? 0: item["Inventory Count"],
         dateCreated: item["Date Created"],
         brand_name: req.identity.name,
         brand_id: req.identity.id
