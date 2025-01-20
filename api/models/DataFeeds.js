@@ -45,7 +45,7 @@ module.exports = {
     categoryId: {type:"string"},
     brand: {type:"string"},
     childSKU: {type:"string"},
-    childPrice: {type:"number"},
+    childPrice: {type:"string"},
     color: {type:"string"},
     colorFamily: {type:"string"},
     colorSwatches: {type:"string"},
