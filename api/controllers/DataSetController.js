@@ -270,9 +270,19 @@ exports.sendDataSets = async (req, res) => {
     };
 
     // console.log(query1);
-    let listOfAcceptedInvites = await AffiliateInvite.find(query1);
-    let listOfBrandInvite = await AffiliateBrandInvite.find(query2);
+    // let listOfAcceptedInvites = await AffiliateInvite.find(query1);
+    // let listOfBrandInvite = await AffiliateBrandInvite.find(query2);
 
+    //finding list of all affiliates connected to this brand
+    let BrandAffiliateAssociations = await BrandAffiliateAssociation.find({
+      brand_id: req.body.brand_id,
+      status: "accepted",
+      isDeleted: false,
+      isActive: true
+    });
+
+    ////
+    /*
     function removeDuplicates(array, key) {
       const seen = new Set();
       return array.filter((item) => {
@@ -284,16 +294,17 @@ exports.sendDataSets = async (req, res) => {
         return true;
       });
     }
-
+  */
     // Combine the two lists
-    let combinedList = [...listOfBrandInvite, ...listOfAcceptedInvites];
+    // let combinedList = [...listOfBrandInvite, ...listOfAcceptedInvites];
     // console.log(combinedList);
     // Remove duplicates based on the 'id' key
-    listOfAcceptedInvites = removeDuplicates(combinedList, "affiliate_id");
+    // listOfAcceptedInvites = removeDuplicates(combinedList, "affiliate_id");
+    listOfAcceptedInvites = BrandAffiliateAssociations;
 
-    for (let invites of listOfAcceptedInvites) {
+    for (let invite of listOfAcceptedInvites) {
       let findUser = await Users.findOne({
-        id: invites.affiliate_id,
+        id: invite.affiliate_id,
         // status: data.affiliateStatus,
         isDeleted: false,
       });
@@ -338,24 +349,50 @@ exports.sendDataSets = async (req, res) => {
 
     for (let item of student_arr) {
       payload = {
-        ID: item.ID,
+        ID: item["Product ID"],
         type: item.Type,
         SKU: item.SKU,
         Name: item.Name,
-        Published: Boolean(Number(item.Published)),
-        isFeatured: Boolean(Number(item.Is_Featured)),
-        isVisible: Boolean(Number(item.Is_Visible)),
-        shortDescription: item.Short_Description,
-        longDescription: item.Long_Description,
+        productURL: item["Product URL"],
+        price: item["Price"],
+        retailPrice: item["Retail Price"],
+        thumbnailURL: item["Thumbnail URL"],
+        searchKeywords: item["Search Keywords"],
+        description: item["Description"],
+        category: item["Category"],
+        categoryId: item["Category ID"],
+        brand: item["Brand"],
+        childSKU: item["Child SKU"],
+        childPrice: item["Child Price"],
+        color: item["Color"],
+        colorFamily: item["Color Family"],
+        colorSwatches: item["Color Swatches"],
+        size: item["Size"],
+        shoeSize: item["Shoe Size"],
+        pantSize: item["Pants Size"],
+        occasion: item["Occassion"],
+        season: item["Season"],
+        badges: item["Badges"],
+        ratingAvg: item["Rating Avg"],
+        ratingCount: item["Rating Count"],
+        inventoryCount: item["Inventory Count"],
+        dateCreated: item["Date Created"],
         brand_name: req.identity.name,
-        brand_id: req.identity.id,
-        url: item.url
+        brand_id: req.identity.id
+        //
+        // Published: Boolean(Number(item.Published)),
+        // isFeatured: Boolean(Number(item.Is_Featured)),
+        // isVisible: Boolean(Number(item.Is_Visible)),
+        // shortDescription: item.Short_Description,
+        // longDescription: item.Long_Description,
+        
+        // url: item.url
       }
 
       let existingData = await DataFeeds.findOne({
         ID: item.ID,
         SKU: item.SKU,
-        brand_id: req.identity.id,
+        brand_id: req.identity.id
       });
 
       if (!existingData) {
@@ -383,10 +420,28 @@ exports.listOfDataSet = async (req, res) => {
     var count = parseInt(req.param("count"));
     let sortBy = req.param("sortBy");
     let addedBy = req.param("addedBy");
-    let user_id = req.param("user_id");
+    // let user_id = req.param("user_id");
     let startDate = req.param("startDate");
     let endDate = req.param("endDate");
+    let affiliate_id = req.param("affiliate_id");
+    let brand_id = req.param("brand_id");
+    //Get all brands associated with this affiliate
+    let BrandAffiliateAssociations = await BrandAffiliateAssociation.find({
+      affiliate_id: affiliate_id,
+      status: "accepted",
+      isDeleted: false,
+      isActive: true
+    });
+    let listOfBrandIds = BrandAffiliateAssociations.filter((cur)=>String(cur.brand_id));
+    if(brand_id) {
+      if(listOfBrandIds.includes(brand_id)) {
+        query.brand_id = brand_id;
+      } else {
 
+      }
+    } else {
+      query.brand_id = {$in: listOfBrandIds};
+    }
     var date = new Date();
 
     var query = {};
@@ -411,9 +466,9 @@ exports.listOfDataSet = async (req, res) => {
 
     query.isDeleted = false;
 
-    if (user_id) {
-      query.user_id = new ObjectId(user_id);
-    }
+    // if (user_id) {
+    //   query.user_id = new ObjectId(user_id);
+    // }
 
     if (addedBy) {
       query.addedBy = new ObjectId(addedBy);
@@ -456,14 +511,14 @@ exports.listOfDataSet = async (req, res) => {
       {
         $lookup: {
           from: "users",
-          localField: "user_id",
+          localField: "brand_id",
           foreignField: "_id",
-          as: "user_details",
+          as: "brand_details",
         },
       },
       {
         $unwind: {
-          path: "$user_details",
+          path: "$brand_details",
           preserveNullAndEmptyArrays: true,
         },
       },
@@ -471,7 +526,7 @@ exports.listOfDataSet = async (req, res) => {
         $project: {
           user_id: "$user_id",
           filePath: "$filePath",
-          user_details: "$user_details",
+          brand_details: "$brand_details",
           addedBy_details: "$addedBy_details",
           status: "$status",
           isDeleted: "$isDeleted",
@@ -986,7 +1041,6 @@ exports.getEmailMessage = async (req, res) => {
 exports.ListDataSetsBrand = async (req, res) => {
   try {
     let affiliate_id = req.identity.id;
-
     if (affiliate_id) {
       let listAffiliateInvite = await AffiliateInvite.find({ affiliate_id: affiliate_id, isDeleted: false });
       if (listAffiliateInvite) {
@@ -1020,12 +1074,45 @@ exports.ListDataSetsBrand = async (req, res) => {
 
     }
 
-
-
-
-
-
   } catch (err) {
+    return res.status(400).json({
+      success: false,
+      error: { code: 400, message: "" + err },
+    });
+  }
+
+}
+
+
+exports.ListDataFeedsBrand = async (req, res) => {
+  try {
+    let affiliate_id = req.param('affiliate_id');
+    let brand_id = req.param('brand_id');
+    let BrandAffiliateAssociations = await BrandAffiliateAssociation.find({
+      affiliate_id: affiliate_id,
+      status: "accepted",
+      isDeleted: false,
+      isActive: true
+    });
+    let listOfBrandIds = BrandAffiliateAssociations.filter((cur)=>String(cur.brand_id));
+    let dataFeeds;
+    if(brand_id) {
+      if(listOfBrandIds.includes(brand_id)) {
+        dataFeeds = await DataFeeds.find({brand_id: brand_id});
+      } else {
+        dataFeeds = [];
+      }
+    } else {
+      dataFeeds = await DataFeeds.find({brand_id: {$in: listOfBrandIds}});
+    }
+
+      return res.status(200).json({
+        success: true,
+        data: dataFeeds,
+        total: dataFeeds.length,
+      });
+
+    } catch (err) {
     return res.status(400).json({
       success: false,
       error: { code: 400, message: "" + err },

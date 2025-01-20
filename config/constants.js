@@ -391,6 +391,20 @@ module.exports.constants = {
     ADDED_PUBLISH: "Blog published successfully",
     REMOVED_PUBLISH: "Blog un-published successfully",
   },
+  BANK_ACCOUNT: {
+    CREATED: "Bank account created successfully",
+    LINK_CREATED: "Link created successfully",
+    NO_ACTIVE_ACCOUNT_ID: "No Active account id",
+    ACCOUNT_STATUS_UPDATED: "Account status updated",
+    UPDATE_FAILED: "Account update failed. Please check the account ID.",
+    ACCOUNT_NOT_FOUND: "No accounts found for this user.",
+    LATEST_ACCOUNT_ACTIVATED: "Latest Account Activated",
+    TRANSFER_CREATED_SUCCESSFULLY: "Transfer created successfully",
+    EXTERNAL_ACCOUNT: "Account created successfully",
+    DETAIL: "Detail retrieved successfully"
+
+  },
+
   CAMPAIGN: {
     ADDED: "Campaign added successfully",
     UPDATED: "Campaign updated successfully",
