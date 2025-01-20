@@ -426,22 +426,6 @@ exports.listOfDataSet = async (req, res) => {
     let affiliate_id = req.param("affiliate_id");
     let brand_id = req.param("brand_id");
     //Get all brands associated with this affiliate
-    let BrandAffiliateAssociations = await BrandAffiliateAssociation.find({
-      affiliate_id: affiliate_id,
-      status: "accepted",
-      isDeleted: false,
-      isActive: true
-    });
-    let listOfBrandIds = BrandAffiliateAssociations.filter((cur)=>String(cur.brand_id));
-    if(brand_id) {
-      if(listOfBrandIds.includes(brand_id)) {
-        query.brand_id = brand_id;
-      } else {
-
-      }
-    } else {
-      query.brand_id = {$in: listOfBrandIds};
-    }
     var date = new Date();
 
     var query = {};
@@ -492,7 +476,6 @@ exports.listOfDataSet = async (req, res) => {
       endDate = new Date(endDate);
       query.submitDateAndTime = { $lte: endDate };
     }
-
     const pipeline = [
       {
         $lookup: {
@@ -570,6 +553,7 @@ exports.listOfDataSet = async (req, res) => {
 
   } catch (err) {
     // (err)
+    console.log(err);
     return res.status(400).json({
       success: false,
       error: { code: 400, message: "" + err },
@@ -1094,7 +1078,7 @@ exports.ListDataFeedsBrand = async (req, res) => {
       isDeleted: false,
       isActive: true
     });
-    let listOfBrandIds = BrandAffiliateAssociations.filter((cur)=>String(cur.brand_id));
+    let listOfBrandIds = BrandAffiliateAssociations.map((cur)=>String(cur.brand_id));
     let dataFeeds;
     if(brand_id) {
       if(listOfBrandIds.includes(brand_id)) {
