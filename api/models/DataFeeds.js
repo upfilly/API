@@ -55,9 +55,9 @@ module.exports = {
     occasion: {type:"string"},
     season: {type:"string"},
     badges: {type:"string"},
-    ratingAvg: {type:"number"},
-    ratingCount: {type:"number"},
-    inventoryCount: {type:"number"},
+    ratingAvg: {type:"string"},
+    ratingCount: {type:"string"},
+    inventoryCount: {type:"string"},
     dateCreated: {type: 'ref', columnType: 'datetime'},
     brand_name: {type: "string"},
     brand_id: {model: "users"}
