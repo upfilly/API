@@ -347,7 +347,7 @@ exports.sendDataSets = async (req, res) => {
     }
 
 
-    for (let item of student_arr) {
+    for await (let item of student_arr) {
       payload = {
         ID: item["Product ID"],
         type: item.Type,
@@ -390,7 +390,7 @@ exports.sendDataSets = async (req, res) => {
       }
 
       let existingData = await DataFeeds.findOne({
-        ID: item.ID,
+        ID: item["Product ID"],
         SKU: item.SKU,
         brand_id: req.identity.id
       });
@@ -398,17 +398,13 @@ exports.sendDataSets = async (req, res) => {
       if (!existingData) {
         await DataFeeds.create(payload);
       } else {
-        await DataFeeds.updateOne({ ID: item.ID }, payload);
+        await DataFeeds.updateOne({ ID: item["Product ID"] }, payload);
       }
 
     }
-
-
-
-
-    response.success(student_arr, constants.DATASET.ADDED, req, res);
+    return response.success(student_arr, constants.DATASET.ADDED, req, res);
   } catch (err) {
-    response.failed(err, `${err}`, req, res);
+    return response.failed(err, `${err}`, req, res);
   }
 };
 
