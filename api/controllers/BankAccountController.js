@@ -1,7 +1,7 @@
 "use strict";
 
 const stripeServices = require("../services/StripeServices");
-const constants = require("../../config/constants");
+const {constants} = require("../../config/constants");
 const stripe = require('stripe')(process.env.STRIPE_KEY);
 
 /** common function for create account onboarding link */
@@ -10,7 +10,7 @@ const accountDetailLink = async (userId) => {
     try {
         console.log("addedBy", userId)
         let dataObject;
-        const getAccountId = await db.account.findOne({ addedBy: userId, isActive: true })
+        const getAccountId = await Account.findOne({ addedBy: userId, isActive: true })
         if (getAccountId) {
             dataObject = { accountId: getAccountId.accountId, userId: userId }
         } else {
@@ -50,7 +50,7 @@ module.exports = {
                     success: false,
                     error: {
                         code: "400",
-                        message: constants.onBoarding.PAYLOAD_MISSING
+                        message: constants.user.PAYLOAD_MISSING
                     }
                 })
             }
@@ -58,16 +58,16 @@ module.exports = {
             const dataObject = { email, businessName, country }
             const createBankAccount = await stripeServices.add_bank_account(dataObject)
 
-            const findAndUpdate = await db.account.updateMany({ addedBy: req.identity.id, isActive: true }, { isActive: false })
-
-            const saveAccountId = await db.account.create({
+            const findAndUpdate = await Account.update({ addedBy: req.identity.id, isActive: true }).set({ isActive: false });
+            console.log("Inside main function - ", createBankAccount);
+            const saveAccountId = await Account.create({
                 status: "active",
                 accountId: createBankAccount.id,
                 addedBy: req.identity.id,
                 isDeleted: false,
                 createdAt: new Date(),
                 updatedAt: new Date(),
-            })
+            }).fetch();
             if (saveAccountId) {
                 const link = await accountDetailLink(req.identity.id)
 
@@ -78,6 +78,7 @@ module.exports = {
                 })
             }
         } catch (error) {
+            console.log(error);
             return res.status(400).json({
                 success: false,
                 error: {
@@ -95,7 +96,7 @@ module.exports = {
                 case "account.updated":
                     const eventObject = request.body.data.object;
 
-                    const findAccount = await db.account.findOne({ accountId: eventObject.id });
+                    const findAccount = await Account.findOne({ accountId: eventObject.id });
 
                     if (findAccount) {
                         const updateObject = {
@@ -109,7 +110,7 @@ module.exports = {
                             bankAccountNumber: eventObject.external_accounts?.data[0].last4
                         };
 
-                        await db.account.updateOne({ accountId: eventObject.id }, { $set: updateObject });
+                        await Account.updateOne({ accountId: eventObject.id }, { $set: updateObject });
 
                         console.log("Account updated successfully");
 
@@ -180,13 +181,13 @@ module.exports = {
 
             if (status === true) {
 
-                const activeAccount = await db.account.find({ userId: userId, isActive: true });
+                const activeAccount = await Account.find({ userId: userId, isActive: true });
                 if (activeAccount) {
-                    await db.account.updateMany({ userId: userId }, { isActive: false });
+                    await Account.update({ userId: userId }).set({ isActive: false });
                 }
 
 
-                const updateAccountStatus = await db.account.updateOne(
+                const updateAccountStatus = await Account.updateOne(
                     { accountId: accountId, userId: userId },
                     { isActive: true }
                 );
@@ -210,12 +211,12 @@ module.exports = {
 
             if (status === false) {
 
-                await db.account.updateMany({ userId: userId }, { isActive: false });
+                await Account.update({ userId: userId }).set({ isActive: false });
 
-                const latestAccount = await db.account.findOne({ userId: userId }).sort({ createdAt: -1 });
+                const latestAccount = await Account.findOne({ userId: userId }).sort({ createdAt: -1 });
 
                 if (latestAccount) {
-                    await db.account.updateOne({ accountId: latestAccount.accountId }, { isActive: true });
+                    await Account.updateOne({ accountId: latestAccount.accountId }).set({ isActive: true });
                     return res.status(200).json({
                         success: true,
                         message: constants.BANK_ACCOUNT.LATEST_ACCOUNT_ACTIVATED
@@ -295,7 +296,8 @@ module.exports = {
                     }
                 }
             ]
-            const total = await db.transfer.aggregate([...pipeline]);
+            //have to create transfer table
+            const total = await Transfer.aggregate([...pipeline]);
             const totalCount = total.length;
 
             if (page && count) {
@@ -311,7 +313,7 @@ module.exports = {
                 );
             }
 
-            const result = await db.transfer.aggregate([...pipeline]);
+            const result = await Transfer.aggregate([...pipeline]);
 
             return res.status(200).json({
                 success: true,
@@ -343,7 +345,7 @@ module.exports = {
                 })
             }
 
-            const transferDetail = await db.transfer.findOne({ _id: id }).populate("paidTo")
+            const transferDetail = await Transfer.findOne({ _id: id }).populate("paidTo")
             if (transferDetail) {
                 return res.status(200).json({
                     success: true,

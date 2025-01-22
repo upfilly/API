@@ -313,6 +313,7 @@ exports.add_bank_account = async (options) => {
 
         },
     })
+    console.log("inside add bank account - ", account);
     return account
 }
 

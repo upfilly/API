@@ -8,6 +8,7 @@
  * https://sailsjs.com/anatomy/config/routes-js
  */
 
+
 module.exports.routes = {
   /***************************************************************************
    *                                                                          *
@@ -579,4 +580,14 @@ module.exports.routes = {
   //  "get /campaign-request/public-campaigns": "CampaignRequestByAffiliateController.getAllPublicCampaigns",
   //  "put /campaign-request/change-status": "CampaignRequestByAffiliateController.changeRequestStatus",
 
+  /*
+  * @BankAccount
+  */
+ "post /account/create": "BankAccountController.createAccount",
+ "post /account/update/status": "BankAccountController.updateAccountStatus",
+ "get /account/transfer/listing": "BankAccountController.transferListing",
+ "get /account/transfer/detail": "BankAccountController.transferDetail",
+ "post /account/webhook": "BankAccountController.webhook",
+ "get /account/retrieve": "BankAccountController.retriveAccount",
+ "post /account/link/regenerate": "BankAccountController.regenrateOnBoardingLink"
 };   
