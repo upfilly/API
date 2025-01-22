@@ -1,7 +1,7 @@
 "use strict";
 
 const stripeServices = require("../services/StripeServices");
-const constants = require("../../config/constants");
+const {constants} = require("../../config/constants");
 const stripe = require('stripe')(process.env.STRIPE_KEY);
 
 /** common function for create account onboarding link */
@@ -50,7 +50,7 @@ module.exports = {
                     success: false,
                     error: {
                         code: "400",
-                        message: constants.onBoarding.PAYLOAD_MISSING
+                        message: constants.user.PAYLOAD_MISSING
                     }
                 })
             }
@@ -58,8 +58,8 @@ module.exports = {
             const dataObject = { email, businessName, country }
             const createBankAccount = await stripeServices.add_bank_account(dataObject)
 
-            const findAndUpdate = await Account.updateMany({ addedBy: req.identity.id, isActive: true }, { isActive: false })
-
+            const findAndUpdate = await Account.update({ addedBy: req.identity.id, isActive: true }).set({ isActive: false });
+            console.log("Inside main function - ", createBankAccount);
             const saveAccountId = await Account.create({
                 status: "active",
                 accountId: createBankAccount.id,
@@ -67,7 +67,7 @@ module.exports = {
                 isDeleted: false,
                 createdAt: new Date(),
                 updatedAt: new Date(),
-            })
+            }).fetch();
             if (saveAccountId) {
                 const link = await accountDetailLink(req.identity.id)
 
@@ -78,6 +78,7 @@ module.exports = {
                 })
             }
         } catch (error) {
+            console.log(error);
             return res.status(400).json({
                 success: false,
                 error: {
@@ -210,7 +211,7 @@ module.exports = {
 
             if (status === false) {
 
-                await Account.updateMany({ userId: userId }, { isActive: false });
+                await Account.update({ userId: userId }).set({ isActive: false });
 
                 const latestAccount = await Account.findOne({ userId: userId }).sort({ createdAt: -1 });
 
