@@ -587,7 +587,9 @@ module.exports.routes = {
  "post /account/update/status": "BankAccountController.updateAccountStatus",
  "get /account/transfer/listing": "BankAccountController.transferListing",
  "get /account/transfer/detail": "BankAccountController.transferDetail",
- "post /account/webhook": "BankAccountController.webhook",
+//  "post /account/webhook": "BankAccountController.webhook",
  "get /account/retrieve": "BankAccountController.retriveAccount",
- "post /account/link/regenerate": "BankAccountController.regenrateOnBoardingLink"
+ "post /account/link/regenerate": "BankAccountController.regenrateOnBoardingLink",
+
+
 };   

@@ -169,12 +169,12 @@ module.exports = {
         try {
             const { accountId, status, userId } = req.body;
 
-            if (!accountId || status === undefined) {
+            if (!accountId || !status) {
                 return res.status(400).json({
                     success: false,
                     error: {
                         code: "400",
-                        message: constants.onBoarding.PAYLOAD_MISSING
+                        message: constants.user.PAYLOAD_MISSING
                     }
                 });
             }
