@@ -43,6 +43,9 @@ module.exports.policies = {
     googleLoginAuthentication: true,
     googleLogin: true,
   },
+  BankAccountController: {
+    webhook: true
+  },
   SubscriptionPlansController: {
     getAllSubscriptionPlans: true,
     //payNowOnStripe: true,
