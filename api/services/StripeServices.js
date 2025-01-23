@@ -321,8 +321,8 @@ exports.create_account_link = async (options) => {
 
     const accountLink = await stripe.accountLinks.create({
         account: options.accountId,
-        refresh_url: `${credentials.FRONT_WEB_URL}/gethelp`,
-        return_url: `${credentials.FRONT_WEB_URL}/experiencemarc`,
+        refresh_url: `${credentials.FRONT_WEB_URL}/profile`,
+        return_url: `${credentials.FRONT_WEB_URL}/`,
         type: 'account_onboarding',
 
     });
