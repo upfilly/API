@@ -378,14 +378,24 @@ module.exports = {
             // }
 
             // Fetch the account details from Stripe
-            const accountDetails = await stripeServices.retrieve_account("acct_1QhTNgBUjnhDIjAq");
-
-
+            let userId = req.param('userId');
+            if(!userId) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Pass user's ID!"
+                });
+            }
+            let connectedAccount = await Account.findOne({addedBy: userId, isActive: true, isDeleted: false});
+            if(!connectedAccount) {
+                return res.status(404).json({
+                    success: false,
+                    message: "No linked active account found!"
+                });
+            }
+            // const accountDetails = await stripeServices.retrieve_account(conn);
             return res.status(200).json({
                 success: true,
-                data: {
-                    accountDetails,
-                }
+                data: connectedAccount
             });
         } catch (error) {
             return res.status(400).json({
