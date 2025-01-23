@@ -394,7 +394,7 @@ module.exports = {
                     message: "No linked active account found!"
                 });
             }
-            const accountDetails = await stripeServices.retrieve_account(conn);
+            const accountDetails = await stripeServices.retrieve_account(connectedAccount.accountId);
             return res.status(200).json({
                 success: true,
                 data: connectedAccount
