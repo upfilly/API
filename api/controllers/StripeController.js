@@ -1708,31 +1708,6 @@ exports.webhook = async (request, response) => {
                 }
 
                 break;
-            case "account.updated":
-                const eventObject = request.body.data.object;
-
-                const findAccount = await Account.findOne({ accountId: eventObject.id });
-
-                if (findAccount) {
-                    const updateObject = {
-                        transfer: eventObject.capabilities.transfers || "",
-                        account_holder_name: eventObject.external_accounts?.data[0]?.account_holder_name || "",
-                        bank_name: eventObject.external_accounts?.data[0]?.bank_name || "",
-                        country: eventObject.external_accounts?.data[0]?.country || "",
-                        currency: eventObject.external_accounts?.data[0]?.currency || "",
-                        accountStatus: eventObject.external_accounts?.data[0]?.status || "",
-                        routingNumber: eventObject.external_accounts?.data[0]?.routing_number || "",
-                        bankAccountNumber: eventObject.external_accounts?.data[0].last4
-                    };
-
-                    await Account.updateOne({ accountId: eventObject.id }).set(updateObject);
-
-                    // console.log("Account updated successfully");
-
-                } else {
-                    console.log("Account not found");
-                }
-                break;    
 
             default:
                 
