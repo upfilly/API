@@ -388,8 +388,9 @@ module.exports = {
             }
             let connectedAccount = await Account.findOne({addedBy: userId, isActive: true, isDeleted: false});
             if(!connectedAccount) {
-                return res.status(404).json({
-                    success: false,
+                return res.status(200).json({
+                    success: true,
+                    data: null,
                     message: "No linked active account found!"
                 });
             }
