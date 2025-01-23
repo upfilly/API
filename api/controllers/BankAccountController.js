@@ -2,7 +2,8 @@
 
 const stripeServices = require("../services/StripeServices");
 const {constants} = require("../../config/constants");
-const stripe = require('stripe')(process.env.STRIPE_KEY);
+const credentials = require('../../config/local.js'); //sails.config.env.production;
+const stripe = require("stripe")(credentials.PAYMENT_INFO.SECREATKEY);
 
 /** common function for create account onboarding link */
 
@@ -392,7 +393,7 @@ module.exports = {
                     message: "No linked active account found!"
                 });
             }
-            // const accountDetails = await stripeServices.retrieve_account(conn);
+            const accountDetails = await stripeServices.retrieve_account(conn);
             return res.status(200).json({
                 success: true,
                 data: connectedAccount
@@ -407,4 +408,31 @@ module.exports = {
             });
         }
     },
+    deleteAccount: async (req, res) => {
+        try {
+            let accountId = req.param('accountId');
+            if(!accountId) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Pass account ID!"
+                });
+            }
+            let connectedAccount = await Account.findOne({id: accountId});
+            if(!connectedAccount) {
+                return res.status(404).json({
+                    success: false,
+                    message: "Account not found!"
+                });
+            }
+            const deletedAccount = await stripe.accounts.del(connectedAccount.accountId);
+            await Account.updateOne({id: accountId}).set({isActive: false, isDeleted: true});
+            if (deletedAccount.deleted) {
+                return res.status(200).json({ success: true, message: `Account deleted successfully.` });
+            } else {
+                return res.status(400).json({ success: false, message: `Account could not be deleted.` });
+            }
+        } catch(err) {
+            return res.status(500).json({ success: false, message: err.message });
+        }
+    }
 }

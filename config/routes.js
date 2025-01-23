@@ -590,6 +590,6 @@ module.exports.routes = {
 //  "post /account/webhook": "BankAccountController.webhook",
  "get /account/retrieve": "BankAccountController.retriveAccount",
  "post /account/link/regenerate": "BankAccountController.regenrateOnBoardingLink",
-
+  "delete /account/delete": "BankAccountController.deleteAccount"
 
 };   
