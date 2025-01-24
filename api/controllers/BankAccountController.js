@@ -9,7 +9,6 @@ const stripe = require("stripe")(credentials.PAYMENT_INFO.SECREATKEY);
 
 const accountDetailLink = async (userId) => {
     try {
-        console.log("addedBy", userId)
         let dataObject;
         const getAccountId = await Account.findOne({ addedBy: userId, isActive: true })
         if (getAccountId) {
@@ -29,7 +28,6 @@ const accountDetailLink = async (userId) => {
 }
 const ReGenerateAccountDetailLink = async (accountId) => {
     try {
-        console.log("accountId", accountId)
         const createLink = await stripeServices.create_account_link({ accountId })
 
         if (createLink) {
@@ -60,7 +58,6 @@ module.exports = {
             const createBankAccount = await stripeServices.add_bank_account(dataObject)
 
             const findAndUpdate = await Account.update({ addedBy: req.identity.id, isActive: true }).set({ isActive: false });
-            console.log("Inside main function - ", createBankAccount);
             const saveAccountId = await Account.create({
                 status: "active",
                 accountId: createBankAccount.id,
@@ -79,7 +76,6 @@ module.exports = {
                 })
             }
         } catch (error) {
-            console.log(error);
             return res.status(400).json({
                 success: false,
                 error: {
@@ -96,7 +92,6 @@ module.exports = {
             switch (request.body.type) {
                 case "account.updated":
                     const eventObject = request.body.data.object;
-                    console.log("Account updated event fired - ", eventObject);
                     const findAccount = await Account.findOne({ accountId: eventObject.id });
 
                     if (findAccount) {
@@ -112,9 +107,6 @@ module.exports = {
                         };
 
                         await Account.updateOne({ accountId: eventObject.id }).set(updateObject);
-
-                        console.log("Account updated successfully");
-
                     } else {
                         console.log("Account not found");
                     }
@@ -151,7 +143,6 @@ module.exports = {
             }
 
             const createLink = await ReGenerateAccountDetailLink(accountId);
-            console.log("createLink", createLink)
             return res.status(200).json({
                 success: true,
                 data: createLink
