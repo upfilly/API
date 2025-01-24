@@ -96,7 +96,7 @@ module.exports = {
             switch (request.body.type) {
                 case "account.updated":
                     const eventObject = request.body.data.object;
-
+                    console.log("Account updated event fired - ", eventObject);
                     const findAccount = await Account.findOne({ accountId: eventObject.id });
 
                     if (findAccount) {
@@ -111,7 +111,7 @@ module.exports = {
                             bankAccountNumber: eventObject.external_accounts?.data[0].last4
                         };
 
-                        await Account.updateOne({ accountId: eventObject.id }, { $set: updateObject });
+                        await Account.updateOne({ accountId: eventObject.id }).set(updateObject);
 
                         console.log("Account updated successfully");
 
