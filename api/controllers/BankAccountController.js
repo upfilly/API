@@ -108,7 +108,7 @@ module.exports = {
                             currency: eventObject.external_accounts?.data[0]?.currency || "",
                             accountStatus: eventObject.external_accounts?.data[0]?.status || "",
                             routingNumber: eventObject.external_accounts?.data[0]?.routing_number || "",
-                            bankAccountNumber: eventObject.external_accounts?.data[0].last4
+                            bankAccountNumber: eventObject.external_accounts?.data[0]?.last4 || ""
                         };
 
                         await Account.updateOne({ accountId: eventObject.id }).set(updateObject);
