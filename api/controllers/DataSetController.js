@@ -337,10 +337,32 @@ exports.sendDataSets = async (req, res) => {
     }
     let payload = {
       addedBy: req.identity.id,
-      filePath: data.filePath,
+      filePath: data.filePath || "",
+      url : data.url || "",
     }
 
     await DataSet.create(payload);
+
+    if(data.type == "url"){
+      for await (let itm of listOfAcceptedInvites ){
+        payload = {
+          brand_id: req.identity.id,
+          url: data.url
+        }
+        let existingData = await DataFeeds.findOne({
+          url :data.url,
+          brand_id: req.identity.id
+        });
+        
+        if (!existingData) {
+          await DataFeeds.create(payload);
+        } else {
+          await DataFeeds.updateOne({ url :data.url, brand_id: req.identity.id }, payload);
+        }
+      }
+    return response.success(student_arr, constants.DATASET.ADDED, req, res);
+
+    }
 
     // here we are storing data feeds
 
@@ -364,7 +386,7 @@ exports.sendDataSets = async (req, res) => {
     } else {
       student_arr = await parseExcelFile(fileBuffer);
     }
-    console.log(student_arr);
+    // console.log(student_arr);
 
     for await (let item of student_arr) {
       payload = {
@@ -526,6 +548,7 @@ exports.listOfDataSet = async (req, res) => {
           filePath: "$filePath",
           brand_details: "$brand_details",
           addedBy_details: "$addedBy_details",
+          url:"$url",
           status: "$status",
           isDeleted: "$isDeleted",
           addedBy: "$addedBy",

@@ -3,6 +3,7 @@ module.exports = {
   attributes: {
     user_id: { model: "users" },
     filePath: { type: "string" },
+    url :{type:'string'},
     addedBy: { model: "users" },
     updatedBy: { model: "users" },
     isDeleted: { type: "Boolean", defaultsTo: false },
