@@ -219,7 +219,9 @@ exports.find = async function (req, res) {
         addedBy: '$addedBy',
         updatedBy: '$updatedBy',
         updatedAt: '$updatedAt',
-        createdAt: '$createdAt'
+        createdAt: '$createdAt',
+        commission_status : "$commission_status",
+        commission_paid: "$commission_paid",
       }
     };
 
