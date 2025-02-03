@@ -1117,16 +1117,18 @@ exports.ListDataFeedsBrand = async (req, res) => {
       isActive: true
     });
     let listOfBrandIds = BrandAffiliateAssociations.map((cur)=>String(cur.brand_id));
-    console.log(listOfBrandIds);
+    // console.log(listOfBrandIds);
     let dataFeeds;
     if(brand_id) {
       if(listOfBrandIds.includes(brand_id)) {
-        dataFeeds = await DataFeeds.find({brand_id: brand_id});
+        // previous code ----> dataFeeds = await DataFeeds.find({brand_id: brand_id})
+        dataFeeds = await DataFeeds.find({brand_id: brand_id}).select(["url","filePath","brand_id"]).populate("brand_id");
       } else {
         dataFeeds = [];
       }
     } else {
-      dataFeeds = await DataFeeds.find({brand_id: listOfBrandIds});
+        // previous code ----> dataFeeds = await DataFeeds.find({brand_id: brand_id})
+      dataFeeds = await DataFeeds.find({brand_id: listOfBrandIds}).select(["url","filePath","brand_id"]).populate("brand_id");
     }
 
       return res.status(200).json({
