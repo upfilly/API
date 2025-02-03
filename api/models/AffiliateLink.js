@@ -38,8 +38,8 @@ module.exports = {
     updatedAt: { type: "ref", autoUpdatedAt: true, },
     isDeleted: { type: 'Boolean', defaultsTo: false },
     // keys for commission approved and reject by brand and these below keys are used for bran
-    commission_status : {type:"string",isIn:["pending","accepted","rejected"]},
-    commission_paid : {type:'string',isIn:["pending", "paid", "unPaid"]}
+    commission_status : {type:"string",isIn:["pending","accepted","rejected"],defaultsTo:"pending"},
+    commission_paid : {type:'string',isIn:["pending", "paid", "unPaid"],defaultsTo:"pending"}
   }
 };
 
