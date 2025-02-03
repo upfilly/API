@@ -346,3 +346,8 @@ exports.transfer_fund = async (options) => {
     })
     return createPayout
 }
+
+exports.retrieve_balance = async() => {
+    const balance = await stripe.balance.retrieve();
+    return balance
+}
