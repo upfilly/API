@@ -60,7 +60,10 @@ module.exports = {
     inventoryCount: {type:"string"},
     dateCreated: {type: 'ref', columnType: 'datetime'},
     brand_name: {type: "string"},
-    brand_id: {model: "users"}
+    brand_id: {model: "users"},
+    url :{type:'string'}, // when brand share url
+    filePath : {type:'string'}, // when brand share csv file and that file path store in this
+
   }
 
 };

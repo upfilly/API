@@ -2067,11 +2067,16 @@ module.exports = {
         } else {
           delete get_user.listOfOtherUsers
         }
-
+        if(get_user.role === "admin"){
+          let balance = await Services.StripeServices.retrieve_balance()
+          get_user.stripe_account_balance = balance.available[0].amount
+          get_user.pending_balance = balance.pending[0].amount
+        }
         return response.success(get_user, constants.user.FETCHED, req, res);
       }
       throw constants.user.INVALID_ID;
     } catch (error) {
+      console.log(error,'====eer')
       return response.failed(null, `${error}`, req, res);
     }
   },

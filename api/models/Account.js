@@ -1,4 +1,5 @@
 module.exports = {
+  schema:true,
     attributes: {
         status: { type: "string", defaultsTo: "active" },
         accountId: { type: "string"},
