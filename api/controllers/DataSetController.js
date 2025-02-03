@@ -335,7 +335,7 @@ exports.sendDataSets = async (req, res) => {
 
       await Emails.DataSet.sendDataSet(emailPayload);
     }
-    console.log(listOfAcceptedInvites,'listOfAcceptedInvites')
+    // console.log(listOfAcceptedInvites,'listOfAcceptedInvites')
 
     let payload = {
       addedBy: req.identity.id,
@@ -366,7 +366,7 @@ exports.sendDataSets = async (req, res) => {
 
     }else {
       for await (let itm of listOfAcceptedInvites ){
-        console.log(data.filePath,'data.filePath')
+        // console.log(data.filePath,'data.filePath')
         payload = {
           brand_id: req.identity.id,
           filePath: data.filePath
