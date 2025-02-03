@@ -29,6 +29,10 @@ module.exports = {
         event_type: { type: "json", defaultsTo: [] },
         campaign_unique_id: { type: "string" },
         // campaign_link: { type: "json", defaultsTo: [] },
+        // new key added for campaign commission to show in campaign listing
+        commission : {type: 'number',defaultsTo: 0},
+        commission_event_type : {type: 'string',isIn:["lead","purchase","visitor"]},
+        commission_type : {type: 'string',isIn:["amount","percentage"]},
         addedBy: { model: "users", },
         updatedBy: { model: "users", },
         createdAt: { type: "ref", autoCreatedAt: true, },

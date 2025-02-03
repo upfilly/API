@@ -94,6 +94,9 @@ exports.addCommission = async (req, res) => {
 
     const created = await CommissionsManagement.create(req.body).fetch();
     if (created) {
+      // update commission in campaign when adding from manage campaign
+      await Campaign.updateOne({id:campaign},{commission:created.amount,commission_event_type:created.event_type, commission_type : created.amount_type})
+
       return response.success(null, constants.COMMISSION.CREATED, req, res);
     }
     throw constants.COMMON.SERVER_ERROR;

@@ -274,3 +274,11 @@ exports.deleteCommission = async (req, res) => {
     }
 }
 
+exports.payCommissionToAdmin = async(req,res) => {
+    try {
+        
+    } catch (error) {
+        
+    }
+}
+

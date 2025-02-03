@@ -469,7 +469,10 @@ exports.getAllCampaignsForBrand = async (req, res) => {
                     createdAt: 1,
                     updatedAt: 1,
                     isDefault: 1,
-                    isDeleted: 1
+                    isDeleted: 1,
+                    commission:1,
+                    commission_event_type:1,
+                    commission_type:1
                 }
             },
             {
