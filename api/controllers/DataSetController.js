@@ -362,15 +362,38 @@ exports.sendDataSets = async (req, res) => {
       }
     return response.success(student_arr, constants.DATASET.ADDED, req, res);
 
+    }else {
+      for await (let itm of listOfAcceptedInvites ){
+        payload = {
+          brand_id: req.identity.id,
+          url: data.url
+        }
+        let existingData = await DataFeeds.findOne({
+          filePath :data.filePath,
+          brand_id: req.identity.id
+        });
+        
+        if (!existingData) {
+          await DataFeeds.create(payload);
+        } else {
+          await DataFeeds.updateOne({ url :data.url, brand_id: req.identity.id }, payload);
+        }
+      }
     }
 
     // here we are storing data feeds
+    
 
     let duplicate = 0;
     let createdCount = 0;
     const url = constant.BACK_WEB_URL + "/" + data.filePath; // assume the URL is sent in the request body
+    
+
     const { fileType1, fileBuffer } = await getFileFromUrl(url);
+    
+    
     let fileType = url.substr(url.lastIndexOf(".") + 1)
+    console.log(fileType,'fileType')
     if (fileType !== 'csv' && fileType !== 'xlsx' && fileType !== 'xls') {
       throw {
         success: false,
@@ -386,7 +409,7 @@ exports.sendDataSets = async (req, res) => {
     } else {
       student_arr = await parseExcelFile(fileBuffer);
     }
-    // console.log(student_arr);
+
 
     for await (let item of student_arr) {
       payload = {
