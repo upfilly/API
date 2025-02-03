@@ -335,6 +335,8 @@ exports.sendDataSets = async (req, res) => {
 
       await Emails.DataSet.sendDataSet(emailPayload);
     }
+    console.log(listOfAcceptedInvites,'listOfAcceptedInvites')
+
     let payload = {
       addedBy: req.identity.id,
       filePath: data.filePath || "",
@@ -364,9 +366,10 @@ exports.sendDataSets = async (req, res) => {
 
     }else {
       for await (let itm of listOfAcceptedInvites ){
+        console.log(data.filePath,'data.filePath')
         payload = {
           brand_id: req.identity.id,
-          url: data.url
+          filePath: data.filePath
         }
         let existingData = await DataFeeds.findOne({
           filePath :data.filePath,
@@ -376,7 +379,7 @@ exports.sendDataSets = async (req, res) => {
         if (!existingData) {
           await DataFeeds.create(payload);
         } else {
-          await DataFeeds.updateOne({ url :data.url, brand_id: req.identity.id }, payload);
+          await DataFeeds.updateOne({ url :data.filePath, brand_id: req.identity.id }, payload);
         }
       }
     }
@@ -468,6 +471,7 @@ exports.sendDataSets = async (req, res) => {
     }
     return response.success(student_arr, constants.DATASET.ADDED, req, res);
   } catch (err) {
+    console.log(err,'============errr')
     return response.failed(err, `${err}`, req, res);
   }
 };
