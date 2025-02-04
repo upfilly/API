@@ -256,7 +256,7 @@ exports.find = async function (req, res) {
         order_id: "$order_id",
         currency: "$currency",
         price: "$price",
-        // campaignId: "$brand_association_details.",
+        campaignId: "$brand_association_details.campaign_id",
         brand_association_details : {_id : "$brand_association_details._id",campaign_id:"$brand_association_details.campaign_id"},
         campaign_details:"$campaign_details",
         discount: "$discount",
