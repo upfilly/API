@@ -205,6 +205,48 @@ exports.find = async function (req, res) {
           preserveNullAndEmptyArrays: true,
         },
       },
+      {
+        $lookup: {
+          from: "brandaffiliateassociation",
+          let: { brand_id: "$brand_id", affiliate_id: "$affiliate_id", isActive: true },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$brand_id", "$$brand_id"] },
+                    { $eq: ["$affiliate_id", "$$affiliate_id"] },
+                    { $eq: ["$isActive", "$$isActive"] }
+                  ]
+                }
+              }
+            },
+          ],
+          as: "brand_association_details"  // The final result will be stored in "campaign_details"
+        }
+      },      
+      
+      {
+        $unwind: {
+          path: "$brand_association_details",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: "campaign",
+          localField: "brand_association_details.campaign_id",
+          foreignField: "_id",
+          as: "campaign_details",
+        },
+      },
+      {
+        $unwind: {
+          path: "$campaign_details",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+
     ];
 
     let projection = {
@@ -214,7 +256,9 @@ exports.find = async function (req, res) {
         order_id: "$order_id",
         currency: "$currency",
         price: "$price",
-        campaignId: "$campaignId",
+        // campaignId: "$brand_association_details.",
+        brand_association_details : {_id : "$brand_association_details._id",campaign_id:"$brand_association_details.campaign_id"},
+        campaign_details:"$campaign_details",
         discount: "$discount",
         event: '$event',
         timestamp: '$timestamp',
