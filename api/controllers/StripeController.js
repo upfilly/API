@@ -1659,7 +1659,7 @@ exports.webhook = async (request, response) => {
 
                     if(event_object.metadata.commission == "paid"){
                         // update user
-                        await AffiliateLink.updateOne({brand_id:event_object.metadata.user_id},{commission_status:"paid"})
+                        await AffiliateLink.updateOne({id:event_object.metadata.brandAssociateId},{commission_status:"paid"})
                         let get_admin = await Users.findOne({role:"admin"})
 
                         let transaction_payload = {
@@ -1810,7 +1810,7 @@ exports.createCheckoutSession = async (req, res) => {
 // brand pay affiliate commission to admin
 exports.payToAdmin = async(req,res) =>{ 
     try {
-        const { commission } = req.body;
+        const { commission, brandAssociateId } = req.body;
         let user_id = req.identity.id
         if (user_id) {
             var get_user = await Users.findOne({ id: user_id, isDeleted: false });
@@ -1834,7 +1834,8 @@ exports.payToAdmin = async(req,res) =>{
             lineItems: line_items,
             metadata: {
                 user_id: user_id,
-                commission : "paid"
+                commission : "paid",
+                brandAssociateId : brandAssociateId
             },
             email: get_user.email
         });
