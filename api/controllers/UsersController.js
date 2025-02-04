@@ -1884,7 +1884,8 @@ module.exports = {
     try {
       let id = req.param("id");
       let listOfOtherUsers = [];
-      let get_user = await Users.findOne({ id: id }).populate("activeUser");
+      let get_user = await Users.findOne({ id: id }).populate("activeUser").populate("plan_id");
+      
       if (get_user) {
         // console.log(get_user.role);
         if (get_user.role === "brand" || get_user.role === "affiliate") {
@@ -2072,6 +2073,9 @@ module.exports = {
           get_user.stripe_account_balance = balance.available[0].amount
           get_user.pending_balance = balance.pending[0].amount
         }
+        console.log(get_user.activeUser.plan_id,'get_user.activeUser.plan_id')
+        get_user.active_plan = await SubscriptionPlans.findOne({id:get_user.activeUser.plan_id})
+        console.log(get_user.active_plan,'get_user')
         return response.success(get_user, constants.user.FETCHED, req, res);
       }
       throw constants.user.INVALID_ID;
