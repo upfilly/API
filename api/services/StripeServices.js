@@ -284,7 +284,7 @@ exports.one_time_payment = async (options) => {
 }
 // service of pay only commission 
 exports.one_time_payment_for_commission = async (options) => {
-    console.log(options,'options')
+    
     const session = await stripe.checkout.sessions.create({
         line_items: options.lineItems,
         mode: 'payment',
