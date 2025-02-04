@@ -534,7 +534,7 @@ exports.report = async function (req, res) {
   }
 }
 
-exports.updateCommission = async(req,res)=>{
+exports.updateCommission = async(req,res)=>{ 
   try {
     const {commission_status,commission_paid, id } = req.body
     if ((commission_status || commission_paid) && !id) {
