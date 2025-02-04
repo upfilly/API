@@ -148,6 +148,7 @@ module.exports.routes = {
   "delete /card": "StripeController.deleteCard",
   // "post /hook": "StripeController.webhook",
   "post /create/session": "StripeController.createCheckoutSession",
+  "post /pay/commission/to/admin" : "StripeController.payToAdmin",
 
   /**
    * @SMTP
