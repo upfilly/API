@@ -1654,10 +1654,10 @@ exports.webhook = async (request, response) => {
 
             case 'checkout.session.completed':
                 var event_object = event.data.object;
-                // console.log(event_object, "event of session checkout complete");
+                console.log(event_object, "event of session checkout complete");
                 if (event_object) {
 
-                    if(event_object.metadata.commission == "paid"){
+                    if(event_object.metadata.commission === "paid"){
                         // update user
                         console.log(event_object.metadata.brandAssociateId,'event_object.metadata.brandAssociateId')
                         let abc = await AffiliateLink.updateOne({id:event_object.metadata.brandAssociateId},{commission_paid :"paid"})
