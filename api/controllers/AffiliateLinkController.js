@@ -534,4 +534,25 @@ exports.report = async function (req, res) {
   }
 }
 
+exports.updateCommission = async(req,res)=>{
+  try {
+    const {commission_status,commission_paid, id } = req.body
+    if ((commission_status || commission_paid) && !id) {
+      return res
+        .status(400)
+        .json({ error: constants.AFFILIATELINK.MISSING_FIELDS });
+    }
+
+    const updatedAffiliateLink = await AffiliateLink.updateOne({
+      id: id,
+      isDeleted: false,
+    }).set(req.body);
+    return response.success(updatedAffiliateLink, constants.AFFILIATELINK.UPDATED, req, res);
+
+
+  } catch (error) {
+    return response.failed(null, `${error}`, req, res);
+  }
+}
+
 
