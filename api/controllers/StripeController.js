@@ -1659,7 +1659,9 @@ exports.webhook = async (request, response) => {
 
                     if(event_object.metadata.commission == "paid"){
                         // update user
-                        await AffiliateLink.updateOne({id:event_object.metadata.brandAssociateId},{commission_paid:"paid"})
+                        console.log(event_object.metadata.brandAssociateId,'event_object.metadata.brandAssociateId')
+                        let abc = await AffiliateLink.updateOne({id:event_object.metadata.brandAssociateId},{commission_paid :"paid"})
+                        console.log("updateddd",abc )
                         let get_admin = await Users.findOne({role:"admin"})
 
                         let transaction_payload = {
