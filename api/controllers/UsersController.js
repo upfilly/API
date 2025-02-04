@@ -2073,9 +2073,9 @@ module.exports = {
           get_user.stripe_account_balance = balance.available[0].amount
           get_user.pending_balance = balance.pending[0].amount
         }
-        console.log(get_user.activeUser.plan_id,'get_user.activeUser.plan_id')
-        get_user.active_plan = await SubscriptionPlans.findOne({id:get_user.activeUser.plan_id})
-        console.log(get_user.active_plan,'get_user')
+        // console.log(get_user.activeUser.plan_id,'get_user.activeUser.plan_id')
+        // get_user.active_plan = await SubscriptionPlans.findOne({id:get_user.activeUser.plan_id})
+        // console.log(get_user.active_plan,'get_user')
         return response.success(get_user, constants.user.FETCHED, req, res);
       }
       throw constants.user.INVALID_ID;
