@@ -1486,7 +1486,7 @@ exports.webhook = async (request, response) => {
     try {
         const event = request.body;
         // Handle the event
-        console.log(event.type,'event.typeevent.typeevent.typeevent.type')
+        
         switch (event.type) {
             case 'customer.subscription.updated':
                 var event_object = event.data.object;
@@ -1654,9 +1654,9 @@ exports.webhook = async (request, response) => {
                 break;
 
             case 'checkout.session.completed':
-                console.log("ijfffffffdjijhuhuiuggygygy")
+
                 var event_object = event.data.object;
-                console.log(event_object, "event of session checkout complete");
+                
                 if (event_object) {
 
                     if(event_object.metadata.commission === "paid"){
