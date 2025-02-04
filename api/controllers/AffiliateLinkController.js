@@ -114,7 +114,7 @@ exports.find = async function (req, res) {
     let count = req.param('count') || 10;
     let page = req.param('page') || 1;
     let skipNo = (Number(page) - 1) * Number(count);
-    let { search, sortBy, status, isDeleted, format, addedBy, affiliate_id, brand_id, campaignId } = req.query;
+    let { search, sortBy, status, isDeleted, format, addedBy, affiliate_id, brand_id, campaignId,commission_status,commission_paid  } = req.query;
     let sortquery = {};
 
     // Handle search
@@ -161,6 +161,14 @@ exports.find = async function (req, res) {
     }
     if(campaignId) {
       query.campaignId = new ObjectId(campaignId);
+    }
+
+    if(commission_status){
+      query.commission_status = commission_status
+    }
+
+    if(commission_paid){
+      query.commission_paid = commission_paid
     }
     
     // Handle format
@@ -523,6 +531,27 @@ exports.report = async function (req, res) {
       } catch (error) {
       console.error(error, "=================err");
       return Response.failed(null, `${error}`, req, res);
+  }
+}
+
+exports.updateCommission = async(req,res)=>{ 
+  try {
+    const {commission_status,commission_paid, id } = req.body
+    if ((commission_status || commission_paid) && !id) {
+      return res
+        .status(400)
+        .json({ error: constants.AFFILIATELINK.MISSING_FIELDS });
+    }
+
+    const updatedAffiliateLink = await AffiliateLink.updateOne({
+      id: id,
+      isDeleted: false,
+    }).set(req.body);
+    return response.success(updatedAffiliateLink, constants.AFFILIATELINK.UPDATED, req, res);
+
+
+  } catch (error) {
+    return response.failed(null, `${error}`, req, res);
   }
 }
 

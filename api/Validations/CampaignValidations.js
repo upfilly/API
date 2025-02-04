@@ -10,7 +10,7 @@ exports.addCampaign = async (req, res, next) => {
         affiliate_id: Joi.array().optional(),
         event_type: Joi.array().optional().items(Joi.string().optional()),
         description: Joi.string().optional().allow(""),
-        amount: Joi.number().required().min(0),
+        amount: Joi.number().optional().min(0),
         images: Joi.array().optional().items(
             Joi.object({
                 name: Joi.string().optional().allow(""),

@@ -149,6 +149,7 @@ module.exports.routes = {
   "delete /card": "StripeController.deleteCard",
   // "post /hook": "StripeController.webhook",
   "post /create/session": "StripeController.createCheckoutSession",
+  "post /pay/commission/to/admin" : "StripeController.payToAdmin",
 
   /**
    * @SMTP
@@ -529,6 +530,7 @@ module.exports.routes = {
   "PUT /affiliatelink": "AffiliateLinkController.update",
   "DELETE /affiliatelink": "AffiliateLinkController.destroy",
   "get /affiliatelink/report": "AffiliateLinkController.report",
+  "put /update/commission/status": "AffiliateLinkController.updateCommission",
 
   /**
    * @FirstPromoter

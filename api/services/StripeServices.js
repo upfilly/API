@@ -282,6 +282,19 @@ exports.one_time_payment = async (options) => {
     });
     return session;
 }
+// service of pay only commission 
+exports.one_time_payment_for_commission = async (options) => {
+    console.log(options,'options')
+    const session = await stripe.checkout.sessions.create({
+        line_items: options.lineItems,
+        mode: 'payment',
+        success_url: `${credentials.FRONT_WEB_URL}/paymentSuccess?id=${options.metadata.user_id}`,
+        cancel_url: `${credentials.FRONT_WEB_URL}/cancel?id=${options.metadata.user_id}`,
+        metadata: options.metadata,
+        customer_email: options.email
+    });
+    return session;
+}
 
 // exports.one_time_payment = async (options) => {
 //     const session = await stripe.checkout.sessions.create({
