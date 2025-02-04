@@ -311,7 +311,7 @@ exports.getAllCampaignRequestsForAffiliate = async (req, res) => {
             let field = typeArr[0];
             sortquery[field ? field : 'updatedAt'] = sortType ? (sortType == 'desc' ? -1 : 1) : -1;
         } else {
-            sortquery = { updatedAt: -1 }
+            sortquery = { createdAt: -1 }
         }
         // Pipeline Stages
         let pipeline = [
@@ -373,6 +373,9 @@ exports.getAllCampaignRequestsForAffiliate = async (req, res) => {
         });
         pipeline.push({
             $limit: Number(count)
+        });
+        pipeline.push({
+            $sort: sortquery,
         });
         let result = await db.collection("brandaffiliateassociation").aggregate(pipeline).toArray();
         let resData = {
