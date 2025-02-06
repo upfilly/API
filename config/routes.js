@@ -581,4 +581,10 @@ module.exports.routes = {
   //  "get /campaign-request/public-campaigns": "CampaignRequestByAffiliateController.getAllPublicCampaigns",
   //  "put /campaign-request/change-status": "CampaignRequestByAffiliateController.changeRequestStatus",
 
+  /**
+   * @BankAccountController
+   */
+
+  "post /transfer/payment" : "BankAccountController.transferPayment"
+
 };   
