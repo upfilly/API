@@ -246,7 +246,20 @@ exports.find = async function (req, res) {
           preserveNullAndEmptyArrays: true,
         },
       },
-
+      {
+        $lookup: {
+          from: "subscriptionplans",
+          localField: "brand_details.plan_id",
+          foreignField: "_id",
+          as: "plan_details",
+        },
+      },
+      {
+        $unwind: {
+          path: "$plan_details",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
     ];
 
     let projection = {
@@ -266,6 +279,8 @@ exports.find = async function (req, res) {
         data: '$data',
         affiliate_name: "$affiliate_details.fullName",
         brand_name: "$brand_details.fullName",
+        brand_details : {_id : "$brand_details._id", plan_id : "$brand_details.plan_id" },
+        plan_details : "$plan_details",
         isDeleted: '$isDeleted',
         status: '$status',
         addedBy: '$addedBy',

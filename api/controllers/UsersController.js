@@ -1885,7 +1885,8 @@ module.exports = {
       let id = req.param("id");
       let listOfOtherUsers = [];
       let get_user = await Users.findOne({ id: id }).populate("activeUser").populate("plan_id");
-      
+      console.log(get_user,'=====')
+      // return
       if (get_user) {
         // console.log(get_user.role);
         if (get_user.role === "brand" || get_user.role === "affiliate") {

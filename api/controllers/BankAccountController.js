@@ -1,9 +1,17 @@
 "use strict";
 
 const stripeServices = require("../services/StripeServices");
+<<<<<<< HEAD
 const {constants} = require("../../config/constants");
 const credentials = require('../../config/local.js'); //sails.config.env.production;
 const stripe = require("stripe")(credentials.PAYMENT_INFO.SECREATKEY);
+=======
+const constants = require("../../config/constants");
+const stripe = require('stripe')(process.env.STRIPE_KEY);
+const moment = require("moment")
+const emails = require("../Emails/EmailMessageTemplate")
+const response = require("../services/Response")
+>>>>>>> 2d4842d9230a0ab69177f5eaf039d5c1840506f0
 
 /** common function for create account onboarding link */
 
@@ -400,6 +408,7 @@ module.exports = {
             });
         }
     },
+<<<<<<< HEAD
     deleteAccount: async (req, res) => {
         try {
             let accountId = req.param('accountId');
@@ -425,6 +434,60 @@ module.exports = {
             }
         } catch(err) {
             return res.status(500).json({ success: false, message: err.message });
+=======
+    transferPayment : async (req,res) => {
+        try {
+            const {affiliate_id,amount,currency} = req.body
+            if(!affiliate_id){
+                return res.status(400).json({
+                    success: false,
+                    error: {
+                        code: "400",
+                        message: "Associate Id required: "
+                    }
+                });
+            }
+            const userDetail = await Users.findOne({ id: affiliate_id, isDeleted: false });
+                
+                // let get_user = await Users.findOne({id:get_associate_data})
+                const accountDetails = await Account.findOne({
+                    addedBy: affiliate_id,
+                    isDeleted: false,
+                    isActive: true
+                });
+    
+                if (!accountDetails) {
+                    if (userDetail) {
+                        const emailPayload = {
+                            fullName: userDetail.fullName,
+                            email: userDetail.email
+                        };
+                        emails.reminderToOpenAccount(emailPayload);
+                    }
+                    return response.failed(null,`${userDetail.fullName} hasn't setup account yet.`, req,res)
+                }
+    
+                console.log(accountDetails.accountId,'accountDetails.accountId')
+                const payload = {
+                    accountId: accountDetails.accountId,
+                    transferredAmount: amount,
+                    currency: currency || "usd",
+                    description: `An amount of ${amount / 100} has been transferred from Upfilly to ${ userDetail.fullName} on ${moment().format('YYYY-MM-DD HH:mm:ss')}.`,
+                    paidTo: userDetail.id,
+                    // scheduleId: transfer._id,
+                    amount: amount
+                };
+    
+                await stripeServices.transfer_fund(payload);
+
+            
+    
+            return true;
+        } catch (error) {
+            console.error("Error processing transfers:", error.message);
+            return response.failed(null,error, req,res)
+
+>>>>>>> 2d4842d9230a0ab69177f5eaf039d5c1840506f0
         }
     }
 }
