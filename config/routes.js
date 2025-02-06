@@ -582,7 +582,6 @@ module.exports.routes = {
   //  "get /campaign-request/public-campaigns": "CampaignRequestByAffiliateController.getAllPublicCampaigns",
   //  "put /campaign-request/change-status": "CampaignRequestByAffiliateController.changeRequestStatus",
 
-<<<<<<< HEAD
   /*
   * @BankAccount
   */
@@ -593,13 +592,11 @@ module.exports.routes = {
  "post /account/webhook": "BankAccountController.webhook",
  "get /account/retrieve": "BankAccountController.retriveAccount",
  "post /account/link/regenerate": "BankAccountController.regenrateOnBoardingLink",
-  "delete /account/delete": "BankAccountController.deleteAccount"
-=======
+  "delete /account/delete": "BankAccountController.deleteAccount",
   /**
    * @BankAccountController
    */
 
   "post /transfer/payment" : "BankAccountController.transferPayment"
->>>>>>> 2d4842d9230a0ab69177f5eaf039d5c1840506f0
 
 };   
