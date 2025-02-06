@@ -1,17 +1,14 @@
 "use strict";
 
 const stripeServices = require("../services/StripeServices");
-<<<<<<< HEAD
 const {constants} = require("../../config/constants");
 const credentials = require('../../config/local.js'); //sails.config.env.production;
 const stripe = require("stripe")(credentials.PAYMENT_INFO.SECREATKEY);
-=======
 const constants = require("../../config/constants");
-const stripe = require('stripe')(process.env.STRIPE_KEY);
+// const stripe = require('stripe')(process.env.STRIPE_KEY);
 const moment = require("moment")
 const emails = require("../Emails/EmailMessageTemplate")
 const response = require("../services/Response")
->>>>>>> 2d4842d9230a0ab69177f5eaf039d5c1840506f0
 
 /** common function for create account onboarding link */
 
@@ -408,7 +405,6 @@ module.exports = {
             });
         }
     },
-<<<<<<< HEAD
     deleteAccount: async (req, res) => {
         try {
             let accountId = req.param('accountId');
@@ -434,7 +430,8 @@ module.exports = {
             }
         } catch(err) {
             return res.status(500).json({ success: false, message: err.message });
-=======
+        }
+    },
     transferPayment : async (req,res) => {
         try {
             const {affiliate_id,amount,currency} = req.body
@@ -487,7 +484,6 @@ module.exports = {
             console.error("Error processing transfers:", error.message);
             return response.failed(null,error, req,res)
 
->>>>>>> 2d4842d9230a0ab69177f5eaf039d5c1840506f0
         }
     }
 }
