@@ -434,13 +434,13 @@ module.exports = {
     },
     transferPayment : async (req,res) => {
         try {
-            const {affiliate_id,amount,currency} = req.body
+            const {affiliate_id,amount,currency,association_id} = req.body
             if(!affiliate_id){
                 return res.status(400).json({
                     success: false,
                     error: {
                         code: "400",
-                        message: "Associate Id required: "
+                        message: "Affiliate Id required."
                     }
                 });
             }
@@ -475,7 +475,10 @@ module.exports = {
                     amount: amount
                 };
     
-                await stripeServices.transfer_fund(payload);
+                let paid = await stripeServices.transfer_fund(payload);
+                if(paid){
+                    await AffiliateLink.updateOne({id:association_id},{admin_paid : true})
+                }
 
             
     

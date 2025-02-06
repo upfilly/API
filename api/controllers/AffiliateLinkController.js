@@ -114,7 +114,7 @@ exports.find = async function (req, res) {
     let count = req.param('count') || 10;
     let page = req.param('page') || 1;
     let skipNo = (Number(page) - 1) * Number(count);
-    let { search, sortBy, status, isDeleted, format, addedBy, affiliate_id, brand_id, campaignId,commission_status,commission_paid  } = req.query;
+    let { search, sortBy, status, isDeleted, format, addedBy, affiliate_id, brand_id, campaignId,commission_status,commission_paid,admin_paid  } = req.query;
     let sortquery = {};
 
     // Handle search
@@ -169,6 +169,9 @@ exports.find = async function (req, res) {
 
     if(commission_paid){
       query.commission_paid = commission_paid
+    }
+    if(admin_paid){
+      query.admin_paid = admin_paid
     }
     
     // Handle format
@@ -289,6 +292,7 @@ exports.find = async function (req, res) {
         createdAt: '$createdAt',
         commission_status : "$commission_status",
         commission_paid: "$commission_paid",
+        admin_paid : "$admin_paid",
       }
     };
 
