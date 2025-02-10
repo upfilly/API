@@ -264,6 +264,7 @@ exports.getAllCampaignRequestsForAffiliate = async (req, res) => {
         }
 
         let query = {};
+        let new_query = {}
         let count = req.param('count') || 10;
         let page = req.param('page') || 1;
         let { search, isDeleted, status, sortBy, brand_id, affiliate_id } = req.query;
@@ -302,7 +303,7 @@ exports.getAllCampaignRequestsForAffiliate = async (req, res) => {
         if (affiliate_id) {
             query.affiliate_id = new ObjectId(affiliate_id);
         }
-
+        new_query.campaign_commission = {$gt : 0}
         let sortquery = {};
         if (sortBy) {
             let typeArr = [];
@@ -350,7 +351,8 @@ exports.getAllCampaignRequestsForAffiliate = async (req, res) => {
                 $project: {
                     affiliate_id:1,
                     campaign_id:1,
-                    campaign_detail:1,
+                    campaign_detail:"$campaign_detail",
+                    campaign_commission : "$campaign_detail.commission",
                     brand_id: 1,
                     brand_detail: 1,
                     isDeleted: 1,
@@ -364,7 +366,8 @@ exports.getAllCampaignRequestsForAffiliate = async (req, res) => {
                     updatedAt: 1,
                     isActive: 1,
                 }
-            }
+            },
+            {$match:new_query}
         ];
 
         let totalresult = await db.collection('brandaffiliateassociation').aggregate(pipeline).toArray();
