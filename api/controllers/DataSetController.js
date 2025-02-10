@@ -1236,7 +1236,7 @@ exports.viewCSVAffiliate = async(req,res) => {
 } catch (error) {
   return res.status(400).json({
     success: false,
-    error: { code: 400, message: "" + err },
+    error: { code: 400, message: "" + error },
   });
 }
       
