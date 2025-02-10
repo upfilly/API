@@ -14,6 +14,45 @@ const https = require('https');
 
 const Services = require('../services/index');
 const Papa = require('papaparse');
+const axios = require("axios")
+
+
+async function processCSVAndRespond(csvFilePath, newColumnName, affliate_id) {
+  try {
+    const resolvedPath = csvFilePath //path.resolve(csvFilePath);
+    const csvData = fs.readFileSync(resolvedPath, 'utf8');
+
+    const results = Papa.parse(csvData, {
+      header: true,
+      dynamicTyping: true,
+      skipEmptyLines: true,
+    });
+
+    const data = results.data;
+
+    data.forEach(row => {
+      if (row['Product ID'] && row['Product URL']) {
+        row[newColumnName] = `https://upfilly.com/?affiliate_id=${affliate_id}&url=${row['Product URL']}`;
+      } else {
+        row[newColumnName] = "Missing Data";
+      }
+    });
+
+    const csv = Papa.unparse(data, { header: true });
+
+    // Optional: Save the updated CSV
+    // console.log(resolvedPath,'resolvedPath')
+    
+    fs.writeFileSync(resolvedPath, csv, 'utf8');
+    console.log("CSV file updated",resolvedPath);
+
+    return resolvedPath; // Return the CSV data
+
+  } catch (error) {
+    console.error('Error processing CSV:', error);
+    throw error; // Re-throw the error for the caller to handle
+  }
+}
 
 
 
@@ -1172,4 +1211,33 @@ exports.ListDataFeedsBrand = async (req, res) => {
     });
   }
 
+}
+
+exports.viewCSVAffiliate = async(req,res) => {
+  try {
+    
+  
+  const {csv_url} = req.query
+  if(!csv_url){
+    return res.status(400).json({
+      success: false,
+      error: { code: 400, message: "CSV file require"  },
+    });
+  }
+
+  const csvPath = csv_url //path.join(__dirname, 'data.csv'); // Path relative to script
+  const newColumn = "Share URL";
+  let updatedCSV = await processCSVAndRespond(csvPath,newColumn,req.identity.id)
+  return res.status(200).json({
+    success: true,
+    data: updatedCSV,
+    message : "Data fetch successfully"
+  });
+} catch (error) {
+  return res.status(400).json({
+    success: false,
+    error: { code: 400, message: "" + err },
+  });
+}
+      
 }

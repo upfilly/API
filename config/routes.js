@@ -503,6 +503,7 @@ module.exports.routes = {
   "get /dataset/list": "DataSetController.listOfDataSet",
   "get /dataset/view": "DataSetController.importCsvDataHttp",
   "get /listDataSets": "DataSetController.ListDataFeedsBrand",
+  "get /csv" : "DataSetController.viewCSVAffiliate",
   /**
    * @EmailMessageTemplate
    *
