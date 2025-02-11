@@ -47,7 +47,7 @@ async function processCSVAndRespond(csvFilePath, newColumnName, affliate_id) {
     fs.writeFileSync(resolvedPath, csv, 'utf8');
     console.log("CSV file updated",resolvedPath);
     resolvedPath = resolvedPath.split("/")
-    resolvedPath = constant.BACK_WEB_URL + "/"+abd[6]+"/"+abd[7]
+    resolvedPath = constant.BACK_WEB_URL + "/"+resolvedPath[6]+"/"+resolvedPath[7]
     return resolvedPath; // Return the CSV data
 
   } catch (error) {
