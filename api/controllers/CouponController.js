@@ -220,7 +220,7 @@ exports.getAllCoupon = async (req, res) => {
             },
             {
                 $unwind : {
-                path : "$addedByDetails",
+                path : "$addedByDetails", 
                 preserveNullAndEmptyArrays : true
                 }
             },
