@@ -15,55 +15,13 @@ const https = require('https');
 const Services = require('../services/index');
 const Papa = require('papaparse');
 const axios = require("axios")
-const tmp = require("tmp")
 
 
-// async function processCSVAndRespond(csvFilePath, newColumnName, affliate_id) {
-//   try {
-//     const { data: csvData } = await axios.get(csvURL);  // Destructuring the data
-
-//     if (!response.ok) {
-//         throw new Error(`HTTP error! status: ${response.status}`);
-//     }
-
-//     const resolvedPath = csvFilePath //path.resolve(csvFilePath);
-//     console.log(resolvedPath,'resolvedPath')
-//     // const csvData = fs.readFileSync(resolvedPath, 'utf8');
-
-//     const results = Papa.parse(csvData, {
-//       header: true,
-//       dynamicTyping: true,
-//       skipEmptyLines: true,
-//     });
-
-//     const data = results.data;
-
-//     data.forEach(row => {
-//       if (row['Product ID'] && row['Product URL']) {
-//         row[newColumnName] = `https://upfilly.com/?affiliate_id=${affliate_id}&url=${row['Product URL']}`;
-//       } else {
-//         row[newColumnName] = "Missing Data";
-//       }
-//     });
-
-//     const csv = Papa.unparse(data, { header: true });
-
-//     // Optional: Save the updated CSV
-//     // console.log(resolvedPath,'resolvedPath')
-    
-//     fs.writeFileSync(resolvedPath, csv, 'utf8');
-//     console.log("CSV file updated",resolvedPath);
-
-//     return resolvedPath; // Return the CSV data
-
-//   } catch (error) {
-//     console.error('Error processing CSV:', error);
-//     throw error; // Re-throw the error for the caller to handle
-//   }
-// }
-async function processCSVFromURL(csvURL, newColumnName, affliate_id) {
+async function processCSVAndRespond(csvFilePath, newColumnName, affliate_id) {
   try {
-    const { data: csvData } = await axios.get(csvURL);
+    const resolvedPath = csvFilePath //path.resolve(csvFilePath);
+    console.log(resolvedPath,'resolvedPath')
+    const csvData = fs.readFileSync(resolvedPath, 'utf8');
 
     const results = Papa.parse(csvData, {
       header: true,
@@ -77,27 +35,26 @@ async function processCSVFromURL(csvURL, newColumnName, affliate_id) {
       if (row['Product ID'] && row['Product URL']) {
         row[newColumnName] = `https://upfilly.com/?affiliate_id=${affliate_id}&url=${row['Product URL']}`;
       } else {
-        throw "Product ID and PRoduct URL Required"
         row[newColumnName] = "Missing Data";
       }
     });
 
     const csv = Papa.unparse(data, { header: true });
 
-    const tmpFile = tmp.fileSync({ postfix: '.csv' }); // Create temporary file
-    // console.log(tmpFile,'tmpFile')
-    const resolvedPath = tmpFile.name;                 // Get the file path
+    // Optional: Save the updated CSV
     // console.log(resolvedPath,'resolvedPath')
-    fs.writeFileSync(resolvedPath, csv, 'utf8');        // Write to the temporary file
-    // console.log(resolvedPath,'resolvedPath')
-    return resolvedPath; // Return the path to the temporary CSV file
+    
+    fs.writeFileSync(resolvedPath, csv, 'utf8');
+    console.log("CSV file updated",resolvedPath);
 
+    return resolvedPath; // Return the CSV data
 
   } catch (error) {
-    console.error('Error processing CSV from URL:', error);
-    throw error;
+    console.error('Error processing CSV:', error);
+    throw error; // Re-throw the error for the caller to handle
   }
 }
+
 
 
 let Unique = (arr) => {
@@ -466,6 +423,7 @@ exports.sendDataSets = async (req, res) => {
         }
       }
       return response.success(student_arr, constants.DATASET.ADDED, req, res);
+
     }
 
     // here we are storing data feeds
@@ -1261,18 +1219,19 @@ exports.ListDataFeedsBrand = async (req, res) => {
 exports.viewCSVAffiliate = async(req,res) => {
   try {
     
-  
-  const {csv_url} = req.query
-  if(!csv_url){
-    return res.status(400).json({
-      success: false,
-      error: { code: 400, message: "CSV file require"  },
-    });
-  }
-
-  const csvPath = csv_url //path.join(__dirname, 'data.csv'); // Path relative to script
+    const {csv_url} = req.query
+    if(!csv_url){
+      return res.status(400).json({
+        success: false,
+        error: { code: 400, message: "CSV file require"  },
+      });
+    }
+    
+  var rootpath = process.cwd();
+  const csvPath = rootpath + "/assets"+ csv_url //path.join(__dirname, 'data.csv'); // Path relative to script
+  console.log(csvPath,'csvPath')
   const newColumn = "Share URL";
-  let updatedCSV = await processCSVFromURL(csvPath,newColumn,req.identity.id)
+  let updatedCSV = await processCSVAndRespond(csvPath,newColumn,req.identity.id)
   return res.status(200).json({
     success: true,
     data: updatedCSV,
