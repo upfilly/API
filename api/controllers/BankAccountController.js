@@ -479,6 +479,7 @@ module.exports = {
                 if(paid){
                     await AffiliateLink.updateOne({id:association_id},{admin_paid : "paid"})
                 }
+                return response.success(null,"Payment Transfered successfully", req,res)
 
             
     
