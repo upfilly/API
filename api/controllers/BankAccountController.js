@@ -118,6 +118,7 @@ module.exports = {
                     break;
                 case "balance.available" : 
                     console.log("handle balance availiable webhook")
+                    break;
 
                 default:
                     // Log unhandled event types
