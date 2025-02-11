@@ -477,7 +477,7 @@ module.exports = {
     
                 let paid = await stripeServices.transfer_fund(payload);
                 if(paid){
-                    await AffiliateLink.updateOne({id:association_id},{admin_paid : true})
+                    await AffiliateLink.updateOne({id:association_id},{admin_paid : "paid"})
                 }
 
             
