@@ -19,7 +19,7 @@ const axios = require("axios")
 
 async function processCSVAndRespond(csvFilePath, newColumnName, affliate_id) {
   try {
-    const resolvedPath = csvFilePath //path.resolve(csvFilePath);
+    let resolvedPath = csvFilePath //path.resolve(csvFilePath);
     console.log(resolvedPath,'resolvedPath')
     const csvData = fs.readFileSync(resolvedPath, 'utf8');
 
