@@ -437,6 +437,7 @@ exports.getAllBanner = async (req, res) => {
         status: "$status",
         addedBy: "$addedBy",
         addedBy_name: "$addedBy_details.fullName",
+        addedBy_details : "$addedBy_details",
         updatedBy: "$updatedBy",
         updatedAt: "$updatedAt",
         isDeleted: "$isDeleted",
