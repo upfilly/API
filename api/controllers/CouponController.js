@@ -210,9 +210,23 @@ exports.getAllCoupon = async (req, res) => {
         }
         // console.log(sortquery, "-----------------sortquery");
         let pipeline = [
-
+            {
+                $lookup :{
+                from  :"users",
+                localField : "addedBy",
+                foreignField : "_id",
+                as : "addedByDetails"
+             }
+            },
+            {
+                $unwind : {
+                path : "$addedByDetails",
+                preserveNullAndEmptyArrays : true
+                }
+            },
         ];
         let projection = {
+           
             $project: {
                 id: '$_id',
                 media: '$media',
@@ -224,6 +238,7 @@ exports.getAllCoupon = async (req, res) => {
                 applicable: "$applicable",
                 visibility: "$visibility",
                 url: "$url",
+                addedByDetails : {fullName : "$addedByDetails.fullName",email : "$addedByDetails.email"},
                 couponCommission: "$couponCommission",
                 isDeleted: "$isDeleted",
                 deletedAt: "$deletedAt",
