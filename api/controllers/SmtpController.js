@@ -167,7 +167,7 @@ module.exports = {
                     subject: subject,
                     html: message
                 }, function (err, info) {
-                    console.log('err', err, info)
+                    // console.log('err', err)
 
                 });
             }

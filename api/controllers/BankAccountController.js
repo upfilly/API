@@ -464,7 +464,7 @@ module.exports = {
                     return response.failed(null,`${userDetail.fullName} hasn't setup account yet.`, req,res)
                 }
     
-                console.log(accountDetails.accountId,'accountDetails.accountId')
+                // console.log(accountDetails.accountId,'accountDetails.accountId')
                 const payload = {
                     accountId: accountDetails.accountId,
                     transferredAmount: amount,
@@ -478,12 +478,14 @@ module.exports = {
                 let paid = await stripeServices.transfer_fund(payload);
                 if(paid){
                     await AffiliateLink.updateOne({id:association_id},{admin_paid : "paid"})
+                    let email_payload = {
+                        fullName : userDetail.fullName,
+                        email : userDetail.email,
+                        amount : amount,
+                    }
+                    emails.adminPaid(email_payload)
+                    return response.success(null,"Payment Transfered successfully", req,res)
                 }
-                return response.success(null,"Payment Transfered successfully", req,res)
-
-            
-    
-            return true;
         } catch (error) {
             console.error("Error processing transfers:", error.message);
             return response.failed(null,error, req,res)
