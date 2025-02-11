@@ -94,9 +94,9 @@ module.exports = {
     webhook: async (request, response) => {
         try {
 
+            const eventObject = request.body.data.object;
             switch (request.body.type) {
                 case "account.updated":
-                    const eventObject = request.body.data.object;
                     const findAccount = await Account.findOne({ accountId: eventObject.id });
 
                     if (findAccount) {
@@ -116,6 +116,8 @@ module.exports = {
                         console.log("Account not found");
                     }
                     break;
+                case "balance.available" : 
+                    console.log("handle balance availiable webhook")
 
                 default:
                     // Log unhandled event types
