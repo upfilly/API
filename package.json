@@ -47,6 +47,7 @@
     "sails-hook-sockets": "^2.0.0",
     "sails-mongo": "^2.0.0",
     "stripe": "^11.6.0",
+    "tmp": "^0.2.3",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
