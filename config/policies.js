@@ -113,6 +113,6 @@ module.exports.policies = {
     addGPT: true
   },
   ScriptController : {
-    getAllScript : true
+    getById : true
   }
 };

@@ -59,7 +59,7 @@ exports.getAllScript = async (req, res) => {
         let query = {};
         let count = req.param('count') || 10;
         let page = req.param('page') || 1;
-        let { search, sortBy, script_type, status, isDeleted, brand_id } = req.query;
+        let { search, sortBy, script_type, status, isDeleted, brand_id, isDefault } = req.query;
 
         skipNo = (Number(page - 1)) * Number(count);
 
@@ -96,6 +96,9 @@ exports.getAllScript = async (req, res) => {
 
         if(brand_id){
             query.brand_id = brand_id
+        }
+        if(isDefault){
+            query.isDefault = isDefault
         }
         // console.log(query);
         let pipeline = [
@@ -170,10 +173,24 @@ exports.getAllScript = async (req, res) => {
 exports.getById = async (req, res) => {
     try {
         const id = req.param("id")
+        const brand_id = req.param("brand_id")
         if (!id) {
             throw constants.SCRIPT.ID_REQUIRED
         }
-        const get_script = await Script.findOne({ id: id });
+        if(brand_id){
+            let get_script = await Script.findOne({ id: id, brand_id : brand_id });
+            if (get_script) {
+                return response.success(get_script, constants.SCRIPT.FETCHED, req, res);
+            }else {
+                get_script = await Script.findOne({ isDefault:true });
+                if(get_script){
+                    throw constants.SCRIPT.NO_DEFAULT_SCRIPT
+                }
+                return response.success(get_script, constants.SCRIPT.FETCHED, req, res);
+                
+            }
+        }
+         const get_script = await Script.findOne({ id: id });
         if (get_script) {
             return response.success(get_script, constants.SCRIPT.FETCHED, req, res);
         }

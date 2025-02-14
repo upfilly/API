@@ -378,6 +378,7 @@ module.exports.constants = {
     PARAM_MISSING: "Params missing",
     NOT_FOUND: "Content not found",
     DEFAULT_EXIST  : "Default Script already exist",
+    NO_DEFAULT_SCRIPT : "No default script added",
   },
   BLOG: {
     ALREADY_EXIST: "Same title already exist",
