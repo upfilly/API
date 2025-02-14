@@ -22,6 +22,13 @@ exports.addScript = async (req, res) => {
         }
 
         let { script_content } = req.body;
+
+        let default_exist = await Script.findOne({isDefault:true})
+        if(default_exist){
+            throw constants.SCRIPT.ALREADY_EXIST;
+        }
+
+
         let query = {};
         query.script_content = script_content;
         req.body.updatedBy = req.identity.id;
@@ -52,7 +59,7 @@ exports.getAllScript = async (req, res) => {
         let query = {};
         let count = req.param('count') || 10;
         let page = req.param('page') || 1;
-        let { search, sortBy, script_type, status, isDeleted } = req.query;
+        let { search, sortBy, script_type, status, isDeleted, brand_id } = req.query;
 
         skipNo = (Number(page - 1)) * Number(count);
 
@@ -87,6 +94,12 @@ exports.getAllScript = async (req, res) => {
             query.status = status
         }
 
+        if(brand_id){
+            query.brand_id = brand_id
+        }else if(req.identity.role != "admin"){
+            query.isDefault = true
+        }
+
         // console.log(query);
         let pipeline = [
             {
@@ -114,6 +127,8 @@ exports.getAllScript = async (req, res) => {
                 status: "$status",
                 addedBy: "$addedBy",
                 addedBy_name: "$addedBy_details.fullName",
+                brand_id : "$brand_id",
+                isDefault : "$isDefault",
                 createdAt: "$createdAt",
                 updatedAt: "$updatedAt",
                 updatedBy: "$updatedBy",

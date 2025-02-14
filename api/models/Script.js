@@ -16,6 +16,8 @@ module.exports = {
         isDeleted: { type: 'Boolean', defaultsTo: false },
         createdAt: { type: 'ref', autoCreatedAt: true },
         updatedAt: { type: 'ref', autoUpdatedAt: true },
+        brand_id : {model:"users"}, // adding to show dynamic sript to every brand
+        isDefault :{type:"boolean"}
     },
 
 };
