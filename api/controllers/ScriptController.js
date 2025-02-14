@@ -174,9 +174,6 @@ exports.getById = async (req, res) => {
     try {
         const id = req.param("id")
         const brand_id = req.param("brand_id")
-        if (!id) {
-            throw constants.SCRIPT.ID_REQUIRED
-        }
         if(brand_id){
             let get_script = await Script.findOne({ id: id, brand_id : brand_id });
             if (get_script) {
@@ -189,6 +186,10 @@ exports.getById = async (req, res) => {
                 return response.success(get_script, constants.SCRIPT.FETCHED, req, res);
                 
             }
+        }
+
+        if (!id) {
+            throw constants.SCRIPT.ID_REQUIRED
         }
          const get_script = await Script.findOne({ id: id });
         if (get_script) {
