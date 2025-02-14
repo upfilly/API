@@ -111,5 +111,8 @@ module.exports.policies = {
   },
   GeneralPurposeTrackingController: {
     addGPT: true
+  },
+  ScriptController : {
+    getAllScript : true
   }
 };
