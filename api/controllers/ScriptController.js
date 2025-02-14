@@ -180,7 +180,7 @@ exports.getById = async (req, res) => {
                 return response.success(get_script, constants.SCRIPT.FETCHED, req, res);
             }else {
                 get_script = await Script.findOne({ isDefault:true });
-                if(get_script){
+                if(!get_script){
                     throw constants.SCRIPT.NO_DEFAULT_SCRIPT
                 }
                 return response.success(get_script, constants.SCRIPT.FETCHED, req, res);
