@@ -96,10 +96,7 @@ exports.getAllScript = async (req, res) => {
 
         if(brand_id){
             query.brand_id = brand_id
-        }else if(req.identity.role != "admin"){
-            query.isDefault = true
         }
-
         // console.log(query);
         let pipeline = [
             {
