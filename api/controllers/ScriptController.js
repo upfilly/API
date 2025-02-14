@@ -21,7 +21,7 @@ exports.addScript = async (req, res) => {
             throw validation_result.message;
         }
 
-        let { script_content } = req.body;
+        let { script_content,brand_id } = req.body;
 
         let default_exist = await Script.findOne({isDefault:true})
         if(default_exist){
@@ -31,6 +31,7 @@ exports.addScript = async (req, res) => {
 
         let query = {};
         query.script_content = script_content;
+        query.brand_id = brand_id
         req.body.updatedBy = req.identity.id;
 
         let get_script = await Script.findOne(query);
