@@ -211,7 +211,7 @@ exports.getById = async (req, res) => {
       let get_script = await Script.findOne({
         id: id,
         brand_id: brand_id,
-      }).populate("brand_id");
+      })
       if (get_script) {
         return response.success(get_script, constants.SCRIPT.FETCHED, req, res);
       } else {
@@ -226,7 +226,7 @@ exports.getById = async (req, res) => {
     if (!id) {
       throw constants.SCRIPT.ID_REQUIRED;
     }
-    const get_script = await Script.findOne({ id: id });
+    const get_script = await Script.findOne({ id: id }).populate("brand_id");;
     if (get_script) {
       return response.success(get_script, constants.SCRIPT.FETCHED, req, res);
     }
