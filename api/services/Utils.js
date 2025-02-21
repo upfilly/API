@@ -176,6 +176,19 @@ exports.string_to_array = async (string) => {
     return []
 }
 
+exports.string_ids_toObjectIds_array = async (string) => {
+    // console.log(string, "string");
+    if (string) {
+        let string_arr = string.split(',');
+        let string_arr2 = [];
+        for await (let item of string_arr) {
+            string_arr2.push(new ObjectId(item));
+        }
+        return string_arr2;
+    }
+    return []
+},
+
 exports.get_first_letter_from_each_word = async (string) => {
     let new_string = "";
     string = string.replace(/\s+/g, ' ').trim()             // To Remove extra whitespaces from the string like double, triple or more whitespaces

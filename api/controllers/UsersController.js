@@ -1104,17 +1104,25 @@ module.exports = {
       }
 
       if (category_id) {
-        query.category_id = new ObjectId(category_id);
+        // query.category_id = new ObjectId(category_id);
+        category_id = await Services.Utils.string_ids_toObjectIds_array(category_id);
+        query.category_id = {$in : category_id}
       }
       if (sub_child_category_id) {
-        query.sub_child_category_id = new ObjectId(sub_child_category_id);
+        // query.sub_child_category_id = new ObjectId(sub_child_category_id);
+
+        sub_child_category_id = await Services.Utils.string_ids_toObjectIds_array(sub_child_category_id);
+        query.sub_child_category_id = {$in : sub_child_category_id}
       }
       if (sub_category_id) {
-        query.sub_category_id = new ObjectId(sub_category_id);
+        // query.sub_category_id = new ObjectId(sub_category_id);
+        sub_category_id = await Services.Utils.string_ids_toObjectIds_array(sub_category_id);
+        query.sub_category_id = {$in : sub_category_id}
       }
 
       if (cat_type) {
-        query.cat_type = cat_type;
+        cat_type = await Services.Utils.string_to_array(cat_type);
+        query.cat_type = {$in : cat_type}
       }
 
       if (start_date && end_date) {

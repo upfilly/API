@@ -471,9 +471,14 @@ exports.getCategoryWithSub = async (req, res) => {
             query.type = type;
         }
 
+        // if (cat_type) {
+        //     query.cat_type = cat_type;
+        // }
         if (cat_type) {
-            query.cat_type = cat_type;
-        }
+                cat_type = await Services.Utils.string_to_array(cat_type);
+                query.cat_type = {$in : cat_type}
+            }
+      
 
         // Pipeline Stages
         let pipeline = [
