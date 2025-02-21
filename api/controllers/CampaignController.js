@@ -275,7 +275,11 @@ exports.getAllCampaignRequestsForAffiliate = async (req, res) => {
         if (search) {
             search = Services.Utils.remove_special_char_exept_underscores(search);
             query.$or = [
-                { "campaign_detail.name": { $regex: search, '$options': 'i' } }
+                
+            ]
+            new_query.$or = [
+                { "campaign_name": { $regex: search, '$options': 'i' } }
+
             ]
         }
 
@@ -421,6 +425,7 @@ exports.getAllCampaignRequestsForAffiliate = async (req, res) => {
                     campaign_id:1,
                     campaign_detail:"$campaign_detail",
                     campaign_commission : "$campaign_detail.commission",
+                    campaign_name : "$campaign_detail.name",
                     brand_id: 1,
                     brand_detail: 1,
                     isDeleted: 1,
@@ -500,6 +505,7 @@ exports.getAllCampaignsForBrand = async (req, res) => {
         }
 
         let query = {};
+        let new_query  = {}
         let count = req.param('count') || 10;
         let page = req.param('page') || 1;
         let { search, sortBy, brand_id } = req.query;
@@ -508,8 +514,11 @@ exports.getAllCampaignsForBrand = async (req, res) => {
 
         if (search) {
             search = Services.Utils.remove_special_char_exept_underscores(search);
-            query.$or = [
-                { "name": { $regex: search, '$options': 'i' } }
+            // query.$or = [
+            //     { "name": { $regex: search, '$options': 'i' } },
+            // ]
+            new_query.$or = [
+                {commissionToString : {$regex : search, "$options": "i"}}
             ]
         }
         query.isDeleted = false;
@@ -547,7 +556,7 @@ exports.getAllCampaignsForBrand = async (req, res) => {
         if(region) {
             query.region = {$in:[region]}
         }
-        
+        console.log(new_query,'new_query')
         // Pipeline Stages
         let pipeline = [
              // lookups for categories
@@ -621,6 +630,7 @@ exports.getAllCampaignsForBrand = async (req, res) => {
                     isDefault: 1,
                     isDeleted: 1,
                     commission:1,
+                    commissionToString : {$toString : "$commission"},
                     commission_event_type:1,
                     commission_type:1,
                     category : 1,
@@ -632,6 +642,9 @@ exports.getAllCampaignsForBrand = async (req, res) => {
                     sub_category_detail :"$sub_category_detail",
                     sub_child_category_detail: "$sub_child_category_detail",
                 }
+            },
+            {
+                $match : new_query
             },
             {
                 $sort: sortquery
