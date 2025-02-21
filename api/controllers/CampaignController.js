@@ -366,6 +366,52 @@ exports.getAllCampaignRequestsForAffiliate = async (req, res) => {
                     preserveNullAndEmptyArrays: true
                 }
             },
+            // lookups for categories
+            {
+                $lookup: {
+                    from: "commoncategories",
+                    localField: "campaign_detail.category",
+                    foreignField: "_id",
+                    as: "category_detail"
+                }
+            },
+            {
+                $unwind: {
+                    path: '$category_detail',
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+
+            {
+                $lookup: {
+                    from: "commoncategories",
+                    localField: "campaign_detail.sub_category",
+                    foreignField: "_id",
+                    as: "sub_category_detail"
+                }
+            },
+            {
+                $unwind: {
+                    path: '$sub_category_detail',
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+
+            {
+                $lookup: {
+                    from: "subchildcategory",
+                    localField: "campaign_detail.sub_child_category",
+                    foreignField: "_id",
+                    as: "sub_child_category_detail"
+                }
+            },
+            {
+                $unwind: {
+                    path: '$sub_child_category_detail',
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            
             {
                 $match: query
             },
@@ -387,7 +433,9 @@ exports.getAllCampaignRequestsForAffiliate = async (req, res) => {
                     accepted_at: 1,
                     updatedAt: 1,
                     isActive: 1,
-
+                    category_detail : "$category_detail",
+                    sub_category_detail :"$sub_category_detail",
+                    sub_child_category_detail: "$sub_child_category_detail",
                     category : "$campaign_detail.category",
                     sub_category:"$campaign_detail.sub_category",
                     category_type:"$campaign_detail.category_type",
@@ -502,6 +550,52 @@ exports.getAllCampaignsForBrand = async (req, res) => {
         
         // Pipeline Stages
         let pipeline = [
+             // lookups for categories
+             {
+                $lookup: {
+                    from: "commoncategories",
+                    localField: "category",
+                    foreignField: "_id",
+                    as: "category_detail"
+                }
+            },
+            {
+                $unwind: {
+                    path: '$category_detail',
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+
+            {
+                $lookup: {
+                    from: "commoncategories",
+                    localField: "sub_category",
+                    foreignField: "_id",
+                    as: "sub_category_detail"
+                }
+            },
+            {
+                $unwind: {
+                    path: '$sub_category_detail',
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+
+            {
+                $lookup: {
+                    from: "subchildcategory",
+                    localField: "sub_child_category",
+                    foreignField: "_id",
+                    as: "sub_child_category_detail"
+                }
+            },
+            {
+                $unwind: {
+                    path: '$sub_child_category_detail',
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+
             {
                 $match: query
             },
@@ -533,7 +627,10 @@ exports.getAllCampaignsForBrand = async (req, res) => {
                     sub_category:1,
                     category_type:1,
                     sub_child_category:1,
-                    region:1
+                    region:1,
+                    category_detail : "$category_detail",
+                    sub_category_detail :"$sub_category_detail",
+                    sub_child_category_detail: "$sub_child_category_detail",
                 }
             },
             {
@@ -797,7 +894,7 @@ exports.getCampaignById = async (req, res) => {
         if (!id) {
             throw constants.CAMPAIGN.ID_REQUIRED;
         }
-        let get_campaign = await Campaign.findOne({ id: id, isDeleted: false }).populate('brand_id');//.populate('affiliate_id');
+        let get_campaign = await Campaign.findOne({ id: id, isDeleted: false }).populate('brand_id').populate("category").populate("sub_category").populate("sub_child_category");//.populate('affiliate_id');
         if (!get_campaign) {
             throw constants.CAMPAIGN.INVALID_ID;
         }
