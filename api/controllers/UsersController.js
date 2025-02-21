@@ -1123,7 +1123,7 @@ module.exports = {
       if (cat_type) {
         cat_type = await Services.Utils.string_to_array(cat_type);
         query.cat_type = {$in : cat_type}
-      }
+      } 
 
       if (start_date && end_date) {
         const date = new Date(start_date);
