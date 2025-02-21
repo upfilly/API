@@ -240,6 +240,8 @@ exports.listPublicCampaignsOfAllBrands = async (req, res) => {
 exports.getAllCampaignRequestsForAffiliate = async (req, res) => {
     try {
         let user_id = req.identity.id;
+        let {category,sub_category,category_type,sub_child_category,region} = req.query
+
         let loggedInUser = await Users.findOne({ id: user_id, isDeleted: false });
         if (loggedInUser.addedBy) {
 
@@ -314,6 +316,26 @@ exports.getAllCampaignRequestsForAffiliate = async (req, res) => {
         } else {
             sortquery = { createdAt: -1 }
         }
+        if (sub_category) {
+            // query.sub_category_id = new ObjectId(sub_category_id);
+            sub_category = await Services.Utils.string_ids_toObjectIds_array(sub_category);
+            new_query.sub_category = {$in : sub_category}
+          }
+        if(category){
+            category = await Services.Utils.string_ids_toObjectIds_array(category);
+            new_query.category = {$in : category}
+        }
+        if (category_type) {
+            category_type = await Services.Utils.string_to_array(category_type);
+            new_query.category_type = {$in : category_type}
+        } 
+        if (category_type) {
+            sub_child_category = await Services.Utils.string_to_array(sub_child_category);
+            new_query.sub_child_category = {$in : sub_child_category}
+        } 
+        if(region) {
+            new_query.region = {$in:[region]}
+        }
         // Pipeline Stages
         let pipeline = [
             {
@@ -365,6 +387,12 @@ exports.getAllCampaignRequestsForAffiliate = async (req, res) => {
                     accepted_at: 1,
                     updatedAt: 1,
                     isActive: 1,
+
+                    category : "$campaign_detail.category",
+                    sub_category:"$campaign_detail.sub_category",
+                    category_type:"$campaign_detail.category_type",
+                    sub_child_category:"$campaign_detail.sub_child_category",
+                    region:"$campaign_detail.region"
                 }
             },
             {$match:new_query}
@@ -399,6 +427,7 @@ exports.getAllCampaignRequestsForAffiliate = async (req, res) => {
 exports.getAllCampaignsForBrand = async (req, res) => {
     try {
         let user_id = req.identity.id;
+        let {category,sub_category,category_type,sub_child_category,region} = req.query
         let loggedInUser = await Users.findOne({ id: user_id, isDeleted: false });
         if (loggedInUser.addedBy) {
 
@@ -450,6 +479,27 @@ exports.getAllCampaignsForBrand = async (req, res) => {
         } else {
             sortquery = { updatedAt: -1 }
         }
+        if (sub_category) {
+                // query.sub_category_id = new ObjectId(sub_category_id);
+                sub_category = await Services.Utils.string_ids_toObjectIds_array(sub_category);
+                query.sub_category = {$in : sub_category}
+              }
+        if(category){
+            query.category = await Services.Utils.string_ids_toObjectIds_array(category);
+            query.category = {$in : category}
+        }
+        if (category_type) {
+            category_type = await Services.Utils.string_to_array(category_type);
+            query.category_type = {$in : category_type}
+        } 
+        if (category_type) {
+            sub_child_category = await Services.Utils.string_to_array(sub_child_category);
+            query.sub_child_category = {$in : sub_child_category}
+        } 
+        if(region) {
+            query.region = {$in:[region]}
+        }
+        
         // Pipeline Stages
         let pipeline = [
             {
@@ -478,7 +528,12 @@ exports.getAllCampaignsForBrand = async (req, res) => {
                     isDeleted: 1,
                     commission:1,
                     commission_event_type:1,
-                    commission_type:1
+                    commission_type:1,
+                    category : 1,
+                    sub_category:1,
+                    category_type:1,
+                    sub_child_category:1,
+                    region:1
                 }
             },
             {

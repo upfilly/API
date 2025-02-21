@@ -38,7 +38,13 @@ module.exports = {
         createdAt: { type: "ref", autoCreatedAt: true, },
         updatedAt: { type: "ref", autoUpdatedAt: true, },
         isDefault: {type: 'Boolean', defaultsTo: false},
-        isDeleted: { type: 'Boolean', defaultsTo: false }
+        isDeleted: { type: 'Boolean', defaultsTo: false },
+        // new keys 
+        category : {model:"commoncategories"},
+        sub_category: {model:"commoncategories"},
+        category_type : {type:"string"},
+        sub_child_category : {model: "subchildcategory"},
+        region : {type:"json"},
     },
 
 };
