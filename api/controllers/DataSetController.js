@@ -17,6 +17,41 @@ const Papa = require('papaparse');
 const axios = require("axios")
 
 
+
+/**
+ * // Function to convert CSV to XML
+async function convertCSVtoXML(csvFilePath, xmlFilePath) {
+  const records = [];
+
+  // Read and parse CSV file
+  await new Promise((resolve, reject) => {
+    fs.createReadStream(csvFilePath)
+      .pipe(csvParser())
+      .on("data", (row) => {
+        records.push(row);
+      })
+      .on("end", resolve)
+      .on("error", reject);
+  });
+
+  // Convert JSON (CSV data) to XML format
+  const builder = new Builder({ headless: true, rootName: "Root" });
+  const xmlData = builder.buildObject({ Record: records });
+
+  // Write XML to file
+  fs.writeFileSync(xmlFilePath, xmlData);
+  console.log(`✅ XML file saved at: ${xmlFilePath}`);
+}
+
+// Define input CSV file and output XML file paths
+const csvFilePath = "input.csv";
+const xmlFilePath = "output.xml";
+
+// Run the conversion
+convertCSVtoXML(csvFilePath, xmlFilePath).catch(console.error);
+ */
+
+
 generateName = function () {
   // action are perform to generate random name for every file
   var uuid = require('uuid');

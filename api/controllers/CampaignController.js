@@ -907,7 +907,31 @@ exports.getCampaignById = async (req, res) => {
         if (!id) {
             throw constants.CAMPAIGN.ID_REQUIRED;
         }
-        let get_campaign = await Campaign.findOne({ id: id, isDeleted: false }).populate('brand_id').populate("category").populate("sub_category").populate("sub_child_category");//.populate('affiliate_id');
+        let get_campaign = await Campaign.findOne({ id: id, isDeleted: false }).populate('brand_id')
+        if(get_campaign.category && get_campaign.category.length > 0){
+            let category = []
+            for await (let cat of category){
+                let data = await CommonCategories.findOne({id : cat.id}).select(["id","name"])
+                category.push(data)
+            }
+            get_campaign.category = category
+        }
+        if(get_campaign.sub_category && get_campaign.sub_category.length > 0){
+            let sub_category = []
+            for await (let cat of category){
+                let data = await CommonCategories.findOne({id : cat.id}).select(["id","name"])
+                sub_category.push(data)
+            }
+            get_campaign.sub_category = sub_category
+        }
+        if(get_campaign.sub_child_category && get_campaign.sub_child_category.length > 0){
+            let sub_child_category = []
+            for await (let cat of category){
+                let data = await SubChildCategory.findOne({id : cat.id}).select(["id","name"])
+                sub_child_category.push(data)
+            }
+            get_campaign.sub_child_category = sub_child_category
+        }
         if (!get_campaign) {
             throw constants.CAMPAIGN.INVALID_ID;
         }

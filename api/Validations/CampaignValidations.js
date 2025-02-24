@@ -33,10 +33,10 @@ exports.addCampaign = async (req, res, next) => {
         access_type: Joi.string().required().valid('public', 'private'),
         commission_type : Joi.string().required(),
         commission : Joi.number().required().min(0),
-        category : Joi.string().optional(),
-        sub_category : Joi.string().optional(),
+        category : Joi.array().optional(),
+        sub_category : Joi.array().optional(),
         category_type : Joi.string().optional(),
-        sub_child_category : Joi.string().optional(),
+        sub_child_category : Joi.array().optional(),
         region : Joi.array().optional(),
     });
     return await Validate(schema, req, res);
