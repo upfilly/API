@@ -73,6 +73,7 @@ function saveCSVToFile(csvData, filename) {
     
     csvPath = csvPath.split("/")
     csvPath = constant.BACK_WEB_URL + "/"+csvPath[6]+"/"+csvPath[7]
+    console.log(csvPath,'csvPatddsfdsfdh')
     return csvPath
   } catch (error) {
     console.error("Error writing CSV file:", error);
@@ -469,6 +470,7 @@ exports.sendDataSets = async (req, res) => {
         var urlData = saveCSVToFile(csvData, filename);
         
         let csv_url = urlData
+        console.log(csv_url,'=====')
         csv_url = csv_url.split("/")[2]
         console.log(csv_url,'csv_url')
         var rootpath = process.cwd();
