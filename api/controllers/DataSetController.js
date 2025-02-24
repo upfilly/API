@@ -471,7 +471,8 @@ exports.sendDataSets = async (req, res) => {
         
         let csv_url = urlData
         console.log(csv_url,'=====')
-        csv_url = csv_url.split("/")[3] // on server on 3rd index url_docs is coming
+        csv_url = csv_url.split("/")[4] // on server 
+        csv_url = csv_url.pop()
         console.log(csv_url,'csv_url')
         var rootpath = process.cwd();
         const csvPath = rootpath + "/assets/url_docs/"+ csv_url //path.join(__dirname, 'data.csv'); // Path relative to script
