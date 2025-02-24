@@ -83,7 +83,7 @@ function saveCSVToFile(csvData, filename) {
 async function processCSVAndRespond(csvFilePath, newColumnName, affliate_id) {
   try {
     let resolvedPath = csvFilePath //path.resolve(csvFilePath);
-    
+    console.log(resolvedPath,'resolvedPath')
     const csvData = fs.readFileSync(resolvedPath, 'utf8');
 
     const results = Papa.parse(csvData, {
