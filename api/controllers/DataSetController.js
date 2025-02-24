@@ -471,7 +471,7 @@ exports.sendDataSets = async (req, res) => {
         
         let csv_url = urlData
         console.log(csv_url,'=====')
-        csv_url = csv_url.split("/")[4] // on server 
+        csv_url = csv_url.split("/") // on server 
         csv_url = csv_url.pop()
         console.log(csv_url,'csv_url')
         var rootpath = process.cwd();
