@@ -41,9 +41,9 @@ module.exports = {
         isDeleted: { type: 'Boolean', defaultsTo: false },
         // new keys 
         category : {type:"json"},
-        sub_category: {type:"commoncategories"},
+        sub_category: {type:"json"},
         category_type : {type:"string"},
-        sub_child_category : {model: "subchildcategory"},
+        sub_child_category : {type: "json"},
         region : {type:"json"},
     },
 
