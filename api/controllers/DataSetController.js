@@ -17,10 +17,73 @@ const Papa = require('papaparse');
 const axios = require("axios")
 
 
+generateName = function () {
+  // action are perform to generate random name for every file
+  var uuid = require('uuid');
+  var randomStr = uuid.v4();
+  var date = new Date();
+  var currentDate = date.valueOf();
+
+  retVal = randomStr + currentDate;
+  return retVal;
+};
+
+async function downloadCSV(url) {
+  try {
+    const { data } = await axios.get(url);
+    
+    // ✅ Check if response contains unwanted metadata
+  if (data.includes("google.visualization.Query.setResponse")) {
+    const jsonMatch = data.match(/google\.visualization\.Query\.setResponse\((.*)\);/);
+    
+    if (jsonMatch && jsonMatch[1]) {
+      const jsonData = JSON.parse(jsonMatch[1]);
+
+      // ✅ Extract column headers from JSON
+      const headers = jsonData.table.cols.map(col => col.label || ""); // Handle empty labels
+
+      // ✅ Extract row values
+      const rows = jsonData.table.rows.map(row => row.c.map(cell => (cell ? cell.v : "")));
+
+      // ✅ Combine headers and rows into CSV format
+      return [headers.join(","), ...rows.map(row => row.join(","))].join("\n");
+    }
+  }
+
+  // ✅ Return empty CSV format if parsing fails
+  return "";
+  } catch (error) {
+    console.error("Error downloading CSV:", error);
+    return null;
+  }
+}
+
+function saveCSVToFile(csvData, filename) {
+  // const filePath = path.join(__dirname, "assets", filename);
+  let rootpath = process.cwd()
+  let csvPath = rootpath + "/assets/url_docs/"
+  csvPath = csvPath + generateName() + ".csv"
+  if (!fs.existsSync(csvPath)) {
+    // fs.mkdirSync("assets");
+    
+  }
+
+  try {
+    fs.writeFileSync(csvPath, csvData);
+    
+    csvPath = csvPath.split("/")
+    csvPath = constant.BACK_WEB_URL + "/"+csvPath[6]+"/"+csvPath[7]
+    return csvPath
+  } catch (error) {
+    console.error("Error writing CSV file:", error);
+  }
+}
+
+
 async function processCSVAndRespond(csvFilePath, newColumnName, affliate_id) {
   try {
     let resolvedPath = csvFilePath //path.resolve(csvFilePath);
-    console.log(resolvedPath,'resolvedPath')
+    
     const csvData = fs.readFileSync(resolvedPath, 'utf8');
 
     const results = Papa.parse(csvData, {
@@ -45,7 +108,7 @@ async function processCSVAndRespond(csvFilePath, newColumnName, affliate_id) {
     // console.log(resolvedPath,'resolvedPath')
     
     fs.writeFileSync(resolvedPath, csv, 'utf8');
-    console.log("CSV file updated",resolvedPath);
+    
     resolvedPath = resolvedPath.split("/")
     resolvedPath = constant.BACK_WEB_URL + "/"+resolvedPath[6]+"/"+resolvedPath[7]
     return resolvedPath; // Return the CSV data
@@ -387,24 +450,53 @@ exports.sendDataSets = async (req, res) => {
     await DataSet.create(payload);
 
     if(data.type == "url"){
-      for await (let itm of listOfAcceptedInvites ){
-        payload = {
-          brand_id: req.identity.id,
-          url: data.url
-        }
-        let existingData = await DataFeeds.findOne({
-          url :data.url,
-          brand_id: req.identity.id
-        });
-        
-        if (!existingData) {
-          await DataFeeds.create(payload);
-        } else {
-          await DataFeeds.updateOne({ url :data.url, brand_id: req.identity.id }, payload);
-        }
-      }
-    return response.success(student_arr, constants.DATASET.ADDED, req, res);
+      const url = data.url
+      const googleSheetURL = url;
 
+      // Convert Google Sheets URL to CSV export URL
+      const csvExportURL = googleSheetURL.replace('/edit', '/gviz/tq?tqx=out:csv');
+      const csvData = await downloadCSV(csvExportURL);
+      if (csvData) {
+        // Add a new column
+        // const columnName = 'Share URL';  // The name of the new column
+        // // const columnValue = `https://upfilly.com/?affiliate_id=${req.identity.id}&url=${row['Product URL']}`;  // The value for the new column
+        // const modifiedCSV = addColumnToCSV(csvData, columnName,req.identity.id);
+
+        // Specify the filename to save the data
+        const filename = 'output_with_new_column.csv';
+    
+        // Save the downloaded CSV data to a file
+        var urlData = saveCSVToFile(csvData, filename);
+        
+        let csv_url = urlData
+        csv_url = csv_url.split("/")[2]
+        var rootpath = process.cwd();
+        const csvPath = rootpath + "/assets/url_docs/"+ csv_url //path.join(__dirname, 'data.csv'); // Path relative to script
+        
+        const newColumn = "Share URL";
+        urlData = await processCSVAndRespond(csvPath,newColumn,req.identity.id)
+        urlData = urlData.split("/")[1] + "/" + urlData.split("/")[2]
+      // console.log(urlData,'urlData')
+        for await (let itm of listOfAcceptedInvites ){
+          payload = {
+            brand_id: req.identity.id,
+            url: urlData//data.url
+          }
+          let existingData = await DataFeeds.findOne({
+            url :data.url,
+            brand_id: req.identity.id
+          });
+          
+          if (!existingData) {
+            await DataFeeds.create(payload);
+          } else {
+            await DataFeeds.updateOne({ url :data.url, brand_id: req.identity.id }, payload);
+          }
+        }
+      return response.success(student_arr, constants.DATASET.ADDED, req, res);
+      } else {
+        console.error('Failed to download CSV data');
+      }
     }else {
       for await (let itm of listOfAcceptedInvites ){
         // console.log(data.filePath,'data.filePath')

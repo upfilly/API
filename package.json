@@ -9,7 +9,7 @@
     "@sailshq/lodash": "^3.10.3",
     "@sailshq/socket.io-redis": "^5.2.0",
     "apify-client": "^2.7.1",
-    "axios": "^1.5.1",
+    "axios": "^1.7.9",
     "bcrypt-nodejs": "^0.0.3",
     "braintree": "^3.18.0",
     "country-code-info": "^0.3.0",
