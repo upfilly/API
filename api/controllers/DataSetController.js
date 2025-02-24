@@ -470,7 +470,7 @@ exports.sendDataSets = async (req, res) => {
         var urlData = saveCSVToFile(csvData, filename);
         
         let csv_url = urlData
-        console.log(csv_url,'=====')
+        // console.log(csv_url,'=====')
         csv_url = csv_url.split("/") // on server 
         csv_url = csv_url.pop()
         console.log(csv_url,'csv_url')
@@ -479,7 +479,9 @@ exports.sendDataSets = async (req, res) => {
         
         const newColumn = "Share URL";
         urlData = await processCSVAndRespond(csvPath,newColumn,req.identity.id)
-        urlData = urlData.split("/")[1] + "/" + urlData.split("/")[2]
+        urlData =csv_url // urlData.split("/") //[1] + "/" + urlData.split("/")[2]
+        console.log(urlData,'urlData')
+
       // console.log(urlData,'urlData')
         for await (let itm of listOfAcceptedInvites ){
           payload = {
