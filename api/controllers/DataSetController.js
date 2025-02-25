@@ -644,7 +644,7 @@ exports.sendDataSets = async (req, res) => {
       let updatedCSV = await processCSVAndRespond(csvPath,newColumn,req.identity.id)
       console.log(updatedCSV,'updatedCSV')
       
-        const xmlFile = constant.BACK_WEB_URL + "/assets/documents/" + updatedCSV
+        const xmlFile = constant.BACK_WEB_URL + "/assets/" + updatedCSV
         const xmlFilePath = rootpath +  "/assets/documents/" + generateName() + ".xml"
         let id = req.identity.id
         let xml = await fetchAndUpdateXML(xmlFile, xmlFilePath,id);
