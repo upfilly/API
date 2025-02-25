@@ -560,60 +560,82 @@ exports.getAllCampaignsForBrand = async (req, res) => {
         // Pipeline Stages
         let pipeline = [
              // lookups for categories
-             {
+            //  {
+            //     $lookup: {
+            //         from: "commoncategories",
+            //         localField: "category",
+            //         foreignField: "_id",
+            //         as: "category_detail"
+            //     }
+            // },
+            // {
+            //     $unwind: {
+            //         path: '$category_detail',
+            //         preserveNullAndEmptyArrays: true
+            //     }
+            // },
+            {
                 $lookup: {
                     from: "commoncategories",
-                    localField: "category",
-                    foreignField: "_id",
+                    let: { categoryIds: "$category" },
+                    pipeline: [
+                        { $match: { $expr: { $in: ["$_id", { $map: { input: "$$categoryIds", as: "id", in: { $toObjectId: "$$id" } } }] } } }
+                    ],
                     as: "category_detail"
                 }
             },
-            {
-                $unwind: {
-                    path: '$category_detail',
-                    preserveNullAndEmptyArrays: true
-                }
-            },
+
             // {
             //     $lookup: {
             //         from: "commoncategories",
-            //         let: { categoryIds: "$category" },
-            //         pipeline: [
-            //             { $match: { $expr: { $in: ["$_id", { $map: { input: "$$categoryIds", as: "id", in: { $toObjectId: "$$id" } } }] } } }
-            //         ],
-            //         as: "category_detail"
+            //         localField: "sub_category",
+            //         foreignField: "_id",
+            //         as: "sub_category_detail"
+            //     }
+            // },
+            // {
+            //     $unwind: {
+            //         path: '$sub_category_detail',
+            //         preserveNullAndEmptyArrays: true
+            //     }
+            // },
+            {
+                $lookup: {
+                    from: "commoncategories",
+                    let: { categoryIds: "$sub_category" },
+                    pipeline: [
+                        { $match: { $expr: { $in: ["$_id", { $map: { input: "$$categoryIds", as: "id", in: { $toObjectId: "$$id" } } }] } } }
+                    ],
+                    as: "sub_category_detail"
+                }
+            },
+
+            // {
+            //     $lookup: {
+            //         from: "subchildcategory",
+            //         localField: "sub_child_category",
+            //         foreignField: "_id",
+            //         as: "sub_child_category_detail"
+            //     }
+            // },
+            // {
+            //     $unwind: {
+            //         path: '$sub_child_category_detail',
+            //         preserveNullAndEmptyArrays: true
             //     }
             // },
 
             {
                 $lookup: {
-                    from: "commoncategories",
-                    localField: "sub_category",
-                    foreignField: "_id",
-                    as: "sub_category_detail"
-                }
-            },
-            {
-                $unwind: {
-                    path: '$sub_category_detail',
-                    preserveNullAndEmptyArrays: true
-                }
-            },
-
-            {
-                $lookup: {
                     from: "subchildcategory",
-                    localField: "sub_child_category",
-                    foreignField: "_id",
+                    let: { categoryIds: "$sub_child_category" },
+                    pipeline: [
+                        { $match: { $expr: { $in: ["$_id", { $map: { input: "$$categoryIds", as: "id", in: { $toObjectId: "$$id" } } }] } } }
+                    ],
                     as: "sub_child_category_detail"
                 }
             },
-            {
-                $unwind: {
-                    path: '$sub_child_category_detail',
-                    preserveNullAndEmptyArrays: true
-                }
-            },
+
 
             {
                 $match: query
