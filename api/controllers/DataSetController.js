@@ -532,8 +532,9 @@ exports.sendDataSets = async (req, res) => {
         xml = xml.split("/")
         xml = xml.splice(-2)
         xml = xml.join("/")
-        
-        for await (let itm of listOfAcceptedInvites ){
+        // console.log(listOfAcceptedInvites.length,"listOfAcceptedInvites")
+        // for await (let itm of listOfAcceptedInvites ){
+          console.log("here")
           payload = {
             brand_id: req.identity.id,
             url: urlData || "",//data.url
@@ -549,9 +550,9 @@ exports.sendDataSets = async (req, res) => {
           if (!existingData) {
             await DataFeeds.create(payload);
           } else {
-            await DataFeeds.updateOne({ url :data.url, brand_id: req.identity.id,xml : xmlPath }, payload);
+            await DataFeeds.updateOne({ url :data.url, brand_id: req.identity.id,xml : xmlPath,type: data.type }, payload);
           }
-        }
+        // }
         return response.success(student_arr, constants.DATASET.ADDED, req, res);
       }
 
@@ -586,7 +587,7 @@ exports.sendDataSets = async (req, res) => {
         xmlPath = xmlPath.splice(-2)
         xmlPath = xmlPath.join("/")
         
-        for await (let itm of listOfAcceptedInvites ){
+        // for await (let itm of listOfAcceptedInvites ){
           payload = {
             brand_id: req.identity.id,
             url: urlData,//data.url
@@ -607,7 +608,7 @@ exports.sendDataSets = async (req, res) => {
           } else {
             await DataFeeds.updateOne({ url :data.url, brand_id: req.identity.id,xml : xmlPath }, payload);
           }
-        }
+        // }
       return response.success(student_arr, constants.DATASET.ADDED, req, res);
       } else {
         console.error('Failed to download CSV data');
@@ -624,8 +625,10 @@ exports.sendDataSets = async (req, res) => {
       xmlPath = xmlPath.split("/")
       xmlPath = xmlPath.splice(-2)
       xmlPath = xmlPath.join("/")
-      for await (let itm of listOfAcceptedInvites ){
-        // console.log(data.filePath,'data.filePath')
+      // console.log(listOfAcceptedInvites.length,"listOfAcceptedInvites")
+
+      // for await (let itm of listOfAcceptedInvites ){
+        console.log('data.filePath')
         payload = {
           brand_id: req.identity.id,
           filePath: updatedCSV, //data.filePath   contain file path + new column which is added
@@ -643,7 +646,7 @@ exports.sendDataSets = async (req, res) => {
         } else {
           await DataFeeds.updateOne({ url :data.filePath, brand_id: req.identity.id,xml : xmlPath }, payload);
         }
-      }
+      // }
 
       return response.success(student_arr, constants.DATASET.ADDED, req, res);
 
