@@ -16,6 +16,8 @@ const Services = require('../services/index');
 const Papa = require('papaparse');
 const axios = require("axios")
 const { Builder } = require("xml2js");
+const xml2js = require("xml2js");
+
 const csv = require("csvtojson");
 
 
@@ -64,6 +66,52 @@ function sanitizeKeys(obj) {
 // // Run the conversion
 // convertCSVtoXML(csvFilePath, xmlFilePath).catch(console.error);
  
+async function fetchAndUpdateXML(url, xmlFilePath,id) {
+  try {
+    // Fetch XML data from the URL
+    const response = await axios.get(url);
+    const xmlData = response.data;
+
+    // Parse XML to JSON
+    const parser = new xml2js.Parser();
+    const builder = new xml2js.Builder({ headless: true });
+
+    const jsonData = await parser.parseStringPromise(xmlData);
+    
+    let existingRecords = jsonData?.Root?.Record;
+    // if(existingRecords){
+    //   existingRecords = Products.Product
+    // }
+    console.log(existingRecords,'existingRecords')
+    const lastProductURL = existingRecords.length > 0 ? existingRecords[existingRecords.length - 1]["Product_URL"]?.[0] : "https://default-url.com";
+    const newRecord = {
+      Share_URL : [`https://upfilly.com/?affiliate_id=${id}&url=${lastProductURL}`]
+    }
+
+    // Ensure "Root" exists and has "Record" array
+    if (!jsonData.Root) {
+      jsonData.Root = { Record: [] };
+    }
+
+    // If there's only one record, convert it into an array
+    if (!Array.isArray(jsonData.Root.Record)) {
+      jsonData.Root.Record = [jsonData.Root.Record];
+    }
+
+    // Add the new record
+    jsonData.Root.Record.push(newRecord);
+
+    // Convert JSON back to XML
+    const updatedXml = builder.buildObject(jsonData);
+    xmlFilePath = xmlFilePath + generateName() + ".xml"
+    // Save the updated XML to a file
+    fs.writeFileSync(xmlFilePath, updatedXml);
+    console.log(`✅ New record added and XML saved at: ${xmlFilePath}`);
+    return xmlFilePath
+  } catch (error) {
+    console.error("❌ Error fetching or updating XML:", error);
+  }
+}
 
 
 generateName = function () {
@@ -133,7 +181,7 @@ function saveCSVToFile(csvData, filename) {
 async function processCSVAndRespond(csvFilePath, newColumnName, affliate_id) {
   try {
     let resolvedPath = csvFilePath //path.resolve(csvFilePath);
-    console.log(resolvedPath,'resolvedPath')
+    
     const csvData = fs.readFileSync(resolvedPath, 'utf8');
 
     const results = Papa.parse(csvData, {
@@ -501,20 +549,45 @@ exports.sendDataSets = async (req, res) => {
 
     if(data.type == "url"){
       const url = data.url
+      if(url.endsWith("xml")){
+        let rootpath = process.cwd()
+        const xmlFilePath = rootpath + "/assets/documents/"
+        let id = req.identity.id
+        let xml = fetchAndUpdateXML(url, xmlFilePath,id);
+
+        xml = xml.split("/")
+        xml = xml.splice(-2)
+        xml = xml.join("/")
+        
+        for await (let itm of listOfAcceptedInvites ){
+          payload = {
+            brand_id: req.identity.id,
+            url: urlData || "",//data.url
+            xml : xml
+          }
+          let existingData = await DataFeeds.findOne({
+            url :data.url,
+            brand_id: req.identity.id,
+            xml : xmlPath
+          });
+          
+          if (!existingData) {
+            await DataFeeds.create(payload);
+          } else {
+            await DataFeeds.updateOne({ url :data.url, brand_id: req.identity.id,xml : xmlPath }, payload);
+          }
+        }
+        return response.success(student_arr, constants.DATASET.ADDED, req, res);
+      }
       const googleSheetURL = url;
 
       // Convert Google Sheets URL to CSV export URL
       const csvExportURL = googleSheetURL.replace('/edit', '/gviz/tq?tqx=out:csv');
       const csvData = await downloadCSV(csvExportURL);
       if (csvData) {
-        // Add a new column
-        // const columnName = 'Share URL';  // The name of the new column
-        // // const columnValue = `https://upfilly.com/?affiliate_id=${req.identity.id}&url=${row['Product URL']}`;  // The value for the new column
-        // const modifiedCSV = addColumnToCSV(csvData, columnName,req.identity.id);
-
         // Specify the filename to save the data
         const filename = 'output_with_new_column.csv';
-    
+
         // Save the downloaded CSV data to a file
         var urlData = saveCSVToFile(csvData, filename);
         
