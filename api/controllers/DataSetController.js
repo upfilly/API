@@ -1347,13 +1347,13 @@ exports.ListDataFeedsBrand = async (req, res) => {
     if(brand_id) {
       if(listOfBrandIds.includes(brand_id)) {
         // previous code ----> dataFeeds = await DataFeeds.find({brand_id: brand_id})
-        dataFeeds = await DataFeeds.find({brand_id: brand_id}).select(["url","filePath","brand_id"]).populate("brand_id").sort("createdAt Desc");
+        dataFeeds = await DataFeeds.find({brand_id: brand_id}).select(["url","xml","filePath","brand_id"]).populate("brand_id").sort("createdAt Desc");
       } else {
         dataFeeds = [];
       }
     } else {
         // previous code ----> dataFeeds = await DataFeeds.find({brand_id: brand_id})
-      dataFeeds = await DataFeeds.find({brand_id: listOfBrandIds}).select(["url","filePath","brand_id"]).populate("brand_id").sort("createdAt Desc");
+      dataFeeds = await DataFeeds.find({brand_id: listOfBrandIds}).select(["url","xml","filePath","brand_id"]).populate("brand_id").sort("createdAt Desc");
     }
 
       return res.status(200).json({
