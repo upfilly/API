@@ -338,7 +338,8 @@ exports.getAllCampaignRequestsForAffiliate = async (req, res) => {
             new_query.sub_child_category = {$in : sub_child_category}
         } 
         if(region) {
-            new_query.region = {$in:[region]}
+            region = await Services.Utils.string_to_array(region);
+            new_query.region = {$in:region}
         }
         // Pipeline Stages
         // console.log(new_query,'new_query')
