@@ -648,7 +648,7 @@ exports.sendDataSets = async (req, res) => {
         const xmlFilePath = rootpath +  "/assets/documents/" + generateName() + ".xml"
         let id = req.identity.id
         let xml = await fetchAndUpdateXML(xmlFile, xmlFilePath,id);
-
+        console.log(xml,'this is xml')
         xml = xml.split("/")
         xml = xml.splice(-2)
         xml = xml.join("/")
