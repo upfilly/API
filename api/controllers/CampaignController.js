@@ -445,7 +445,8 @@ exports.getAllCampaignRequestsForAffiliate = async (req, res) => {
                     sub_category:"$campaign_detail.sub_category",
                     category_type:"$campaign_detail.category_type",
                     sub_child_category:"$campaign_detail.sub_child_category",
-                    region:"$campaign_detail.region"
+                    region:"$campaign_detail.region",
+                    region_continents : "$campaign_detail.region_continents",
                 }
             },
             {$match:new_query}
@@ -670,6 +671,7 @@ exports.getAllCampaignsForBrand = async (req, res) => {
                     category_type:1,
                     sub_child_category:1,
                     region:1,
+                    region_continents:1,
                     category_detail : "$category_detail",
                     sub_category_detail :"$sub_category_detail",
                     sub_child_category_detail: "$sub_child_category_detail",

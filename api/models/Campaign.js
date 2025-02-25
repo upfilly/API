@@ -45,6 +45,7 @@ module.exports = {
         category_type : {type:"string"},
         sub_child_category : {type: "json",defaultsTo : []},
         region : {type:"json",defaultsTo : []},
+        region_continents : {type:'json',defaultsTo : []},
     },
 
 };
