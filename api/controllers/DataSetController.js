@@ -550,11 +550,12 @@ exports.sendDataSets = async (req, res) => {
     if(data.type == "url"){
       const url = data.url
       if(url.endsWith("xml")){
+        console.log("under xml")
         let rootpath = process.cwd()
         const xmlFilePath = rootpath + "/assets/documents/"
         let id = req.identity.id
-        let xml = fetchAndUpdateXML(url, xmlFilePath,id);
-
+        let xml = await fetchAndUpdateXML(url, xmlFilePath,id);
+        
         xml = xml.split("/")
         xml = xml.splice(-2)
         xml = xml.join("/")
@@ -568,7 +569,7 @@ exports.sendDataSets = async (req, res) => {
           let existingData = await DataFeeds.findOne({
             url :data.url,
             brand_id: req.identity.id,
-            xml : xmlPath
+            xml : xml
           });
           
           if (!existingData) {
@@ -579,6 +580,8 @@ exports.sendDataSets = async (req, res) => {
         }
         return response.success(student_arr, constants.DATASET.ADDED, req, res);
       }
+      console.log("dfjffd")
+      return
       const googleSheetURL = url;
 
       // Convert Google Sheets URL to CSV export URL
