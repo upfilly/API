@@ -15,41 +15,55 @@ const https = require('https');
 const Services = require('../services/index');
 const Papa = require('papaparse');
 const axios = require("axios")
+const { Builder } = require("xml2js");
+const csv = require("csvtojson");
 
 
+// Function to sanitize object keys for XML
+function sanitizeKeys(obj) {
+  const sanitizedObj = {};
+  for (const key in obj) {
+    const newKey = key.replace(/\s+/g, "_"); // Replace spaces with underscores
+    sanitizedObj[newKey] = obj[key]; // Assign value to new key
+  }
+  return sanitizedObj;
+}
 
-/**
- * // Function to convert CSV to XML
-async function convertCSVtoXML(csvFilePath, xmlFilePath) {
-  const records = [];
 
-  // Read and parse CSV file
-  await new Promise((resolve, reject) => {
-    fs.createReadStream(csvFilePath)
-      .pipe(csvParser())
-      .on("data", (row) => {
-        records.push(row);
-      })
-      .on("end", resolve)
-      .on("error", reject);
-  });
+ // Function to convert CSV to XML
+ async function convertCSVtoXML(csvFilePath) {
+  try {
+    let rootpath = process.cwd()
+    let xmlPath = rootpath + "/assets/documents/"
+    xmlPath = xmlPath + generateName() + ".xml"
 
-  // Convert JSON (CSV data) to XML format
-  const builder = new Builder({ headless: true, rootName: "Root" });
-  const xmlData = builder.buildObject({ Record: records });
+    // Convert CSV to JSON
+    let jsonArray = await csv().fromFile(csvFilePath);
+    jsonArray = jsonArray.map(sanitizeKeys);
 
-  // Write XML to file
-  fs.writeFileSync(xmlFilePath, xmlData);
-  console.log(`✅ XML file saved at: ${xmlFilePath}`);
+    // Convert JSON to XML format
+    const builder = new Builder({ headless: true, rootName: "Root" });
+    const xmlData = builder.buildObject({ Record: jsonArray });
+
+    // Write XML to file
+    if (!fs.existsSync(xmlPath)) {
+      // fs.mkdirSync("assets"); 
+    }
+    fs.writeFileSync(xmlPath, xmlData);
+    console.log(`✅ XML file saved at: ${xmlPath}`);
+    return xmlPath
+  } catch (error) {
+    console.error("❌ Error converting CSV to XML:", error);
+  }
 }
 
 // Define input CSV file and output XML file paths
-const csvFilePath = "input.csv";
-const xmlFilePath = "output.xml";
+// const csvFilePath = "input.csv";
+// const xmlFilePath = "output.xml";
 
-// Run the conversion
-convertCSVtoXML(csvFilePath, xmlFilePath).catch(console.error);
- */
+// // Run the conversion
+// convertCSVtoXML(csvFilePath, xmlFilePath).catch(console.error);
+ 
 
 
 generateName = function () {
@@ -507,31 +521,38 @@ exports.sendDataSets = async (req, res) => {
         let csv_url = urlData
         // console.log(csv_url,'=====')
         csv_url = csv_url.split("/") // on server 
-        csv_url = csv_url.pop()
-        console.log(csv_url,'csv_url')
+        csv_url = csv_url.splice(-2)
+        csv_url = csv_url.join("/")
+        
         var rootpath = process.cwd();
         const csvPath = rootpath + "/assets/url_docs/"+ csv_url //path.join(__dirname, 'data.csv'); // Path relative to script
         
         const newColumn = "Share URL";
         urlData = await processCSVAndRespond(csvPath,newColumn,req.identity.id)
         urlData =csv_url // urlData.split("/") //[1] + "/" + urlData.split("/")[2]
-        console.log(urlData,'urlData')
-
-      // console.log(urlData,'urlData')
+        
+        // convert csv into xml
+        let xmlPath = await convertCSVtoXML(csvPath)
+        xmlPath = xmlPath.split("/")
+        xmlPath = xmlPath.splice(-2)
+        xmlPath = xmlPath.join("/")
+        
         for await (let itm of listOfAcceptedInvites ){
           payload = {
             brand_id: req.identity.id,
-            url: urlData//data.url
+            url: urlData,//data.url
+            xml : xmlPath
           }
           let existingData = await DataFeeds.findOne({
             url :data.url,
-            brand_id: req.identity.id
+            brand_id: req.identity.id,
+            xml : xmlPath
           });
           
           if (!existingData) {
             await DataFeeds.create(payload);
           } else {
-            await DataFeeds.updateOne({ url :data.url, brand_id: req.identity.id }, payload);
+            await DataFeeds.updateOne({ url :data.url, brand_id: req.identity.id,xml : xmlPath }, payload);
           }
         }
       return response.success(student_arr, constants.DATASET.ADDED, req, res);
@@ -752,6 +773,7 @@ exports.listOfDataSet = async (req, res) => {
           brand_details: "$brand_details",
           addedBy_details: "$addedBy_details",
           url:"$url",
+          xml :"$xml",// its path in docuemnts
           status: "$status",
           isDeleted: "$isDeleted",
           addedBy: "$addedBy",

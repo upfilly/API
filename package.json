@@ -47,7 +47,8 @@
     "sails-hook-sockets": "^2.0.0",
     "sails-mongo": "^2.0.0",
     "stripe": "^11.6.0",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "xml2js": "^0.6.2"
   },
   "devDependencies": {
     "eslint": "5.16.0"
