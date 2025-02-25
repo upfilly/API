@@ -322,18 +322,18 @@ exports.getAllCampaignRequestsForAffiliate = async (req, res) => {
         }
         if (sub_category) {
             // query.sub_category_id = new ObjectId(sub_category_id);
-            sub_category = await Services.Utils.string_ids_toObjectIds_array(sub_category);
+            sub_category = await Services.Utils.string_to_array(sub_category);
             new_query.sub_category = {$in : sub_category}
           }
         if(category){
-            category = await Services.Utils.string_ids_toObjectIds_array(category);
+            category = await Services.Utils.string_to_array(category);
             new_query.category = {$in : category}
         }
         if (category_type) {
             category_type = await Services.Utils.string_to_array(category_type);
             new_query.category_type = {$in : category_type}
         } 
-        if (category_type) {
+        if (sub_child_category) {
             sub_child_category = await Services.Utils.string_to_array(sub_child_category);
             new_query.sub_child_category = {$in : sub_child_category}
         } 
@@ -341,6 +341,7 @@ exports.getAllCampaignRequestsForAffiliate = async (req, res) => {
             new_query.region = {$in:[region]}
         }
         // Pipeline Stages
+        // console.log(new_query,'new_query')
         let pipeline = [
             {
                 $lookup: {

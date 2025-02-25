@@ -66,10 +66,15 @@ function sanitizeKeys(obj) {
 // // Run the conversion
 // convertCSVtoXML(csvFilePath, xmlFilePath).catch(console.error);
  
-async function fetchAndUpdateXML(url, xmlFilePath,id) {
+async function fetchAndUpdateXML(url, xmlFilePath,id,csvFilePath) {
   try {
+    var response
     // Fetch XML data from the URL
-    const response = await axios.get(url);
+    if(url){
+       response = await axios.get(url);
+    }else {
+      response = fs.readFileSync(csvFilePath)
+    }
     const xmlData = response.data;
 
     // Parse XML to JSON
@@ -82,7 +87,7 @@ async function fetchAndUpdateXML(url, xmlFilePath,id) {
     // if(existingRecords){
     //   existingRecords = Products.Product
     // }
-    console.log(existingRecords,'existingRecords')
+    
     const lastProductURL = existingRecords.length > 0 ? existingRecords[existingRecords.length - 1]["Product_URL"]?.[0] : "https://default-url.com";
     const newRecord = {
       Share_URL : [`https://upfilly.com/?affiliate_id=${id}&url=${lastProductURL}`]
@@ -208,7 +213,7 @@ async function processCSVAndRespond(csvFilePath, newColumnName, affliate_id) {
     fs.writeFileSync(resolvedPath, csv, 'utf8');
     
     resolvedPath = resolvedPath.split("/")
-    resolvedPath = constant.BACK_WEB_URL + "/"+resolvedPath[6]+"/"+resolvedPath[7]
+    resolvedPath = "/"+ resolvedPath[6]+"/"+resolvedPath[7] //constant.BACK_WEB_URL + 
     return resolvedPath; // Return the CSV data
 
   } catch (error) {
@@ -633,11 +638,25 @@ exports.sendDataSets = async (req, res) => {
         console.error('Failed to download CSV data');
       }
     }else {
+      var rootpath = process.cwd();
+      const csvPath = rootpath + "/assets"+ data.filePath //path.join(__dirname, 'data.csv'); // Path relative to script
+      const newColumn = "Affiliate Link";
+      let updatedCSV = await processCSVAndRespond(csvPath,newColumn,req.identity.id)
+      console.log(updatedCSV,'updatedCSV')
+      
+        const xmlFilePath = constant.BACK_WEB_URL + "/assets/documents/" + updatedCSV
+        let id = req.identity.id
+        let xml = await fetchAndUpdateXML(url, xmlFilePath,id);
+
+        xml = xml.split("/")
+        xml = xml.splice(-2)
+        xml = xml.join("/")
       for await (let itm of listOfAcceptedInvites ){
         // console.log(data.filePath,'data.filePath')
         payload = {
           brand_id: req.identity.id,
-          filePath: data.filePath
+          filePath: updatedCSV, //data.filePath   contain file path + new column which is added
+          xml : xml
         }
         let existingData = await DataFeeds.findOne({
           filePath :data.filePath,
@@ -650,6 +669,7 @@ exports.sendDataSets = async (req, res) => {
           await DataFeeds.updateOne({ url :data.filePath, brand_id: req.identity.id }, payload);
         }
       }
+
       return response.success(student_arr, constants.DATASET.ADDED, req, res);
 
     }
@@ -1458,7 +1478,7 @@ exports.viewCSVAffiliate = async(req,res) => {
     
   var rootpath = process.cwd();
   const csvPath = rootpath + "/assets"+ csv_url //path.join(__dirname, 'data.csv'); // Path relative to script
-  console.log(csvPath,'csvPath')
+  
   const newColumn = "Share URL";
   let updatedCSV = await processCSVAndRespond(csvPath,newColumn,req.identity.id)
   return res.status(200).json({
