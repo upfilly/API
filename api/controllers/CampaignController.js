@@ -560,30 +560,30 @@ exports.getAllCampaignsForBrand = async (req, res) => {
         // Pipeline Stages
         let pipeline = [
              // lookups for categories
-            //  {
-            //     $lookup: {
-            //         from: "commoncategories",
-            //         localField: "category",
-            //         foreignField: "_id",
-            //         as: "category_detail"
-            //     }
-            // },
-            // {
-            //     $unwind: {
-            //         path: '$category_detail',
-            //         preserveNullAndEmptyArrays: true
-            //     }
-            // },
-            {
+             {
                 $lookup: {
                     from: "commoncategories",
-                    let: { categoryIds: "$category" },
-                    pipeline: [
-                        { $match: { $expr: { $in: ["$_id", { $map: { input: "$$categoryIds", as: "id", in: { $toObjectId: "$$id" } } }] } } }
-                    ],
+                    localField: "category",
+                    foreignField: "_id",
                     as: "category_detail"
                 }
             },
+            {
+                $unwind: {
+                    path: '$category_detail',
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            // {
+            //     $lookup: {
+            //         from: "commoncategories",
+            //         let: { categoryIds: "$category" },
+            //         pipeline: [
+            //             { $match: { $expr: { $in: ["$_id", { $map: { input: "$$categoryIds", as: "id", in: { $toObjectId: "$$id" } } }] } } }
+            //         ],
+            //         as: "category_detail"
+            //     }
+            // },
 
             {
                 $lookup: {
