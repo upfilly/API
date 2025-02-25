@@ -66,15 +66,10 @@ function sanitizeKeys(obj) {
 // // Run the conversion
 // convertCSVtoXML(csvFilePath, xmlFilePath).catch(console.error);
  
-async function fetchAndUpdateXML(url, xmlFilePath,id,csvFilePath) {
+async function fetchAndUpdateXML(url, xmlFilePath,id) {
   try {
-    var response
     // Fetch XML data from the URL
-    if(url){
-       response = await axios.get(url);
-    }else {
-      response = fs.readFileSync(csvFilePath)
-    }
+    const response = await axios.get(url);
     const xmlData = response.data;
 
     // Parse XML to JSON
@@ -87,7 +82,7 @@ async function fetchAndUpdateXML(url, xmlFilePath,id,csvFilePath) {
     // if(existingRecords){
     //   existingRecords = Products.Product
     // }
-    
+    console.log(existingRecords,'existingRecords')
     const lastProductURL = existingRecords.length > 0 ? existingRecords[existingRecords.length - 1]["Product_URL"]?.[0] : "https://default-url.com";
     const newRecord = {
       Share_URL : [`https://upfilly.com/?affiliate_id=${id}&url=${lastProductURL}`]
@@ -640,24 +635,21 @@ exports.sendDataSets = async (req, res) => {
     }else {
       var rootpath = process.cwd();
       const csvPath = rootpath + "/assets"+ data.filePath //path.join(__dirname, 'data.csv'); // Path relative to script
+      
       const newColumn = "Affiliate Link";
       let updatedCSV = await processCSVAndRespond(csvPath,newColumn,req.identity.id)
-      console.log(updatedCSV,'updatedCSV')
-      
-        const xmlFile = constant.BACK_WEB_URL + "/assets/" + updatedCSV
-        const xmlFilePath = rootpath +  "/assets/documents/" + generateName() + ".xml"
-        let id = req.identity.id
-        let xml = await fetchAndUpdateXML(xmlFile, xmlFilePath,id);
-        console.log(xml,'this is xml')
-        xml = xml.split("/")
-        xml = xml.splice(-2)
-        xml = xml.join("/")
+      // converting csv file into xml
+
+      let xmlPath = await convertCSVtoXML(csvPath)
+      xmlPath = xmlPath.split("/")
+      xmlPath = xmlPath.splice(-2)
+      xmlPath = xmlPath.join("/")
       for await (let itm of listOfAcceptedInvites ){
         // console.log(data.filePath,'data.filePath')
         payload = {
           brand_id: req.identity.id,
           filePath: updatedCSV, //data.filePath   contain file path + new column which is added
-          xml : xml
+          xml : xmlPath
         }
         let existingData = await DataFeeds.findOne({
           filePath :data.filePath,
@@ -667,7 +659,7 @@ exports.sendDataSets = async (req, res) => {
         if (!existingData) {
           await DataFeeds.create(payload);
         } else {
-          await DataFeeds.updateOne({ url :data.filePath, brand_id: req.identity.id }, payload);
+          await DataFeeds.updateOne({ url :data.filePath, brand_id: req.identity.id,xml : xmlPath }, payload);
         }
       }
 
