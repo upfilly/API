@@ -79,10 +79,7 @@ async function fetchAndUpdateXML(url, xmlFilePath,id) {
     const jsonData = await parser.parseStringPromise(xmlData);
     
     let existingRecords = jsonData?.Root?.Record;
-    // if(existingRecords){
-    //   existingRecords = Products.Product
-    // }
-    console.log(existingRecords,'existingRecords')
+    
     const lastProductURL = existingRecords.length > 0 ? existingRecords[existingRecords.length - 1]["Product_URL"]?.[0] : "https://default-url.com";
     const newRecord = {
       Share_URL : [`https://upfilly.com/?affiliate_id=${id}&url=${lastProductURL}`]
@@ -490,37 +487,13 @@ exports.sendDataSets = async (req, res) => {
       isDeleted: false,
     };
 
-    // console.log(query1);
-    // let listOfAcceptedInvites = await AffiliateInvite.find(query1);
-    // let listOfBrandInvite = await AffiliateBrandInvite.find(query2);
 
-    //finding list of all affiliates connected to this brand
     let BrandAffiliateAssociations = await BrandAffiliateAssociation.find({
       brand_id: req.body.brand_id,
       status: "accepted",
       isDeleted: false,
       isActive: true
     });
-
-    ////
-    /*
-    function removeDuplicates(array, key) {
-      const seen = new Set();
-      return array.filter((item) => {
-        const keyValue = item[key];
-        if (seen.has(keyValue)) {
-          return false;
-        }
-        seen.add(keyValue);
-        return true;
-      });
-    }
-  */
-    // Combine the two lists
-    // let combinedList = [...listOfBrandInvite, ...listOfAcceptedInvites];
-    // console.log(combinedList);
-    // Remove duplicates based on the 'id' key
-    // listOfAcceptedInvites = removeDuplicates(combinedList, "affiliate_id");
     listOfAcceptedInvites = BrandAffiliateAssociations;
 
     for (let invite of listOfAcceptedInvites) {
@@ -555,7 +528,7 @@ exports.sendDataSets = async (req, res) => {
         const xmlFilePath = rootpath + "/assets/documents/"
         let id = req.identity.id
         let xml = await fetchAndUpdateXML(url, xmlFilePath,id);
-        
+
         xml = xml.split("/")
         xml = xml.splice(-2)
         xml = xml.join("/")
@@ -564,7 +537,8 @@ exports.sendDataSets = async (req, res) => {
           payload = {
             brand_id: req.identity.id,
             url: urlData || "",//data.url
-            xml : xml
+            xml : xml,
+            type:data.type
           }
           let existingData = await DataFeeds.findOne({
             url :data.url,
@@ -580,8 +554,7 @@ exports.sendDataSets = async (req, res) => {
         }
         return response.success(student_arr, constants.DATASET.ADDED, req, res);
       }
-      console.log("dfjffd")
-      return
+
       const googleSheetURL = url;
 
       // Convert Google Sheets URL to CSV export URL
@@ -617,12 +590,16 @@ exports.sendDataSets = async (req, res) => {
           payload = {
             brand_id: req.identity.id,
             url: urlData,//data.url
-            xml : xmlPath
+            xml : xmlPath,
+            type:data.type
+
           }
           let existingData = await DataFeeds.findOne({
             url :data.url,
             brand_id: req.identity.id,
-            xml : xmlPath
+            xml : xmlPath,
+            type:data.type,
+
           });
           
           if (!existingData) {
@@ -652,7 +629,9 @@ exports.sendDataSets = async (req, res) => {
         payload = {
           brand_id: req.identity.id,
           filePath: updatedCSV, //data.filePath   contain file path + new column which is added
-          xml : xmlPath
+          xml : xmlPath,
+          type:data.type
+
         }
         let existingData = await DataFeeds.findOne({
           filePath :data.filePath,
