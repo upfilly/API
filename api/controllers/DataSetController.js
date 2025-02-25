@@ -525,7 +525,7 @@ exports.sendDataSets = async (req, res) => {
         csv_url = csv_url.join("/")
         
         var rootpath = process.cwd();
-        const csvPath = rootpath + "/assets/url_docs/"+ csv_url //path.join(__dirname, 'data.csv'); // Path relative to script
+        const csvPath = rootpath + "/assets/"+ csv_url //path.join(__dirname, 'data.csv'); // Path relative to script
         
         const newColumn = "Share URL";
         urlData = await processCSVAndRespond(csvPath,newColumn,req.identity.id)
