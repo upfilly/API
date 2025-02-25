@@ -40,11 +40,11 @@ module.exports = {
         isDefault: {type: 'Boolean', defaultsTo: false},
         isDeleted: { type: 'Boolean', defaultsTo: false },
         // new keys 
-        category : {type:"json"},
-        sub_category: {type:"json"},
+        category : {type:"json",defaultsTo : []},
+        sub_category: {type:"json",defaultsTo : []},
         category_type : {type:"string"},
-        sub_child_category : {type: "json"},
-        region : {type:"json"},
+        sub_child_category : {type: "json",defaultsTo : []},
+        region : {type:"json",defaultsTo : []},
     },
 
 };

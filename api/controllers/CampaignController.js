@@ -560,18 +560,28 @@ exports.getAllCampaignsForBrand = async (req, res) => {
         // Pipeline Stages
         let pipeline = [
              // lookups for categories
-             {
+            //  {
+            //     $lookup: {
+            //         from: "commoncategories",
+            //         localField: "category",
+            //         foreignField: "_id",
+            //         as: "category_detail"
+            //     }
+            // },
+            // {
+            //     $unwind: {
+            //         path: '$category_detail',
+            //         preserveNullAndEmptyArrays: true
+            //     }
+            // },
+            {
                 $lookup: {
                     from: "commoncategories",
-                    localField: "category",
-                    foreignField: "_id",
+                    let: { categoryIds: "$category" },
+                    pipeline: [
+                        { $match: { $expr: { $in: ["$_id", { $map: { input: "$$categoryIds", as: "id", in: { $toObjectId: "$$id" } } }] } } }
+                    ],
                     as: "category_detail"
-                }
-            },
-            {
-                $unwind: {
-                    path: '$category_detail',
-                    preserveNullAndEmptyArrays: true
                 }
             },
 
@@ -910,24 +920,27 @@ exports.getCampaignById = async (req, res) => {
         let get_campaign = await Campaign.findOne({ id: id, isDeleted: false }).populate('brand_id')
         if(get_campaign.category && get_campaign.category.length > 0){
             let category = []
-            for await (let cat of category){
-                let data = await CommonCategories.findOne({id : cat.id}).select(["id","name"])
+            for await (let cat of get_campaign.category){
+                let data = await CommonCategories.findOne({id : cat}).select(["id","name"])
+                console.log(data,'category')
                 category.push(data)
             }
             get_campaign.category = category
         }
+
         if(get_campaign.sub_category && get_campaign.sub_category.length > 0){
             let sub_category = []
-            for await (let cat of category){
-                let data = await CommonCategories.findOne({id : cat.id}).select(["id","name"])
+            for await (let cat of get_campaign.sub_category){
+                let data = await CommonCategories.findOne({id : cat}).select(["id","name"])
                 sub_category.push(data)
             }
             get_campaign.sub_category = sub_category
         }
+
         if(get_campaign.sub_child_category && get_campaign.sub_child_category.length > 0){
             let sub_child_category = []
-            for await (let cat of category){
-                let data = await SubChildCategory.findOne({id : cat.id}).select(["id","name"])
+            for await (let cat of get_campaign.sub_category){
+                let data = await SubChildCategory.findOne({id : cat}).select(["id","name"])
                 sub_child_category.push(data)
             }
             get_campaign.sub_child_category = sub_child_category
