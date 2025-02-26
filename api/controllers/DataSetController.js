@@ -544,7 +544,7 @@ exports.sendDataSets = async (req, res) => {
             await DataFeeds.updateOne({ url :data.url, brand_id: req.identity.id,xml : xmlPath,type: data.type }, payload);
           }
         }
-        return response.success(student_arr, constants.DATASET.ADDED, req, res);
+        return response.success(null, constants.DATASET.ADDED, req, res);
       }
 
       const googleSheetURL = url;
@@ -596,7 +596,7 @@ exports.sendDataSets = async (req, res) => {
             await DataFeeds.updateOne({ url :data.url, brand_id: req.identity.id,xml : xmlPath }, payload);
           }
         }
-      return response.success(student_arr, constants.DATASET.ADDED, req, res);
+      return response.success(null, constants.DATASET.ADDED, req, res);
       } else {
         console.error('Failed to download CSV data');
       }
