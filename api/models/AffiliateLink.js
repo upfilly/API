@@ -41,6 +41,7 @@ module.exports = {
     commission_status : {type:"string",isIn:["pending","accepted","rejected"],defaultsTo:"pending"},
     commission_paid : {type:'string',isIn:["pending", "paid", "unPaid"],defaultsTo:"pending"},
     admin_paid : {type : "string",isIn:["pending", "paid", "not_paid"],defaultsTo:"pending"},
+    lead_id : {type:"string"},
   }
 };
 
