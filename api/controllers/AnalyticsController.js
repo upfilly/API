@@ -687,7 +687,9 @@ exports.clickAnalytics = async(req,res) => {
                                 },
                                 // price: { $sum: '$price' },
                                 createdAt : {$first:"$createdAt"},
-                                action: {$sum: "$createdAt" }
+                                count:  {$sum: { 
+                                    $cond: { if: { $ne : ["$affiliate_id", ""] }, then: 1, else: 0 } 
+                                } }
                             },
 
                         },
@@ -731,7 +733,9 @@ exports.clickAnalytics = async(req,res) => {
                                 },
                                 // price: { $sum: '$price' },
                                 createdAt : {$first:"$createdAt"},
-                                action: {$sum: "$createdAt" }
+                                count: {$sum: { 
+                                    $cond: { if: { $ne : ["$affiliate_id", ""] }, then: 1, else: 0 } 
+                                } }
                             },
 
                         },

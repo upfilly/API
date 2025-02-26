@@ -15,7 +15,7 @@ const Emails = require('../Emails/index');
 
 exports.savedCookies = async (req, res) => {
     try {
-        let { affiliate_id, affiliate_link, ip_address } = req.body;
+        let { affiliate_id, affiliate_link, ip_address,brand_id } = req.body;
 
         var trackQuery = {};
 
@@ -26,6 +26,7 @@ exports.savedCookies = async (req, res) => {
                 affiliate_link: affiliate_link,
                 isDeleted: false,
                 ip_address: ip_address,
+                brand_id:brand_id,
                 // isSet: true,
             }
             let alraedy_exist_cookies = await Cookies.findOne(query);
