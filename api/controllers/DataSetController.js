@@ -58,15 +58,8 @@ function sanitizeKeys(obj) {
     console.error("❌ Error converting CSV to XML:", error);
   }
 }
-
-// Define input CSV file and output XML file paths
-// const csvFilePath = "input.csv";
-// const xmlFilePath = "output.xml";
-
-// // Run the conversion
-// convertCSVtoXML(csvFilePath, xmlFilePath).catch(console.error);
  
-async function fetchAndUpdateXML(url, xmlFilePath,id) {
+async function fetchAndUpdateXML(url, xmlFilePath,affiliate_id,brand_id) {
   try {
     // Fetch XML data from the URL
     const response = await axios.get(url);
@@ -82,7 +75,7 @@ async function fetchAndUpdateXML(url, xmlFilePath,id) {
     
     const lastProductURL = existingRecords.length > 0 ? existingRecords[existingRecords.length - 1]["Product_URL"]?.[0] : "https://default-url.com";
     const newRecord = {
-      Share_URL : [`https://upfilly.com/?affiliate_id=${id}&url=${lastProductURL}`]
+      Share_URL : [`https://upfilly.com/?affiliate_id=${affiliate_id}$brand_id=${brand_id}&url=${lastProductURL}`]
     }
 
     // Ensure "Root" exists and has "Record" array
@@ -109,7 +102,6 @@ async function fetchAndUpdateXML(url, xmlFilePath,id) {
     console.error("❌ Error fetching or updating XML:", error);
   }
 }
-
 
 generateName = function () {
   // action are perform to generate random name for every file
@@ -174,8 +166,7 @@ function saveCSVToFile(csvData, filename) {
   }
 }
 
-
-async function processCSVAndRespond(csvFilePath, newColumnName, affliate_id) {
+async function processCSVAndRespond(csvFilePath, newColumnName, affliate_id,brand_id) {
   try {
     let resolvedPath = csvFilePath //path.resolve(csvFilePath);
     
@@ -191,7 +182,7 @@ async function processCSVAndRespond(csvFilePath, newColumnName, affliate_id) {
 
     data.forEach(row => {
       if (row['Product ID'] && row['Product URL']) {
-        row[newColumnName] = `https://upfilly.com/?affiliate_id=${affliate_id}&url=${row['Product URL']}`;
+        row[newColumnName] = `https://upfilly.com/?affiliate_id=${affliate_id}&brand_id=${brand_id}&url=${row['Product URL']}`;
       } else {
         row[newColumnName] = "Missing Data";
       }
@@ -526,14 +517,14 @@ exports.sendDataSets = async (req, res) => {
         console.log("under xml")
         let rootpath = process.cwd()
         const xmlFilePath = rootpath + "/assets/documents/"
-        let id = req.identity.id
-        let xml = await fetchAndUpdateXML(url, xmlFilePath,id);
+        
+        for await (let itm of listOfAcceptedInvites ){
+        let xml = await fetchAndUpdateXML(url, xmlFilePath,itm.affiliate_id,req.identity.id);
 
         xml = xml.split("/")
         xml = xml.splice(-2)
         xml = xml.join("/")
         // console.log(listOfAcceptedInvites.length,"listOfAcceptedInvites")
-        // for await (let itm of listOfAcceptedInvites ){
           console.log("here")
           payload = {
             brand_id: req.identity.id,
@@ -552,7 +543,7 @@ exports.sendDataSets = async (req, res) => {
           } else {
             await DataFeeds.updateOne({ url :data.url, brand_id: req.identity.id,xml : xmlPath,type: data.type }, payload);
           }
-        // }
+        }
         return response.success(student_arr, constants.DATASET.ADDED, req, res);
       }
 
@@ -578,7 +569,8 @@ exports.sendDataSets = async (req, res) => {
         const csvPath = rootpath + "/assets/"+ csv_url //path.join(__dirname, 'data.csv'); // Path relative to script
         
         const newColumn = "Share URL";
-        urlData = await processCSVAndRespond(csvPath,newColumn,req.identity.id)
+        for await (let itm of listOfAcceptedInvites ){
+        urlData = await processCSVAndRespond(csvPath,newColumn,itm.affiliate_id,req.identity.id)
         urlData =csv_url // urlData.split("/") //[1] + "/" + urlData.split("/")[2]
         
         // convert csv into xml
@@ -587,20 +579,15 @@ exports.sendDataSets = async (req, res) => {
         xmlPath = xmlPath.splice(-2)
         xmlPath = xmlPath.join("/")
         
-        // for await (let itm of listOfAcceptedInvites ){
           payload = {
             brand_id: req.identity.id,
             url: urlData,//data.url
             xml : xmlPath,
-            type:data.type
-
           }
           let existingData = await DataFeeds.findOne({
             url :data.url,
             brand_id: req.identity.id,
             xml : xmlPath,
-            type:data.type,
-
           });
           
           if (!existingData) {
@@ -608,7 +595,7 @@ exports.sendDataSets = async (req, res) => {
           } else {
             await DataFeeds.updateOne({ url :data.url, brand_id: req.identity.id,xml : xmlPath }, payload);
           }
-        // }
+        }
       return response.success(student_arr, constants.DATASET.ADDED, req, res);
       } else {
         console.error('Failed to download CSV data');
@@ -618,7 +605,8 @@ exports.sendDataSets = async (req, res) => {
       const csvPath = rootpath + "/assets"+ data.filePath //path.join(__dirname, 'data.csv'); // Path relative to script
       
       const newColumn = "Affiliate Link";
-      let updatedCSV = await processCSVAndRespond(csvPath,newColumn,req.identity.id)
+      for await (let itm of listOfAcceptedInvites ){
+      let updatedCSV = await processCSVAndRespond(csvPath,newColumn,itm.affiliate_id,req.identity.id)
       // converting csv file into xml
 
       let xmlPath = await convertCSVtoXML(csvPath)
@@ -627,7 +615,6 @@ exports.sendDataSets = async (req, res) => {
       xmlPath = xmlPath.join("/")
       // console.log(listOfAcceptedInvites.length,"listOfAcceptedInvites")
 
-      // for await (let itm of listOfAcceptedInvites ){
         console.log('data.filePath')
         payload = {
           brand_id: req.identity.id,
@@ -646,7 +633,7 @@ exports.sendDataSets = async (req, res) => {
         } else {
           await DataFeeds.updateOne({ url :data.filePath, brand_id: req.identity.id,xml : xmlPath }, payload);
         }
-      // }
+      }
 
       return response.success(student_arr, constants.DATASET.ADDED, req, res);
 
