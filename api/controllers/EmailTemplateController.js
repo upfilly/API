@@ -237,7 +237,7 @@ exports.getAll = async (req, res) => {
     let sortquery = {};
 
     if (search) {
-      search = await Services.Utils.remove_special_char_except_underscores(search);
+      search = await Services.Utils.remove_special_char_exept_underscores(search);
       query.$or = [
         { templateName: { $regex: search, '$options': 'i' } },
         { emailName: { $regex: search, '$options': 'i' } }
@@ -343,7 +343,7 @@ exports.getUserEmailTemplate = async (req, res) => {
     let sortquery = {};
 
     if (search) {
-      search = await Services.Utils.remove_special_char_except_underscores(search);
+      search = await Services.Utils.remove_special_char_exept_underscores(search);
       query.$or = [
         { templateName: { $regex: search, '$options': 'i' } },
         { emailName: { $regex: search, '$options': 'i' } }
