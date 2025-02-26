@@ -381,8 +381,8 @@ exports.reportAnalytics = async(req,res) => {
             endDate2 = new Date(endDate2);
             new_query.createdAt = { $gte: startDate2, $lte: endDate2 };
         }
-        console.log(query,'query')
-        console.log(new_query,'new_query')
+        // console.log(query,'query')
+        // console.log(new_query,'new_query')
         let pipeline = [
 
             {

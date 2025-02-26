@@ -38,7 +38,8 @@ exports.addCampaign = async (req, res, next) => {
         category_type : Joi.string().optional(),
         sub_child_category : Joi.array().optional(),
         region : Joi.array().optional(),
-        region_continents : Joi.array().optional()
+        region_continents : Joi.array().optional(),
+        lead_amount : Joi.number().optional(),
     });
     return await Validate(schema, req, res);
 }
