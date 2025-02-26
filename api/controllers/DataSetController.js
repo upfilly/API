@@ -530,7 +530,6 @@ exports.sendDataSets = async (req, res) => {
             brand_id: req.identity.id,
             url: urlData || "",//data.url
             xml : xml,
-            type:data.type
           }
           let existingData = await DataFeeds.findOne({
             url :data.url,
