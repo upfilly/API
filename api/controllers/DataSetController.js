@@ -923,8 +923,16 @@ exports.sendEmailMessage = async (req, res) => {
       };
 
       // console.log(query1);
-      let listOfAcceptedInvites = await AffiliateInvite.find(query1);
-      let listOfBrandInvite = await AffiliateBrandInvite.find(query2);
+      // let listOfAcceptedInvites = await AffiliateInvite.find(query1);
+      // let listOfBrandInvite = await AffiliateBrandInvite.find(query2);
+
+      let BrandAffiliateAssociations = await BrandAffiliateAssociation.find({
+        brand_id: req.identity.id,
+        status: "accepted",
+        isDeleted: false,
+        isActive: true
+      });
+      listOfAcceptedInvites = BrandAffiliateAssociations;
 
       function removeDuplicates(array, key) {
         const seen = new Set();
@@ -939,10 +947,10 @@ exports.sendEmailMessage = async (req, res) => {
       }
 
       // Combine the two lists
-      let combinedList = [...listOfBrandInvite, ...listOfAcceptedInvites];
-      // console.log(combinedList);
-      // Remove duplicates based on the 'id' key
-      listOfAcceptedInvites = removeDuplicates(combinedList, "affiliate_id");
+      // let combinedList = [...listOfBrandInvite, ...listOfAcceptedInvites];
+      // // console.log(combinedList);
+      // // Remove duplicates based on the 'id' key
+      // listOfAcceptedInvites = removeDuplicates(combinedList, "affiliate_id");
       // console.log(listOfAcceptedInvites, "==listOfAcceptedInvites");
 
       for await (let invites of listOfAcceptedInvites) {
