@@ -587,9 +587,9 @@ exports.reportAnalytics = async(req,res) => {
       
 
 
-        let result = await db.collection('affiliatelink').aggregate(pipeline, { allowDiskUse: true }).toArray()
+        // let result = await db.collection('affiliatelink').aggregate(pipeline, { allowDiskUse: true }).toArray()
 
-        let result2 = await db.collection('affiliatelink').aggregate(pipeline2, { allowDiskUse: true }).toArray()
+        // let result2 = await db.collection('affiliatelink').aggregate(pipeline2, { allowDiskUse: true }).toArray()
 
         // console.log(totalResult,"resultresultresultresultresult")
         let resData = {
@@ -597,6 +597,185 @@ exports.reportAnalytics = async(req,res) => {
             data: result ? result : [],
             total2 : totalResult2 ? totalResult2.length : 0,
             data2 : result2 ? result2 : 0
+        }
+        if (!req.param('page') && !req.param('count')) {
+            resData.data = totalResult ? totalResult : []
+        }
+
+        return Response.success(resData, constants.COMMON.SUCCESS, req, res);
+
+    } catch (error) {
+        console.error(error, "=================err");
+        return Response.failed(null, `${error}`, req, res);
+    }
+}
+
+exports.clickAnalytics = async(req,res) => {
+    try {
+        let query = {};
+        let count = req.param('count') || 10;
+        let page = req.param('page') || 1;
+        let skipNo = (Number(page) - 1) * Number(count);
+        let { search,  isDeleted,   affiliate_id, startDate2, endDate2, startDate, endDate } = req.query;
+        let new_query = {}
+
+        // Handle search
+        if (search) {
+            search = Services.Utils.remove_special_char_exept_underscores(search);
+            query.$or = [
+                { event: { $regex: search, '$options': 'i' } },
+                { 'urlParams.page': { $regex: search, '$options': 'i' } },
+                { 'data.page': { $regex: search, '$options': 'i' } }
+            ];
+        }
+
+        // Handle isDeleted
+        if (isDeleted) {
+            query.isDeleted = isDeleted === 'true';
+        } else {
+            query.isDeleted = false;
+        }
+
+        if(startDate && endDate) {
+            startDate = new Date(startDate);
+            endDate = new Date(endDate);
+            query.createdAt = { $gte: startDate, $lte: endDate };
+        }
+    
+        if(affiliate_id){
+            query.affiliate_id = new ObjectId(affiliate_id)
+        }
+
+        // if(brand_id){
+        //     query.brand_id = new ObjectId(brand_id)
+        // }
+
+        new_query = {...query}
+
+        if(startDate2 && endDate2) {
+            startDate2 = new Date(startDate2);
+            endDate2 = new Date(endDate2);
+            new_query.createdAt = { $gte: startDate2, $lte: endDate2 };
+        }
+        // console.log(query,'query')
+        // console.log(new_query,'new_query')
+        let pipeline = [
+            {
+                $project: {
+                    id: "$_id",
+                    affiliate_id: "$affiliate_id",
+                    isDeleted: '$isDeleted',
+                    updatedBy: '$updatedBy',
+                    updatedAt: '$updatedAt',
+                    createdAt: '$createdAt',
+                    day: { $dayOfMonth: "$createdAt" },
+                }
+            },
+            {
+                $match: query
+            },
+            {
+                $facet: {
+                    total_docs: [
+                        { $count: "total_docs" }
+                    ],
+                    clicks: [
+                        {
+                            $group: {
+                                _id: {
+                                    day: "$day"
+                                },
+                                // price: { $sum: '$price' },
+                                createdAt : {$first:"$createdAt"},
+                                action: {$sum: "$createdAt" }
+                            },
+
+                        },
+                       
+                    ],
+
+                }
+            },
+            {
+                $addFields: {
+                    total_docs: { $arrayElemAt: ["$total_docs", 0] }
+                }
+            }
+        ];
+
+        let pipeline2 = [
+            {
+                $project: {
+                    id: "$_id",
+                    affiliate_id: "$affiliate_id",
+                    isDeleted: '$isDeleted',
+                    updatedBy: '$updatedBy',
+                    updatedAt: '$updatedAt',
+                    createdAt: '$createdAt',
+                    day: { $dayOfMonth: "$createdAt" },
+                }
+            },
+            {
+                $match: new_query
+            },
+            {
+                $facet: {
+                    total_docs: [
+                        { $count: "total_docs" }
+                    ],
+                    clicks: [
+                        {
+                            $group: {
+                                _id: {
+                                    day: "$day"
+                                },
+                                // price: { $sum: '$price' },
+                                createdAt : {$first:"$createdAt"},
+                                action: {$sum: "$createdAt" }
+                            },
+
+                        },
+                       
+                    ],
+
+                }
+            },
+            {
+                $addFields: {
+                    total_docs: { $arrayElemAt: ["$total_docs", 0] }
+                }
+            }
+        ];
+
+        let projection = {
+            $project: {
+                _id: "$_id",
+                clicks: "$clicks",
+            }
+
+        };
+
+        pipeline.push(projection);
+
+        pipeline2.push(projection);
+
+        let totalResult = await db.collection('cookies').aggregate(pipeline, { allowDiskUse: true }).toArray();
+
+        let totalResult2 = await db.collection('cookies').aggregate(pipeline2, { allowDiskUse: true }).toArray();
+        
+      
+
+
+        // let result = await db.collection('cookies').aggregate(pipeline, { allowDiskUse: true }).toArray()
+
+        // let result2 = await db.collection('cookies').aggregate(pipeline2, { allowDiskUse: true }).toArray()
+
+        // console.log(totalResult,"resultresultresultresultresult")
+        let resData = {
+            total: totalResult ? totalResult.length : 0,
+            data: totalResult ? totalResult : [],
+            total2 : totalResult2 ? totalResult2.length : 0,
+            data2 : totalResult2 ? totalResult2 : 0
         }
         if (!req.param('page') && !req.param('count')) {
             resData.data = totalResult ? totalResult : []
