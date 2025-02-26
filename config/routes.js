@@ -564,6 +564,7 @@ module.exports.routes = {
    */
 
   "get /analytics-sales": "AnalyticsController.salesAnalytics",
+  "get /analytics-reports":"AnalyticsController.reportAnalytics",
 
    /**
    * @GeneralPurposeTracking
