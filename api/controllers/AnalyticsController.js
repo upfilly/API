@@ -406,6 +406,8 @@ exports.reportAnalytics = async(req,res) => {
                     updatedAt: '$updatedAt',
                     createdAt: '$createdAt',
                     day: { $dayOfMonth: "$createdAt" },
+                    month: { $: "$createdAt" },
+                    year: { $year: "$createdAt" },
                 }
             },
             {
@@ -426,6 +428,8 @@ exports.reportAnalytics = async(req,res) => {
                             $group: {
                                 _id: {
                                     day: "$day",
+                                    month :"$month",
+                                    year : "$year",
                                 },
                                 price: { $sum: "$price" },
                                 // affiliate_id:{$first:"$affiliate_id"},
@@ -442,7 +446,9 @@ exports.reportAnalytics = async(req,res) => {
                         {
                             $group: {
                                 _id: {
-                                    day: "$day"
+                                    day: "$day",
+                                    month :"$month",
+                                    year : "$year",
                                 },
                                 // price: { $sum: '$price' },
                                 createdAt : {$first:"$createdAt"},
@@ -715,6 +721,8 @@ exports.clickAnalytics = async(req,res) => {
                     updatedAt: '$updatedAt',
                     createdAt: '$createdAt',
                     day: { $dayOfMonth: "$createdAt" },
+                    month: { $: "$createdAt" },
+                    year: { $year: "$createdAt" },
                 }
             },
             {
@@ -729,7 +737,9 @@ exports.clickAnalytics = async(req,res) => {
                         {
                             $group: {
                                 _id: {
-                                    day: "$day"
+                                    day: "$day",
+                                    month : "$month",
+                                    year : "$year",
                                 },
                                 // price: { $sum: '$price' },
                                 createdAt : {$first:"$createdAt"},
