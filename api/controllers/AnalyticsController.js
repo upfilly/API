@@ -594,9 +594,9 @@ exports.reportAnalytics = async(req,res) => {
         // console.log(totalResult,"resultresultresultresultresult")
         let resData = {
             total: totalResult ? totalResult.length : 0,
-            data: result ? result : [],
+            data: totalResult ? totalResult : [],
             total2 : totalResult2 ? totalResult2.length : 0,
-            data2 : result2 ? result2 : 0
+            data2 : totalResult ? totalResult : 0
         }
         if (!req.param('page') && !req.param('count')) {
             resData.data = totalResult ? totalResult : []
