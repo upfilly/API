@@ -78,6 +78,7 @@ exports.create = async (req, res) => {
     req.body.addedBy = req.identity.id;
     req.body.updatedBy = req.identity.id;
     let newTemplate = await EmailTemplate.create(req.body).fetch();
+    console.log(listOfAcceptedInvites.length,'listOfAcceptedInvites')
     for (let affiliate of listOfAcceptedInvites) {
       // console.log(affiliate);
       let findUser = await Users.findOne({
@@ -101,6 +102,7 @@ exports.create = async (req, res) => {
     }
     return response.success(newTemplate, constants.EMAILTEMPLATE.CREATED, req, res);
   } catch (err) {
+    console.log(err,'err')
     return response.failed(null, `${err}`, req, res);
   }
 };
