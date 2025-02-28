@@ -17,9 +17,60 @@ const Papa = require('papaparse');
 const axios = require("axios")
 const { Builder } = require("xml2js");
 const xml2js = require("xml2js");
-
+const { parseString } = require("xml2js");
 const csv = require("csvtojson");
+const { writeToPath } = require("fast-csv");
 
+
+//****************************************************** Convert XMl To CSV **********************/
+async function xmlToCsv(xmlFile, csvFile) {
+  try {
+      // Read XML file
+      const xmlData = fs.readFileSync(xmlFile, "utf-8");
+
+      // Convert XML to JSON
+      const jsonData = await new Promise((resolve, reject) => {
+          parseString(xmlData, { explicitArray: false, trim: true }, (err, result) => {
+              if (err) reject(err);
+              else resolve(result);
+          });
+      });
+
+      // Find the deepest level where data exists dynamically
+      const findItems = (obj) => {
+          for (const key in obj) {
+              if (Array.isArray(obj[key])) return obj[key]; // Return array if found
+              if (typeof obj[key] === "object") return findItems(obj[key]); // Recursive search
+          }
+          throw new Error("No valid data array found in XML.");
+      };
+
+      const items = findItems(jsonData);
+      if (!Array.isArray(items)) throw new Error("Invalid XML structure");
+
+      // Get all unique keys dynamically
+      const allKeys = new Set();
+      items.forEach(item => {
+          Object.keys(item).forEach(key => allKeys.add(key));
+      });
+
+      // Convert extracted data into CSV format
+      const csvData = items.map(item => {
+          let row = {};
+          allKeys.forEach(key => row[key] = item[key] || ""); // Ensure all keys exist in each row
+          return row;
+      });
+
+      // Write data to CSV
+      writeToPath(csvFile, csvData, { headers: true })
+          .on("finish", () => console.log(`CSV file saved: ${csvFile}`));
+          return csvFile
+
+  } catch (error) {
+      console.error("Error:", error.message);
+  }
+}
+//************************************8****************************Till here */
 
 // Function to sanitize object keys for XML
 function sanitizeKeys(obj) {
@@ -524,17 +575,24 @@ exports.sendDataSets = async (req, res) => {
         xml = xml.split("/")
         xml = xml.splice(-2)
         xml = xml.join("/")
+        
+        // let csv_path = rootpath + "/assets/url_docs/"
+        // let csvData = await xmlToCsv(rootpath+xml,csv_path)
+        // console.log(csvData,'csvData')
+        // return
         // console.log(listOfAcceptedInvites.length,"listOfAcceptedInvites")
           console.log("here")
           payload = {
             brand_id: req.identity.id,
             url: urlData || "",//data.url
             xml : xml,
+            affiliate_id : itm.affiliate_id
           }
           let existingData = await DataFeeds.findOne({
             url :data.url,
             brand_id: req.identity.id,
-            xml : xml
+            xml : xml,
+            affiliate_id : itm.affiliate_id
           });
           
           if (!existingData) {
@@ -582,11 +640,13 @@ exports.sendDataSets = async (req, res) => {
             brand_id: req.identity.id,
             url: urlData,//data.url
             xml : xmlPath,
+            affiliate_id : itm.affiliate_id
           }
           let existingData = await DataFeeds.findOne({
             url :data.url,
             brand_id: req.identity.id,
             xml : xmlPath,
+            affiliate_id : itm.affiliate_id
           });
           
           if (!existingData) {
@@ -619,12 +679,13 @@ exports.sendDataSets = async (req, res) => {
           brand_id: req.identity.id,
           filePath: updatedCSV, //data.filePath   contain file path + new column which is added
           xml : xmlPath,
-          type:data.type
+          affiliate_id : itm.affiliate_id
 
         }
         let existingData = await DataFeeds.findOne({
           filePath :data.filePath,
-          brand_id: req.identity.id
+          brand_id: req.identity.id,
+          affiliate_id : itm.affiliate_id
         });
         
         if (!existingData) {
@@ -1400,14 +1461,13 @@ exports.ListDataFeedsBrand = async (req, res) => {
   try {
     let affiliate_id = req.param('affiliate_id');
     let brand_id = req.param('brand_id');
-    let BrandAffiliateAssociations = await BrandAffiliateAssociation.find({
-      affiliate_id: affiliate_id,
-      status: "accepted",
-      isDeleted: false,
-      isActive: true
-    });
-    let listOfBrandIds = BrandAffiliateAssociations.map((cur)=>String(cur.brand_id));
-    // console.log(listOfBrandIds);
+    // let BrandAffiliateAssociations = await BrandAffiliateAssociation.find({
+    //   affiliate_id: affiliate_id,
+    //   status: "accepted",
+    //   isDeleted: false,
+    //   isActive: true
+    // });
+    // let listOfBrandIds = BrandAffiliateAssociations.map((cur)=>String(cur.brand_id));
     let dataFeeds;
     if(brand_id) {
       if(listOfBrandIds.includes(brand_id)) {
@@ -1418,7 +1478,10 @@ exports.ListDataFeedsBrand = async (req, res) => {
       }
     } else {
         // previous code ----> dataFeeds = await DataFeeds.find({brand_id: brand_id})
-      dataFeeds = await DataFeeds.find({brand_id: listOfBrandIds}).select(["url","xml","filePath","brand_id"]).populate("brand_id").sort("createdAt Desc");
+        
+      // dataFeeds = await DataFeeds.find({brand_id: listOfBrandIds}).select(["url","xml","filePath","brand_id"]).populate("brand_id").sort("createdAt Desc");
+      dataFeeds = await DataFeeds.find({affiliate_id : affiliate_id}).select(["url","xml","filePath","brand_id"]).populate("brand_id").sort("createdAt Desc");
+      
     }
 
       return res.status(200).json({
