@@ -627,7 +627,7 @@ exports.clickAnalytics = async(req,res) => {
         let count = req.param('count') || 10;
         let page = req.param('page') || 1;
         let skipNo = (Number(page) - 1) * Number(count);
-        let { search,  isDeleted,   affiliate_id, startDate2, endDate2, startDate, endDate } = req.query;
+        let { search,  isDeleted,   affiliate_id, brand_id, startDate2, endDate2, startDate, endDate } = req.query;
         let new_query = {}
 
         // Handle search
@@ -657,9 +657,9 @@ exports.clickAnalytics = async(req,res) => {
             query.affiliate_id = new ObjectId(affiliate_id)
         }
 
-        // if(brand_id){
-        //     query.brand_id = new ObjectId(brand_id)
-        // }
+        if(brand_id){
+            query.brand_id = new ObjectId(brand_id)
+        }
 
         new_query = {...query}
 
@@ -675,6 +675,7 @@ exports.clickAnalytics = async(req,res) => {
                 $project: {
                     id: "$_id",
                     affiliate_id: "$affiliate_id",
+                    brand_id: "$brand_id",
                     isDeleted: '$isDeleted',
                     updatedBy: '$updatedBy',
                     updatedAt: '$updatedAt',
@@ -725,6 +726,7 @@ exports.clickAnalytics = async(req,res) => {
                 $project: {
                     id: "$_id",
                     affiliate_id: "$affiliate_id",
+                    brand_id: "$brand_id",
                     isDeleted: '$isDeleted',
                     updatedBy: '$updatedBy',
                     updatedAt: '$updatedAt',
