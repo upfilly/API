@@ -218,7 +218,7 @@ exports.getAllAssociatedBrandListing = async (req, res) => {
       affiliate_id: req.identity.id,
       status: "accepted",
     });
-    let campaignListing = await Campaign.find({
+    let campaignListing = await BrandAffiliateAssociation.find({
       affiliate_id: req.identity.id,
       status: "accepted",
     });
@@ -254,6 +254,7 @@ exports.getAllAssociatedBrandListing = async (req, res) => {
 
     return response.success(ListOfbrands, "List of all brands fetched successfully", req, res);
   } catch (error) {
+    console.log(error,'===error')
     return response.failed(null, `${error}`, req, res);
   }
 };
