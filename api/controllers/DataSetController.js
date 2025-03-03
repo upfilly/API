@@ -35,7 +35,7 @@ async function xmlToCsv(xmlFile, csvFile) {
               else resolve(result);
           });
       });
-
+      console.log(jsonData,'jsonData')
       // Find the deepest level where data exists dynamically
       const findItems = (obj) => {
           for (const key in obj) {
@@ -46,6 +46,7 @@ async function xmlToCsv(xmlFile, csvFile) {
       };
 
       const items = findItems(jsonData);
+      console.log(items,'items')
       if (!Array.isArray(items)) throw new Error("Invalid XML structure");
 
       // Get all unique keys dynamically
@@ -62,10 +63,9 @@ async function xmlToCsv(xmlFile, csvFile) {
       });
 
       // Write data to CSV
-      writeToPath(csvFile, csvData, { headers: true })
-          .on("finish", () => console.log(`CSV file saved: ${csvFile}`));
-          return csvFile
-
+      writeToPath(csvFile, csvData, { headers: true }).on("finish", () => console.log(`CSV file saved: ${csvFile}`));
+      console.log(csvFile,'csvFile')
+      return csvFile
   } catch (error) {
       console.error("Error:", error.message);
   }
@@ -570,26 +570,27 @@ exports.sendDataSets = async (req, res) => {
         const xmlFilePath = rootpath + "/assets/documents/"
         
         for await (let itm of listOfAcceptedInvites ){
-        let xml = await fetchAndUpdateXML(url, xmlFilePath,itm.affiliate_id,req.identity.id);
+          let xml = await fetchAndUpdateXML(url, xmlFilePath,itm.affiliate_id,req.identity.id);
 
-        xml = xml.split("/")
-        xml = xml.splice(-2)
-        xml = xml.join("/")
-        
-        // let csv_path = rootpath + "/assets/url_docs/"
-        // let csvData = await xmlToCsv(rootpath+xml,csv_path)
-        // console.log(csvData,'csvData')
-        // return
-        // console.log(listOfAcceptedInvites.length,"listOfAcceptedInvites")
-          console.log("here")
+          xml = xml.split("/")
+          xml = xml.splice(-2)
+          xml = xml.join("/")
+          
+          let newXmlPath = rootpath + "/assets/"
+          let csv_path = rootpath + "/assets/url_docs/" + generateName() + ".csv"
+          let csvData = await xmlToCsv(newXmlPath+xml,csv_path)
+
+          csvData = csvData.split("/")
+          csvData = csvData.splice(-2)
+          csvData = csvData.join("/")
           payload = {
             brand_id: req.identity.id,
-            url: urlData || "",//data.url
+            url: csvData || "",//data.url
             xml : xml,
             affiliate_id : itm.affiliate_id
           }
           let existingData = await DataFeeds.findOne({
-            url :data.url,
+            url :csvData,
             brand_id: req.identity.id,
             xml : xml,
             affiliate_id : itm.affiliate_id
@@ -598,7 +599,7 @@ exports.sendDataSets = async (req, res) => {
           if (!existingData) {
             await DataFeeds.create(payload);
           } else {
-            await DataFeeds.updateOne({ url :data.url, brand_id: req.identity.id,xml : xmlPath,type: data.type }, payload);
+            await DataFeeds.updateOne({ url :csvData, brand_id: req.identity.id,xml : xmlPath,type: data.type }, payload);
           }
         }
         return response.success(null, constants.DATASET.ADDED, req, res);
