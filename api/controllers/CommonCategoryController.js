@@ -33,7 +33,9 @@ exports.addCommonCategory = async (req, res) => {
                 req.body.cat_type = get_category.cat_type
             }
         }
-
+        if(parent_id){
+            query.parent_id = parent_id
+        }
         let get_category = await CommonCategories.findOne(query);
         if (get_category) {
             throw constants.COMMON_CATEGORIES.ALREADY_EXIST
