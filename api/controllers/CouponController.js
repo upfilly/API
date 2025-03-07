@@ -16,6 +16,17 @@ const xml2js = require("xml2js");
 const fs = require("fs");
 const path = require("path");
 
+generateName = function () {
+  // action are perform to generate random name for every file
+  var uuid = require('uuid');
+  var randomStr = uuid.v4();
+  var date = new Date();
+  var currentDate = date.valueOf();
+
+  retVal = randomStr + currentDate;
+  return retVal;
+};
+
 exports.addCoupon = async (req, res) => {
   try {
     let {
@@ -353,17 +364,18 @@ exports.getAllCoupon = async (req, res) => {
           }
           // Check if CSV is requested
           if (csv) {
-              const fields = ["addedByDetails.fullName", "couponCode", "couponType", "startDate", "expirationDate"];
+              const fields = ["fullName", "couponCode", "couponType", "startDate", "expirationDate"];
               const json2csvParser = new Parser({ fields });
               const csvData = json2csvParser.parse(result);
               let rootpath = process.cwd()
-              let csvPath = rootpath + "/assets/documents/" + ".csv"
-              const filePath = path.join(csvPath);
-              fs.writeFileSync(filePath, csvData);
+              let csvPath = rootpath + "/assets/documents/" +generateName()+ ".csv"
+              
+              // const filePath = path.join(csvPath);
+              fs.writeFileSync(csvPath, csvData);
         
               res.setHeader("Content-Disposition", "attachment; filename=coupons.csv");
               res.setHeader("Content-Type", "text/csv");
-              return res.download(filePath, "coupons.csv");
+              return res.download(csvPath, "coupons.csv");
             }
         
             // ✅ Generate XML
