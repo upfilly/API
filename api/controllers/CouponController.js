@@ -10,6 +10,7 @@ const db = sails.getDatastore().manager;
 const ObjectId = require("mongodb").ObjectId;
 const Services = require("../services/index");
 const Validations = require("../Validations/index");
+const credentials = require("../../config/local")
 
 const { Parser } = require("json2csv");
 const xml2js = require("xml2js");
@@ -327,6 +328,7 @@ exports.getAllCoupon = async (req, res) => {
                 updatedBy: "$updatedBy",
                 updatedAt: "$updatedAt",
                 createdAt: "$createdAt",
+                i : "$addedBy",
                 fullName: "$addedByDetails.fullName"
             }
         };
@@ -364,7 +366,10 @@ exports.getAllCoupon = async (req, res) => {
           }
           // Check if CSV is requested
           if (csv) {
-              const fields = ["fullName", "couponCode", "couponType", "startDate", "expirationDate"];
+              let fields = ["fullName", "couponCode", "couponType", "startDate", "expirationDate","URL"];
+              result.forEach(item => {
+                item.URL = `${credentials.BACK_WEB_URL}/?affiliate_id=${media}&brand_id=${item.addedBy ? item.addedBy : "No data"}&url=${item.url}`;
+              });
               const json2csvParser = new Parser({ fields });
               const csvData = json2csvParser.parse(result);
               let rootpath = process.cwd()
@@ -380,12 +385,13 @@ exports.getAllCoupon = async (req, res) => {
         
             // ✅ Generate XML
             if (xml) {
-                const xmlFormattedResult = result.map(({ fullName, couponCode, couponType, startDate, expirationDate }) => ({
-                  fullName,
-                  couponCode,
-                  couponType,
-                  startDate,
-                  expirationDate,
+              const xmlFormattedResult = result.map(item => ({
+                  fullName: item.fullName,
+                  couponCode: item.couponCode,
+                  couponType: item.couponType,
+                  startDate: item.startDate,
+                  expirationDate: item.expirationDate,
+                  URL: `${credentials.BACK_WEB_URL}/?affiliate_id=${media}&brand_id=${item.addedBy}&url=${item.url}`
                 }));
               
                 const builder = new xml2js.Builder();
@@ -421,6 +427,7 @@ exports.getAllCoupon = async (req, res) => {
         return response.success(resData, constants.COUPON.FETCHED, req, res);
 
     } catch (error) {
+      console.log(error,',===')
         return response.failed(null, `${error}`, req, res);
     }
 }
