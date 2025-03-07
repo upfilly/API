@@ -225,7 +225,7 @@ exports.deleteCoupon = async function (req, res) {
 exports.getAllCoupon = async (req, res) => {
     try {
         let query = {};
-        let count = req.param('count') || 10;
+        let count = req.param('count') || 1000;
         let page = req.param('page') || 1;
         let skipNo = (Number(page) - 1) * Number(count);
         let { search, sortBy, status, isDeleted, plan_type, couponType, addedBy, visibility, media,csv,xml } = req.query;
