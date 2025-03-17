@@ -170,4 +170,21 @@ module.exports.bootstrap = async function () {
     }
   })
 
+  // create cron which change status to expired of coupons when expired date goes
+  cron.schedule("0 12 * * *", async () => {
+    const todayDate = new Date(new Date().setUTCHours(0,0,0,0))
+    let allCoupons = await Coupon.find({isDeleted:false, status : "Enabled"})
+    if(allCoupons && allCoupons.length>0){
+      let i = 0
+      for await (let coupon of allCoupons){
+        let expiredDate = new Date(coupon.expirationDate)
+        if(expiredDate < todayDate){
+          await Coupon.updateOne({id:coupon.id},{status:"Expired"})
+          i++
+        }
+      }
+      console.log(`From ${allCoupons.length} ${i} are expired on ${todayDate}`)
+    }
+  })
+
 };
