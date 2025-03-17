@@ -349,7 +349,7 @@ exports.getAllCoupon = async (req, res) => {
         // }
         // pipeline.push(unset_stage)
 
-        let totalresult = db.collection('coupon').aggregate(pipeline).toArray();
+        let totalresult = await db.collection('coupon').aggregate(pipeline).toArray();
         pipeline.push({
             $skip: Number(skipNo)
         });
