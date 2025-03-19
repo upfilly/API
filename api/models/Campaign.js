@@ -46,7 +46,8 @@ module.exports = {
         sub_child_category : {type: "json",defaultsTo : []},
         region : {type:"json",defaultsTo : []},
         region_continents : {type:'json',defaultsTo : []},
-        lead_amount : {type:'number'}
+        lead_amount : {type:'number'},
+        campaign_type : {type:"string",isIn:["manual","automatic"]},
     },
 
 };
