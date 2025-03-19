@@ -40,6 +40,7 @@ exports.addCampaign = async (req, res, next) => {
         region : Joi.array().optional(),
         region_continents : Joi.array().optional(),
         lead_amount : Joi.number().optional(),
+        campaign_type : Joi.string().required().valid("manual","automatic")
     });
     return await Validate(schema, req, res);
 }
@@ -77,6 +78,7 @@ exports.editCampaign = async (req, res, next) => {
         category_type : Joi.string().optional(),
         sub_child_category : Joi.string().optional(),
         region : Joi.array().optional(),
+        campaign_type : Joi.string().valid("manual","automatic")
     });
     return await Validate(schema, req, res);
 }
