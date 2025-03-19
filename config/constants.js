@@ -669,6 +669,8 @@ module.exports.constants = {
     FETCHED: "Campaign requests fetched sucessfully",
     INVALID_ID: "Invalid ID",
     CANNOT_ACCEPT: "This campaign request has already been accepted!",
-    STATUS_UPDATE: "Status updated successfully"
+    STATUS_UPDATE: "Status updated successfully",
+    FETCHED_ALL: "All Requests fetched successfully",
+    MANUAL_REQUIRED : "Only Manual campaign is able to send request",
   }
 };
