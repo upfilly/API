@@ -73,10 +73,10 @@ exports.editCampaign = async (req, res, next) => {
         ),
         isDefault: Joi.boolean().optional(),
         access_type: Joi.string().optional().valid('public', 'private'),
-        category : Joi.string().optional(),
-        sub_category : Joi.string().optional(),
+        category : Joi.array().optional(),
+        sub_category : Joi.array().optional(),
         category_type : Joi.string().optional(),
-        sub_child_category : Joi.string().optional(),
+        sub_child_category : Joi.array().optional(),
         region : Joi.array().optional(),
         campaign_type : Joi.string().valid("manual","automatic")
     });
