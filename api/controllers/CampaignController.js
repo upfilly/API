@@ -970,7 +970,7 @@ exports.getCampaignById = async (req, res) => {
         if(get_campaign.sub_child_category && get_campaign.sub_child_category.length > 0){
             let sub_child_category = []
             for await (let cat of get_campaign.sub_category){
-                let data = await SubChildCategory.findOne({id : cat}).select(["id","name"])
+                let data = await SubChildCategory.findOne({id : cat.id}).select(["id","name"])
                 sub_child_category.push(data)
             }
             get_campaign.sub_child_category = sub_child_category
