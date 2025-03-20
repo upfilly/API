@@ -42,7 +42,7 @@ exports.sendCampaignRequestToBrand = async (req, res) => {
         let { campaign_id, brand_id, affiliate_id } = req.body;
         if(!affiliate_id)
             affiliate_id = req.identity.id;
-        let campaign = await Campaign.findOne({id: campaign_id, isDeleted: false, access_type: 'public'});
+        let campaign = await Campaign.findOne({id: campaign_id, isDeleted: false});
         if(!campaign) {
             return response.failed(null, constants.CAMPAIGN_REQUEST_BY_AFFILIATE.CAMPAIGN_NOT_FOUND, req, res);
         }
