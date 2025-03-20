@@ -664,7 +664,7 @@ module.exports.constants = {
   CAMPAIGN_REQUEST_BY_AFFILIATE: {
     CAMPAIGN_NOT_FOUND: "Campaign not found!",
     ALREADY_EXISTS: "Request already made once!",
-    ADDED: "Campaign request by affiliate added successfully",
+    ADDED: "Request sent to Brand successfully",
     ID_REQUIRED: "Id Required",
     FETCHED: "Campaign requests fetched sucessfully",
     INVALID_ID: "Invalid ID",

@@ -23,7 +23,7 @@ module.exports = {
     },
     status: { 
       type: 'string', 
-      isIn: ['pending', 'accepted', "rejected"], 
+      isIn: ['pending', 'accepted', "rejected","requested"],  // add requested key in this because as flow change now if campaign is created as manual then affiliate will send request to brand for accept reject
       defaultsTo: 'pending' 
     },
     reason: {
