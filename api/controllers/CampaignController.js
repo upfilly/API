@@ -990,7 +990,8 @@ exports.getCampaignById = async (req, res) => {
 
 exports.changeCampaignStatus = async (req, res) => {
     try {
-        //To approve or reject campaign requests
+        //To approve or reject campaign requests        
+        // added new code   
         let user_id = req.identity.id;
 
         let loggedInUser = await Users.findOne({ id: user_id, isDeleted: false });
