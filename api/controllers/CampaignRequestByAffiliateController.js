@@ -66,7 +66,7 @@ exports.sendCampaignRequestToBrand = async (req, res) => {
         // req.body.association = association.id.toString();
         // update BrandAffiliateAssociation status to requested default 
         await BrandAffiliateAssociation.updateOne({id: id}).set({status: "requested"}); //isActive: true
-
+        req.body.association = id
         let sent_request = await CampaignRequestByAffiliate.create(req.body).fetch();
 
         if (sent_request) {
@@ -219,6 +219,7 @@ exports.getAllRequestsForBrand = async (req, res) => {
                 campaign_details: "$campaign_details",
                 brand_id: "$brand_id",
                 campaign_name: "$campaign_details.name",
+                association:"$association",
                 reason : "$reason",
                 status: "$status",
                 addedBy: "$addedBy",

@@ -8,7 +8,6 @@ exports.sendCampaignRequestToBrand = async (req, res, next) => {
         brand_id:Joi.string().required(),
         affiliate_id:Joi.string().required(),
         id : Joi.string().required(),
-        association : Joi.string().required()
     });
     return await Validate(schema, req, res);
 }
