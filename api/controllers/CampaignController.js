@@ -1031,9 +1031,9 @@ exports.changeCampaignStatus = async (req, res) => {
         }
 
         if (get_campaign) { 
-            if (!['affiliate'].includes(req.identity.role)) {
-                throw constants.COMMON.UNAUTHORIZED;
-            }
+            // if (!['affiliate'].includes(req.identity.role)) {
+            //     throw constants.COMMON.UNAUTHORIZED;
+            // }
             switch (req.body.status) {
                 case "accepted":
                     req.body.accepted_at = new Date();
