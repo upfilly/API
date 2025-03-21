@@ -310,7 +310,7 @@ exports.getAllCampaignRequestsForAffiliate = async (req, res) => {
         if (affiliate_id) {
             query.affiliate_id = new ObjectId(affiliate_id);
         }
-        new_query.campaign_commission = {$gt : 0}
+        // new_query.campaign_commission = {$gt : 0}
         let sortquery = {};
         if (sortBy) {
             let typeArr = [];
