@@ -287,7 +287,7 @@ exports.changeRequestStatus = async (req, res) => {
             throw validation_result.message
         }
 
-        let { id, status } = req.body;
+        let { id, status,affiliate_id } = req.body;
 
         let get_request = await CampaignRequestByAffiliate.findOne({ id: id, isDeleted: false });
 
@@ -295,37 +295,19 @@ exports.changeRequestStatus = async (req, res) => {
             throw constants.CAMPAIGN_REQUEST_BY_AFFILIATE.INVALID_ID;
         }
 
-        // if (status == "accepted" && ['accepted'].includes(get_request.status)) {
-        //     throw constants.CAMPAIGN_REQUEST_BY_AFFILIATE.CANNOT_ACCEPT;
-        // }
-
-        // if (!['affiliate'].includes(req.identity.role)) {
-        //     throw constants.COMMON.UNAUTHORIZED;
-        // }
-
-        // switch (req.body.status) {
-        //     case "accepted":
-        //         req.body.accepted_at = new Date()
-        //         break;
-        //     default:
-        //         break;
-
-        // }
 
         req.body.updatedBy = req.identity.id;
         let update_status = await CampaignRequestByAffiliate.updateOne({ id: id }).set(req.body);
 
         // update brand associate affiliate
-        let association_data = await BrandAffiliateAssociation.findOne({ id: CampaignRequestByAffiliate.association, isDeleted: false, status: {in: ["pending","requested"]} }).populate('campaign_id');
-        console.log(association_data,'association_dataassociation_dataassociation_data')
+        let association_data = await BrandAffiliateAssociation.findOne({ id: get_request.association, isDeleted: false, status: {in: ["pending","requested"]} }).populate('campaign_id');
+        
         if(req.body.status === 'accepted') {
-            console.log("in status accepted ")
-            await BrandAffiliateAssociation.update({affiliate_id: req.body.affiliate_id, brand_id: association_data.brand_id}).set({isActive: false});
+            await BrandAffiliateAssociation.update({affiliate_id: affiliate_id, brand_id: association_data.brand_id}).set({isActive: false});
             await BrandAffiliateAssociation.updateOne({id: association_data.id}).set({status: req.body.status, isActive: true});
             console.log("updateddfjddjfldjfdfldjflsdfldds ")
             
         } else if(req.body.status === 'rejected'){
-            console.log("in rejected")
             await BrandAffiliateAssociation.updateOne({id: association_data.id}).set({status: "rejected"});
         } 
 
