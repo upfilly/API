@@ -1024,7 +1024,7 @@ exports.changeCampaignStatus = async (req, res) => {
         }
         let { id } = req.body;
 
-        let get_campaign = await BrandAffiliateAssociation.findOne({ id: id, isDeleted: false, status: "pending" }).populate('campaign_id');
+        let get_campaign = await BrandAffiliateAssociation.findOne({ id: id, isDeleted: false, status: {in: ["pending","requested"]} }).populate('campaign_id');
 
         if (!get_campaign) {
             throw constants.CAMPAIGN.INVALID_ID;
