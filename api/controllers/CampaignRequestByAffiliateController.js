@@ -39,7 +39,7 @@ exports.sendCampaignRequestToBrand = async (req, res) => {
         if (validation_result && !validation_result.success) {
             throw validation_result.message;
         }
-        let { campaign_id, brand_id, affiliate_id } = req.body;
+        let { campaign_id, brand_id, affiliate_id,id } = req.body;
         if(!affiliate_id)
             affiliate_id = req.identity.id;
         let campaign = await Campaign.findOne({id: campaign_id, isDeleted: false});
