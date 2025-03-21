@@ -1027,6 +1027,7 @@ exports.changeCampaignStatus = async (req, res) => {
 
         let get_campaign = await BrandAffiliateAssociation.findOne({ id: id, isDeleted: false, status: {in: ["pending","requested"]} }).populate('campaign_id');
 
+        console.log(get_campaign,'get_campaign')
         if (!get_campaign) {
             throw constants.CAMPAIGN.INVALID_ID;
         }
@@ -1045,12 +1046,16 @@ exports.changeCampaignStatus = async (req, res) => {
             }
             req.body.addedBy = user_id;
             if(req.body.status === 'accepted') {
+                console.log("in status accepted ")
                 await BrandAffiliateAssociation.update({affiliate_id: req.body.affiliate_id, brand_id: get_campaign.brand_id}).set({isActive: false});
                 await BrandAffiliateAssociation.updateOne({id: id}).set({status: req.body.status, isActive: true});
+                console.log("updateddfjddjfldjfdfldjflsdfldds ")
                 
             } else if(req.body.status === 'rejected'){
+                console.log("in rejected")
                 await BrandAffiliateAssociation.updateOne({id: get_campaign.id}).set({status: "rejected"});
             } else {
+                console.log("in nothign")
                 return response.failed(null, constants.CAMPAIGN.INVALID_STATUS, req, res);
             }
             
