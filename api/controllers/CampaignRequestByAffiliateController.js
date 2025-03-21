@@ -315,17 +315,17 @@ exports.changeRequestStatus = async (req, res) => {
         let update_status = await CampaignRequestByAffiliate.updateOne({ id: id }).set(req.body);
 
         // update brand associate affiliate
-        let get_campaign = await BrandAffiliateAssociation.findOne({ id: id, isDeleted: false, status: {in: ["pending","requested"]} }).populate('campaign_id');
-        
+        let association_data = await BrandAffiliateAssociation.findOne({ id: CampaignRequestByAffiliate.association, isDeleted: false, status: {in: ["pending","requested"]} }).populate('campaign_id');
+        console.log(association_data,'association_dataassociation_dataassociation_data')
         if(req.body.status === 'accepted') {
             console.log("in status accepted ")
-            await BrandAffiliateAssociation.update({affiliate_id: req.body.affiliate_id, brand_id: get_campaign.brand_id}).set({isActive: false});
-            await BrandAffiliateAssociation.updateOne({id: id}).set({status: req.body.status, isActive: true});
+            await BrandAffiliateAssociation.update({affiliate_id: req.body.affiliate_id, brand_id: association_data.brand_id}).set({isActive: false});
+            await BrandAffiliateAssociation.updateOne({id: association_data.id}).set({status: req.body.status, isActive: true});
             console.log("updateddfjddjfldjfdfldjflsdfldds ")
             
         } else if(req.body.status === 'rejected'){
             console.log("in rejected")
-            await BrandAffiliateAssociation.updateOne({id: get_campaign.id}).set({status: "rejected"});
+            await BrandAffiliateAssociation.updateOne({id: association_data.id}).set({status: "rejected"});
         } 
 
 

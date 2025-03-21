@@ -11,7 +11,7 @@ module.exports = {
     affiliate_id: { model: "users" },
     // message: { type: "string" },
     campaign_id: { model: "campaign" },
-    // association: {model: "brandaffiliateassociation"},
+    association: {model: "brandaffiliateassociation"},
     status: { type: 'string', isIn: ['accepted', 'rejected','pending'], defaultsTo: 'pending', },
     // affiliate_comment: {type: 'string', defaultsTo: ''},
     reason: {type: 'string', defaultsTo: ''},
