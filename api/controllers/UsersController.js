@@ -1322,7 +1322,8 @@ module.exports = {
         category_id,
         sub_child_category_id,
         addedBy,
-        request_status
+        request_status,
+        category_type,
       } = req.query;
       let skipNo = (Number(page) - 1) * Number(count);
       let query = { isDeleted: false };
@@ -1410,20 +1411,37 @@ module.exports = {
       if (addedBy) {
         query.addedBy = new ObjectId(addedBy);
       }
-
-      if (category_id) {
-        query.category_id = new ObjectId(category_id);
-      }
-      if (sub_child_category_id) {
-        query.sub_child_category_id = new ObjectId(sub_child_category_id);
-      }
       if (sub_category_id) {
-        query.sub_category_id = new ObjectId(sub_category_id);
-      }
+            // query.sub_category_id = new ObjectId(sub_category_id);
+            sub_category_id = await Services.Utils.string_to_array(sub_category_id);
+            query.sub_category_id = {$in : sub_category_id}
+          }
+        if(category_id){
+            category = await Services.Utils.string_to_array(category);
+            query.category = {$in : category}
+        }
+        if (category_type) {
+            category_type = await Services.Utils.string_to_array(category_type);
+            query.category_type = {$in : category_type}
+        } 
+        if (sub_child_category_id) {
+          sub_child_category_id = await Services.Utils.string_to_array(sub_child_category_id);
+            query.sub_child_category = {$in : sub_child_category_id}
+        } 
+      
+      // if (category_id) {
+      //   query.category_id = new ObjectId(category_id);
+      // }
+      // if (sub_child_category_id) {
+      //   query.sub_child_category_id = new ObjectId(sub_child_category_id);
+      // }
+      // if (sub_category_id) {
+      //   query.sub_category_id = new ObjectId(sub_category_id);
+      // }
 
-      if (cat_type) {
-        query.cat_type = cat_type;
-      }
+      // if (cat_type) {
+      //   query.cat_type = cat_type;
+      // }
 
       if (start_date && end_date) {
         var date = new Date(start_date);
@@ -1471,12 +1489,12 @@ module.exports = {
             as: "categories_details",
           },
         },
-        {
-          $unwind: {
-            path: "$categories_details",
-            preserveNullAndEmptyArrays: true,
-          },
-        },
+        // {
+        //   $unwind: {
+        //     path: "$categories_details",
+        //     preserveNullAndEmptyArrays: true,
+        //   },
+        // },
         {
           $lookup: {
             from: "affiliatebrandinvite",
@@ -1548,7 +1566,8 @@ module.exports = {
           isFeatured: "$isFeatured",
           isTrusted: "$isTrusted",
           category_id: "$category_id",
-          cat_type: "$categories_details.cat_type",
+          // cat_type: "$categories_details.cat_type",
+          category_type : "$category_type",
           sub_category_id: "$sub_category_id",
           sub_child_category_id: "$sub_child_category_id",
           request_status: "$request_status"
