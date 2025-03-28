@@ -315,9 +315,11 @@ exports.editProfile = async (req, res, next) => {
             is_admin_access: Joi.boolean().optional(),
         }),
         isTrusted: Joi.boolean().optional(),
-        category_id: Joi.string().optional().allow(null),
-        sub_category_id: Joi.string().optional().allow(null),
-        sub_child_category_id: Joi.string().optional().allow(null),
+
+        category_id: Joi.array().allow(null),
+        sub_category_id: Joi.array().allow(null),
+        sub_child_category_id: Joi.array().allow(null),
+        affiliate_website: Joi.array().allow(null),
 
         step: Joi.number().optional().min(1).max(4),
         profile_status: Joi.string().optional().valid('pending', 'completed'),
