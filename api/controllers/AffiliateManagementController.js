@@ -111,7 +111,7 @@ exports.editAffiliateGroup = async (req, res) => {
         }
 
         let affiliate_group = await AffiliateManagement.findOne({
-            addeBy: req.identity.id,
+            addedBy: req.identity.id,
             name: req.body.name,
             isDeleted: false,
             id: { "!=": id }
@@ -172,7 +172,7 @@ exports.getAllAffiliateGroup = async (req, res) => {
         let skipNo = (Number(page) - 1) * Number(count);
 
         if (search) {
-            search = await Services.Utils.remove_special_char_exept_underscores(search);
+            search = Services.Utils.remove_special_char_exept_underscores(search);
             query.$or = [
                 { group_name: { $regex: search, '$options': 'i' } }
             ]
@@ -355,7 +355,6 @@ exports.getDefaultAffiliateGroup = async (req, res) => {
             });
         }
     } catch (error) {
-        // console.log(error);
         return response.failed(null, `${error}`, req, res)
     }
 }

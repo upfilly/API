@@ -33,7 +33,9 @@ exports.addCommonCategory = async (req, res) => {
                 req.body.cat_type = get_category.cat_type
             }
         }
-
+        if(parent_id){
+            query.parent_id = parent_id
+        }
         let get_category = await CommonCategories.findOne(query);
         if (get_category) {
             throw constants.COMMON_CATEGORIES.ALREADY_EXIST
@@ -106,7 +108,7 @@ exports.editCommonCategory = async (req, res) => {
 //         let skipNo = (Number(page) - 1) * Number(count);
 
 //         if (search) {
-//             search = await Services.Utils.remove_special_char_exept_underscores(search);
+//             search = Services.Utils.remove_special_char_exept_underscores(search);
 //             query.$or = [
 //                 { name: { $regex: search, '$options': 'i' } },
 //             ]
@@ -209,7 +211,7 @@ exports.getAllMainCommonCategory = async (req, res) => {
         let skipNo = (Number(page) - 1) * Number(count);
 
         if (search) {
-            search = await Services.Utils.remove_special_char_exept_underscores(search);
+            search = Services.Utils.remove_special_char_exept_underscores(search);
             query.$or = [
                 { name: { $regex: search, '$options': 'i' } },
             ]
@@ -315,7 +317,7 @@ exports.getAllSubsCommonCategory = async (req, res) => {
         let skipNo = (Number(page) - 1) * Number(count);
 
         if (search) {
-            search = await Services.Utils.remove_special_char_exept_underscores(search);
+            search = Services.Utils.remove_special_char_exept_underscores(search);
             query.$or = [
                 { name: { $regex: search, '$options': 'i' } },
             ]
@@ -431,7 +433,7 @@ exports.getCategoryWithSub = async (req, res) => {
         let skipNo = (Number(page) - 1) * Number(count);
 
         if (search) {
-            search = await Services.Utils.remove_special_char_exept_underscores(search);
+            search = Services.Utils.remove_special_char_exept_underscores(search);
             query.$or = [
                 { name: { $regex: search, '$options': 'i' } },
             ]
@@ -471,9 +473,14 @@ exports.getCategoryWithSub = async (req, res) => {
             query.type = type;
         }
 
+        // if (cat_type) {
+        //     query.cat_type = cat_type;
+        // }
         if (cat_type) {
-            query.cat_type = cat_type;
-        }
+                cat_type = await Services.Utils.string_to_array(cat_type);
+                query.cat_type = {$in : cat_type}
+            }
+      
 
         // Pipeline Stages
         let pipeline = [
@@ -582,7 +589,6 @@ exports.getCategoryWithSub = async (req, res) => {
                 return response.success(resData, constants.COMMON_CATEGORIES.FETCHED_ALL, req, res);
 
     } catch (err) {
-        console.log(err, "==err");
         return response.failed(null, `${err}`, req, res);
     }
 }

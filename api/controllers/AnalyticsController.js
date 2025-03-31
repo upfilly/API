@@ -23,7 +23,7 @@ const ObjectId = require('mongodb').ObjectId;
 
 //         // Handle search
 //         if (search) {
-//             search = await Services.Utils.remove_special_char_exept_underscores(search);
+//             search = Services.Utils.remove_special_char_exept_underscores(search);
 //             query.$or = [
 //                 { event: { $regex: search, '$options': 'i' } },
 //                 { 'urlParams.page': { $regex: search, '$options': 'i' } },
@@ -133,7 +133,7 @@ exports.salesAnalytics = async (req, res) => {
 
         // Handle search
         if (search) {
-            search = await Services.Utils.remove_special_char_exept_underscores(search);
+            search = Services.Utils.remove_special_char_exept_underscores(search);
             query.$or = [
                 { event: { $regex: search, '$options': 'i' } },
                 { 'urlParams.page': { $regex: search, '$options': 'i' } },
@@ -189,7 +189,6 @@ exports.salesAnalytics = async (req, res) => {
             endDate = new Date(endDate);
             query.createdAt = { $gte: startDate, $lte: endDate };
         }
-        console.log(group_query);
 
         let pipeline = [
 
@@ -325,4 +324,493 @@ exports.salesAnalytics = async (req, res) => {
         return Response.failed(null, `${error}`, req, res);
     }
 };
+
+exports.reportAnalytics = async(req,res) => {
+    try {
+        let query = {};
+        let count = req.param('count') || 10;
+        let page = req.param('page') || 1;
+        let skipNo = (Number(page) - 1) * Number(count);
+        let { search, sortBy, status, isDeleted,  brand_id, affiliate_id, startDate2, endDate2, startDate, endDate } = req.query;
+        let sortquery = {};
+        let new_query = {}
+
+        // Handle search
+        if (search) {
+            search = Services.Utils.remove_special_char_exept_underscores(search);
+            query.$or = [
+                { event: { $regex: search, '$options': 'i' } },
+                { 'urlParams.page': { $regex: search, '$options': 'i' } },
+                { 'data.page': { $regex: search, '$options': 'i' } }
+            ];
+        }
+
+        // Handle isDeleted
+        if (isDeleted) {
+            query.isDeleted = isDeleted === 'true';
+        } else {
+            query.isDeleted = false;
+        }
+
+      
+
+        // Handle status
+        if (status) {
+            query.status = status;
+        }
+
+        if(startDate && endDate) {
+            startDate = new Date(startDate);
+            endDate = new Date(endDate);
+            query.createdAt = { $gte: startDate, $lte: endDate };
+        }
+        
+
+        if(affiliate_id){
+            query.affiliate_id = new ObjectId(affiliate_id)
+        }
+
+        if(brand_id){
+            query.brand_id = new ObjectId(brand_id)
+        }
+
+        new_query = {...query}
+
+        if(startDate2 && endDate2) {
+            startDate2 = new Date(startDate2);
+            endDate2 = new Date(endDate2);
+            new_query.createdAt = { $gte: startDate2, $lte: endDate2 };
+        }
+        // console.log(query,'query')
+        // console.log(new_query,'new_query')
+        let pipeline = [
+
+            {
+                $project: {
+                    id: "$_id",
+                    affiliate_id: "$affiliate_id",
+                    brand_id: "$brand_id",
+                    order_id: {$cond : {if:"$order_id",then:"$order_id",else : null}},
+                    currency: "$currency",
+                    price: "$price",
+                    campaignId: "$campaignId",
+                    discount: "$discount",
+                    event: '$event',
+                    // timestamp: '$timestamp',
+                    // urlParams: '$urlParams',
+                    // data: '$data',
+                    isDeleted: '$isDeleted',
+                    status: '$status',
+                    addedBy: '$addedBy',
+                    updatedBy: '$updatedBy',
+                    updatedAt: '$updatedAt',
+                    createdAt: '$createdAt',
+                    day: { $dayOfMonth: "$createdAt" },
+                    month: { $month: "$createdAt" },
+                    year: { $year: "$createdAt" },
+                }
+            },
+            {
+                $match: query
+            },
+            {
+                $facet: {
+                    total_docs: [
+                        { $count: "total_docs" }
+                    ],
+                    revenue: [
+                        {
+                            // $group: {
+                            //     _id: {
+                            //         day: "$createdAt",
+                            //     }
+                            // },
+                            $group: {
+                                _id: {
+                                    day: "$day",
+                                    month :"$month",
+                                    year : "$year",
+                                },
+                                price: { $sum: "$price" },
+                                // affiliate_id:{$first:"$affiliate_id"},
+                                createdAt : {$first:"$createdAt"},
+                                // day: { $first: "$day" }
+
+                            }
+                        },
+                        // {
+                        //     $unset: ['_id']
+                        // }
+                    ],
+                    actions: [
+                        {
+                            $group: {
+                                _id: {
+                                    day: "$day",
+                                    month :"$month",
+                                    year : "$year",
+                                },
+                                // price: { $sum: '$price' },
+                                createdAt : {$first:"$createdAt"},
+                                order_id : {$first:"$order_id"},
+                                action: {$sum: { 
+                                    $cond: { if: { $ne : ["$order_id", ""] }, then: 1, else: 0 } 
+                                } }
+                            },
+
+                        },
+                        // {
+                        //     $unset: ['_id']
+                        // },
+                        {
+                            $skip: Number(skipNo)
+                        },
+                        {
+
+                            $limit: Number(count)
+                        }
+                    ],
+
+                }
+            },
+            {
+                $addFields: {
+                    total_docs: { $arrayElemAt: ["$total_docs", 0] }
+                }
+            }
+        ];
+
+        let pipeline2 = [
+
+            {
+                $project: {
+                    id: "$_id",
+                    affiliate_id: "$affiliate_id",
+                    brand_id: "$brand_id",
+                    order_id: {$cond : {if:"$order_id",then:"$order_id",else : null}},
+                    currency: "$currency",
+                    price: "$price",
+                    campaignId: "$campaignId",
+                    discount: "$discount",
+                    event: '$event',
+                    // timestamp: '$timestamp',
+                    // urlParams: '$urlParams',
+                    // data: '$data',
+                    isDeleted: '$isDeleted',
+                    status: '$status',
+                    addedBy: '$addedBy',
+                    updatedBy: '$updatedBy',
+                    updatedAt: '$updatedAt',
+                    createdAt: '$createdAt',
+                    day: { $dayOfMonth: "$createdAt" },
+                    month: { $month: "$createdAt" },
+                    year: { $year: "$createdAt" },                }
+            },
+            {
+                $match: new_query
+            },
+            {
+                $facet: {
+                    total_docs: [
+                        { $count: "total_docs" }
+                    ],
+                    revenue: [
+                        {
+                            // $group: {
+                            //     _id: {
+                            //         day: "$createdAt",
+                            //     }
+                            // },
+                            $group: {
+                                _id: {
+                                    day: "$day",
+                                    month :"$month",
+                                    year : "$year",
+                                },
+                                price: { $sum: "$price" },
+                                // affiliate_id:{$first:"$affiliate_id"},
+                                createdAt : {$first:"$createdAt"},
+                                // day: { $first: "$day" }
+
+                            }
+                        },
+                        // {
+                        //     $unset: ['_id']
+                        // }
+                    ],
+                    actions: [
+                        {
+                            $group: {
+                                _id: {
+                                    day: "$day",
+                                    month :"$month",
+                                    year : "$year",
+                                },
+                                // price: { $sum: '$price' },
+                                createdAt : {$first:"$createdAt"},
+                                order_id : {$first:"$order_id"},
+                                action: {$sum: { 
+                                    $cond: { if: { $ne : ["$order_id", ""] }, then: 1, else: 0 } 
+                                } }
+                            },
+
+                        },
+                        // {
+                        //     $unset: ['_id']
+                        // },
+                        {
+                            $skip: Number(skipNo)
+                        },
+                        {
+
+                            $limit: Number(count)
+                        }
+                    ],
+
+                }
+            },
+            {
+                $addFields: {
+                    total_docs: { $arrayElemAt: ["$total_docs", 0] }
+                }
+            }
+        ];
+
+        let projection = {
+            $project: {
+                _id: "$_id",
+                revenue: "$revenue",
+                actions: "$actions",
+                // summary: "$summary"
+
+            }
+
+        };
+
+        pipeline.push(projection);
+
+        pipeline2.push(projection);
+
+        let totalResult = await db.collection('affiliatelink').aggregate(pipeline, { allowDiskUse: true }).toArray();
+
+        let totalResult2 = await db.collection('affiliatelink').aggregate(pipeline2, { allowDiskUse: true }).toArray();
+        
+      
+
+
+        // let result = await db.collection('affiliatelink').aggregate(pipeline, { allowDiskUse: true }).toArray()
+
+        // let result2 = await db.collection('affiliatelink').aggregate(pipeline2, { allowDiskUse: true }).toArray()
+
+        // console.log(totalResult,"resultresultresultresultresult")
+        let resData = {
+            total: totalResult ? totalResult.length : 0,
+            data: totalResult ? totalResult : [],
+            total2 : totalResult2 ? totalResult2.length : 0,
+            data2 : totalResult ? totalResult : 0
+        }
+        if (!req.param('page') && !req.param('count')) {
+            resData.data = totalResult ? totalResult : []
+        }
+
+        return Response.success(resData, constants.COMMON.SUCCESS, req, res);
+
+    } catch (error) {
+        console.error(error, "=================err");
+        return Response.failed(null, `${error}`, req, res);
+    }
+}
+
+exports.clickAnalytics = async(req,res) => {
+    try {
+        let query = {};
+        let count = req.param('count') || 10;
+        let page = req.param('page') || 1;
+        let skipNo = (Number(page) - 1) * Number(count);
+        let { search,  isDeleted,   affiliate_id, brand_id, startDate2, endDate2, startDate, endDate } = req.query;
+        let new_query = {}
+
+        // Handle search
+        if (search) {
+            search = Services.Utils.remove_special_char_exept_underscores(search);
+            query.$or = [
+                { event: { $regex: search, '$options': 'i' } },
+                { 'urlParams.page': { $regex: search, '$options': 'i' } },
+                { 'data.page': { $regex: search, '$options': 'i' } }
+            ];
+        }
+
+        // Handle isDeleted
+        if (isDeleted) {
+            query.isDeleted = isDeleted === 'true';
+        } else {
+            query.isDeleted = false;
+        }
+
+        if(startDate && endDate) {
+            startDate = new Date(startDate);
+            endDate = new Date(endDate);
+            query.createdAt = { $gte: startDate, $lte: endDate };
+        }
+    
+        if(affiliate_id){
+            query.affiliate_id = new ObjectId(affiliate_id)
+        }
+
+        if(brand_id){
+            query.brand_id = new ObjectId(brand_id)
+        }
+
+        new_query = {...query}
+
+        if(startDate2 && endDate2) {
+            startDate2 = new Date(startDate2);
+            endDate2 = new Date(endDate2);
+            new_query.createdAt = { $gte: startDate2, $lte: endDate2 };
+        }
+        // console.log(query,'query')
+        // console.log(new_query,'new_query')
+        let pipeline = [
+            {
+                $project: {
+                    id: "$_id",
+                    affiliate_id: "$affiliate_id",
+                    brand_id: "$brand_id",
+                    isDeleted: '$isDeleted',
+                    updatedBy: '$updatedBy',
+                    updatedAt: '$updatedAt',
+                    createdAt: '$createdAt',
+                    day: { $dayOfMonth: "$createdAt" },
+                    month: { $month: "$createdAt" },
+                    year: { $year: "$createdAt" },
+                }
+            },
+            {
+                $match: query
+            },
+            {
+                $facet: {
+                    total_docs: [
+                        { $count: "total_docs" }
+                    ],
+                    clicks: [
+                        {
+                            $group: {
+                                _id: {
+                                    day: "$day",
+                                    month : "$month",
+                                    year : "$year",
+                                },
+                                // price: { $sum: '$price' },
+                                createdAt : {$first:"$createdAt"},
+                                count:  {$sum: { 
+                                    $cond: { if: { $ne : ["$affiliate_id", ""] }, then: 1, else: 0 } 
+                                } }
+                            },
+
+                        },
+                       
+                    ],
+
+                }
+            },
+            {
+                $addFields: {
+                    total_docs: { $arrayElemAt: ["$total_docs", 0] }
+                }
+            }
+        ];
+
+        let pipeline2 = [
+            {
+                $project: {
+                    id: "$_id",
+                    affiliate_id: "$affiliate_id",
+                    brand_id: "$brand_id",
+                    isDeleted: '$isDeleted',
+                    updatedBy: '$updatedBy',
+                    updatedAt: '$updatedAt',
+                    createdAt: '$createdAt',
+                    day: { $dayOfMonth: "$createdAt" },
+                    month: { $month: "$createdAt" },
+                    year: { $year: "$createdAt" },
+                }
+            },
+            {
+                $match: new_query
+            },
+            {
+                $facet: {
+                    total_docs: [
+                        { $count: "total_docs" }
+                    ],
+                    clicks: [
+                        {
+                            $group: {
+                                _id: {
+                                    day: "$day",
+                                    month : "$month",
+                                    year : "$year",
+                                },
+                                // price: { $sum: '$price' },
+                                createdAt : {$first:"$createdAt"},
+                                count: {$sum: { 
+                                    $cond: { if: { $ne : ["$affiliate_id", ""] }, then: 1, else: 0 } 
+                                } }
+                            },
+
+                        },
+                       
+                    ],
+
+                }
+            },
+            {
+                $addFields: {
+                    total_docs: { $arrayElemAt: ["$total_docs", 0] }
+                }
+            }
+        ];
+
+        let projection = {
+            $project: {
+                _id: "$_id",
+                clicks: "$clicks",
+            }
+
+        };
+
+        pipeline.push(projection);
+
+        pipeline2.push(projection);
+
+        let totalResult = await db.collection('cookies').aggregate(pipeline, { allowDiskUse: true }).toArray();
+
+        let totalResult2 = await db.collection('cookies').aggregate(pipeline2, { allowDiskUse: true }).toArray();
+        
+      
+
+
+        // let result = await db.collection('cookies').aggregate(pipeline, { allowDiskUse: true }).toArray()
+
+        // let result2 = await db.collection('cookies').aggregate(pipeline2, { allowDiskUse: true }).toArray()
+
+        // console.log(totalResult,"resultresultresultresultresult")
+        let resData = {
+            total: totalResult ? totalResult.length : 0,
+            data: totalResult ? totalResult : [],
+            total2 : totalResult2 ? totalResult2.length : 0,
+            data2 : totalResult2 ? totalResult2 : 0
+        }
+        if (!req.param('page') && !req.param('count')) {
+            resData.data = totalResult ? totalResult : []
+        }
+
+        return Response.success(resData, constants.COMMON.SUCCESS, req, res);
+
+    } catch (error) {
+        console.error(error, "=================err");
+        return Response.failed(null, `${error}`, req, res);
+    }
+}
 

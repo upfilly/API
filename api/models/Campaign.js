@@ -14,27 +14,51 @@ module.exports = {
     schema: true,
     attributes: {
         brand_id: { model: "users" },
+<<<<<<< HEAD
         parent_id:{model:'users'},      //seems to be useless
         parent_role:{type: "string" },  //seems to be useless
         affiliate_id: { model: "users" },
+=======
+        parent_id:{model:'users'},
+        parent_role:{type: "string" },
+        // affiliate_id: { collection: "users", via: "id" },
+>>>>>>> 00455dd1578685d133ee3189b01955e48b5bda7f
         name: { type: "string" },
         description: { type: "string" },
         images: { type: "json", columnType: "array" },
         documents: { type: "json", columnType: "array" },
         videos: { type: "json", columnType: "array" },
         access_type: { type: 'string', isIn: ['public', 'private'], defaultsTo: 'private' },
+<<<<<<< HEAD
         // status: { type: 'string', isIn: ['pending', 'accepted', "rejected"], defaultsTo: 'pending' },
         reason: { type: "string" },
+=======
+        // reason: { type: "string" },
+>>>>>>> 00455dd1578685d133ee3189b01955e48b5bda7f
         // accepted_at: { type: 'ref', columnType: 'datetime' },
         amount: { type: 'number', defaultsTo: 0 },
         event_type: { type: "json", defaultsTo: [] },
         campaign_unique_id: { type: "string" },
-        campaign_link: { type: "json", defaultsTo: [] },
+        // campaign_link: { type: "json", defaultsTo: [] },
+        // new key added for campaign commission to show in campaign listing
+        commission : {type: 'number',defaultsTo: 0},
+        commission_event_type : {type: 'string',isIn:["lead","purchase","visitor"]},
+        commission_type : {type: 'string',isIn:["amount","percentage"]},
         addedBy: { model: "users", },
         updatedBy: { model: "users", },
         createdAt: { type: "ref", autoCreatedAt: true, },
         updatedAt: { type: "ref", autoUpdatedAt: true, },
         isDefault: {type: 'Boolean', defaultsTo: false},
-        isDeleted: { type: 'Boolean', defaultsTo: false }
+        isDeleted: { type: 'Boolean', defaultsTo: false },
+        // new keys 
+        category : {type:"json",defaultsTo : []},
+        sub_category: {type:"json",defaultsTo : []},
+        category_type : {type:"string"},
+        sub_child_category : {type: "json",defaultsTo : []},
+        region : {type:"json",defaultsTo : []},
+        region_continents : {type:'json',defaultsTo : []},
+        lead_amount : {type:'number'},
+        campaign_type : {type:"string",isIn:["manual","automatic"]},
     },
+
 };

@@ -65,7 +65,6 @@ exports.generateLink = async (req, res) => {
     return response.success(get_link, constants.TRACKING.LINK, req, res);
 
   } catch (err) {
-    console.log(err);
     return response.failed(null, `${err}`, req, res);
   }
 }
@@ -98,14 +97,12 @@ exports.create = async function (req, res) {
     }
     req.body.addedBy = (req.identity?.id) ? req.identity.id : null;
     req.body.updatedBy = (req.identity?.id) ? req.identity.id : null;
-    console.log(req.body, "==req.body");
 
     const newAffiliateLink = await AffiliateLink.create(req.body).fetch();
 
     return response.success(newAffiliateLink, constants.AFFILIATELINK.CREATED, req, res);
 
   } catch (error) {
-    console.log(error, "==error");
 
     return response.failed(null, `${error}`, req, res);
   }
@@ -117,12 +114,12 @@ exports.find = async function (req, res) {
     let count = req.param('count') || 10;
     let page = req.param('page') || 1;
     let skipNo = (Number(page) - 1) * Number(count);
-    let { search, sortBy, status, isDeleted, format, addedBy, affiliate_id, brand_id, campaignId } = req.query;
+    let { search, sortBy, status, isDeleted, format, addedBy, affiliate_id, brand_id, campaignId,commission_status,commission_paid,admin_paid  } = req.query;
     let sortquery = {};
 
     // Handle search
     if (search) {
-      search = await Services.Utils.remove_special_char_exept_underscores(search);
+      search = Services.Utils.remove_special_char_exept_underscores(search);
       query.$or = [
         { event: { $regex: search, '$options': 'i' } },
         { 'urlParams.page': { $regex: search, '$options': 'i' } },
@@ -165,6 +162,17 @@ exports.find = async function (req, res) {
     if(campaignId) {
       query.campaignId = new ObjectId(campaignId);
     }
+
+    if(commission_status){
+      query.commission_status = commission_status
+    }
+
+    if(commission_paid){
+      query.commission_paid = commission_paid
+    }
+    if(admin_paid){
+      query.admin_paid = admin_paid
+    }
     
     // Handle format
     if (format) {
@@ -200,6 +208,61 @@ exports.find = async function (req, res) {
           preserveNullAndEmptyArrays: true,
         },
       },
+      {
+        $lookup: {
+          from: "brandaffiliateassociation",
+          let: { brand_id: "$brand_id", affiliate_id: "$affiliate_id", isActive: true },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$brand_id", "$$brand_id"] },
+                    { $eq: ["$affiliate_id", "$$affiliate_id"] },
+                    { $eq: ["$isActive", "$$isActive"] }
+                  ]
+                }
+              }
+            },
+          ],
+          as: "brand_association_details"  // The final result will be stored in "campaign_details"
+        }
+      },      
+      
+      {
+        $unwind: {
+          path: "$brand_association_details",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: "campaign",
+          localField: "brand_association_details.campaign_id",
+          foreignField: "_id",
+          as: "campaign_details",
+        },
+      },
+      {
+        $unwind: {
+          path: "$campaign_details",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: "subscriptionplans",
+          localField: "brand_details.plan_id",
+          foreignField: "_id",
+          as: "plan_details",
+        },
+      },
+      {
+        $unwind: {
+          path: "$plan_details",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
     ];
 
     let projection = {
@@ -209,7 +272,9 @@ exports.find = async function (req, res) {
         order_id: "$order_id",
         currency: "$currency",
         price: "$price",
-        campaignId: "$campaignId",
+        campaignId: "$brand_association_details.campaign_id",
+        brand_association_details : {_id : "$brand_association_details._id",campaign_id:"$brand_association_details.campaign_id"},
+        campaign_details:"$campaign_details",
         discount: "$discount",
         event: '$event',
         timestamp: '$timestamp',
@@ -217,12 +282,18 @@ exports.find = async function (req, res) {
         data: '$data',
         affiliate_name: "$affiliate_details.fullName",
         brand_name: "$brand_details.fullName",
+        brand_details : {_id : "$brand_details._id", plan_id : "$brand_details.plan_id" },
+        plan_details : "$plan_details",
         isDeleted: '$isDeleted',
         status: '$status',
         addedBy: '$addedBy',
         updatedBy: '$updatedBy',
         updatedAt: '$updatedAt',
-        createdAt: '$createdAt'
+        createdAt: '$createdAt',
+        commission_status : "$commission_status",
+        commission_paid: "$commission_paid",
+        admin_paid : "$admin_paid",
+        lead_id : "$lead_id",
       }
     };
 
@@ -332,7 +403,7 @@ exports.report = async function (req, res) {
 
       // Handle search
       if (search) {
-          search = await Services.Utils.remove_special_char_exept_underscores(search);
+          search = Services.Utils.remove_special_char_exept_underscores(search);
           query.$or = [
               { event: { $regex: search, '$options': 'i' } },
               { 'urlParams.page': { $regex: search, '$options': 'i' } },
@@ -384,7 +455,6 @@ exports.report = async function (req, res) {
           endDate = new Date(endDate);
           query.createdAt = { $gte: startDate, $lte: endDate };
       }
-      console.log(group_query);
 
       let pipeline = [
 
@@ -514,7 +584,6 @@ exports.report = async function (req, res) {
           // });
 
           let result = await db.collection('affiliatelink').aggregate(pipeline, { allowDiskUse: true }).toArray()
-          console.log(result);
           let resData = {
               total: result[0] ? result[0].data.length : 0,
               data: result[0] ? result[0].data: []
@@ -526,6 +595,27 @@ exports.report = async function (req, res) {
       } catch (error) {
       console.error(error, "=================err");
       return Response.failed(null, `${error}`, req, res);
+  }
+}
+
+exports.updateCommission = async(req,res)=>{ 
+  try {
+    const {commission_status,commission_paid, id } = req.body
+    if ((commission_status || commission_paid) && !id) {
+      return res
+        .status(400)
+        .json({ error: constants.AFFILIATELINK.MISSING_FIELDS });
+    }
+
+    const updatedAffiliateLink = await AffiliateLink.updateOne({
+      id: id,
+      isDeleted: false,
+    }).set(req.body);
+    return response.success(updatedAffiliateLink, constants.AFFILIATELINK.UPDATED, req, res);
+
+
+  } catch (error) {
+    return response.failed(null, `${error}`, req, res);
   }
 }
 

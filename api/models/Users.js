@@ -34,17 +34,23 @@ module.exports = {
     plan_id: {
       model: 'subscriptionplans'
     },
-    subscription_id: {
-      type: 'string'
-    },
+    special_plan_id: {model: 'subscriptionplans'},
     affiliate_group: { model: 'affiliatemanagement' },
     affiliate_type: { type: "string", isIn: ["individual", "business"] },
     social_media_platforms: { type: "json", defaultsTo: [] },
     tags: { type: "json", defaultsTo: [] },
 
-    category_id: { model: "commoncategories" },
-    sub_category_id: { model: "commoncategories" },
-    sub_child_category_id: { model: "subchildcategory" },
+    // change below keys to array 
+    // category_id: { model: "commoncategories" },
+    // sub_category_id: { model: "commoncategories" },
+    // sub_child_category_id: { model: "subchildcategory" },
+    category_id: { type : "json" },
+    sub_category_id: { type : "json" },
+    sub_child_category_id: { type : "json" },
+    affiliate_website : {type:'json'}, // new key
+    category_type : {type: "json"},
+
+
     updated_password: { type: 'string' },
 
     // youtube_email: { type: 'string' },
@@ -191,7 +197,6 @@ module.exports = {
   },
 
   beforeCreate: function (user, next) {
-    console.log(user, "--------------user");
     if (user.firstName || user.lastName) {
       user.fullName = user.firstName + ' ' + user.lastName;
     }
@@ -208,7 +213,6 @@ module.exports = {
     }
   },
   authenticate: function (email, password) {
-    console.log('in auth    ');
     var query = {};
     query.email = email;
     query.$or = [{ roles: ['SA', 'A'] }];

@@ -215,9 +215,7 @@ exports.calculate_discount_before_subscribe = async (user_id, subscription_plan_
         }
         if (get_subscription_plan.discount_type === "percentage") {
             if (get_subscription_plan) {
-                console.log("in per", get_subscription_plan);
                 coupon_discount += (Number(item.amount_value) * Number(get_subscription_plan.amount)) / 100;
-                console.log(coupon_discount, "---coupon_discount");
             }
         }
     }

@@ -8,6 +8,7 @@
  * https://sailsjs.com/docs/concepts/policies
  */
 
+
 module.exports.policies = {
 
   /***************************************************************************
@@ -21,7 +22,8 @@ module.exports.policies = {
 
 
   UsersController: {
-    // 'adminSignin': true,     
+    // 'adminSignin': true,
+    'registerBrandWithPlan': true,    
     'register': true,
     'userSignin': true,
     'verifyUser': true,
@@ -39,12 +41,16 @@ module.exports.policies = {
     deleteUserWithoutAuth: true,
     userDetail: true,
     googleLoginAuthentication: true,
-    googleLogin: true
+    googleLogin: true,
+  },
+  BankAccountController: {
+    webhook: true
   },
   SubscriptionPlansController: {
     getAllSubscriptionPlans: true,
-    subscribe: true,
-    subscribeOnBraintree: true
+    //payNowOnStripe: true,
+    //subscribeOnBraintree: true,
+    webhook: true
   },
   StripeController: {
     webhook: true,
@@ -102,5 +108,11 @@ module.exports.policies = {
     removeFirstPromoter:true,
     updateFirstPromoter:true,
     exportScalenutData:true
+  },
+  GeneralPurposeTrackingController: {
+    addGPT: true
+  },
+  ScriptController : {
+    getById : true
   }
 };

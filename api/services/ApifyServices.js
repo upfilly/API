@@ -44,14 +44,10 @@ exports.get_twitter_profile = async (usernames) => {
     const run = await client.actor("quacker/twitter-scraper").call(input)
     const items = await client.dataset(run.defaultDatasetId).listItems();
 
-    console.log(items, '========items')
-    console.log(JSON.stringify(items), '========items222222')
-
 }
 
 
 exports.get_youtube_profile = async (options) => {
-    console.log('======ented =====');
     // let { data } = await axios.get(`https://youtube.googleapis.com/youtube/v3/channels?part=snippet%2CcontentDetails%2Cstatistics&id=UC_x5XG1OV2P6uZZ5FSM9Ttw&key=AIzaSyAa8yy0GdcGPHdtD083HiGGx_S0vMPScDM`,
     // { headers: { Authorization: `Bearer ya29.a0AWY7CklW2s1PoVyYL7peJacHBUs6fn6URxsJEZlaL6OLFP7zLr6Pnam-J6VXKvBcfaIxPdL8ViGCo53Jl0W8gcdqfNE7N6fkh2orMnolDM-1M2QeU78H1wX3pEW30b1qF_k9DnUmPVyXwEiPK0qU9uYTnPmHqnS4FwaCgYKAR4SARMSFQG1tDrpXME4g70IzF0NWbZTMI-ypw0169` } }
     // );
@@ -69,8 +65,6 @@ exports.get_youtube_profile = async (options) => {
         part: 'snippet,contentDetails,statistics',
         id: "UCq-Fj5jknLsUf-MWSy4_brA"
     });
-    console.log(data);
-    console.log(data.items[0].statistics);
 
     //   const channel = response.data.items[0];
     //   console.log('Channel Title:', channel.snippet.title);
@@ -89,9 +83,6 @@ exports.get_snapchat_profile = async (usernames) => {
     const run = await client.actor("argusapi/snapchat-profile-scraper").call(input)
     const { items } = await client.dataset(run.defaultDatasetId).listItems();
 
-    console.log(items, '========items')
-    console.log(JSON.stringify(items), '========items222222')
-
 }
 
 exports.get_pinterest_profile = async (usernames) => {
@@ -109,9 +100,6 @@ exports.get_pinterest_profile = async (usernames) => {
     };
     const run = await client.actor("epctex/pinterest-scraper").call(input)
     const { items } = await client.dataset(run.defaultDatasetId).listItems();
-
-    console.log(items, '========items')
-    console.log(JSON.stringify(items), '========items222222')
 
 }
 
@@ -137,7 +125,6 @@ exports.get_tiktok_profile = async (usernames) => {
 
 // not working
 exports.get_facebook_profile = async (usernames) => {
-    console.log('========items')
 
     const input = {
         "fbUrls": [
@@ -155,14 +142,10 @@ exports.get_facebook_profile = async (usernames) => {
     const run = await client.actor("apify/facebook-url-to-id").call(input)
     const { items } = await client.dataset(run.defaultDatasetId).listItems();
 
-    console.log(items, '========items')
-    console.log(JSON.stringify(items), '========items222222')
-
 }
 
 // working
 exports.get_youtube_profile2 = async (usernames) => {
-    console.log('========items')
 
     const input = {
         "downloadSubtitles": false,
@@ -183,8 +166,4 @@ exports.get_youtube_profile2 = async (usernames) => {
 
     const run = await client.actor("bernardo/youtube-scraper").call(input)
     const { items } = await client.dataset(run.defaultDatasetId).listItems();
-
-    console.log(items, '========items')
-    console.log(JSON.stringify(items), '========items222222')
-
 }

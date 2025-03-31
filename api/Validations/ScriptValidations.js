@@ -4,7 +4,9 @@ const Validate = require('./Validate').validate;
 exports.addScript = async (req, res, next) => {
     const schema = Joi.object({
         script_content: Joi.string().required(),
-        script_type: Joi.string().optional()
+        script_type: Joi.string().optional(),
+        brand_id : Joi.string().optional(),
+        isDefault : Joi.boolean().optional()
     });
     return await Validate(schema, req, res);
 

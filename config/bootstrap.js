@@ -82,12 +82,13 @@ module.exports.bootstrap = async function () {
     let date = new Date();
     date.setDate(date.getDate() - 1)
     let update_subscriptions = await Subscriptions.update({
-      status: { in: ["active", "inactive"] },
-      valid_upto: { "<": date }
-    },
+      amount: 0,
+      status: { in: ["active"] },
+      valid_upto: { "<=": date }
+    }).set(
       {
         status: "cancelled",
-      }).fetch();
+      });
 
     if (update_subscriptions && update_subscriptions.length > 0) {
       for await (let item of update_subscriptions) {
@@ -95,8 +96,10 @@ module.exports.bootstrap = async function () {
           let delete_old_subscription = await Services.StripeServices.delete_subscription({
             stripe_subscription_id: item.stripe_subscription_id
           });
+          if(item.user_id) {
+            await Users.updateOne({id: item.user_id}).set({plan_id: null,special_plan_id: null});
+          }
         } catch (error) {
-          console.log(error, '===eeor');
         }
       }
     }
@@ -164,6 +167,23 @@ module.exports.bootstrap = async function () {
           invite_id: item.id
         })
       }
+    }
+  })
+
+  // create cron which change status to expired of coupons when expired date goes
+  cron.schedule("0 12 * * *", async () => {
+    const todayDate = new Date(new Date().setUTCHours(0,0,0,0))
+    let allCoupons = await Coupon.find({isDeleted:false, status : "Enabled"})
+    if(allCoupons && allCoupons.length>0){
+      let i = 0
+      for await (let coupon of allCoupons){
+        let expiredDate = new Date(coupon.expirationDate)
+        if(expiredDate < todayDate){
+          await Coupon.updateOne({id:coupon.id},{status:"Expired"})
+          i++
+        }
+      }
+      console.log(`From ${allCoupons.length} ${i} are expired on ${todayDate}`)
     }
   })
 

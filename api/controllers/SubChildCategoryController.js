@@ -20,10 +20,11 @@ exports.addSubChildCategory = async (req, res) => {
             throw validation_result.message;
         }
 
-        let { name } = req.body;
+        let { name, category_id } = req.body;
 
         let query = {};
         query.name = name.toLowerCase();
+        query.category_id = category_id
         query.isDeleted = false;
 
 
@@ -54,11 +55,12 @@ exports.editSubChildCategory = async (req, res) => {
             throw validation_result.message;
         }
 
-        let { name, id } = req.body;
+        let { name, id, category_id } = req.body;
 
         let query = {
             name: name.toLowerCase(),
             isDeleted: false,
+            category_id : category_id,
             id: { "!=": id }
         }
 
@@ -95,7 +97,7 @@ exports.getAllSubChildCommonCategory = async (req, res) => {
         let skipNo = (Number(page) - 1) * Number(count);
 
         if (search) {
-            search = await Services.Utils.remove_special_char_exept_underscores(search);
+            search = Services.Utils.remove_special_char_exept_underscores(search);
             query.$or = [
                 { name: { $regex: search, '$options': 'i' } },
             ]

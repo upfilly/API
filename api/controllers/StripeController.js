@@ -1486,6 +1486,7 @@ exports.webhook = async (request, response) => {
     try {
         const event = request.body;
         // Handle the event
+        
         switch (event.type) {
             case 'customer.subscription.updated':
                 var event_object = event.data.object;
@@ -1653,64 +1654,92 @@ exports.webhook = async (request, response) => {
                 break;
 
             case 'checkout.session.completed':
+
                 var event_object = event.data.object;
-                // console.log(event_object, "event of session checkout complete");
+                
                 if (event_object) {
 
-                    let create_subscription_payload = {
-                        user_id: event_object.metadata.user_id,
-                        subscription_plan_id: event_object.metadata.plan_id,
-                        stripe_subscription_id: event_object.subscription,
-                        addedBy: event_object.metadata.user_id,
-                        name: event_object.metadata.plan_name ? event_object.metadata.plan_name : "",
-                        amount: event_object.amount_subtotal,
-                        interval: "month",
-                        interval_count: event_object.metadata.interval_count ? event_object.metadata.interval_count : 1,
-                        trial_period_days: event_object.metadata.trial_period_days ? event_object.metadata.trial_period_days : 0,
-                        status: "active"
-                        // valid_upto: new Date(create_subscription.current_period_end * 1000),
-                        // trial_period_end_date: new Date(create_subscription.trial_end * 1000),
-                    };
+                    if(event_object.metadata.commission === "paid"){
+                        // update user
+                        console.log(event_object.metadata.brandAssociateId,'event_object.metadata.brandAssociateId')
+                        let abc = await AffiliateLink.updateOne({id:event_object.metadata.brandAssociateId},{commission_paid :"paid"})
+                        console.log("updateddd",abc )
+                        let get_admin = await Users.findOne({role:"admin"})
 
-                    let add_subscription = await Subscriptions.create(create_subscription_payload).fetch();
-                    // console.log(add_subscription, "---add_subscription");
-                    if (add_subscription) {
-                        let update_user = await Users.updateOne(
-                            { id: event_object.metadata.user_id },
-                            {
-                                subscription_id: event_object.subscription,
-                                plan_id: event_object.metadata.plan_id,
-                                isPayment: true
-                            }
-                        );
+                        let transaction_payload = {
+                            user_id: event_object.metadata.user_id,
+                            paid_to: get_admin.id,
+                            transaction_type: "pay_commission",
+                            transaction_id: event_object.invoice,
+                            // subscription_id: event_object.subscription,
+                            stripe_charge_id: event_object.invoice,
+                            currency: event_object.currency,
+                            amount: event_object.amount_subtotal ? event_object.amount_subtotal / 100 : 0,
+                            transaction_status: event_object.payment_status
+                        }
+
+                        if (event_object.payment_status == "paid") {
+                            transaction_payload.transaction_status = "successful";
+                        }
+
+                         await Transactions.create(transaction_payload).fetch();
+                    }else {
+                        let create_subscription_payload = {
+                            user_id: event_object.metadata.user_id,
+                            subscription_plan_id: event_object.metadata.plan_id,
+                            stripe_subscription_id: event_object.subscription,
+                            addedBy: event_object.metadata.user_id,
+                            name: event_object.metadata.plan_name ? event_object.metadata.plan_name : "",
+                            amount: event_object.amount_subtotal,
+                            interval: "month",
+                            interval_count: event_object.metadata.interval_count ? event_object.metadata.interval_count : 1,
+                            trial_period_days: event_object.metadata.trial_period_days ? event_object.metadata.trial_period_days : 0,
+                            status: "active"
+                            // valid_upto: new Date(create_subscription.current_period_end * 1000),
+                            // trial_period_end_date: new Date(create_subscription.trial_end * 1000),
+                        };
+
+                        let add_subscription = await Subscriptions.create(create_subscription_payload).fetch();
+                        // console.log(add_subscription, "---add_subscription");
+                        if (add_subscription) {
+                             await Users.updateOne(
+                                { id: event_object.metadata.user_id },
+                                {
+                                    subscription_id: event_object.subscription,
+                                    plan_id: event_object.metadata.plan_id,
+                                    isPayment: true
+                                }
+                            );
+                        }
+
+                        let get_subscription_plan = await SubscriptionPlans.findOne({ id: event_object.metadata.plan_id });
+                        let transaction_payload = {
+                            user_id: event_object.metadata.user_id,
+                            paid_to: get_subscription_plan ? get_subscription_plan.addedBy : null,
+                            transaction_type: "buy_subscription",
+                            subscription_plan_id: get_subscription_plan.id,
+                            transaction_id: event_object.invoice,
+                            // subscription_id: event_object.subscription,
+                            stripe_charge_id: event_object.invoice,
+                            currency: event_object.currency,
+                            amount: event_object.amount_subtotal ? event_object.amount_subtotal / 100 : 0,
+                            stripe_subscription_id: event_object.subscription,
+                            transaction_status: event_object.payment_status
+                        }
+
+                        if (event_object.payment_status == "paid") {
+                            transaction_payload.transaction_status = "successful";
+                        }
+
+                         await Transactions.create(transaction_payload).fetch();
                     }
-
-                    let get_subscription_plan = await SubscriptionPlans.findOne({ id: event_object.metadata.plan_id });
-                    let transaction_payload = {
-                        user_id: event_object.metadata.user_id,
-                        paid_to: get_subscription_plan ? get_subscription_plan.addedBy : null,
-                        transaction_type: "buy_subscription",
-                        subscription_plan_id: get_subscription_plan.id,
-                        transaction_id: event_object.invoice,
-                        // subscription_id: event_object.subscription,
-                        stripe_charge_id: event_object.invoice,
-                        currency: event_object.currency,
-                        amount: event_object.amount_subtotal ? event_object.amount_subtotal / 100 : 0,
-                        stripe_subscription_id: event_object.subscription,
-                        transaction_status: event_object.payment_status
-                    }
-
-                    if (event_object.payment_status == "paid") {
-                        transaction_payload.transaction_status = "successful";
-                    }
-
-                    let create_transacton = await Transactions.create(transaction_payload).fetch();
+                    
                 }
 
                 break;
 
             default:
-                console.log(`Unhandled event type ${event.type}`);
+                
         }
 
         // Return a response to acknowledge receipt of the event
@@ -1774,9 +1803,58 @@ exports.createCheckoutSession = async (req, res) => {
             return response.success(resData, constants.COMMON.SUCCESS, req, res);
         }
     } catch (error) {
-        console.log(error, "=============err");
         // Handle errors and respond with an error message
         return res.serverError({
+            success: false,
+            message: 'Error creating Checkout Session',
+        });
+    }
+}
+
+// brand pay affiliate commission to admin
+exports.payToAdmin = async(req,res) =>{ 
+    try {
+        const { commission, brandAssociateId } = req.body;
+        let user_id = req.identity.id
+        if (user_id) {
+            var get_user = await Users.findOne({ id: user_id, isDeleted: false });
+        }
+
+        line_items = [{
+            // 'price': commission * 100 || 0,
+            "price_data": {
+                currency: "usd",
+                unit_amount: commission * 100 || 0,
+                product_data: {
+                    name: "Commission Payment",  // Product name (could be a generic name)
+                    description: "Payment for commission"
+                },
+              },
+            'quantity': 1,
+        }];
+
+        // Create a Checkout Session
+        let create_session = await Services.StripeServices.one_time_payment_for_commission({
+            lineItems: line_items,
+            metadata: {
+                user_id: user_id,
+                commission : "paid",
+                brandAssociateId : brandAssociateId
+            },
+            email: get_user.email
+        });
+
+        if (create_session) {
+            let resData = {
+                url: create_session.url
+            }
+
+            return response.success(resData, constants.COMMON.SUCCESS, req, res);
+        }
+    } catch (error) {
+        console.log(error,'-===========================')
+          // Handle errors and respond with an error message
+          return res.serverError({
             success: false,
             message: 'Error creating Checkout Session',
         });

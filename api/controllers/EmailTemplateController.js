@@ -45,8 +45,18 @@ exports.create = async (req, res) => {
     };
 
     // console.log(query1);
-    let listOfAcceptedInvites = await AffiliateInvite.find(query1);
-    let listOfBrandInvite = await AffiliateBrandInvite.find(query2);
+    // let listOfAcceptedInvites = await AffiliateInvite.find(query1);
+    // let listOfBrandInvite = await AffiliateBrandInvite.find(query2);
+    // console.log(listOfAcceptedInvites,'listOfAcceptedInvites')
+    // console.log(listOfBrandInvite,'listOfBrandInvite')
+
+    let BrandAffiliateAssociations = await BrandAffiliateAssociation.find({
+      brand_id: req.identity.id,
+      status: "accepted",
+      isDeleted: false,
+      isActive: true
+    });
+    listOfAcceptedInvites = BrandAffiliateAssociations;
 
     function removeDuplicates(array, key) {
       const seen = new Set();
@@ -60,14 +70,15 @@ exports.create = async (req, res) => {
       });
     }
 
-    let combinedList = [...listOfBrandInvite, ...listOfAcceptedInvites];
+    // let combinedList = [...listOfBrandInvite, ...listOfAcceptedInvites];
     // console.log(combinedList);
     // Remove duplicates based on the 'id' key
-    listOfAcceptedInvites = removeDuplicates(combinedList, "affiliate_id");
+    // listOfAcceptedInvites = removeDuplicates(combinedList, "affiliate_id");
 
     req.body.addedBy = req.identity.id;
     req.body.updatedBy = req.identity.id;
     let newTemplate = await EmailTemplate.create(req.body).fetch();
+    
     for (let affiliate of listOfAcceptedInvites) {
       // console.log(affiliate);
       let findUser = await Users.findOne({
@@ -91,7 +102,7 @@ exports.create = async (req, res) => {
     }
     return response.success(newTemplate, constants.EMAILTEMPLATE.CREATED, req, res);
   } catch (err) {
-    console.log(err);
+    console.log(err,'err')
     return response.failed(null, `${err}`, req, res);
   }
 };
@@ -198,7 +209,6 @@ exports.update = async (req, res) => {
     }
     return response.success(newTemplate, constants.EMAILTEMPLATE.UPDATED, req, res);
   } catch (err) {
-    console.log(err);
     return response.failed(null, `${err}`, req, res);
   }
 };
@@ -229,7 +239,7 @@ exports.getAll = async (req, res) => {
     let sortquery = {};
 
     if (search) {
-      search = await Services.Utils.remove_special_char_except_underscores(search);
+      search = await Services.Utils.remove_special_char_exept_underscores(search);
       query.$or = [
         { templateName: { $regex: search, '$options': 'i' } },
         { emailName: { $regex: search, '$options': 'i' } }
@@ -335,7 +345,7 @@ exports.getUserEmailTemplate = async (req, res) => {
     let sortquery = {};
 
     if (search) {
-      search = await Services.Utils.remove_special_char_except_underscores(search);
+      search = await Services.Utils.remove_special_char_exept_underscores(search);
       query.$or = [
         { templateName: { $regex: search, '$options': 'i' } },
         { emailName: { $regex: search, '$options': 'i' } }

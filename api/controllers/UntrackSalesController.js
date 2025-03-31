@@ -67,7 +67,6 @@ module.exports = {
         }
 
         catch (error) {
-            console.log(error, "========err");
             return response.failed(null, `${error}`, req, res)
         }
     },
@@ -177,7 +176,7 @@ module.exports = {
 
             var query = {}
             if (search) {
-                search = await Services.Utils.remove_special_char_exept_underscores(search);
+                search = Services.Utils.remove_special_char_exept_underscores(search);
                 query.$or = [{ brand_fullName: { $regex: search, '$options': 'i' } }];
             }
             query.isDeleted = false;
@@ -339,7 +338,6 @@ module.exports = {
             throw constants.COMMON.SERVER_ERROR
 
         } catch (error) {
-            console.log(error);
             return response.failed(null, `${error}`, req, res)
         }
     }

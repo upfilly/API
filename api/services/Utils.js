@@ -1,6 +1,6 @@
 const moment = require('moment');
 const { constants } = require('../../config/constants');
-// const ObjectId = require('mongodb').ObjectId;
+const ObjectId = require('mongodb').ObjectId;
 // connect.new ObjectId = core.BSON.new ObjectId;
 // connect.new ObjectId = core.BSON.new ObjectId;
 
@@ -51,7 +51,7 @@ exports.get_admin = async () => {
     return get_admin;
 }
 
-exports.title_case = async (string) => {
+exports.title_case = (string) => {
     string = string.toLowerCase()
     string = string.split(' ');
     for (let i in string) {
@@ -150,7 +150,7 @@ exports.get_hour_and_minutes = async (start_date, end_date) => {
     }
 }
 
-exports.remove_special_char_exept_underscores = async (string) => {
+exports.remove_special_char_exept_underscores = (string) => {
     string = string.replace(/[^a-zA-Z0-9_. -]/g, "");
     return string;
 }
@@ -175,6 +175,19 @@ exports.string_to_array = async (string) => {
 
     return []
 }
+
+exports.string_ids_toObjectIds_array = async (string) => {
+    // console.log(string, "string");
+    if (string) {
+        let string_arr = string.split(',');
+        let string_arr2 = [];
+        for await (let item of string_arr) {
+            string_arr2.push(new ObjectId(item));
+        }
+        return string_arr2;
+    }
+    return []
+},
 
 exports.get_first_letter_from_each_word = async (string) => {
     let new_string = "";

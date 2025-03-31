@@ -280,6 +280,8 @@ module.exports.constants = {
     CANNOT_ACCEPT: "This campaign already accepted",
     STATUS_UPDATE: "Status updated successfully",
     INVALID_INFLUENCER_ID: "Invaild influencer Id",
+    INVALID_BRAND_ID: "Invaild Brand ID",
+    INVALID_AFFILIATE_ID: "Invaild Affiliate ID"
   },
   NOTIFICATION: {
     FETCHED: "Notification fetched successfully",
@@ -375,6 +377,8 @@ module.exports.constants = {
     INVALID_ID: "Invalid id",
     PARAM_MISSING: "Params missing",
     NOT_FOUND: "Content not found",
+    DEFAULT_EXIST  : "Default Script already exist",
+    NO_DEFAULT_SCRIPT : "No default script added",
   },
   BLOG: {
     ALREADY_EXIST: "Same title already exist",
@@ -389,6 +393,20 @@ module.exports.constants = {
     ADDED_PUBLISH: "Blog published successfully",
     REMOVED_PUBLISH: "Blog un-published successfully",
   },
+  BANK_ACCOUNT: {
+    CREATED: "Bank account created successfully",
+    LINK_CREATED: "Link created successfully",
+    NO_ACTIVE_ACCOUNT_ID: "No Active account id",
+    ACCOUNT_STATUS_UPDATED: "Account status updated",
+    UPDATE_FAILED: "Account update failed. Please check the account ID.",
+    ACCOUNT_NOT_FOUND: "No accounts found for this user.",
+    LATEST_ACCOUNT_ACTIVATED: "Latest Account Activated",
+    TRANSFER_CREATED_SUCCESSFULLY: "Transfer created successfully",
+    EXTERNAL_ACCOUNT: "Account created successfully",
+    DETAIL: "Detail retrieved successfully"
+
+  },
+
   CAMPAIGN: {
     ADDED: "Campaign added successfully",
     UPDATED: "Campaign updated successfully",
@@ -400,9 +418,12 @@ module.exports.constants = {
     ALREADY_EXIST: "Same Campaign already exists",
     INVALID_CONTRACT_ID: "Invalid contract Id",
     // ALREADY_EXIST: "Campaign already started for this contract",
-    CANNOT_ACCEPT: "This campaign already accepted",
+    CANNOT_ACCEPT: "This campaign has already been accepted",
     STATUS_UPDATE: "Status updated successfully",
     INVALID_INFLUENCER_ID: "Invaild influencer Id",
+    NOT_FOUND: "Campaign not found!",
+    INVALID_STATUS: "Invalid status",
+    NOT_ALLOWED_AFFS_EXIST: "Deletion denied as affiliates are part of this campaign!"
   },
 
   PROPOSAL: {
@@ -487,6 +508,7 @@ module.exports.constants = {
     CANNOT_ACCEPT: "This request is already accepted",
     STATUS_UPDATE: "Status updated successfully",
     INVALID_INFLUENCER_ID: "Invaild influencer Id",
+    NO_DEFAULT_CAMPAIGN: "No default campaign"
   },
 
   INVITE: {
@@ -626,6 +648,29 @@ module.exports.constants = {
     ID_REQUIRED: "Id Required",
     FETCHED: "Activity log fetched sucessfully",
     FETCHED_ALL: "Activity logs fetched sucessfully",
-    INVALID_ID: "Invalid id",
+    INVALID_ID: "Invalid ID",
   },
+
+  GENERAL_PURPOSE_TRACKING: {
+    ADDED: "Tracking data added successfully",
+    FAILED_ADDING: "Encountered an issue while adding tracking data",
+    ID_REQUIRED: "Id Required",
+    DELETED_SUCCESSFULLY: "General Purpose Tracking data deleted successfully!",
+    FETCHED: "General Purpose Tracking data fetched sucessfully",
+    FETCHED_ALL: "General Purpose Tracking data fetched sucessfully",
+    INVALID_ID: "Invalid ID",
+  },
+
+  CAMPAIGN_REQUEST_BY_AFFILIATE: {
+    CAMPAIGN_NOT_FOUND: "Campaign not found!",
+    ALREADY_EXISTS: "Request already made once!",
+    ADDED: "Request sent to Brand successfully",
+    ID_REQUIRED: "Id Required",
+    FETCHED: "Campaign requests fetched sucessfully",
+    INVALID_ID: "Invalid ID",
+    CANNOT_ACCEPT: "This campaign request has already been accepted!",
+    STATUS_UPDATE: "Status updated successfully",
+    FETCHED_ALL: "All Requests fetched successfully",
+    MANUAL_REQUIRED : "Only Manual campaign is able to send request",
+  }
 };

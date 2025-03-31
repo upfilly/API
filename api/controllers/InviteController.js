@@ -198,51 +198,16 @@ exports.getAllInvite = async (req, res) => {
 
 exports.getAllAffiliateListing = async (req, res) => {
   try {
-    let offerAffiliateListings = await MakeOffer.find({
-      brand_id: req.identity.id,
-      status: "accepted",
-    });
-    let affiliateBrandInvites = await AffiliateBrandInvite.find({
-      brand_id: req.identity.id,
-      status: "accepted",
-    });
-    let campaignListing = await Campaign.find({
-      brand_id: req.identity.id,
-      status: "accepted",
-    });
-    let affiliateInviteListing = await AffiliateInvite.find({
-      addedBy: req.identity.id,
-      status: "accepted",
-    });
-
-    const combinedResults = [
-      ...offerAffiliateListings,
-      ...affiliateBrandInvites,
-      ...campaignListing,
-      ...affiliateInviteListing,
-    ];
-
-    // Use a dictionary to remove duplicates and ensure unique affiliate_ids
-    const uniqueAffiliates = {};
-    combinedResults.forEach((item) => {
-      if (!uniqueAffiliates[item.affiliate_id]) {
-        uniqueAffiliates[item.affiliate_id] = item;
-      }
-    });
-
-    const uniqueAffiliatesList = Object.values(uniqueAffiliates);
-    let ListOfAffiliates = [];
-    // Print the combined and unique results
-    for await (let affiliateId of uniqueAffiliatesList) {
-      user = await Users.findOne({ id: affiliateId.affiliate_id, isDeleted: false });
-      ListOfAffiliates.push(user);
-    }
-
+    let brand_id = req.param('brand_id');
+    let affiliates = await BrandAffiliateAssociation.find({isActive: true, brand_id: brand_id, isDeleted: false}).populate('affiliate_id');
+    let ListOfAffiliates = affiliates;
+    ListOfAffiliates = ListOfAffiliates.filter((c)=> c.affiliate_id && !c.affiliate_id.isDeleted).map((c) => c.affiliate_id);
     return response.success(ListOfAffiliates, "List of all affiliates fetched successfully", req, res);
   } catch (error) {
     return response.failed(null, `${error}`, req, res);
   }
 };
+
 exports.getAllAssociatedBrandListing = async (req, res) => {
   try {
     let offerAffiliateListings = await MakeOffer.find({
@@ -253,7 +218,7 @@ exports.getAllAssociatedBrandListing = async (req, res) => {
       affiliate_id: req.identity.id,
       status: "accepted",
     });
-    let campaignListing = await Campaign.find({
+    let campaignListing = await BrandAffiliateAssociation.find({
       affiliate_id: req.identity.id,
       status: "accepted",
     });
@@ -289,6 +254,7 @@ exports.getAllAssociatedBrandListing = async (req, res) => {
 
     return response.success(ListOfbrands, "List of all brands fetched successfully", req, res);
   } catch (error) {
+    console.log(error,'===error')
     return response.failed(null, `${error}`, req, res);
   }
 };

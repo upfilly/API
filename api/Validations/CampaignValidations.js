@@ -7,10 +7,10 @@ exports.addCampaign = async (req, res, next) => {
         name: Joi.string().required(),
         brand_id:Joi.string().required(),
         parent_role:Joi.string().optional(),
-        affiliate_id: Joi.string().optional(),
+        affiliate_id: Joi.array().optional(),
         event_type: Joi.array().optional().items(Joi.string().optional()),
         description: Joi.string().optional().allow(""),
-        amount: Joi.number().required().min(0),
+        amount: Joi.number().optional().min(0),
         images: Joi.array().optional().items(
             Joi.object({
                 name: Joi.string().optional().allow(""),
@@ -30,7 +30,17 @@ exports.addCampaign = async (req, res, next) => {
             }).optional()
         ),
         isDefault: Joi.boolean().optional(),
-        access_type: Joi.string().required().valid('public', 'private')
+        access_type: Joi.string().required().valid('public', 'private'),
+        commission_type : Joi.string().optional(),
+        commission : Joi.number().optional().min(0),
+        category : Joi.array().optional(),
+        sub_category : Joi.array().optional(),
+        category_type : Joi.string().optional(),
+        sub_child_category : Joi.array().optional(),
+        region : Joi.array().optional(),
+        region_continents : Joi.array().optional(),
+        lead_amount : Joi.number().optional(),
+        campaign_type : Joi.string().required().valid("manual","automatic")
     });
     return await Validate(schema, req, res);
 }
@@ -39,7 +49,7 @@ exports.editCampaign = async (req, res, next) => {
 
     const schema = Joi.object({
         id: Joi.string().required(),
-        affiliate_id: Joi.string().optional(),
+        affiliate_id: Joi.array().optional(),
         event_type: Joi.array().optional().items(Joi.string().optional()),
         name: Joi.string().required(),
         description: Joi.string().optional().allow(""),
@@ -62,7 +72,13 @@ exports.editCampaign = async (req, res, next) => {
             }).optional()
         ),
         isDefault: Joi.boolean().optional(),
-        access_type: Joi.string().required().valid('public', 'private')
+        access_type: Joi.string().optional().valid('public', 'private'),
+        category : Joi.array().optional(),
+        sub_category : Joi.array().optional(),
+        category_type : Joi.string().optional(),
+        sub_child_category : Joi.array().optional(),
+        region : Joi.array().optional(),
+        campaign_type : Joi.string().valid("manual","automatic")
     });
     return await Validate(schema, req, res);
 }
@@ -76,7 +92,8 @@ exports.changeCampaignStatus = async (req, res) => {
             is: "rejected",
             then: Joi.string().required(),
             otherwise: Joi.string().optional(),
-        })
+        }),
+        affiliate_id: Joi.string().required()
     });
     return await Validate(schema, req, res);
 }

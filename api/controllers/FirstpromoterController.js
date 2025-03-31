@@ -33,14 +33,12 @@ const csv = require('csv-parser');
 
     try {
       const response = await axios.delete(url, { headers });
-      console.log(response.response);
       return res.status(200).json({
         success: true,
         message: "First promoter removed successfully",
         data: response.data,
       });
     } catch (error) {
-      console.log(error);
       return res.status(400).json({
         success: false,
         error: { message: error },
@@ -57,14 +55,12 @@ const csv = require('csv-parser');
     let data = req.body;
     try {
       const response = await axios.put(url, data, { headers });
-      console.log(response);
       return res.status(200).json({
         success: true,
         message: "First promoter updated successfully",
         data: response.data,
       });
     } catch (error) {
-      console.log(error);
       return res.status(400).json({
         success: false,
         error: { message: error },
@@ -90,12 +86,7 @@ const csv = require('csv-parser');
         },
       });
 
-      console.log("Login Response Status:", loginResponse.status);
-      console.log("Login Response Headers:", loginResponse.headers);
-      console.log("Login Response Data:", loginResponse.data);
-
       const cookies = loginResponse.headers["set-cookie"][0];
-      console.log(cookies, "========================++>");
       if (!cookies) {
         throw new Error("Login failed: No cookies returned");
       }
@@ -116,11 +107,6 @@ const csv = require('csv-parser');
           },
         }
       );
-
-      console.log("Export Response Status:", exportResponse.status);
-      console.log("Export Response Headers:", exportResponse.headers);
-      console.log("Export Response Data:", exportResponse.data);
-
       const responseData = exportResponse.data;
       return res.status(200).json({
         responseData,
@@ -214,7 +200,6 @@ const csv = require('csv-parser');
 
         try {
             fs.renameSync(oldPath, newPath);
-            console.log('File renamed successfully to', newPath);
 
             // Process the CSV file
             fs.createReadStream(`${newPath}`)
@@ -237,7 +222,6 @@ const csv = require('csv-parser');
             console.error('Error processing the file:', error);
         }
     } else {
-        console.log('No file found to rename.');
     }
 
     await browser.close();
@@ -273,7 +257,6 @@ exports.addFirstPromoter = async (req, res) => {
         const createdPromoter = await FirstPromoter.create(data).fetch();
         if (createdPromoter) {
             let filePath = await Services.scalenutServices.exportScalenutData(data);
-            console.log(filePath.data,"<--------------------->");
             let updatedPromoter = {};
             if(filePath && filePath.success === true ){
                updatedPromoter = await FirstPromoter.updateOne({id:createdPromoter.id},{filePath:filePath.msg});
@@ -285,7 +268,6 @@ exports.addFirstPromoter = async (req, res) => {
         }
         throw constants.COMMON.SERVER_ERROR;
     } catch (error) {
-      console.log(error)
         return response.failed(null, `${error}`, req, res);
     }
 }
@@ -356,7 +338,7 @@ exports.getAllFirstPromoters = async (req, res) => {
         let skipNo = (Number(page) - 1) * Number(count);
 
         if (search) {
-            search = await Services.Utils.remove_special_char_exept_underscores(search);
+            search = Services.Utils.remove_special_char_exept_underscores(search);
             query.$or = [
                 { email: { $regex: search, '$options': 'i' } },
                 { url: { $regex: search, '$options': 'i' } },
@@ -547,7 +529,6 @@ exports.importFirstPromoter = async (req, res) => {
       duplicates: duplicate,
     });
   } catch (err) {
-    console.log(err);
     return res.status(500).json({
       success: false,
       error: {
@@ -566,7 +547,7 @@ exports.firstPromoterDataListing = async(req,res)=>{
     let skipNo = (Number(page) - 1) * Number(count);
 
     if (search) {
-        search = await Services.Utils.remove_special_char_exept_underscores(search);
+        search = Services.Utils.remove_special_char_exept_underscores(search);
         query.$or = [
             { email: { $regex: search, '$options': 'i' } },
             { url: { $regex: search, '$options': 'i' } },

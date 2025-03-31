@@ -8,6 +8,7 @@
  * https://sailsjs.com/anatomy/config/routes-js
  */
 
+
 module.exports.routes = {
   /***************************************************************************
    *                                                                          *
@@ -68,7 +69,7 @@ module.exports.routes = {
   "get /google/login/authentication": "UsersController.googleLoginAuthentication",
   "post /google/login": "UsersController.googleLogin",
   "put /user/account-request-status": "UsersController.updateRequestStatus",
-
+  "post /register/brand": "UsersController.registerBrandWithPlan",
 
   /**
    * @CommonAPIs
@@ -106,7 +107,7 @@ module.exports.routes = {
     "SubscriptionPlansController.getSubscriptionPlanById",
   "delete /subscription-plan":
     "SubscriptionPlansController.deleteSubscriptionPlan",
-  "post /subscribe": "SubscriptionPlansController.subscribe",
+  "post /subscribe": "SubscriptionPlansController.payNowOnStripe",
   "put /cancel-subscription": "SubscriptionPlansController.cancelSubscription",
   "get /active-subscription":
     "SubscriptionPlansController.myActiveSubscription",
@@ -115,17 +116,17 @@ module.exports.routes = {
   "get /subscription/graph":
     "SubscriptionPlansController.getSubscriptionsGraphData",
   "get /recommend-plans": "SubscriptionPlansController.getRecommendedPlans",
-
+  "post /hook": "SubscriptionPlansController.webhook",
   /**
    * @Braintree
    */
   //With 3rd party- Braintree
-
+/*
   "post /subscription-plan/braintree":
     "SubscriptionPlansController.addSubscriptionPlanBraintree",
   "post /subscribe/braintree":
     "SubscriptionPlansController.subscribeOnBraintree",
-
+*/
   /**
    * @Transactions
    */
@@ -146,8 +147,9 @@ module.exports.routes = {
   "get /card/all": "StripeController.getAllCards",
   "get /card": "StripeController.getCardById",
   "delete /card": "StripeController.deleteCard",
-  "post /hook": "StripeController.webhook",
+  // "post /hook": "StripeController.webhook",
   "post /create/session": "StripeController.createCheckoutSession",
+  "post /pay/commission/to/admin" : "StripeController.payToAdmin",
 
   /**
    * @SMTP
@@ -271,17 +273,19 @@ module.exports.routes = {
   "post /campaign": "CampaignController.addCampaign",
   "get /campaign": "CampaignController.getCampaignById",
   "put /campaign": "CampaignController.editCampaign",
-  "get /campaign/all": "CampaignController.getAllCampaigns",
+  "get /campaign/affiliate/all": "CampaignController.getAllCampaignRequestsForAffiliate",
+  "get /campaign/brand/all": "CampaignController.getAllCampaignsForBrand",
   "put /campaign/change-status": "CampaignController.changeCampaignStatus",
   "delete /campaign": "CampaignController.deleteCampaign",
+  "get /campaign/public/all": "CampaignController.listPublicCampaignsOfAllBrands",
 
   /**
    * @Proposals
    */
-  "post /proposal": "ProposalController.addproposal",
-  "get /proposal": "ProposalController.findSingleProposal",
-  "get /proposals": "ProposalController.getAllProposals",
-  "put /update/proposal/status": "ProposalController.changeStatus",
+  // "post /proposal": "ProposalController.addproposal",
+  // "get /proposal": "ProposalController.findSingleProposal",
+  // "get /proposals": "ProposalController.getAllProposals",
+  // "put /update/proposal/status": "ProposalController.changeStatus",
 
   /**
    * @AffiliateManagementController
@@ -358,7 +362,7 @@ module.exports.routes = {
   "get /my-total-users": "DashboardController.myTotalUsers",
   "get /total-campaigns": "DashboardController.totalCampaigns",
   "get /recent-users": "DashboardController.recentUser",
-  "get /campaign-request": "DashboardController.totalCampaignsRequests",
+  "get /dashboard/campaign-request": "DashboardController.totalCampaignsRequests",
 
   /**
    * @Product
@@ -472,12 +476,12 @@ module.exports.routes = {
    *
    */
 
-  "post /brand/applyrequest": "AffiliateBrandInviteController.sendApplyRequest",
-  "get /brand/getallrequests": "AffiliateBrandInviteController.getAllRequests",
-  "get /brand/getrequestdetails":
-    "AffiliateBrandInviteController.getRequestDetail",
-  "put /brand/changerequeststatus":
-    "AffiliateBrandInviteController.changeRequestStatus",
+  // "post /brand/applyrequest": "AffiliateBrandInviteController.sendApplyRequest",
+  // "get /brand/getallrequests": "AffiliateBrandInviteController.getAllRequests",
+  // "get /brand/getrequestdetails":
+  //   "AffiliateBrandInviteController.getRequestDetail",
+  // "put /brand/changerequeststatus":
+  //   "AffiliateBrandInviteController.changeRequestStatus",
 
   /**
    * @CouponController
@@ -498,7 +502,8 @@ module.exports.routes = {
   "post /dataset/send": "DataSetController.sendDataSets",
   "get /dataset/list": "DataSetController.listOfDataSet",
   "get /dataset/view": "DataSetController.importCsvDataHttp",
-  "get /listDataSets": "DataSetController.ListDataSetsBrand",
+  "get /listDataSets": "DataSetController.ListDataFeedsBrand",
+  "get /csv" : "DataSetController.viewCSVAffiliate",
   /**
    * @EmailMessageTemplate
    *
@@ -526,6 +531,7 @@ module.exports.routes = {
   "PUT /affiliatelink": "AffiliateLinkController.update",
   "DELETE /affiliatelink": "AffiliateLinkController.destroy",
   "get /affiliatelink/report": "AffiliateLinkController.report",
+  "put /update/commission/status": "AffiliateLinkController.updateCommission",
 
   /**
    * @FirstPromoter
@@ -558,6 +564,42 @@ module.exports.routes = {
    */
 
   "get /analytics-sales": "AnalyticsController.salesAnalytics",
+  "get /analytics-reports":"AnalyticsController.reportAnalytics",
+  "get /analytics-click" : "AnalyticsController.clickAnalytics",
 
+   /**
+   * @GeneralPurposeTracking
+   */
+
+   "post /gptrack": "GeneralPurposeTrackingController.addGPT",
+   "get /gptrack": "GeneralPurposeTrackingController.getGPTById",
+   "get /gptrack/list": "GeneralPurposeTrackingController.getAllGPT",
+   "delete /gptrack/delete": "GeneralPurposeTrackingController.deleteGPTById",
+
+   /**
+    * @CampaignRequestByAffiliate
+    */
+   "post /campaign-request": "CampaignRequestByAffiliateController.sendCampaignRequestToBrand",
+   "get /campaign-request": "CampaignRequestByAffiliateController.getRequestById",
+   "get /campaign-requests": "CampaignRequestByAffiliateController.getAllRequestsForBrand",
+  //  "get /campaign-request/public-campaigns": "CampaignRequestByAffiliateController.getAllPublicCampaigns",
+   "put /campaign-request/change-status": "CampaignRequestByAffiliateController.changeRequestStatus",
+
+  /*
+  * @BankAccount
+  */
+ "post /account/create": "BankAccountController.createAccount",
+ "post /account/update/status": "BankAccountController.updateAccountStatus",
+ "get /account/transfer/listing": "BankAccountController.transferListing",
+ "get /account/transfer/detail": "BankAccountController.transferDetail",
+ "post /account/webhook": "BankAccountController.webhook",
+ "get /account/retrieve": "BankAccountController.retriveAccount",
+ "post /account/link/regenerate": "BankAccountController.regenrateOnBoardingLink",
+  "delete /account/delete": "BankAccountController.deleteAccount",
+  /**
+   * @BankAccountController
+   */
+
+  "post /transfer/payment" : "BankAccountController.transferPayment"
 
 };   

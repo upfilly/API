@@ -202,6 +202,20 @@ exports.getAllTransactions = async (req, res) => {
             },
             {
                 $lookup: {
+                    from: "subscriptionplans",
+                    localField: "special_plan_id",
+                    foreignField: "_id",
+                    as: "special_plans_details"
+                }
+            },
+            {
+                $unwind: {
+                    path: '$special_plans_details',
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
+                $lookup: {
                     from: "users",
                     localField: "user_id",
                     foreignField: "_id",
@@ -235,6 +249,7 @@ exports.getAllTransactions = async (req, res) => {
                     paid_to: "$paid_to",
                     transaction_type: "$transaction_type",
                     subscription_plan_id: "$subscription_plan_id",
+                    special_plan_id: "$special_plan_id",
                     subscription_id: "$subscription_plan_id",
                     transaction_id: "$transaction_id",
                     stripe_charge_id: "$stripe_charge_id",
@@ -247,6 +262,7 @@ exports.getAllTransactions = async (req, res) => {
                     createdAt: "$createdAt",
                     updatedAt: "$updatedAt",
                     subscription_plan_name: "$subscription_plans_details.name",
+                    special_plan_name: "$special_plans_details.name",
                     user_id_name: "$user_id_details.fullName",
                     role: "$user_id_details.role",
                     paid_to_name: "$paid_to_details.fullName",
@@ -263,7 +279,7 @@ exports.getAllTransactions = async (req, res) => {
             },
         ]).toArray();
            
-            let result = await    db.collection('transactions').aggregate([
+            let result = await db.collection('transactions').aggregate([
                 {
                     $lookup: {
                         from: "subscriptionplans",
@@ -275,6 +291,20 @@ exports.getAllTransactions = async (req, res) => {
                 {
                     $unwind: {
                         path: '$subscription_plans_details',
+                        preserveNullAndEmptyArrays: true
+                    }
+                },
+                {
+                    $lookup: {
+                        from: "subscriptionplans",
+                        localField: "special_plan_id",
+                        foreignField: "_id",
+                        as: "special_plans_details"
+                    }
+                },
+                {
+                    $unwind: {
+                        path: '$special_plans_details',
                         preserveNullAndEmptyArrays: true
                     }
                 },
@@ -325,6 +355,7 @@ exports.getAllTransactions = async (req, res) => {
                         createdAt: "$createdAt",
                         updatedAt: "$updatedAt",
                         subscription_plan_name: "$subscription_plans_details.name",
+                        special_plan_name: "$special_plans_details.name",
                         user_id_name: "$user_id_details.fullName",
                         role: "$user_id_details.role",
                         paid_to_name: "$paid_to_details.fullName",
@@ -426,7 +457,7 @@ exports.getTransactionById = async (req, res) => {
             throw constants.TRANSACTION.ID_REQUIRED;
         }
 
-        let get_transaction = await Transactions.findOne({ id: id }).populate('subscription_plan_id').populate('paid_to').populate('user_id');
+        let get_transaction = await Transactions.findOne({ id: id }).populate('subscription_plan_id').populate('special_plan_id').populate('paid_to').populate('user_id');
         if (get_transaction) {
             return response.success(get_transaction, constants.TRANSACTION.FETCHED, req, res)
         }
@@ -491,7 +522,7 @@ exports.downloadInvoice = async (req, res) => {
                     <table style=" border-collapse: collapse; width: 100%;">
                         <tr style="border: 1px solid rgba(237, 237, 237, 1);" >
                             <td style="color:#444647 !important; background:#f5f1f1;; border: 1px solid rgba(237, 237, 237, 1);color: rgba(0, 0, 0, 0.64); padding: 8px; width:25%;font-size: 12px;"> Name</td>
-                            <td style="color:#444647 !important; background:#f5f1f1;; border: 1px solid rgba(237, 237, 237, 1);color: rgba(0, 0, 0, 0.64);padding: 8px;  width: 75%;font-size: 12px;">${user_detail.fullName ? await Services.Utils.title_case(user_detail.fullName) : ""}</td>
+                            <td style="color:#444647 !important; background:#f5f1f1;; border: 1px solid rgba(237, 237, 237, 1);color: rgba(0, 0, 0, 0.64);padding: 8px;  width: 75%;font-size: 12px;">${user_detail.fullName ? Services.Utils.title_case(user_detail.fullName) : ""}</td>
                         </tr>
                         <tr style="border: 1px solid rgba(237, 237, 237, 1);" >
                             <td style="color:#444647 !important;  background:#f5f1f1;; border: 1px solid rgba(237, 237, 237, 1);color: rgba(0, 0, 0, 0.64); padding: 8px; width:25%;font-size: 12px;">Email</td>
@@ -503,7 +534,7 @@ exports.downloadInvoice = async (req, res) => {
                         </tr>
                         <tr style="border: 1px solid rgba(237, 237, 237, 1);" >
                             <td style="color:#444647 !important;  background:#f5f1f1;; border: 1px solid rgba(237, 237, 237, 1);color: rgba(0, 0, 0, 0.64); padding: 8px; width:25%;font-size: 12px;">Address</td>
-                            <td style="color:#444647 !important; background:#f5f1f1;; border: 1px solid rgba(237, 237, 237, 1);color: rgba(0, 0, 0, 0.64);padding: 8px;  width: 75%;font-size: 12px;">${user_detail ? await Services.Utils.title_case(user_detail.address) : ""}</td>
+                            <td style="color:#444647 !important; background:#f5f1f1;; border: 1px solid rgba(237, 237, 237, 1);color: rgba(0, 0, 0, 0.64);padding: 8px;  width: 75%;font-size: 12px;">${user_detail ? Services.Utils.title_case(user_detail.address) : ""}</td>
                         </tr>
                     </table>
                     <table style=" border-collapse: collapse; margin-top:1rem; width: 100%;">
@@ -513,7 +544,7 @@ exports.downloadInvoice = async (req, res) => {
                             <td style="font-weight: 600;width:25% !important; color:#444647 !important; background:#f5f1f1;; border: 1px solid rgba(237, 237, 237, 1);color: rgba(0, 0, 0, 0.64);padding: 8px;  width: 75%;font-size: 12px;"> Total Amount</td>
                         </tr>
                         <tr style="border: 1px solid rgba(237, 237, 237, 1);" >
-                            <td style="width: 25% !important; color:#444647 !important; background:#f5f1f1;; border: 1px solid rgba(237, 237, 237, 1);color: rgba(0, 0, 0, 0.64); padding: 8px; width:25%;font-size: 12px;">${get_subscriptions.name ? await Services.Utils.title_case(get_subscriptions.name) : ""}</td>
+                            <td style="width: 25% !important; color:#444647 !important; background:#f5f1f1;; border: 1px solid rgba(237, 237, 237, 1);color: rgba(0, 0, 0, 0.64); padding: 8px; width:25%;font-size: 12px;">${get_subscriptions.name ? Services.Utils.title_case(get_subscriptions.name) : ""}</td>
                             <td style="width:30% !important; color:#444647 !important; background:#f5f1f1;; border: 1px solid rgba(237, 237, 237, 1);color: rgba(0, 0, 0, 0.64);padding: 8px;  width: 75%;font-size: 12px;">$${get_transactions ? get_transactions.amount : 0}</td>
                             <td style="width:25% !important; color:#444647 !important; background:#f5f1f1;; border: 1px solid rgba(237, 237, 237, 1);color: rgba(0, 0, 0, 0.64);padding: 8px;  width: 75%;font-size: 12px;">$${get_transactions.amount ? get_transactions.amount.toFixed(2) : 0}</td>
                         </tr>
@@ -553,7 +584,7 @@ exports.getAllTransactionsContracts = async (req, res) => {
         let skipNo = (Number(page) - 1) * Number(count);
         let group_by = "$_id";
         if (search) {
-            search = await Services.Utils.remove_special_char_exept_underscores(search);
+            search = Services.Utils.remove_special_char_exept_underscores(search);
             query.$or = [
                 { name: { $regex: search, '$options': 'i' } },
                 { influencer_name: { $regex: search, '$options': 'i' } },

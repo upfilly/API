@@ -63,7 +63,7 @@ module.exports = {
     // Status: Enabled/Disabled
     status: {
       type: "string",
-      isIn: ["Enabled", "Disabled"],
+      isIn: ["Enabled", "Disabled", "Expired"],
       required: true,
     },
 

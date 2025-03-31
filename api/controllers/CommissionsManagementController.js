@@ -94,11 +94,13 @@ exports.addCommission = async (req, res) => {
 
     const created = await CommissionsManagement.create(req.body).fetch();
     if (created) {
+      // update commission in campaign when adding from manage campaign
+      await Campaign.updateOne({id:campaign},{commission:created.amount,commission_event_type:created.event_type, commission_type : created.amount_type})
+
       return response.success(null, constants.COMMISSION.CREATED, req, res);
     }
     throw constants.COMMON.SERVER_ERROR;
   } catch (error) {
-    console.log(error, "------------------error");
     return response.failed(null, `${error}`, req, res);
   }
 };
@@ -145,8 +147,6 @@ exports.editCommssion = async (req, res) => {
     }
     throw constants.COMMON.SERVER_ERROR;
   } catch (error) {
-    console.log(error, "==error");
-
     return response.failed(null, `${error}`, req, res);
   }
 };
@@ -160,7 +160,7 @@ exports.getAllCommission = async (req, res) => {
     let skipNo = (Number(page) - 1) * Number(count);
 
     if (search) {
-      search = await Services.Utils.remove_special_char_exept_underscores(
+      search = Services.Utils.remove_special_char_exept_underscores(
         search
       );
       query.$or = [

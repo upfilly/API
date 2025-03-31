@@ -1,5 +1,6 @@
 const credentials = require('../../config/local.js'); //sails.config.env.production;
 const stripe = require("stripe")(credentials.PAYMENT_INFO.SECREATKEY);
+const constants = require("../../config/constants.js");
 
 exports.create_product = async (options) => {
     const product = await stripe.products.create({
@@ -270,14 +271,97 @@ exports.one_time_payment = async (options) => {
         //         quantity: options.qty,
         //     }
         // ],
-        line_items: options.lineItems,
+        line_items: options.line_items,
         discounts: options.discounts,
         mode: 'subscription',
+        subscription_data: options.subscription_data,
         success_url: `${credentials.FRONT_WEB_URL}/paymentSuccess?id=${options.metadata.user_id}`,
         cancel_url: `${credentials.FRONT_WEB_URL}/cancel?id=${options.metadata.user_id}`,
         metadata: options.metadata,
         customer_email: options.email
     });
-    // console.log(session, '==========session');
     return session;
+}
+// service of pay only commission 
+exports.one_time_payment_for_commission = async (options) => {
+    
+    const session = await stripe.checkout.sessions.create({
+        line_items: options.lineItems,
+        mode: 'payment',
+        success_url: `${credentials.FRONT_WEB_URL}/paymentSuccess?id=${options.metadata.user_id}`,
+        cancel_url: `${credentials.FRONT_WEB_URL}/cancel?id=${options.metadata.user_id}`,
+        metadata: options.metadata,
+        customer_email: options.email
+    });
+    return session;
+}
+
+// exports.one_time_payment = async (options) => {
+//     const session = await stripe.checkout.sessions.create({
+       
+//         line_items: options.line_items,
+//         mode: 'subscription',
+//         success_url: `${credentials.FRONT_WEB_URL}active-plan?payment=success`,
+//         cancel_url: `${credentials.FRONT_WEB_URL}plans`,
+//         metadata: options.metadata,
+//         customer_email: options.email,
+//         discounts:options.discounts
+//     });
+//     return session;
+// }
+
+///Code to add onboarding link
+
+exports.add_bank_account = async (options) => {
+    const account = await stripe.accounts.create({
+        country: options.country,
+        email: options.email,
+        business_profile: {
+            name: options.businessName,
+        },
+        type: 'express',
+        capabilities: {
+            transfers: { requested: true },
+            card_payments: { requested: true }
+
+        },
+    })
+    console.log("inside add bank account - ", account);
+    return account
+}
+
+exports.create_account_link = async (options) => {
+
+    const accountLink = await stripe.accountLinks.create({
+        account: options.accountId,
+        refresh_url: `${credentials.FRONT_WEB_URL}/profile`,
+        return_url: `${credentials.FRONT_WEB_URL}/`,
+        type: 'account_onboarding',
+
+    });
+
+    console.log("accountLink............", accountLink);
+    return accountLink;
+
+}
+
+exports.retrieve_account = async (accountId) => {
+    const accountDetails = await stripe.accounts.retrieve(accountId);
+
+    return accountDetails
+}
+
+exports.transfer_fund = async (options) => {
+    const createPayout = await stripe.transfers.create({
+        amount: Math.round(options.amount),
+        currency: options.currency,
+        destination: options.accountId,
+        description: options.description,
+    })
+    return createPayout
+}
+
+exports.retrieve_balance = async() => {
+    const balance = await stripe.balance.retrieve();
+    return balance
 }

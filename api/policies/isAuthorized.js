@@ -47,7 +47,6 @@ module.exports = async function (req, res, next) {
 
     jwt.verify(token, jwtObj, async function (err, token) {
         if (err) {
-            console.log("err token", err)
             return res.status(401).json({
                 "success": false,
                 "error":{"code": 401, "message": "Your session has expired. Please login"}

@@ -12,10 +12,11 @@ module.exports = {
         paid_to: { model: "users" },
         transaction_type: {
             type: 'string',
-            isIn: ["buy_subscription", "bank_account"]
+            isIn: ["buy_subscription", "bank_account","pay_commission"]
         },
 
         subscription_plan_id: { model: "subscriptionplans" },
+        special_plan_id: {model: "subscriptionplans"},
         subscription_id: { model: "subscriptions" },
         transaction_id: { type: "string" },
         stripe_charge_id: { type: "string" },

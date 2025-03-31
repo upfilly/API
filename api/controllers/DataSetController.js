@@ -13,6 +13,249 @@ const https = require('https');
 // const FileType = require('file-type');
 
 const Services = require('../services/index');
+const Papa = require('papaparse');
+const axios = require("axios")
+const { Builder } = require("xml2js");
+const xml2js = require("xml2js");
+const { parseString } = require("xml2js");
+const csv = require("csvtojson");
+const { writeToPath } = require("fast-csv");
+
+
+//****************************************************** Convert XMl To CSV **********************/
+async function xmlToCsv(xmlFile, csvFile) {
+  try {
+      // Read XML file
+      const xmlData = fs.readFileSync(xmlFile, "utf-8");
+
+      // Convert XML to JSON
+      const jsonData = await new Promise((resolve, reject) => {
+          parseString(xmlData, { explicitArray: false, trim: true }, (err, result) => {
+              if (err) reject(err);
+              else resolve(result);
+          });
+      });
+      console.log(jsonData,'jsonData')
+      // Find the deepest level where data exists dynamically
+      const findItems = (obj) => {
+          for (const key in obj) {
+              if (Array.isArray(obj[key])) return obj[key]; // Return array if found
+              if (typeof obj[key] === "object") return findItems(obj[key]); // Recursive search
+          }
+          throw new Error("No valid data array found in XML.");
+      };
+
+      const items = findItems(jsonData);
+      console.log(items,'items')
+      if (!Array.isArray(items)) throw new Error("Invalid XML structure");
+
+      // Get all unique keys dynamically
+      const allKeys = new Set();
+      items.forEach(item => {
+          Object.keys(item).forEach(key => allKeys.add(key));
+      });
+
+      // Convert extracted data into CSV format
+      const csvData = items.map(item => {
+          let row = {};
+          allKeys.forEach(key => row[key] = item[key] || ""); // Ensure all keys exist in each row
+          return row;
+      });
+
+      // Write data to CSV
+      writeToPath(csvFile, csvData, { headers: true }).on("finish", () => console.log(`CSV file saved: ${csvFile}`));
+      console.log(csvFile,'csvFile')
+      return csvFile
+  } catch (error) {
+      console.error("Error:", error.message);
+  }
+}
+//************************************8****************************Till here */
+
+// Function to sanitize object keys for XML
+function sanitizeKeys(obj) {
+  const sanitizedObj = {};
+  for (const key in obj) {
+    const newKey = key.replace(/\s+/g, "_"); // Replace spaces with underscores
+    sanitizedObj[newKey] = obj[key]; // Assign value to new key
+  }
+  return sanitizedObj;
+}
+
+
+ // Function to convert CSV to XML
+ async function convertCSVtoXML(csvFilePath) {
+  try {
+    let rootpath = process.cwd()
+    let xmlPath = rootpath + "/assets/documents/"
+    xmlPath = xmlPath + generateName() + ".xml"
+
+    // Convert CSV to JSON
+    let jsonArray = await csv().fromFile(csvFilePath);
+    jsonArray = jsonArray.map(sanitizeKeys);
+
+    // Convert JSON to XML format
+    const builder = new Builder({ headless: true, rootName: "Root" });
+    const xmlData = builder.buildObject({ Record: jsonArray });
+
+    // Write XML to file
+    if (!fs.existsSync(xmlPath)) {
+      // fs.mkdirSync("assets"); 
+    }
+    fs.writeFileSync(xmlPath, xmlData);
+    console.log(`✅ XML file saved at: ${xmlPath}`);
+    return xmlPath
+  } catch (error) {
+    console.error("❌ Error converting CSV to XML:", error);
+  }
+}
+ 
+async function fetchAndUpdateXML(url, xmlFilePath,affiliate_id,brand_id) {
+  try {
+    // Fetch XML data from the URL
+    const response = await axios.get(url);
+    const xmlData = response.data;
+
+    // Parse XML to JSON
+    const parser = new xml2js.Parser();
+    const builder = new xml2js.Builder({ headless: true });
+
+    const jsonData = await parser.parseStringPromise(xmlData);
+    
+    let existingRecords = jsonData?.Root?.Record;
+    
+    const lastProductURL = existingRecords.length > 0 ? existingRecords[existingRecords.length - 1]["Product_URL"]?.[0] : "https://default-url.com";
+    const newRecord = {
+      Share_URL : [`https://upfilly.com/?affiliate_id=${affiliate_id}$brand_id=${brand_id}&url=${lastProductURL}`]
+    }
+
+    // Ensure "Root" exists and has "Record" array
+    if (!jsonData.Root) {
+      jsonData.Root = { Record: [] };
+    }
+
+    // If there's only one record, convert it into an array
+    if (!Array.isArray(jsonData.Root.Record)) {
+      jsonData.Root.Record = [jsonData.Root.Record];
+    }
+
+    // Add the new record
+    jsonData.Root.Record.push(newRecord);
+
+    // Convert JSON back to XML
+    const updatedXml = builder.buildObject(jsonData);
+    xmlFilePath = xmlFilePath + generateName() + ".xml"
+    // Save the updated XML to a file
+    fs.writeFileSync(xmlFilePath, updatedXml);
+    console.log(`✅ New record added and XML saved at: ${xmlFilePath}`);
+    return xmlFilePath
+  } catch (error) {
+    console.error("❌ Error fetching or updating XML:", error);
+  }
+}
+
+generateName = function () {
+  // action are perform to generate random name for every file
+  var uuid = require('uuid');
+  var randomStr = uuid.v4();
+  var date = new Date();
+  var currentDate = date.valueOf();
+
+  retVal = randomStr + currentDate;
+  return retVal;
+};
+
+async function downloadCSV(url) {
+  try {
+    const { data } = await axios.get(url);
+    
+    // ✅ Check if response contains unwanted metadata
+  if (data.includes("google.visualization.Query.setResponse")) {
+    const jsonMatch = data.match(/google\.visualization\.Query\.setResponse\((.*)\);/);
+    
+    if (jsonMatch && jsonMatch[1]) {
+      const jsonData = JSON.parse(jsonMatch[1]);
+
+      // ✅ Extract column headers from JSON
+      const headers = jsonData.table.cols.map(col => col.label || ""); // Handle empty labels
+
+      // ✅ Extract row values
+      const rows = jsonData.table.rows.map(row => row.c.map(cell => (cell ? cell.v : "")));
+
+      // ✅ Combine headers and rows into CSV format
+      return [headers.join(","), ...rows.map(row => row.join(","))].join("\n");
+    }
+  }
+
+  // ✅ Return empty CSV format if parsing fails
+  return "";
+  } catch (error) {
+    console.error("Error downloading CSV:", error);
+    return null;
+  }
+}
+
+function saveCSVToFile(csvData, filename) {
+  // const filePath = path.join(__dirname, "assets", filename);
+  let rootpath = process.cwd()
+  let csvPath = rootpath + "/assets/url_docs/"
+  csvPath = csvPath + generateName() + ".csv"
+  if (!fs.existsSync(csvPath)) {
+    // fs.mkdirSync("assets");
+    
+  }
+
+  try {
+    fs.writeFileSync(csvPath, csvData);
+    
+    csvPath = csvPath.split("/")
+    csvPath = constant.BACK_WEB_URL + "/"+csvPath[6]+"/"+csvPath[7]
+    console.log(csvPath,'csvPatddsfdsfdh')
+    return csvPath
+  } catch (error) {
+    console.error("Error writing CSV file:", error);
+  }
+}
+
+async function processCSVAndRespond(csvFilePath, newColumnName, affliate_id,brand_id) {
+  try {
+    let resolvedPath = csvFilePath //path.resolve(csvFilePath);
+    
+    const csvData = fs.readFileSync(resolvedPath, 'utf8');
+
+    const results = Papa.parse(csvData, {
+      header: true,
+      dynamicTyping: true,
+      skipEmptyLines: true,
+    });
+
+    const data = results.data;
+
+    data.forEach(row => {
+      if (row['Product ID'] && row['Product URL']) {
+        row[newColumnName] = `https://upfilly.com/?affiliate_id=${affliate_id}&brand_id=${brand_id}&url=${row['Product URL']}`;
+      } else {
+        row[newColumnName] = "Missing Data";
+      }
+    });
+
+    const csv = Papa.unparse(data, { header: true });
+
+    // Optional: Save the updated CSV
+    // console.log(resolvedPath,'resolvedPath')
+    
+    fs.writeFileSync(resolvedPath, csv, 'utf8');
+    
+    resolvedPath = resolvedPath.split("/")
+    resolvedPath = "/"+ resolvedPath[6]+"/"+resolvedPath[7] //constant.BACK_WEB_URL + 
+    return resolvedPath; // Return the CSV data
+
+  } catch (error) {
+    console.error('Error processing CSV:', error);
+    throw error; // Re-throw the error for the caller to handle
+  }
+}
+
 
 
 let Unique = (arr) => {
@@ -126,7 +369,6 @@ exports.importCsvData = async (req, res) => {
       res
     );
   } catch (err) {
-    console.log(err);
     res.status(400).json({
       success: false,
       error: {
@@ -180,7 +422,6 @@ exports.importCsvDataHttp = async (req, res) => {
       res
     );
   } catch (err) {
-    console.log(err);
     res.status(400).json({
       success: false,
       error: {
@@ -221,8 +462,25 @@ async function parseExcelFile(fileBuffer, addedBy) {
   return data;
 }
 
-
-
+async function parseCSV(csvData, addedBy) {
+  return new Promise((resolve, reject) => {
+    Papa.parse(csvData, {
+      header: true, // Automatically uses the first row as headers
+      skipEmptyLines: true, // Skips empty rows
+      complete: function (results) {
+        const parsedData = results.data.map((row) => ({
+          ...row,
+          addedBy, // Add the `addedBy` field to each row
+        }));
+        resolve(parsedData);
+      },
+      error: function (error) {
+        reject(error);
+      },
+    });
+  });
+}
+/*
 async function parseCSV(csvData, addedBy) {
   // Split the CSV data by lines
   const lines = csvData.trim().split("\n");
@@ -246,7 +504,7 @@ async function parseCSV(csvData, addedBy) {
 
   return result;
 }
-
+*/
 exports.sendDataSets = async (req, res) => {
   try {
     let validation_result = await Validations.DataSetValidation.addDataSet(
@@ -271,31 +529,18 @@ exports.sendDataSets = async (req, res) => {
       isDeleted: false,
     };
 
-    // console.log(query1);
-    let listOfAcceptedInvites = await AffiliateInvite.find(query1);
-    let listOfBrandInvite = await AffiliateBrandInvite.find(query2);
 
-    function removeDuplicates(array, key) {
-      const seen = new Set();
-      return array.filter((item) => {
-        const keyValue = item[key];
-        if (seen.has(keyValue)) {
-          return false;
-        }
-        seen.add(keyValue);
-        return true;
-      });
-    }
+    let BrandAffiliateAssociations = await BrandAffiliateAssociation.find({
+      brand_id: req.body.brand_id,
+      status: "accepted",
+      isDeleted: false,
+      isActive: true
+    });
+    listOfAcceptedInvites = BrandAffiliateAssociations;
 
-    // Combine the two lists
-    let combinedList = [...listOfBrandInvite, ...listOfAcceptedInvites];
-    // console.log(combinedList);
-    // Remove duplicates based on the 'id' key
-    listOfAcceptedInvites = removeDuplicates(combinedList, "affiliate_id");
-
-    for (let invites of listOfAcceptedInvites) {
+    for (let invite of listOfAcceptedInvites) {
       let findUser = await Users.findOne({
-        id: invites.affiliate_id,
+        id: invite.affiliate_id,
         // status: data.affiliateStatus,
         isDeleted: false,
       });
@@ -307,21 +552,167 @@ exports.sendDataSets = async (req, res) => {
 
       await Emails.DataSet.sendDataSet(emailPayload);
     }
+    // console.log(listOfAcceptedInvites,'listOfAcceptedInvites')
+
     let payload = {
       addedBy: req.identity.id,
-      filePath: data.filePath,
+      filePath: data.filePath || "",
+      url : data.url || "",
     }
 
     await DataSet.create(payload);
 
+    if(data.type == "url"){
+      const url = data.url
+      if(url.endsWith("xml")){
+        console.log("under xml")
+        let rootpath = process.cwd()
+        const xmlFilePath = rootpath + "/assets/documents/"
+        
+        for await (let itm of listOfAcceptedInvites ){
+          let xml = await fetchAndUpdateXML(url, xmlFilePath,itm.affiliate_id,req.identity.id);
+
+          xml = xml.split("/")
+          xml = xml.splice(-2)
+          xml = xml.join("/")
+          
+          let newXmlPath = rootpath + "/assets/"
+          let csv_path = rootpath + "/assets/url_docs/" + generateName() + ".csv"
+          let csvData = await xmlToCsv(newXmlPath+xml,csv_path)
+
+          csvData = csvData.split("/")
+          csvData = csvData.splice(-2)
+          csvData = csvData.join("/")
+          payload = {
+            brand_id: req.identity.id,
+            url: csvData || "",//data.url
+            xml : xml,
+            affiliate_id : itm.affiliate_id
+          }
+          let existingData = await DataFeeds.findOne({
+            url :csvData,
+            brand_id: req.identity.id,
+            xml : xml,
+            affiliate_id : itm.affiliate_id
+          });
+          
+          if (!existingData) {
+            await DataFeeds.create(payload);
+          } else {
+            await DataFeeds.updateOne({ url :csvData, brand_id: req.identity.id,xml : xmlPath,type: data.type }, payload);
+          }
+        }
+        return response.success(null, constants.DATASET.ADDED, req, res);
+      }
+
+      const googleSheetURL = url;
+
+      // Convert Google Sheets URL to CSV export URL
+      const csvExportURL = googleSheetURL.replace('/edit', '/gviz/tq?tqx=out:csv');
+      const csvData = await downloadCSV(csvExportURL);
+      if (csvData) {
+        // Specify the filename to save the data
+        const filename = 'output_with_new_column.csv';
+
+        // Save the downloaded CSV data to a file
+        var urlData = saveCSVToFile(csvData, filename);
+        
+        let csv_url = urlData
+        // console.log(csv_url,'=====')
+        csv_url = csv_url.split("/") // on server 
+        csv_url = csv_url.splice(-2)
+        csv_url = csv_url.join("/")
+        
+        var rootpath = process.cwd();
+        const csvPath = rootpath + "/assets/"+ csv_url //path.join(__dirname, 'data.csv'); // Path relative to script
+        
+        const newColumn = "Share URL";
+        for await (let itm of listOfAcceptedInvites ){
+        urlData = await processCSVAndRespond(csvPath,newColumn,itm.affiliate_id,req.identity.id)
+        urlData =csv_url // urlData.split("/") //[1] + "/" + urlData.split("/")[2]
+        
+        // convert csv into xml
+        let xmlPath = await convertCSVtoXML(csvPath)
+        xmlPath = xmlPath.split("/")
+        xmlPath = xmlPath.splice(-2)
+        xmlPath = xmlPath.join("/")
+        
+          payload = {
+            brand_id: req.identity.id,
+            url: urlData,//data.url
+            xml : xmlPath,
+            affiliate_id : itm.affiliate_id
+          }
+          let existingData = await DataFeeds.findOne({
+            url :data.url,
+            brand_id: req.identity.id,
+            xml : xmlPath,
+            affiliate_id : itm.affiliate_id
+          });
+          
+          if (!existingData) {
+            await DataFeeds.create(payload);
+          } else {
+            await DataFeeds.updateOne({ url :data.url, brand_id: req.identity.id,xml : xmlPath }, payload);
+          }
+        }
+      return response.success(null, constants.DATASET.ADDED, req, res);
+      } else {
+        console.error('Failed to download CSV data');
+      }
+    }else {
+      var rootpath = process.cwd();
+      const csvPath = rootpath + "/assets"+ data.filePath //path.join(__dirname, 'data.csv'); // Path relative to script
+      
+      const newColumn = "Affiliate Link";
+      for await (let itm of listOfAcceptedInvites ){
+      let updatedCSV = await processCSVAndRespond(csvPath,newColumn,itm.affiliate_id,req.identity.id)
+      // converting csv file into xml
+
+      let xmlPath = await convertCSVtoXML(csvPath)
+      xmlPath = xmlPath.split("/")
+      xmlPath = xmlPath.splice(-2)
+      xmlPath = xmlPath.join("/")
+      // console.log(listOfAcceptedInvites.length,"listOfAcceptedInvites")
+
+        console.log('data.filePath')
+        payload = {
+          brand_id: req.identity.id,
+          filePath: updatedCSV, //data.filePath   contain file path + new column which is added
+          xml : xmlPath,
+          affiliate_id : itm.affiliate_id
+
+        }
+        let existingData = await DataFeeds.findOne({
+          filePath :data.filePath,
+          brand_id: req.identity.id,
+          affiliate_id : itm.affiliate_id
+        });
+        
+        if (!existingData) {
+          await DataFeeds.create(payload);
+        } else {
+          await DataFeeds.updateOne({ url :data.filePath, brand_id: req.identity.id,xml : xmlPath }, payload);
+        }
+      }
+
+      return response.success(student_arr, constants.DATASET.ADDED, req, res);
+
+    }
+
     // here we are storing data feeds
+    
 
     let duplicate = 0;
     let createdCount = 0;
     const url = constant.BACK_WEB_URL + "/" + data.filePath; // assume the URL is sent in the request body
-    console.log(url);
+    
+
     const { fileType1, fileBuffer } = await getFileFromUrl(url);
+    
+    
     let fileType = url.substr(url.lastIndexOf(".") + 1)
+    console.log(fileType,'fileType')
     if (fileType !== 'csv' && fileType !== 'xlsx' && fileType !== 'xls') {
       throw {
         success: false,
@@ -339,43 +730,65 @@ exports.sendDataSets = async (req, res) => {
     }
 
 
-    for (let item of student_arr) {
+    for await (let item of student_arr) {
       payload = {
-        ID: item.ID,
+        ID: item["Product ID"],
         type: item.Type,
         SKU: item.SKU,
         Name: item.Name,
-        Published: Boolean(Number(item.Published)),
-        isFeatured: Boolean(Number(item.Is_Featured)),
-        isVisible: Boolean(Number(item.Is_Visible)),
-        shortDescription: item.Short_Description,
-        longDescription: item.Long_Description,
+        productURL: item["Product URL"],
+        price: item["Price"],
+        retailPrice: item["Retail Price"],
+        thumbnailURL: item["Thumbnail URL"],
+        searchKeywords: item["Search Keywords"],
+        description: item["Description"],
+        category: item["Category"],
+        categoryId: item["Category ID"],
+        brand: item["Brand"],
+        childSKU: item["Child SKU"],
+        childPrice: item["Child Price"],
+        color: item["Color"],
+        colorFamily: item["Color Family"],
+        colorSwatches: item["Color Swatches"],
+        size: item["Size"],
+        shoeSize: item["Shoe Size"],
+        pantSize: item["Pants Size"],
+        occasion: item["Occassion"],
+        season: item["Season"],
+        badges: item["Badges"],
+        ratingAvg: item["Rating Avg"],
+        ratingCount: item["Rating Count"],
+        inventoryCount: item["Inventory Count"],
+        dateCreated: item["Date Created"],
         brand_name: req.identity.name,
-        brand_id: req.identity.id,
-        url: item.url
+        brand_id: req.identity.id
+        //
+        // Published: Boolean(Number(item.Published)),
+        // isFeatured: Boolean(Number(item.Is_Featured)),
+        // isVisible: Boolean(Number(item.Is_Visible)),
+        // shortDescription: item.Short_Description,
+        // longDescription: item.Long_Description,
+        
+        // url: item.url
       }
 
       let existingData = await DataFeeds.findOne({
-        ID: item.ID,
+        ID: item["Product ID"],
         SKU: item.SKU,
-        brand_id: req.identity.id,
+        brand_id: req.identity.id
       });
 
       if (!existingData) {
         await DataFeeds.create(payload);
       } else {
-        await DataFeeds.updateOne({ ID: item.ID }, payload);
+        await DataFeeds.updateOne({ ID: item["Product ID"], SKU: item.SKU, brand_id: req.identity.id }, payload);
       }
 
     }
-
-
-
-
-    response.success(student_arr, constants.DATASET.ADDED, req, res);
+    return response.success(student_arr, constants.DATASET.ADDED, req, res);
   } catch (err) {
-    console.log(err);
-    response.failed(err, `${err}`, req, res);
+    console.log(err,'============errr')
+    return response.failed(err, `${err}`, req, res);
   }
 };
 
@@ -387,10 +800,12 @@ exports.listOfDataSet = async (req, res) => {
     var count = parseInt(req.param("count"));
     let sortBy = req.param("sortBy");
     let addedBy = req.param("addedBy");
-    let user_id = req.param("user_id");
+    // let user_id = req.param("user_id");
     let startDate = req.param("startDate");
     let endDate = req.param("endDate");
-
+    let affiliate_id = req.param("affiliate_id");
+    let brand_id = req.param("brand_id");
+    //Get all brands associated with this affiliate
     var date = new Date();
 
     var query = {};
@@ -415,9 +830,9 @@ exports.listOfDataSet = async (req, res) => {
 
     query.isDeleted = false;
 
-    if (user_id) {
-      query.user_id = new ObjectId(user_id);
-    }
+    // if (user_id) {
+    //   query.user_id = new ObjectId(user_id);
+    // }
 
     if (addedBy) {
       query.addedBy = new ObjectId(addedBy);
@@ -441,9 +856,6 @@ exports.listOfDataSet = async (req, res) => {
       endDate = new Date(endDate);
       query.submitDateAndTime = { $lte: endDate };
     }
-
-    console.log(query);
-
     const pipeline = [
       {
         $lookup: {
@@ -462,14 +874,14 @@ exports.listOfDataSet = async (req, res) => {
       {
         $lookup: {
           from: "users",
-          localField: "user_id",
+          localField: "brand_id",
           foreignField: "_id",
-          as: "user_details",
+          as: "brand_details",
         },
       },
       {
         $unwind: {
-          path: "$user_details",
+          path: "$brand_details",
           preserveNullAndEmptyArrays: true,
         },
       },
@@ -477,8 +889,10 @@ exports.listOfDataSet = async (req, res) => {
         $project: {
           user_id: "$user_id",
           filePath: "$filePath",
-          user_details: "$user_details",
+          brand_details: "$brand_details",
           addedBy_details: "$addedBy_details",
+          url:"$url",
+          xml :"$xml",// its path in docuemnts
           status: "$status",
           isDeleted: "$isDeleted",
           addedBy: "$addedBy",
@@ -521,6 +935,7 @@ exports.listOfDataSet = async (req, res) => {
 
   } catch (err) {
     // (err)
+    console.log(err);
     return res.status(400).json({
       success: false,
       error: { code: 400, message: "" + err },
@@ -544,8 +959,6 @@ exports.sendEmailMessage = async (req, res) => {
     let data = req.body;
     if (data.isAllJoined) {
 
-      console.log("In All Joined Condition");
-
       query1 = {
         addedBy: req.identity.id,
         status: "accepted",
@@ -558,8 +971,16 @@ exports.sendEmailMessage = async (req, res) => {
       };
 
       // console.log(query1);
-      let listOfAcceptedInvites = await AffiliateInvite.find(query1);
-      let listOfBrandInvite = await AffiliateBrandInvite.find(query2);
+      // let listOfAcceptedInvites = await AffiliateInvite.find(query1);
+      // let listOfBrandInvite = await AffiliateBrandInvite.find(query2);
+
+      let BrandAffiliateAssociations = await BrandAffiliateAssociation.find({
+        brand_id: req.identity.id,
+        status: "accepted",
+        isDeleted: false,
+        isActive: true
+      });
+      listOfAcceptedInvites = BrandAffiliateAssociations;
 
       function removeDuplicates(array, key) {
         const seen = new Set();
@@ -574,10 +995,10 @@ exports.sendEmailMessage = async (req, res) => {
       }
 
       // Combine the two lists
-      let combinedList = [...listOfBrandInvite, ...listOfAcceptedInvites];
-      // console.log(combinedList);
-      // Remove duplicates based on the 'id' key
-      listOfAcceptedInvites = removeDuplicates(combinedList, "affiliate_id");
+      // let combinedList = [...listOfBrandInvite, ...listOfAcceptedInvites];
+      // // console.log(combinedList);
+      // // Remove duplicates based on the 'id' key
+      // listOfAcceptedInvites = removeDuplicates(combinedList, "affiliate_id");
       // console.log(listOfAcceptedInvites, "==listOfAcceptedInvites");
 
       for await (let invites of listOfAcceptedInvites) {
@@ -627,8 +1048,7 @@ exports.sendEmailMessage = async (req, res) => {
 
     // }
     if (data.acceptedDate) {
-      let time_interval_payload = {}
-      console.log("In Before Accepted Condition");
+      let time_interval_payload = {};
 
       if (data.timeInterval === "before") {
         let updatedAt = {
@@ -798,7 +1218,6 @@ exports.sendEmailMessage = async (req, res) => {
 
     response.success(null, constants.EMAILMESSAGE.ADDED, req, res);
   } catch (error) {
-    console.log(error);
     return res.status(400).json({
       success: false,
       error: { code: 400, message: "" + error },
@@ -996,7 +1415,6 @@ exports.getEmailMessage = async (req, res) => {
 exports.ListDataSetsBrand = async (req, res) => {
   try {
     let affiliate_id = req.identity.id;
-
     if (affiliate_id) {
       let listAffiliateInvite = await AffiliateInvite.find({ affiliate_id: affiliate_id, isDeleted: false });
       if (listAffiliateInvite) {
@@ -1030,11 +1448,6 @@ exports.ListDataSetsBrand = async (req, res) => {
 
     }
 
-
-
-
-
-
   } catch (err) {
     return res.status(400).json({
       success: false,
@@ -1042,4 +1455,78 @@ exports.ListDataSetsBrand = async (req, res) => {
     });
   }
 
+}
+
+
+exports.ListDataFeedsBrand = async (req, res) => {
+  try {
+    let affiliate_id = req.param('affiliate_id');
+    let brand_id = req.param('brand_id');
+    // let BrandAffiliateAssociations = await BrandAffiliateAssociation.find({
+    //   affiliate_id: affiliate_id,
+    //   status: "accepted",
+    //   isDeleted: false,
+    //   isActive: true
+    // });
+    // let listOfBrandIds = BrandAffiliateAssociations.map((cur)=>String(cur.brand_id));
+    let dataFeeds;
+    if(brand_id) {
+      if(listOfBrandIds.includes(brand_id)) {
+        // previous code ----> dataFeeds = await DataFeeds.find({brand_id: brand_id})
+        dataFeeds = await DataFeeds.find({brand_id: brand_id}).select(["url","xml","filePath","brand_id"]).populate("brand_id").sort("createdAt Desc");
+      } else {
+        dataFeeds = [];
+      }
+    } else {
+        // previous code ----> dataFeeds = await DataFeeds.find({brand_id: brand_id})
+        
+      // dataFeeds = await DataFeeds.find({brand_id: listOfBrandIds}).select(["url","xml","filePath","brand_id"]).populate("brand_id").sort("createdAt Desc");
+      dataFeeds = await DataFeeds.find({affiliate_id : affiliate_id}).select(["url","xml","filePath","brand_id"]).populate("brand_id").sort("createdAt Desc");
+      
+    }
+
+      return res.status(200).json({
+        success: true,
+        data: dataFeeds,
+        total: dataFeeds.length,
+      });
+
+    } catch (err) {
+      console.log(err);
+    return res.status(400).json({
+      success: false,
+      error: { code: 400, message: "" + err },
+    });
+  }
+
+}
+
+exports.viewCSVAffiliate = async(req,res) => {
+  try {
+    
+    const {csv_url} = req.query
+    if(!csv_url){
+      return res.status(400).json({
+        success: false,
+        error: { code: 400, message: "CSV file require"  },
+      });
+    }
+    
+  var rootpath = process.cwd();
+  const csvPath = rootpath + "/assets"+ csv_url //path.join(__dirname, 'data.csv'); // Path relative to script
+  
+  const newColumn = "Share URL";
+  let updatedCSV = await processCSVAndRespond(csvPath,newColumn,req.identity.id)
+  return res.status(200).json({
+    success: true,
+    data: updatedCSV,
+    message : "Data fetch successfully"
+  });
+} catch (error) {
+  return res.status(400).json({
+    success: false,
+    error: { code: 400, message: "" + error },
+  });
+}
+      
 }

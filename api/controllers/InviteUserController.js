@@ -134,7 +134,6 @@ module.exports = {
 
       return response.success(user, constants.USERINVITE.USERINVITED, req, res);
     } catch (error) {
-      console.log(error);
       return response.failed(null, `${error}`, req, res);
     }
   },
@@ -205,7 +204,6 @@ module.exports = {
         data: activeUser,
       });
     } catch (err) {
-      console.log(err);
       return res.status(400).json({
         success: false,
         error: { code: 400, message: "" + err },
@@ -270,7 +268,6 @@ module.exports = {
         message: constants.user.INVITED_USER_DELETED,
       });
     } catch (err) {
-      console.log(err);
       return res.status(400).json({
         success: false,
         error: { code: 400, message: "" + err },
@@ -315,7 +312,7 @@ module.exports = {
       let skipNo = (Number(page) - 1) * Number(count);
 
       if (search) {
-        search = await Services.Utils.remove_special_char_exept_underscores(
+        search = Services.Utils.remove_special_char_exept_underscores(
           search
         );
         query.$or = [{ name: { $regex: search, $options: "i" } }];
@@ -453,7 +450,6 @@ module.exports = {
       let id = req.identity.id;
       let listOfOtherUsers = [];
       if (req.identity.role === "brand" || req.identity.role === "affiliate") {
-        console.log(req.identity.id);
         listOfOtherUsers = await InviteUsers.find({
           addedBy: req.identity.id,
           isDeleted: false,
@@ -527,7 +523,6 @@ module.exports = {
         );
       }
     } catch (error) {
-      console.log(error);
       return response.failed(null, `${error}`, req, res);
     }
   },
@@ -601,7 +596,6 @@ module.exports = {
         message: constants.user.INVITED_USER_UPDATED,
       });
     } catch (err) {
-      console.log(err);
       return res.status(400).json({
         success: false,
         error: { code: 400, message: "" + err },
@@ -661,7 +655,6 @@ module.exports = {
         data: updatedUser,
       });
     } catch (err) {
-      console.log(err);
       return res.status(400).json({
         success: false,
         error: { code: 400, message: "" + err },
