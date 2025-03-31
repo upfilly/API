@@ -1992,17 +1992,60 @@ module.exports = {
 
           get_user.listOfOtherUsers.push(current_user);
         }
-
-        if (get_user && get_user.category_id && get_user.category_id != "") {
+        
+        let all_category = []
+        let all_sub_category = []
+        let all_sub_child_category = []
+        if (get_user && get_user.category_id && get_user.category_id != "" && get_user.category_id.length>0) {
           // console.log(get_user.category_id, "---------get_user.category_id");
-          let get_category = await CommonCategories.findOne({
-            id: get_user.category_id,
-          });
-          if (get_category) {
-            // console.log(get_category, "------------get_category");
-            get_user.category_name = get_category.name;
+          for await (let category of get_user.category_id){
+            let get_category = await CommonCategories.findOne({
+              id: category,
+            }).select("name");
+            if (get_category) {
+              // console.log(get_category, "------------get_category");
+              // get_user.category_name = get_category.name;
+              all_category.push(get_category)
+            }
+
           }
         }
+        // sub category data
+
+        if (get_user && get_user.sub_category_id && get_user.sub_child_category_id.length>0) {
+          // console.log(get_user.category_id, "---------get_user.category_id");
+          for await (let category of get_user.sub_category_id){
+            let get_category = await CommonCategories.findOne({
+              id: category,
+            }).select("name");
+            if (get_category) {
+              // console.log(get_category, "------------get_category");
+              // get_user.category_name = get_category.name;
+              all_sub_category.push(get_category)
+            }
+
+          }
+        }
+
+        // sub child categories 
+        if (get_user && get_user.sub_child_category_id && get_user.sub_child_category_id.length>0) {
+          // console.log(get_user.category_id, "---------get_user.category_id");
+          for await (let category of get_user.sub_child_category_id){
+            let get_category = await SubChildCategory.findOne({
+              id: category,
+            }).select("name");
+            if (get_category) {
+              // console.log(get_category, "------------get_category");
+              // get_user.category_name = get_category.name;
+              all_sub_child_category.push(get_category)
+            }
+
+          }
+        }
+
+        get_user.all_category = all_category
+        get_user.all_sub_category = all_sub_category
+        get_user.all_sub_child_category = all_sub_child_category
 
         if (
           get_user &&
