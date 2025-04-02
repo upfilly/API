@@ -2323,20 +2323,14 @@ module.exports = {
       if (!get_user) {
         throw constants.user.INVALID_ID;
       }
+      console.log(get_user.role,'get_user.role')
       if (get_user.isVerified == "Y" && get_user.role == "brand") {
-        // if (get_user.subscription_id && get_user.subscription_id != "") {
-          // return res.redirect(
-          //   `${credentials.FRONT_WEB_URL}/dashboard?id=${get_user.id}`
-          // );
-        // } else {
-        //   return res.redirect(
-        //     `${credentials.FRONT_WEB_URL}/pricing?id=${get_user.id}`
-        //   );
-        // }
+        console.log("dkhfisdjflsjflsdjfksjdfdslfd")
         return res.redirect(
           `${credentials.FRONT_WEB_URL}/dashboard?id=${get_user.id}`
         );
       } else if (get_user.isVerified == "Y" && get_user.role == "affiliate") {
+        console.log("98888888888888888888888888888888888888888888")
         return res.redirect(`${credentials.FRONT_WEB_URL}`);
       } else if (get_user.isVerified == "Y" && get_user.role == "team") {
         return res.redirect(`${credentials.FRONT_WEB_URL}`);
