@@ -30,7 +30,7 @@ exports.brandVerifyLink = async (options) => {
                  <div style="max-width: 308px; margin: auto; padding-bottom: 2rem;">
      <img src="${credentials.BACK_WEB_URL}/images/Daco.png" style="width: 60px;margin-top: 2rem;">`;
 
-    if (get_user && ["brand", "affiliate"].includes(get_user.role)) {
+    if (get_user && ["affiliate"].includes(get_user.role)) { // brand is removed from array
         message += `
          <p style="margin-bottom: 8px;color: #747474;font-size: 13px;line-height: 18px; font-weight: bold "><br>Note : Your request has been sent to the admin. Once approved, you will be able to access your dashboard section.</p>`
     }
