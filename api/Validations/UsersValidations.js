@@ -74,7 +74,7 @@ exports.registerBrandWithPlan = async (req, res, next) => {
         plan_id: Joi.string().required(),
         special_plan_id: Joi.string().optional().allow(null),
         network_plan_amount: Joi.number().required(),
-        managed_services_plan_amount: Joi.number().required(),
+        managed_services_plan_amount: Joi.number().optional(),
         interval: Joi.string().required(),
         interval_count: Joi.number().required(),
         isSpecial: Joi.boolean().required(),
