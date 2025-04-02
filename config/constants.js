@@ -25,7 +25,7 @@ module.exports.constants = {
     PASSWORD_CHANGED: "Password has been changed",
     ROLE_REQUIRED: "Role is required.",
     USERNAME_ALREADY: "Username is already exits.",
-    USERNAME_INACTIVE: "User is in active",
+    USERNAME_INACTIVE: "User is inactive",
     CONPASSWORD_REQUIRED: "Confirm Password is required",
     CURRENTPASSWORD_REQUIRED: "Current Password is required",
     CONFIRM_PASSWORD_NOTMATCH: "Confirm Password is not Match",
