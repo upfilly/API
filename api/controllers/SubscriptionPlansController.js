@@ -2154,6 +2154,30 @@ exports.webhook = async (request, response) => {
                         if (updateSubscription && (updateSubscription.status == "cancelled" || updateSubscription.status == "inactive")) {
                             await Users.updateOne({id: event_object.metadata.user_id}).set({plan_id: null, special_plan_id: null, isPayment: false});
                         }
+                        // create subscription
+                        let subscriptionPayload = {
+                            user_id: event_object.metadata.user_id,
+                            stripe_subscription_id: event_object.id,
+                            subscription_plan_id: event_object.metadata.plan_id,
+                            status: "active",
+                            amount: Number(event_object.metadata.network_plan_amount)+Number(event_object.metadata.managed_services_plan_amount),
+                            network_plan_amount: event_object.metadata.network_plan_amount,
+                            managed_services_plan_amount: event_object.metadata.managed_services_plan_amount,
+                            interval: event_object.metadata.interval,
+                            interval_count: event_object.metadata.interval_count,
+                            valid_upto: new Date(cancelAt*1000),
+                            special_plan_id: event_object.metadata.special_plan_id,
+                            addedBy: event_object.metadata.user_id,
+                            updatedBy: event_object.metadata.user_id
+                        }
+                        // console.log(subscriptionPayload);
+                        let subscription = await Subscriptions.create(subscriptionPayload).fetch();
+                        await Users.updateOne({id: event_object.metadata.user_id}).set({
+                            subscription: subscription.id,
+                            plan_id: event_object.metadata.plan_id,
+                            special_plan_id: event_object.metadata.special_plan_id,
+                            isPayment: true
+                        });
                     }
                 }
                 
