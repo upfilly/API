@@ -1762,12 +1762,13 @@ exports.webhook = async (request, response) => {
           break;
         case "checkout.session.completed":
             case 'checkout.session.completed':
-
+          console.log("in checkout.session.completed")
             var event_object = event.data.object;
             
             if (event_object) {
 
                 if(event_object.metadata.commission === "paid"){
+                    console.log("in event_object.metadata.commission")
                     // update user
                     console.log(event_object.metadata.brandAssociateId,'event_object.metadata.brandAssociateId')
                     let abc = await AffiliateLink.updateOne({id:event_object.metadata.brandAssociateId},{commission_paid :"paid"})
@@ -1792,6 +1793,7 @@ exports.webhook = async (request, response) => {
 
                      await Transactions.create(transaction_payload).fetch();
                 }else {
+                    console.log("in else=========================")
                     let create_subscription_payload = {
                         user_id: event_object.metadata.user_id,
                         subscription_plan_id: event_object.metadata.plan_id,
@@ -2112,6 +2114,7 @@ exports.webhook = async (request, response) => {
           */
           break;
         case "customer.subscription.created":
+            console.log("sfisljflisdjflsdjk")
             var event_object = event.data.object;
         //   console.log(
         //     event_object.metadata,
