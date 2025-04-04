@@ -1805,7 +1805,7 @@ exports.webhook = async (request, response) => {
                         interval_count: event_object.metadata.interval_count ? event_object.metadata.interval_count : 1,
                         trial_period_days: event_object.metadata.trial_period_days ? event_object.metadata.trial_period_days : 0,
                         status: "active",
-                        valid_upto: new Date(create_subscription.current_period_end * 1000),
+                        valid_upto: new Date(event_object.current_period_end * 1000),
                         // trial_period_end_date: new Date(create_subscription.trial_end * 1000),
                     };
 
