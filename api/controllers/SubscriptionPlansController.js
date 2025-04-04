@@ -1761,7 +1761,7 @@ exports.webhook = async (request, response) => {
           }*/
           break;
         case "checkout.session.completed":
-            case 'checkout.session.completed':
+        // case 'checkout.session.completed':
           console.log("in checkout.session.completed")
             var event_object = event.data.object;
             
@@ -1810,7 +1810,7 @@ exports.webhook = async (request, response) => {
                     };
 
                     let add_subscription = await Subscriptions.create(create_subscription_payload).fetch();
-                    // console.log(add_subscription, "---add_subscription");
+                    console.log(add_subscription, "---add_subscription");
                     if (add_subscription) {
                          await Users.updateOne(
                             { id: event_object.metadata.user_id },
@@ -2129,9 +2129,9 @@ exports.webhook = async (request, response) => {
               });
             //find any existing subscriptions for the user
             let get_existing_subscription = await Subscriptions.findOne({user_id: event_object.metadata.user_id, status: "active"});
-
+              console.log(get_existing_subscription,'get_existing_subscription')
             if (get_existing_subscription && get_existing_subscription.stripe_subscription_id) {
-    
+                console.log("lsdflidsjfldsjflkdsf")
                 let get_stripe_existing_subscription = await Services.StripeServices.retrieve_subscrition({
                     stripe_subscription_id: get_existing_subscription.stripe_subscription_id
                 })
@@ -2182,6 +2182,7 @@ exports.webhook = async (request, response) => {
                 }
                 
             } else if(get_existing_subscription) {
+                console.log("lsdjflsdjfldsjflsdfjdslfjldfjdsf")
                 await Subscriptions.updateOne({id: get_existing_subscription.id}).set({
                     status: "cancelled"
                 });
@@ -2205,6 +2206,7 @@ exports.webhook = async (request, response) => {
             }
             // console.log(subscriptionPayload);
             let subscription = await Subscriptions.create(subscriptionPayload).fetch();
+            console.log(subscription,'subscription created')
             await Users.updateOne({id: event_object.metadata.user_id}).set({
                 subscription: subscription.id,
                 plan_id: event_object.metadata.plan_id,
