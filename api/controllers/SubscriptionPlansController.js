@@ -2122,98 +2122,98 @@ exports.webhook = async (request, response) => {
         //   );
         //   console.log(event_object.metadata.promoId,"++++++++++++++++++++++++++event_object.metadata.promoId")
 
-          if (event_object) {
-            let cancelAt = Math.floor(Date.now() / 1000) + Number(event_object.metadata.interval_count)*30*24*60*60;
-            const updatedSubscription = await stripe.subscriptions.update(event_object.id, {
-                cancel_at: cancelAt, // Set the cancel_at timestamp
-              });
-            //find any existing subscriptions for the user
-            let get_existing_subscription = await Subscriptions.findOne({user_id: event_object.metadata.user_id, status: "active"});
-              console.log(get_existing_subscription,'get_existing_subscription')
-            if (get_existing_subscription && get_existing_subscription.stripe_subscription_id) {
-                console.log("lsdflidsjfldsjflkdsf")
-                let get_stripe_existing_subscription = await Services.StripeServices.retrieve_subscrition({
-                    stripe_subscription_id: get_existing_subscription.stripe_subscription_id
-                })
+        //   if (event_object) {
+        //     let cancelAt = Math.floor(Date.now() / 1000) + Number(event_object.metadata.interval_count)*30*24*60*60;
+        //     const updatedSubscription = await stripe.subscriptions.update(event_object.id, {
+        //         cancel_at: cancelAt, // Set the cancel_at timestamp
+        //       });
+        //     //find any existing subscriptions for the user
+        //     let get_existing_subscription = await Subscriptions.findOne({user_id: event_object.metadata.user_id, status: "active"});
+        //       console.log(get_existing_subscription,'get_existing_subscription')
+        //     if (get_existing_subscription && get_existing_subscription.stripe_subscription_id) {
+        //         console.log("lsdflidsjfldsjflkdsf")
+        //         let get_stripe_existing_subscription = await Services.StripeServices.retrieve_subscrition({
+        //             stripe_subscription_id: get_existing_subscription.stripe_subscription_id
+        //         })
     
-                if (get_stripe_existing_subscription) {
-                    let delete_old_subscription = await Services.StripeServices.delete_subscription({
-                        stripe_subscription_id: get_existing_subscription.stripe_subscription_id
-                    })
+        //         if (get_stripe_existing_subscription) {
+        //             let delete_old_subscription = await Services.StripeServices.delete_subscription({
+        //                 stripe_subscription_id: get_existing_subscription.stripe_subscription_id
+        //             })
     
-                    if (delete_old_subscription && delete_old_subscription.status == "canceled") {
-                        let updated_payload = {
-                            status: "cancelled"
-                        }
-                        if (get_existing_subscription.valid_upto >= new Date()) {
-                            updated_payload.status = "inactive"
-                        }
+        //             if (delete_old_subscription && delete_old_subscription.status == "canceled") {
+        //                 let updated_payload = {
+        //                     status: "cancelled"
+        //                 }
+        //                 if (get_existing_subscription.valid_upto >= new Date()) {
+        //                     updated_payload.status = "inactive"
+        //                 }
     
-                        let updateSubscription = await Subscriptions.updateOne({ id: get_existing_subscription.id }, updated_payload);
+        //                 let updateSubscription = await Subscriptions.updateOne({ id: get_existing_subscription.id }, updated_payload);
     
-                        if (updateSubscription && (updateSubscription.status == "cancelled" || updateSubscription.status == "inactive")) {
-                            await Users.updateOne({id: event_object.metadata.user_id}).set({plan_id: null, special_plan_id: null, isPayment: false});
-                        }
-                        // create subscription
-                        let subscriptionPayload = {
-                            user_id: event_object.metadata.user_id,
-                            stripe_subscription_id: event_object.id,
-                            subscription_plan_id: event_object.metadata.plan_id,
-                            status: "active",
-                            amount: Number(event_object.metadata.network_plan_amount)+Number(event_object.metadata.managed_services_plan_amount),
-                            network_plan_amount: event_object.metadata.network_plan_amount,
-                            managed_services_plan_amount: event_object.metadata.managed_services_plan_amount,
-                            interval: event_object.metadata.interval,
-                            interval_count: event_object.metadata.interval_count,
-                            valid_upto: new Date(cancelAt*1000),
-                            special_plan_id: event_object.metadata.special_plan_id,
-                            addedBy: event_object.metadata.user_id,
-                            updatedBy: event_object.metadata.user_id
-                        }
-                        // console.log(subscriptionPayload);
-                        let subscription = await Subscriptions.create(subscriptionPayload).fetch();
-                        await Users.updateOne({id: event_object.metadata.user_id}).set({
-                            subscription: subscription.id,
-                            plan_id: event_object.metadata.plan_id,
-                            special_plan_id: event_object.metadata.special_plan_id,
-                            isPayment: true
-                        });
-                    }
-                }
+        //                 if (updateSubscription && (updateSubscription.status == "cancelled" || updateSubscription.status == "inactive")) {
+        //                     await Users.updateOne({id: event_object.metadata.user_id}).set({plan_id: null, special_plan_id: null, isPayment: false});
+        //                 }
+        //                 // create subscription
+        //                 let subscriptionPayload = {
+        //                     user_id: event_object.metadata.user_id,
+        //                     stripe_subscription_id: event_object.id,
+        //                     subscription_plan_id: event_object.metadata.plan_id,
+        //                     status: "active",
+        //                     amount: Number(event_object.metadata.network_plan_amount)+Number(event_object.metadata.managed_services_plan_amount),
+        //                     network_plan_amount: event_object.metadata.network_plan_amount,
+        //                     managed_services_plan_amount: event_object.metadata.managed_services_plan_amount,
+        //                     interval: event_object.metadata.interval,
+        //                     interval_count: event_object.metadata.interval_count,
+        //                     valid_upto: new Date(cancelAt*1000),
+        //                     special_plan_id: event_object.metadata.special_plan_id,
+        //                     addedBy: event_object.metadata.user_id,
+        //                     updatedBy: event_object.metadata.user_id
+        //                 }
+        //                 // console.log(subscriptionPayload);
+        //                 let subscription = await Subscriptions.create(subscriptionPayload).fetch();
+        //                 await Users.updateOne({id: event_object.metadata.user_id}).set({
+        //                     subscription: subscription.id,
+        //                     plan_id: event_object.metadata.plan_id,
+        //                     special_plan_id: event_object.metadata.special_plan_id,
+        //                     isPayment: true
+        //                 });
+        //             }
+        //         }
                 
-            } else if(get_existing_subscription) {
-                console.log("lsdjflsdjfldsjflsdfjdslfjldfjdsf")
-                await Subscriptions.updateOne({id: get_existing_subscription.id}).set({
-                    status: "cancelled"
-                });
-                await Users.updateOne({id: event_object.metadata.user_id}).set({plan_id: null, special_plan_id: null, isPayment: false});
-            }
-            //set current subscription as active
-            let subscriptionPayload = {
-                user_id: event_object.metadata.user_id,
-                stripe_subscription_id: event_object.id,
-                subscription_plan_id: event_object.metadata.plan_id,
-                status: "active",
-                amount: Number(event_object.metadata.network_plan_amount)+Number(event_object.metadata.managed_services_plan_amount),
-                network_plan_amount: event_object.metadata.network_plan_amount,
-                managed_services_plan_amount: event_object.metadata.managed_services_plan_amount,
-                interval: event_object.metadata.interval,
-                interval_count: event_object.metadata.interval_count,
-                valid_upto: new Date(cancelAt*1000),
-                special_plan_id: event_object.metadata.special_plan_id,
-                addedBy: event_object.metadata.user_id,
-                updatedBy: event_object.metadata.user_id
-            }
-            // console.log(subscriptionPayload);
-            let subscription = await Subscriptions.create(subscriptionPayload).fetch();
-            console.log(subscription,'subscription created')
-            await Users.updateOne({id: event_object.metadata.user_id}).set({
-                subscription: subscription.id,
-                plan_id: event_object.metadata.plan_id,
-                special_plan_id: event_object.metadata.special_plan_id,
-                isPayment: true
-            });
-          }
+        //     } else if(get_existing_subscription) {
+        //         console.log("lsdjflsdjfldsjflsdfjdslfjldfjdsf")
+        //         await Subscriptions.updateOne({id: get_existing_subscription.id}).set({
+        //             status: "cancelled"
+        //         });
+        //         await Users.updateOne({id: event_object.metadata.user_id}).set({plan_id: null, special_plan_id: null, isPayment: false});
+        //     }
+        //     //set current subscription as active
+        //     let subscriptionPayload = {
+        //         user_id: event_object.metadata.user_id,
+        //         stripe_subscription_id: event_object.id,
+        //         subscription_plan_id: event_object.metadata.plan_id,
+        //         status: "active",
+        //         amount: Number(event_object.metadata.network_plan_amount)+Number(event_object.metadata.managed_services_plan_amount),
+        //         network_plan_amount: event_object.metadata.network_plan_amount,
+        //         managed_services_plan_amount: event_object.metadata.managed_services_plan_amount,
+        //         interval: event_object.metadata.interval,
+        //         interval_count: event_object.metadata.interval_count,
+        //         valid_upto: new Date(cancelAt*1000),
+        //         special_plan_id: event_object.metadata.special_plan_id,
+        //         addedBy: event_object.metadata.user_id,
+        //         updatedBy: event_object.metadata.user_id
+        //     }
+        //     // console.log(subscriptionPayload);
+        //     let subscription = await Subscriptions.create(subscriptionPayload).fetch();
+        //     console.log(subscription,'subscription created')
+        //     await Users.updateOne({id: event_object.metadata.user_id}).set({
+        //         subscription: subscription.id,
+        //         plan_id: event_object.metadata.plan_id,
+        //         special_plan_id: event_object.metadata.special_plan_id,
+        //         isPayment: true
+        //     });
+        //   }
           break;
         default:
           //console.log(`Unhandled event type ${event.type}`);
