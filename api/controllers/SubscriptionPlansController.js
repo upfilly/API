@@ -1794,6 +1794,21 @@ exports.webhook = async (request, response) => {
                      await Transactions.create(transaction_payload).fetch();
                 }else {
                     console.log("in else=========================")
+                     let get_existing_subs = await Subscriptions.findOne({user_id : event_object.metadata.user_id,status:"active"})
+                     if(get_existing_subs){
+                        let delete_old_subscription = await Services.StripeServices.delete_subscription({
+                            stripe_subscription_id: get_existing_subscription.stripe_subscription_id
+                        })
+                        if(delete_old_subscription){
+                                let updated_payload = {
+                                    status: "cancelled"
+                                }
+                                let updateSubscription = await Subscriptions.updateOne({ id: get_existing_subscription.id }, updated_payload);
+                                if (updateSubscription && (updateSubscription.status == "cancelled" || updateSubscription.status == "inactive")) {
+                                    await Users.updateOne({id: event_object.metadata.user_id}).set({plan_id: null, special_plan_id: null, isPayment: false});
+                                }
+                            }
+                        }
                     let create_subscription_payload = {
                         user_id: event_object.metadata.user_id,
                         subscription_plan_id: event_object.metadata.plan_id,
