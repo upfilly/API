@@ -1804,8 +1804,8 @@ exports.webhook = async (request, response) => {
                         interval: "month",
                         interval_count: event_object.metadata.interval_count ? event_object.metadata.interval_count : 1,
                         trial_period_days: event_object.metadata.trial_period_days ? event_object.metadata.trial_period_days : 0,
-                        status: "active"
-                        // valid_upto: new Date(create_subscription.current_period_end * 1000),
+                        status: "active",
+                        valid_upto: new Date(create_subscription.current_period_end * 1000),
                         // trial_period_end_date: new Date(create_subscription.trial_end * 1000),
                     };
 
@@ -2205,14 +2205,15 @@ exports.webhook = async (request, response) => {
         //         updatedBy: event_object.metadata.user_id
         //     }
         //     // console.log(subscriptionPayload);
-        //     let subscription = await Subscriptions.create(subscriptionPayload).fetch();
-        //     console.log(subscription,'subscription created')
-        //     await Users.updateOne({id: event_object.metadata.user_id}).set({
-        //         subscription: subscription.id,
-        //         plan_id: event_object.metadata.plan_id,
-        //         special_plan_id: event_object.metadata.special_plan_id,
-        //         isPayment: true
-        //     });
+        //     // two plans are created om this 
+        //     // let subscription = await Subscriptions.create(subscriptionPayload).fetch();
+        //     // console.log(subscription,'subscription created')
+        //     // await Users.updateOne({id: event_object.metadata.user_id}).set({
+        //     //     subscription: subscription.id,
+        //     //     plan_id: event_object.metadata.plan_id,
+        //     //     special_plan_id: event_object.metadata.special_plan_id,
+        //     //     isPayment: true
+        //     // });
         //   }
           break;
         default:
