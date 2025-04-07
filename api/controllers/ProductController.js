@@ -244,34 +244,66 @@ module.exports = {
 
             // console.log(JSON.stringify(query), "============query");
             let pipeline = [
+                // {
+                //     $lookup: {
+                //         from: "commoncategories",
+                //         localField: "category_id",
+                //         foreignField: "_id",
+                //         as: "category_details"
+                //     }
+                // },
+                // {
+                //     $unwind: {
+                //         path: '$category_details',
+                //         preserveNullAndEmptyArrays: true
+                //     }
+                // },
+                // {
+                //     $lookup: {
+                //         from: "commoncategories",
+                //         localField: "sub_category_id",
+                //         foreignField: "_id",
+                //         as: "sub_category_details"
+                //     }
+                // },
+                // {
+                //     $unwind: {
+                //         path: '$sub_category_details',
+                //         preserveNullAndEmptyArrays: true
+                //     }
+                // },
                 {
                     $lookup: {
                         from: "commoncategories",
-                        localField: "category_id",
-                        foreignField: "_id",
-                        as: "category_details"
-                    }
-                },
-                {
-                    $unwind: {
-                        path: '$category_details',
-                        preserveNullAndEmptyArrays: true
+                        let: { categoryIds: "$category" },
+                        pipeline: [
+                            { $match: { $expr: { $in: ["$_id", { $map: { input: "$$categoryIds", as: "id", in: { $toObjectId: "$$id" } } }] } } }
+                        ],
+                        as: "category_detail"
                     }
                 },
                 {
                     $lookup: {
                         from: "commoncategories",
-                        localField: "sub_category_id",
-                        foreignField: "_id",
-                        as: "sub_category_details"
+                        let: { categoryIds: "$sub_category" },
+                        pipeline: [
+                            { $match: { $expr: { $in: ["$_id", { $map: { input: "$$categoryIds", as: "id", in: { $toObjectId: "$$id" } } }] } } }
+                        ],
+                        as: "sub_category_detail"
                     }
                 },
                 {
-                    $unwind: {
-                        path: '$sub_category_details',
-                        preserveNullAndEmptyArrays: true
+                    $lookup: {
+                        from: "subchildcategory",
+                        let: { categoryIds: "$sub_child_category" },
+                        pipeline: [
+                            { $match: { $expr: { $in: ["$_id", { $map: { input: "$$categoryIds", as: "id", in: { $toObjectId: "$$id" } } }] } } }
+                        ],
+                        as: "sub_child_category_detail"
                     }
                 },
+
+                
                 {
                     $lookup: {
                         from: "users",
@@ -339,10 +371,12 @@ module.exports = {
                     start_date: "$start_date",
                     end_date: "$end_date",
 
-                    category_name: "$category_details.name",
-                    category_id: "$category_id",
-                    sub_category_id: "$sub_category_id",
-                    sub_category_name: "$sub_category_details.name",
+                    // category_name: "$category_details.name",
+                    category: "$category",
+                    sub_category: "$sub_category",
+                    sub_child_category: "$sub_child_category",
+                    // sub_category_id: "$sub_category_id",
+                    // sub_category_name: "$sub_category_details.name",
                     makeOfferDetails: "$makeOfferDetails",
                     isSubmitted: {
                         $cond: [{ $eq: ['$makeOfferDetails.isDeleted', false] }, true, false]
