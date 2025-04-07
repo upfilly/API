@@ -89,13 +89,34 @@ module.exports = {
 
             let get_product = await Product.findOne({ id: id, isDeleted: false });
             if (get_product) {
-                if (get_product.category_id) {
-                    let get_category = await CommonCategories.findOne({ id: get_product.category_id, isDeleted: false });
-                    get_product.category_name = get_category.name
+                let all_categories = []
+                let all_sub_categories = []
+                let all_sub_child_categories = []
+                if (get_product.category_id && get_product.category_id.length>0) {
+                    for await (let category of get_product.category_id){
+                        let get_category = await CommonCategories.findOne({ id: category, isDeleted: false });
+                        // get_product.category_name = get_category.name
+                        all_categories.push(get_category)
+                    }
                 }
-                if (get_product.sub_category_id) {
-                    let get_sub_category = await CommonCategories.findOne({ id: get_product.sub_category_id, isDeleted: false });
-                    get_product.sub_category_name = get_sub_category.name
+                if (get_product.sub_category_id && get_product.sub_category_id.length>0) {
+                    // let get_sub_category = await CommonCategories.findOne({ id: get_product.sub_category_id, isDeleted: false });
+                    // get_product.sub_category_name = get_sub_category.name
+                    for await (let category of get_product.sub_category_id){
+                        let get_sub_category = await CommonCategories.findOne({ id: category, isDeleted: false });
+                        // get_product.category_name = get_category.name
+                        all_sub_categories.push(get_sub_category)
+                    }
+                }
+
+                if (get_product.sub_child_category_id && get_product.sub_child_category_id.length>0) {
+                    // let get_sub_category = await SubChildCategory.findOne({ id: get_product.sub_category_id, isDeleted: false });
+                    // get_product.sub_category_name = get_sub_category.name
+                    for await (let category of get_product.sub_category_id){
+                        let get_child_category = await SubChildCategory.findOne({ id: category, isDeleted: false });
+                        // get_product.category_name = get_category.name
+                        all_sub_child_categories.push(get_child_category)
+                    }
                 }
                 if (get_product.addedBy) {
                     let get_addedBy_detail = await Users.findOne({ id: get_product.addedBy, isDeleted: false });
@@ -106,6 +127,9 @@ module.exports = {
                 if(makeOfferDetails) {
                     get_product.isSubmitted = true;
                 } else get_product.isSubmitted = false;
+                get_product.all_categories = all_categories
+                get_product.all_sub_categories = all_sub_categories
+                get_product.all_sub_child_categories = all_sub_child_categories
                 return response.success(get_product, constants.PRODUCT.FETCHED_ALL, req, res);
             }
             throw constants.PRODUCT.INVALID_ID;
