@@ -275,7 +275,7 @@ module.exports = {
                 {
                     $lookup: {
                         from: "commoncategories",
-                        let: { categoryIds: "$category" },
+                        let: { categoryIds: "$category_id" },
                         pipeline: [
                             { $match: { $expr: { $in: ["$_id", { $map: { input: "$$categoryIds", as: "id", in: { $toObjectId: "$$id" } } }] } } }
                         ],
@@ -285,7 +285,7 @@ module.exports = {
                 {
                     $lookup: {
                         from: "commoncategories",
-                        let: { categoryIds: "$sub_category" },
+                        let: { categoryIds: "$sub_category_id" },
                         pipeline: [
                             { $match: { $expr: { $in: ["$_id", { $map: { input: "$$categoryIds", as: "id", in: { $toObjectId: "$$id" } } }] } } }
                         ],
@@ -295,7 +295,7 @@ module.exports = {
                 {
                     $lookup: {
                         from: "subchildcategory",
-                        let: { categoryIds: "$sub_child_category" },
+                        let: { categoryIds: "$sub_child_category_id" },
                         pipeline: [
                             { $match: { $expr: { $in: ["$_id", { $map: { input: "$$categoryIds", as: "id", in: { $toObjectId: "$$id" } } }] } } }
                         ],
@@ -372,9 +372,9 @@ module.exports = {
                     end_date: "$end_date",
 
                     // category_name: "$category_details.name",
-                    category: "$category",
-                    sub_category: "$sub_category",
-                    sub_child_category: "$sub_child_category",
+                    category: "$category_id",
+                    sub_category: "$sub_category_id",
+                    sub_child_category: "$sub_child_category_id",
                     // sub_category_id: "$sub_category_id",
                     // sub_category_name: "$sub_category_details.name",
                     makeOfferDetails: "$makeOfferDetails",
