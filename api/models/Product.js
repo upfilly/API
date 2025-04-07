@@ -13,8 +13,8 @@ module.exports = {
     price: { type: 'number' },
     image: { type: 'json' },
     // quantity: { type: 'number' },
-    category_id: { model: 'CommonCategories' },
-    sub_category_id: { model: 'CommonCategories' },
+    category_id: { type: 'json' },//previously both are reference of CommonCategories table
+    // sub_category_id: { type: 'json' }, //previously both are reference of CommonCategories table
     // opportunity_type: { type: 'string', isIn: ['single_placement', 'package', 'full_ratecard'], defaultsTo: '' },
     // placement: { type: 'string', isIn: ['single_placement', 'package', 'full_ratecard'], defaultsTo: '' },
 
