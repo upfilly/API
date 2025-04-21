@@ -268,7 +268,7 @@ exports.getAllCampaignRequestsForAffiliate = async (req, res) => {
         let query = {};
         let new_query = {}
         let count = req.param('count') || 10;
-        let page = req.param('page') || 2;
+        let page = req.param('page') || 1;
         let skipNo = (Number(page) - 1) * Number(count);
 
         if (search) {
