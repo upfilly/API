@@ -240,7 +240,7 @@ exports.listPublicCampaignsOfAllBrands = async (req, res) => {
 exports.getAllCampaignRequestsForAffiliate = async (req, res) => {
     try {
         let user_id = req.identity.id;
-        let {category,sub_category,category_type,sub_child_category,region} = req.query
+        let {category,sub_category,category_type,sub_child_category,region,search, isDeleted, status, sortBy, brand_id, affiliate_id} = req.query
 
         let loggedInUser = await Users.findOne({ id: user_id, isDeleted: false });
         if (loggedInUser.addedBy) {
@@ -269,7 +269,6 @@ exports.getAllCampaignRequestsForAffiliate = async (req, res) => {
         let new_query = {}
         let count = req.param('count') || 10;
         let page = req.param('page') || 1;
-        let { search, isDeleted, status, sortBy, brand_id, affiliate_id } = req.query;
         let skipNo = (Number(page) - 1) * Number(count);
 
         if (search) {
@@ -431,6 +430,7 @@ exports.getAllCampaignRequestsForAffiliate = async (req, res) => {
                     campaign_name : "$campaign_detail.name",
                     brand_id: 1,
                     brand_detail: 1,
+                    brand_name : "$brand_detail.fullName",
                     isDeleted: 1,
                     status: 1,
                     deletedBy: 1,
