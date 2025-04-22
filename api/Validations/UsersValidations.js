@@ -78,7 +78,8 @@ exports.registerBrandWithPlan = async (req, res, next) => {
         interval: Joi.string().required(),
         interval_count: Joi.number().required(),
         isSpecial: Joi.boolean().required(),
-        promoId: Joi.string().optional().allow("")
+        promoId: Joi.string().optional().allow(""),
+        timezone: Joi.string().optional().allow(""),
     }).options({ allowUnknown: true });
     return await Validate(schema, req, res);
 
@@ -212,6 +213,7 @@ exports.addUser = async (req, res, next) => {
         ein: Joi.string().optional().allow(""),
         consent_agreed: Joi.boolean().optional(),
         signature: Joi.string().optional().allow(""),
+        timezone: Joi.string().optional().allow(""),
         signature_date: Joi.date().optional().allow(""),
 
     });
@@ -357,6 +359,7 @@ exports.editProfile = async (req, res, next) => {
         ein: Joi.string().optional().allow(""),
         consent_agreed: Joi.boolean().optional(),
         signature: Joi.string().optional().allow(""),
+        timezone: Joi.string().optional().allow(""),
         signature_date: Joi.date().optional().allow(""),
     });
     return await Validate(schema, req, res);

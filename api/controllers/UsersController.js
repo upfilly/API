@@ -4786,7 +4786,8 @@ module.exports = {
           cat_type: "$categories_details.cat_type",
           sub_category_id: "$sub_category_id",
           sub_child_category_id: "$sub_child_category_id",
-          request_status: "$request_status"
+          request_status: "$request_status",
+          timezone:"$timezone",
         },
       };
       pipeline.push(projection);
