@@ -137,6 +137,7 @@ module.exports.routes = {
   "get /transaction/contract-all":
     "TransactionsController.getAllTransactionsContracts",
   "get /transaction/graph": "TransactionsController.getTransactionsGraphData",
+  "get /transactionGraph":"TransactionsController.transactionGraph",
 
   /**
    * @Cards
