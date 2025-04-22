@@ -1768,33 +1768,38 @@ exports.webhook = async (request, response) => {
             if (event_object) {
 
                 if(event_object.metadata.commission === "paid"){
-                    console.log("in event_object.metadata.commission")
-                    // update user
-                    console.log(event_object.metadata.brandAssociateId,'event_object.metadata.brandAssociateId')
-                    await AffiliateLink.updateOne({id:event_object.metadata.brandAssociateId},{commission_paid :"paid"})
-                    
-                    let get_admin = await Users.findOne({role:"admin"})
-
-                    let transaction_payload = {
-                        user_id: event_object.metadata.user_id,
-                        paid_to: get_admin.id,
-                        transaction_type: "pay_commission",
-                        transaction_id: event_object.invoice,
-                        // subscription_id: event_object.subscription,
-                        stripe_charge_id: event_object.invoice,
-                        currency: event_object.currency,
-                        amount: event_object.amount_subtotal ? event_object.amount_subtotal / 100 : 0,
-                        transaction_status: event_object.payment_status
+                    try {
+                        console.log("in event_object.metadata.commission")
+                        // update user
+                        console.log(event_object.metadata.brandAssociateId,'event_object.metadata.brandAssociateId')
+                        await AffiliateLink.updateOne({id:event_object.metadata.brandAssociateId},{commission_paid :"paid"})
+                        
+                        let get_admin = await Users.findOne({role:"admin"})
+    
+                        let transaction_payload = {
+                            user_id: event_object.metadata.user_id,
+                            paid_to: get_admin.id,
+                            transaction_type: "pay_commission",
+                            transaction_id: event_object.invoice,
+                            // subscription_id: event_object.subscription,
+                            stripe_charge_id: event_object.invoice,
+                            currency: event_object.currency,
+                            amount: event_object.amount_subtotal ? event_object.amount_subtotal / 100 : 0,
+                            transaction_status: event_object.payment_status
+                        }
+                        console.log(transaction_payload,'transaction_payload')
+    
+                        if (event_object.payment_status == "paid") {
+                            transaction_payload.transaction_status = "successful";
+                        }
+    
+                         let create = await Transactions.create(transaction_payload).fetch();
+                         console.log(create,'Transactions')
+                         break;
+                        
+                    } catch (error) {
+                        console.log(error,'========================error')
                     }
-                    console.log(transaction_payload,'transaction_payload')
-
-                    if (event_object.payment_status == "paid") {
-                        transaction_payload.transaction_status = "successful";
-                    }
-
-                     let create = await Transactions.create(transaction_payload).fetch();
-                     console.log(create,'Transactions')
-                     break;
                 }else {
                     console.log("in else=========================")
                      let get_existing_subs = await Subscriptions.findOne({user_id : event_object.metadata.user_id,status:"active"})
