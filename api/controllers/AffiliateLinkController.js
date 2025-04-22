@@ -333,6 +333,78 @@ exports.find = async function (req, res) {
   }
 };
 
+exports.findGraph = async(req,res)=>{
+  try {
+    const { startDate, endDate, filter } = req.query;
+  
+    const moment = require('moment');
+    let start, end;
+    let filterType = filter || "this_month";
+
+    if (startDate && endDate) {
+      start = moment(startDate, "YYYY-MM-DD").startOf("day").toDate();
+      end = moment(endDate, "YYYY-MM-DD").endOf("day").toDate();
+    } else {
+      switch (filterType) {
+        case "this_week":
+          start = moment().startOf("week").toDate();
+          end = moment().endOf("week").toDate();
+          break;
+        case "last_week":
+          start = moment().subtract(1, "week").startOf("week").toDate();
+          end = moment().subtract(1, "week").endOf("week").toDate();
+          break;
+        case "this_month":
+          start = moment().startOf("month").toDate();
+          end = moment().endOf("month").toDate();
+          break;
+        case "last_month":
+          start = moment().subtract(1, "month").startOf("month").toDate();
+          end = moment().subtract(1, "month").endOf("month").toDate();
+          break;
+        case "this_year":
+          start = moment().startOf("year").toDate();
+          end = moment().endOf("year").toDate();
+          break;
+        case "last_year":
+          start = moment().subtract(1, "year").startOf("year").toDate();
+          end = moment().subtract(1, "year").endOf("year").toDate();
+          break;
+        default:
+          start = moment().startOf("month").toDate();
+          end = moment().endOf("month").toDate();
+      }
+    }
+
+
+    const result = await db.collection('affiliatelink').aggregate([
+      {
+        $match: {
+          createdAt: { $gte: start, $lte: end }
+        }
+      },
+      {
+        $group: {
+          _id: "$source", // You can change this to "campaign" or any field that makes sense
+          totalAmount: { $sum: "$price" },
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $project: {
+          totalAmount: 1,
+          count: 1,
+          _id: 0
+        }
+      },
+    ]).toArray();
+
+    return res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    return response.failed(null, `${error}`, req, res);
+  }
+};
+
 exports.findOne = async function (req, res) {
   try {
     if (!req.query.id) {

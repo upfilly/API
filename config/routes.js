@@ -528,6 +528,7 @@ module.exports.routes = {
 
   "POST /affiliatelink": "AffiliateLinkController.create",
   "GET /affiliatelink/all": "AffiliateLinkController.find",
+  "GET /findGraph":"AffiliateLinkController.findGraph",
   "GET /affiliatelink": "AffiliateLinkController.findOne",
   "PUT /affiliatelink": "AffiliateLinkController.update",
   "DELETE /affiliatelink": "AffiliateLinkController.destroy",
