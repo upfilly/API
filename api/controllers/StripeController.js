@@ -1662,8 +1662,8 @@ exports.webhook = async (request, response) => {
                     if(event_object.metadata.commission === "paid"){
                         // update user
                         console.log(event_object.metadata.brandAssociateId,'event_object.metadata.brandAssociateId')
-                        let abc = await AffiliateLink.updateOne({id:event_object.metadata.brandAssociateId},{commission_paid :"paid"})
-                        console.log("updateddd",abc )
+                        await AffiliateLink.updateOne({id:event_object.metadata.brandAssociateId},{commission_paid :"paid"})
+                        
                         let get_admin = await Users.findOne({role:"admin"})
 
                         let transaction_payload = {
@@ -1682,7 +1682,8 @@ exports.webhook = async (request, response) => {
                             transaction_payload.transaction_status = "successful";
                         }
 
-                         await Transactions.create(transaction_payload).fetch();
+                         let data = await Transactions.create(transaction_payload).fetch();
+                         console.log(data,'--created transaction')
                          break;
                     }else {
                         let create_subscription_payload = {
