@@ -1683,6 +1683,7 @@ exports.webhook = async (request, response) => {
                         }
 
                          await Transactions.create(transaction_payload).fetch();
+                         break;
                     }else {
                         let create_subscription_payload = {
                             user_id: event_object.metadata.user_id,
