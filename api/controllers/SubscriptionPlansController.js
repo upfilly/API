@@ -1780,9 +1780,9 @@ exports.webhook = async (request, response) => {
                             user_id: event_object.metadata.user_id,
                             paid_to: get_admin.id,
                             transaction_type: "pay_commission",
-                            transaction_id: event_object.invoice,
+                            transaction_id: event_object.invoice || "",
                             // subscription_id: event_object.subscription,
-                            stripe_charge_id: event_object.invoice,
+                            stripe_charge_id: event_object.invoice || "",
                             currency: event_object.currency,
                             amount: event_object.amount_subtotal ? event_object.amount_subtotal / 100 : 0,
                             transaction_status: event_object.payment_status
