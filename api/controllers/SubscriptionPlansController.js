@@ -1792,7 +1792,8 @@ exports.webhook = async (request, response) => {
                         transaction_payload.transaction_status = "successful";
                     }
 
-                     await Transactions.create(transaction_payload).fetch();
+                     let create = await Transactions.create(transaction_payload).fetch();
+                     console.log(create,'Transactions')
                      break;
                 }else {
                     console.log("in else=========================")
