@@ -1658,7 +1658,6 @@ exports.webhook = async (request, response) => {
                 var event_object = event.data.object;
                 
                 if (event_object) {
-                    console.log(event_object.metadata.commission,'event_object.metadata.commission')
                     if(event_object.metadata.commission === "paid"){
                         // update user
                         console.log(event_object.metadata.brandAssociateId,'event_object.metadata.brandAssociateId')

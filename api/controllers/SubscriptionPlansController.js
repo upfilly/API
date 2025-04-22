@@ -1771,8 +1771,8 @@ exports.webhook = async (request, response) => {
                     console.log("in event_object.metadata.commission")
                     // update user
                     console.log(event_object.metadata.brandAssociateId,'event_object.metadata.brandAssociateId')
-                    let abc = await AffiliateLink.updateOne({id:event_object.metadata.brandAssociateId},{commission_paid :"paid"})
-                    console.log("updateddd",abc )
+                    await AffiliateLink.updateOne({id:event_object.metadata.brandAssociateId},{commission_paid :"paid"})
+                    
                     let get_admin = await Users.findOne({role:"admin"})
 
                     let transaction_payload = {
@@ -1786,12 +1786,14 @@ exports.webhook = async (request, response) => {
                         amount: event_object.amount_subtotal ? event_object.amount_subtotal / 100 : 0,
                         transaction_status: event_object.payment_status
                     }
+                    console.log(transaction_payload,'transaction_payload')
 
                     if (event_object.payment_status == "paid") {
                         transaction_payload.transaction_status = "successful";
                     }
 
                      await Transactions.create(transaction_payload).fetch();
+                     break;
                 }else {
                     console.log("in else=========================")
                      let get_existing_subs = await Subscriptions.findOne({user_id : event_object.metadata.user_id,status:"active"})
