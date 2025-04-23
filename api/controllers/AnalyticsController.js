@@ -11,6 +11,7 @@ const constants = require('../../config/constants').constants;
 const response = require("../services/Response");
 const db = sails.getDatastore().manager;
 const ObjectId = require('mongodb').ObjectId;
+const moment = require('moment');
 
 // exports.salesAnalytics = async function (req, res) {
 //     try {
@@ -627,7 +628,7 @@ exports.clickAnalytics = async(req,res) => {
         let count = req.param('count') || 10;
         let page = req.param('page') || 1;
         let skipNo = (Number(page) - 1) * Number(count);
-        let { search,  isDeleted,   affiliate_id, brand_id, startDate2, endDate2, startDate, endDate } = req.query;
+        let { search,  isDeleted,   affiliate_id, brand_id, startDate2, endDate2, startDate, endDate, filter } = req.query;
         let new_query = {}
 
         // Handle search
@@ -646,11 +647,43 @@ exports.clickAnalytics = async(req,res) => {
         } else {
             query.isDeleted = false;
         }
-
+        const filterType = filter
+        
         if(startDate && endDate) {
             startDate = new Date(startDate);
             endDate = new Date(endDate);
             query.createdAt = { $gte: startDate, $lte: endDate };
+        }else {
+            switch (filterType) {
+                case "this_week":
+                  startDate = moment().startOf("week").toDate();
+                  endDate= moment().endOf("week").toDate();
+                  break;
+                case "last_week":
+                  startDate= moment().subtract(1, "week").startOf("week").toDate();
+                  endDate= moment().subtract(1, "week").endOf("week").toDate();
+                  break;
+                case "this_month":
+                  startDate= moment().startOf("month").toDate();
+                  endDate = moment().endOf("month").toDate();
+                  break;
+                case "last_month":
+                  startDate= moment().subtract(1, "month").startOf("month").toDate();
+                  endDate= moment().subtract(1, "month").endOf("month").toDate();
+                  break;
+                case "this_year":
+                  startDate= moment().startOf("year").toDate();
+                  endDate= moment().endOf("year").toDate();
+                  break;
+                case "last_year":
+                  startDate= moment().subtract(1, "year").startOf("year").toDate();
+                  endDate= moment().subtract(1, "year").endOf("year").toDate();
+                  break;
+                default:
+                  startDate= moment().startOf("month").toDate();
+                  endDate= moment().endOf("month").toDate();
+              }
+              query.createdAt = { $gte: startDate, $lte: endDate };
         }
     
         if(affiliate_id){
@@ -667,9 +700,41 @@ exports.clickAnalytics = async(req,res) => {
             startDate2 = new Date(startDate2);
             endDate2 = new Date(endDate2);
             new_query.createdAt = { $gte: startDate2, $lte: endDate2 };
+        }else {
+            switch (filterType) {
+                case "this_week":
+                  startDate2 = moment().startOf("week").toDate();
+                  endDate2= moment().endOf("week").toDate();
+                  break;
+                case "last_week":
+                  startDate2= moment().subtract(1, "week").startOf("week").toDate();
+                  endDate2= moment().subtract(1, "week").endOf("week").toDate();
+                  break;
+                case "this_month":
+                  startDate2= moment().startOf("month").toDate();
+                  endDate2 = moment().endOf("month").toDate();
+                  break;
+                case "last_month":
+                  startDate2= moment().subtract(1, "month").startOf("month").toDate();
+                  endDate2= moment().subtract(1, "month").endOf("month").toDate();
+                  break;
+                case "this_year":
+                  startDate2= moment().startOf("year").toDate();
+                  endDate2= moment().endOf("year").toDate();
+                  break;
+                case "last_year":
+                  startDate2= moment().subtract(1, "year").startOf("year").toDate();
+                  endDate2= moment().subtract(1, "year").endOf("year").toDate();
+                  break;
+                default:
+                  startDate2= moment().startOf("month").toDate();
+                  endDate2= moment().endOf("month").toDate();
+              }
+              query.createdAt = { $gte: startDate2, $lte: endDate2 };
         }
         // console.log(query,'query')
         // console.log(new_query,'new_query')
+        
         let pipeline = [
             {
                 $project: {
