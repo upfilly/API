@@ -285,11 +285,14 @@ exports.getAllCampaignRequestsForAffiliate = async (req, res) => {
         query.isDeleted = false;
 
         if (status) {
-            if(status != 'accepted') {
-                query.$or = [
-                    {source: "campaign", status: status}
-                ];
-            }
+            query.$or = [
+                {source: "campaign", status: status}
+            ];
+            // if(status != 'accepted') {
+            //     query.$or = [
+            //         {source: "campaign", status: status}
+            //     ];
+            // }
         } else {
             query.$or = [
                 {source: "campaign", status: "accepted"},
