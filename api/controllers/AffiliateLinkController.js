@@ -29,7 +29,8 @@ exports.generateLink = async (req, res) => {
     let query = {
       affiliate_id: req.identity.id
     }
-    let isExist = await AffiliateLink.findOne(query);
+    let isExist = await AffiliateLink.find(query).sort({"createdAt" : -1});
+    isExist = isExist[0]
     if (!isExist) {
       let create_link = await AffiliateLink.create({ affiliate_id: req.identity.id, link: get_link }).fetch()
       if (create_link) {
