@@ -1462,6 +1462,7 @@ exports.ListDataFeedsBrand = async (req, res) => {
   try {
     let affiliate_id = req.param('affiliate_id');
     let brand_id = req.param('brand_id');
+    let search = req.param('search');
     // let BrandAffiliateAssociations = await BrandAffiliateAssociation.find({
     //   affiliate_id: affiliate_id,
     //   status: "accepted",
@@ -1483,6 +1484,14 @@ exports.ListDataFeedsBrand = async (req, res) => {
       // dataFeeds = await DataFeeds.find({brand_id: listOfBrandIds}).select(["url","xml","filePath","brand_id"]).populate("brand_id").sort("createdAt Desc");
       dataFeeds = await DataFeeds.find({affiliate_id : affiliate_id}).select(["url","xml","filePath","brand_id"]).populate("brand_id").sort("createdAt Desc");
       
+    }
+
+    // 🔥 After fetching, manually filter by brand.fullName if search is provided
+    if (search) {
+      const regex = new RegExp(search, 'i'); // case-insensitive regex
+      dataFeeds = dataFeeds.filter(feed => 
+        feed.brand_id && regex.test(feed.brand_id.fullName)
+      );
     }
 
       return res.status(200).json({
