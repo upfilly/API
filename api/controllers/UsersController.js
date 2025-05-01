@@ -4788,6 +4788,7 @@ module.exports = {
           sub_child_category_id: "$sub_child_category_id",
           request_status: "$request_status",
           timezone:"$timezone",
+          currencies: "$currencies",
         },
       };
       pipeline.push(projection);

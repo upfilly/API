@@ -92,7 +92,8 @@ module.exports.policies = {
     addTracking: true
   },
   CookiesController: {
-    savedCookies: true
+    savedCookies: true,
+    getLink: true,
   },
   
   // AffiliateLinkController: {

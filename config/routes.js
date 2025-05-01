@@ -602,6 +602,9 @@ module.exports.routes = {
    * @BankAccountController
    */
 
-  "post /transfer/payment" : "BankAccountController.transferPayment"
+  "post /transfer/payment" : "BankAccountController.transferPayment",
+
+  // new api which take only link
+  "get /:link" : "CookiesController.getLink"
 
 };   
