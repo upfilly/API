@@ -160,7 +160,6 @@ exports.getLink = async(req,res) => {
     || req.headers['x-real-ip'] // Nginx Proxy
     || req.connection.remoteAddress; // Fallback
 
-    console.log(get_ip,'get_ip')
     
     let ipResponse = geoip.lookup(get_ip);
     const lat = ipResponse.ll[0]
