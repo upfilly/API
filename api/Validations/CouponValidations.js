@@ -34,7 +34,7 @@ exports.addCoupon = async (req, res, next) => {
       )
       .required(),
 
-    status: Joi.string().valid("Enabled", "Disabled").required(),
+    status: Joi.string().valid("Enabled", "Disabled","Pending").required(),
 
     url: Joi.string().uri().required(),
 
