@@ -332,7 +332,7 @@ exports.reportAnalytics = async(req,res) => {
         let count = req.param('count') || 10;
         let page = req.param('page') || 1;
         let skipNo = (Number(page) - 1) * Number(count);
-        let { search, sortBy, status, isDeleted,  brand_id, affiliate_id, startDate2, endDate2, startDate, endDate } = req.query;
+        let { search, sortBy, status, isDeleted,  brand_id, affiliate_id, startDate2, endDate2, startDate, endDate,campaign } = req.query;
         let sortquery = {};
         let new_query = {}
 
@@ -373,6 +373,9 @@ exports.reportAnalytics = async(req,res) => {
 
         if(brand_id){
             query.brand_id = new ObjectId(brand_id)
+        }
+        if(campaign){
+            query.campaignId = new ObjectId(campaign)
         }
 
         new_query = {...query}
