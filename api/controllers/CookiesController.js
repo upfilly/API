@@ -152,8 +152,8 @@ exports.getLink = async(req,res) => {
     const merchant_id = params.get("merchant_id")
 
     let url = params.get("url")
-    url = url+".com"
-    redirectLink = `url=${url}?affiliate_id=${affiliate_id}&merchant_id=${merchant_id}`
+    url = "https://"+ url +".com"
+    redirectLink = `${url}?affiliate_id=${affiliate_id}&merchant_id=${merchant_id}`
     
     let get_ip = req.headers['x-forwarded-for']?.split(',')[0] // First IP in the list
     || req.headers['cf-connecting-ip'] // Cloudflare
@@ -183,7 +183,6 @@ exports.getLink = async(req,res) => {
         timezone : ipResponse.timezone,
     }
     await axios.post(`${credentials.BACK_WEB_URL}/saved-cookies`, paylaodDetail)
-    // console.log(userAgentString,'userAgentString')
     
     return res.redirect(redirectLink)
 }
