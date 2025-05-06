@@ -152,7 +152,9 @@ exports.getLink = async(req,res) => {
     const merchant_id = params.get("merchant_id")
 
     let url = params.get("url")
-    url = "https://"+ url +".com"
+    const ext = params.get("ext")
+    
+    url = "https://"+ url + "." +ext
     redirectLink = `${url}?affiliate_id=${affiliate_id}&merchant_id=${merchant_id}`
     
     let get_ip = req.headers['x-forwarded-for']?.split(',')[0] // First IP in the list
