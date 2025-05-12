@@ -361,7 +361,7 @@ exports.editProfile = async (req, res, next) => {
         signature: Joi.string().optional().allow(""),
         timezone: Joi.string().optional().allow(""),
         signature_date: Joi.date().optional().allow(""),
-        currencies: Joi.array().optional().allow([]),
+        currencies: Joi.array().optional().allow(null),
     });
     return await Validate(schema, req, res);
 
