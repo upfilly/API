@@ -631,7 +631,7 @@ exports.clickAnalytics = async(req,res) => {
         let count = req.param('count') || 10;
         let page = req.param('page') || 1;
         let skipNo = (Number(page) - 1) * Number(count);
-        let { search,  isDeleted,   affiliate_id, brand_id, startDate2, endDate2, startDate, endDate, filter } = req.query;
+        let { search,  isDeleted,   affiliate_id, brand_id, startDate2, endDate2, startDate, endDate, filter, campaign } = req.query;
         let new_query = {}
 
         // Handle search
@@ -697,6 +697,10 @@ exports.clickAnalytics = async(req,res) => {
             query.brand_id = new ObjectId(brand_id)
         }
 
+        if(campaign){
+            query.campaignId = new ObjectId(campaign)
+        }
+
         new_query = {...query}
 
         if(startDate2 && endDate2) {
@@ -744,6 +748,7 @@ exports.clickAnalytics = async(req,res) => {
                     id: "$_id",
                     affiliate_id: "$affiliate_id",
                     brand_id: "$brand_id",
+                    campaignId :"$campaignId",
                     isDeleted: '$isDeleted',
                     updatedBy: '$updatedBy',
                     updatedAt: '$updatedAt',
@@ -795,6 +800,7 @@ exports.clickAnalytics = async(req,res) => {
                     id: "$_id",
                     affiliate_id: "$affiliate_id",
                     brand_id: "$brand_id",
+                    campaignId :"$campaignId",
                     isDeleted: '$isDeleted',
                     updatedBy: '$updatedBy',
                     updatedAt: '$updatedAt',

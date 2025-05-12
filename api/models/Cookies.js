@@ -11,6 +11,7 @@ module.exports = {
 
     affiliate_id: { model: "users" },
     affiliate_link: { type: "string" },
+    campaignId: {model: "campaign"},
     ip_address: { type: "string" },
     location: { type: "string" },
     device: { type: "string" },
