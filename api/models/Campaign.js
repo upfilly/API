@@ -48,6 +48,7 @@ module.exports = {
         region_continents : {type:'json',defaultsTo : []},
         lead_amount : {type:'number'},
         campaign_type : {type:"string",isIn:["manual","automatic"]},
+        currencies : {type:"json",defaultsTo:[]}
     },
 
 };

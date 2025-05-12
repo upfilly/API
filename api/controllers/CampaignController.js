@@ -685,6 +685,7 @@ exports.getAllCampaignsForBrand = async (req, res) => {
                     sub_child_category_detail: "$sub_child_category_detail",
                     lead_amount : 1,
                     campaign_type:1,
+                    currencies : 1,
                 }
             },
             {
