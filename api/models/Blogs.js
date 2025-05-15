@@ -30,8 +30,8 @@ module.exports = {
     updatedAt: { type: 'ref', autoUpdatedAt: true },
     isDeleted: { type: 'Boolean', defaultsTo: false },
     // new keys
-    videos : {type:Array, default:[]},
-    link : {type:String},
+    videos : {type:"json", default:[]},
+    link : {type:"string"},
   },
 
 };
