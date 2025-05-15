@@ -29,6 +29,9 @@ module.exports = {
     createdAt: { type: 'ref', autoCreatedAt: true },
     updatedAt: { type: 'ref', autoUpdatedAt: true },
     isDeleted: { type: 'Boolean', defaultsTo: false },
+    // new keys
+    videos : {type:Array, default:[]},
+    link : {type:String},
   },
 
 };

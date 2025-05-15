@@ -15,6 +15,8 @@ exports.addBlog = async (req, res, next) => {
         alt_tag: Joi.string().optional().allow(""),
         isTrending: Joi.boolean().optional(),
         isPublished: Joi.boolean().optional(),
+        videos: Joi.array().optional().allow(null),
+        link : Joi.string().optional().allow(""),
     });
 
     return await Validate(schema, req, res);
@@ -36,6 +38,8 @@ exports.editBlog = async (req, res, next) => {
         alt_tag: Joi.string().optional().allow(""),
         isTrending: Joi.boolean().optional(),
         isPublished: Joi.boolean().optional(),
+        videos: Joi.array().optional().allow(null),
+        link : Joi.string().optional().allow(""),
     });
 
     return await Validate(schema, req, res);

@@ -213,6 +213,8 @@ exports.getAllBlogs = async (req, res) => {
                 isDeleted: "$isDeleted",
                 blog_type_id: "$blog_type_id",
                 category_name: "$blog_type_id_details.name",
+                videos:"$videos",
+                link:"$link",
             }
 
         };
