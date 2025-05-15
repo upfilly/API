@@ -30,7 +30,7 @@ module.exports = {
     updatedAt: { type: 'ref', autoUpdatedAt: true },
     isDeleted: { type: 'Boolean', defaultsTo: false },
     // new keys
-    videos : {type:"json", default:[]},
+    videos : {type:"json", defaultsTo:[]},
     link : {type:"string"},
   },
 
