@@ -173,6 +173,19 @@ exports.decrypt = (data) => {
     let decryptedData = bytes.toString(CryptoJS.enc.Utf8);
     return decryptedData;
 };
+exports.generateSlug = async function (text) {
+    let slug = text
+      .toString()
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^\w\-]+/g, "")
+      .replace(/\-\-+/g, "-")
+      .replace(/^-+/, "")
+      .replace(/-+$/, "");
+  
+    return slug
+  }
 
 exports.get_chunks = (array, chunkSize) => {
     const chunks = [];

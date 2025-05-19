@@ -12,7 +12,7 @@ module.exports = {
     sub_title: { type: "string" },
     image: { type: "json" },
     blog_type_id: { model: "commoncategories" },
-    // slug: { type: "string" },
+    slug: { type: "string" },
     description: { type: "string" },
     meta_title: { type: "string" },
     meta_name: { type: "string" },

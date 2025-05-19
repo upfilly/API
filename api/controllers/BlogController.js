@@ -19,10 +19,13 @@ exports.addBlog = async (req, res) => {
             throw validation_result.message;
         }
 
-        let { isTrending, isPublished } = req.body;
-        // req.body.slug = await Services.CommonServices.generate_Blog_title_slug({ Blog_title: req.body.title });
-        req.body.addedBy = req.identity.id;
+        let { isTrending, isPublished, title } = req.body;
         req.body.title = req.body.title.toLowerCase()
+        let slug = req.body.title
+        slug = slug.split(" ")
+        slug = slug.length > 0 ? slug.join("_") : slug
+        req.body.slug = slug
+        req.body.addedBy = req.identity.id;
         let get_Blog = await Blogs.findOne({ title: req.body.title, isDeleted: false })
         if (get_Blog) {
             throw constants.BLOG.ALREADY_EXIST;
@@ -64,6 +67,11 @@ exports.editBlog = async (req, res) => {
         }
 
         req.body.title = req.body.title.toLowerCase();
+
+        let slug = req.body.title.toLowerCase()
+        slug = slug.split(" ")
+        slug = slug.length > 0 ? slug.join("_") : slug
+
         let Blog_exist = await Blogs.findOne({
             title: req.body.title,
             isDeleted: false,
