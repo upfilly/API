@@ -130,7 +130,7 @@ exports.getAllBlogs = async (req, res) => {
         let query = {};
         let count = req.param('count') || 10;
         let page = req.param('page') || 1;
-        let { search, sortBy, isDeleted, blog_type_id, isTrending, isPublished } = req.query;
+        let { search, sortBy, isDeleted, blog_type_id, isTrending, isPublished, slug } = req.query;
         skipNo = (Number(page - 1)) * Number(count);
         if (search) {
             query.$or = [
@@ -151,6 +151,10 @@ exports.getAllBlogs = async (req, res) => {
         if (isPublished) {
             query.isPublished = isPublished ? isPublished == 'true' : true ? isPublished : false;
         } 
+
+        if(slug){
+            query.slug = slug.toLowerCase()
+        }
 
         let sortquery = {};
         if (sortBy) {
@@ -223,6 +227,7 @@ exports.getAllBlogs = async (req, res) => {
                 category_name: "$blog_type_id_details.name",
                 videos:"$videos",
                 link:"$link",
+                slug : "$slug",
             }
 
         };
