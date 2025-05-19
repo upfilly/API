@@ -111,6 +111,7 @@ exports.editBlog = async (req, res) => {
 exports.getById = async (req, res) => {
     try {
         let id = req.param("id");
+        let slug = req.param("slug");
         if (!id && !slug) {
             throw constants.BLOG.ID_REQUIRED;
         };
