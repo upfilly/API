@@ -368,14 +368,18 @@ exports.reportAnalytics = async(req,res) => {
         
 
         if(affiliate_id){
-            query.affiliate_id = new ObjectId(affiliate_id)
+            affiliate_id = await Services.Utils.string_to_array(affiliate_id)
+            query.affiliate_id = {$in: affiliate_id}
         }
 
         if(brand_id){
-            query.brand_id = new ObjectId(brand_id)
+            brand_id = await Services.Utils.string_to_array(brand_id)
+            query.brand_id = {$in: brand_id}
         }
+
         if(campaign){
-            query.campaignId = new ObjectId(campaign)
+            campaign = await Services.Utils.string_to_array(campaign)
+            query.campaignId = {$in:campaign}
         }
 
         new_query = {...query}
@@ -690,15 +694,18 @@ exports.clickAnalytics = async(req,res) => {
         }
     
         if(affiliate_id){
-            query.affiliate_id = new ObjectId(affiliate_id)
+            affiliate_id = await Services.Utils.string_to_array(affiliate_id)
+            query.affiliate_id = {$in: affiliate_id}
         }
 
         if(brand_id){
-            query.brand_id = new ObjectId(brand_id)
+            brand_id = await Services.Utils.string_to_array(brand_id)
+            query.brand_id = {$in: brand_id}
         }
 
         if(campaign){
-            query.campaignId = new ObjectId(campaign)
+            campaign = await Services.Utils.string_to_array(campaign)
+            query.campaignId = {$in:campaign}
         }
 
         new_query = {...query}
