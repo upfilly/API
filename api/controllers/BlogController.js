@@ -111,11 +111,16 @@ exports.editBlog = async (req, res) => {
 exports.getById = async (req, res) => {
     try {
         let id = req.param("id");
-        if (!id) {
+        if (!id && !slug) {
             throw constants.BLOG.ID_REQUIRED;
         };
-
-        let get_Blog = await Blogs.findOne({ id: id }).populate('blog_type_id');
+        let get_Blog
+        if(slug){
+            slug = slug.toLowerCase()
+            get_Blog = await Blogs.findOne({ slug: slug }).populate('blog_type_id');
+        }else {
+            get_Blog = await Blogs.findOne({ id: id }).populate('blog_type_id');
+        }
         if (get_Blog) {
             return response.success(get_Blog, constants.BLOG.FETCHED, req, res);
         }
