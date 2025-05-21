@@ -4789,6 +4789,7 @@ module.exports = {
           request_status: "$request_status",
           timezone:"$timezone",
           currencies: "$currencies",
+          defaultCurrency: "$defaultCurrency",
         },
       };
       pipeline.push(projection);

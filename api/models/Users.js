@@ -194,7 +194,8 @@ module.exports = {
     request_status: { type: 'string', isIn: ['pending', 'accepted', "rejected"], defaultsTo: 'pending' },
     reason: { type: "string" },
     timezone: { type: "string" },
-    currencies : {type:"json",defaultsTo:[]}
+    currencies : {type:"json",defaultsTo:[]},
+    defaultCurrency : {type:"string",defaultsTo:""},
     
 
   },
