@@ -4790,6 +4790,7 @@ module.exports = {
           timezone:"$timezone",
           currencies: "$currencies",
           defaultCurrency: "$defaultCurrency",
+          propertyType:"$propertyType",
         },
       };
       pipeline.push(projection);

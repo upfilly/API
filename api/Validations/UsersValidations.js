@@ -33,6 +33,7 @@ exports.register = async (req, res, next) => {
         payment_method: Joi.string().optional(),
         device_token: Joi.string().optional().allow(""),
         referral_code: Joi.string().optional().allow(""),
+        propertyType: Joi.array().optional().allow(null),
 
     });
     return await Validate(schema, req, res);
@@ -215,6 +216,7 @@ exports.addUser = async (req, res, next) => {
         signature: Joi.string().optional().allow(""),
         timezone: Joi.string().optional().allow(""),
         signature_date: Joi.date().optional().allow(""),
+        propertyType: Joi.array().optional().allow(null),
 
     });
     return await Validate(schema, req, res);
@@ -362,6 +364,8 @@ exports.editProfile = async (req, res, next) => {
         timezone: Joi.string().optional().allow(""),
         signature_date: Joi.date().optional().allow(""),
         currencies: Joi.array().optional().allow(null),
+        propertyType: Joi.array().optional().allow(null),
+        
     });
     return await Validate(schema, req, res);
 
