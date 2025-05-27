@@ -384,7 +384,7 @@ module.exports.constants = {
     ALREADY_EXIST: "Same title already exist",
     ADDED: "Blog added sucessfully",
     UPDATED: "Blog updated successfully",
-    INVALID_ID: "Invaild Id",
+    INVALID_ID: "Invaild Id or Slug",
     ID_REQUIRED: "Id is required",
     FETCHED: "Blog fetched successfully",
     DELETED: "Blog deleted successfully",
