@@ -57,6 +57,7 @@ module.exports.constants = {
     INVITED_USER_DELETED: "Invited user deleted",
     INVITED_USER_UPDATED: "Invited user updated",
     INVITED_USER_DETAILS: "Invited user details fetched",
+    CURRENCY_EXIST: "Currency exist in some campaign",
   },
   COMMON: {
     COUNTRY_CODE_REQUIRED: "Country  code is required",
