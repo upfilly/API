@@ -489,7 +489,7 @@ exports.getAllCampaignRequestsForAffiliate = async (req, res) => {
 exports.getAllCampaignsForBrand = async (req, res) => {
     try {
         let user_id = req.identity.id;
-        let {category,sub_category,category_type,sub_child_category,region} = req.query
+        let {category,sub_category,category_type,sub_child_category,region,status} = req.query
         let loggedInUser = await Users.findOne({ id: user_id, isDeleted: false });
         if (loggedInUser.addedBy) {
 
@@ -531,7 +531,9 @@ exports.getAllCampaignsForBrand = async (req, res) => {
             ]
         }
         query.isDeleted = false;
-
+        if(status){
+            query.status =status
+        }
         if (brand_id) {
             query.brand_id = new ObjectId(brand_id);
         }
@@ -692,6 +694,7 @@ exports.getAllCampaignsForBrand = async (req, res) => {
                     transaction : 1,
                     legalTerm : 1,
                     islegal : 1,
+                    status : 1,
                 }
             },
             {

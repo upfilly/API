@@ -43,6 +43,7 @@ module.exports = {
         category : {type:"json",defaultsTo : []},
         sub_category: {type:"json",defaultsTo : []},
         category_type : {type:"string"},
+        status : {type:"string",isIn:["active","deactive"],defaultsTo: "active"},
         sub_child_category : {type: "json",defaultsTo : []},
         region : {type:"json",defaultsTo : []},
         region_continents : {type:'json',defaultsTo : []},

@@ -48,7 +48,8 @@ exports.addCampaign = async (req, res, next) => {
         ppc : Joi.object().optional(),
         transaction : Joi.object().optional(),
         legalTerm : Joi.string().optional(),
-        islegal : Joi.boolean().optional()
+        islegal : Joi.boolean().optional(),
+        status : Joi.string().optional().valid("active","deactive"),
     });
     return await Validate(schema, req, res);
 }
@@ -94,7 +95,9 @@ exports.editCampaign = async (req, res, next) => {
         ppc : Joi.object().optional(),
         transaction : Joi.object().optional(),
         legalTerm : Joi.string().optional(),
-        islegal : Joi.boolean().optional()
+        islegal : Joi.boolean().optional(),
+        status : Joi.string().optional().valid("active","deactive"),
+        
     });
     return await Validate(schema, req, res);
 }
