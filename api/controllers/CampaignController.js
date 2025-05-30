@@ -686,6 +686,12 @@ exports.getAllCampaignsForBrand = async (req, res) => {
                     lead_amount : 1,
                     campaign_type:1,
                     currencies : 1,
+                    deDuplicate : 1,
+                    publisher : 1,
+                    ppc : 1,
+                    transaction : 1,
+                    legalTerm : 1,
+                    islegal : 1,
                 }
             },
             {

@@ -41,7 +41,14 @@ exports.addCampaign = async (req, res, next) => {
         region_continents : Joi.array().optional(),
         lead_amount : Joi.number().optional(),
         campaign_type : Joi.string().required().valid("manual","automatic"),
-        currencies : Joi.string().allow("")
+        currencies : Joi.string().allow(""),
+
+        deDuplicate : Joi.object().optional(),
+        publisher : Joi.object().optional(""),
+        ppc : Joi.object().optional(),
+        transaction : Joi.object().optional(),
+        legalTerm : Joi.string().optional(),
+        islegal : Joi.boolean().optional()
     });
     return await Validate(schema, req, res);
 }
@@ -80,7 +87,14 @@ exports.editCampaign = async (req, res, next) => {
         sub_child_category : Joi.array().optional(),
         region : Joi.array().optional(),
         campaign_type : Joi.string().valid("manual","automatic"),
-        currencies : Joi.string().allow("")
+        currencies : Joi.string().allow(""),
+        
+        deDuplicate : Joi.object().optional(),
+        publisher : Joi.object().optional(""),
+        ppc : Joi.object().optional(),
+        transaction : Joi.object().optional(),
+        legalTerm : Joi.string().optional(),
+        islegal : Joi.boolean().optional()
     });
     return await Validate(schema, req, res);
 }

@@ -2627,6 +2627,14 @@ module.exports = {
 
         }
 
+        const allCampaign = await Campaign.find({addedBy: id, isDeleted:false})
+        if(req.body.currencies && allCampaign.length>0){
+          for await (const campaign of allCampaign){
+            if(!req.body.currencies.includes(campaign.currencies)){
+              return response.failed(null,constants.user.CURRENCY_EXIST,req,res)
+            }
+          }
+        }
         return response.success(null, constants.user.UPDATED_USER, req, res);
       }
 

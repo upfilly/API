@@ -49,6 +49,12 @@ module.exports = {
         lead_amount : {type:'number'},
         campaign_type : {type:"string",isIn:["manual","automatic"]},
         currencies : {type:"string"},
+        deDuplicate:{type:'json',defaultsTo:{}},
+        publisher: {type:'json',defaultsTo:{}},
+        ppc: {type:'json',defaultsTo:{}},
+        transaction: {type:'json',defaultsTo:{}},
+        legalTerm: {type:'string',defaultsTo:""},
+        islegal: {type:'boolean',defaultsTo:false},
     },
 
 };
