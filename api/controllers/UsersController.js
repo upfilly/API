@@ -2627,11 +2627,11 @@ module.exports = {
 
         }
 
-        const allCampaign = await Campaign.find({addedBy: id, isDeleted:false})
+        const allCampaign = await Campaign.find({addedBy: id, isDeleted:false, currencies: {"!=" : ""}})
         if(req.body.currencies && allCampaign.length>0){
           for await (const campaign of allCampaign){
             if(!req.body.currencies.includes(campaign.currencies)){
-              return response.failed(null,constants.user.CURRENCY_EXIST,req,res)
+              return response.failed(null,`Can't delete ${campaign.currencies} currency because it is exist in campaign ${campaign.name}`,req,res)
             }
           }
         }
