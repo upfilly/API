@@ -279,6 +279,7 @@ module.exports.routes = {
   "put /campaign/change-status": "CampaignController.changeCampaignStatus",
   "delete /campaign": "CampaignController.deleteCampaign",
   "get /campaign/public/all": "CampaignController.listPublicCampaignsOfAllBrands",
+  "post /campaign/remove": "CampaignController.removeAffiliate",
 
   /**
    * @Proposals

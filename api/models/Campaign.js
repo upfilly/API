@@ -56,6 +56,7 @@ module.exports = {
         transaction: {type:'json',defaultsTo:{}},
         legalTerm: {type:'string',defaultsTo:""},
         islegal: {type:'boolean',defaultsTo:false},
+        isArchive: {type:'boolean',defaultsTo:false},
     },
 
 };

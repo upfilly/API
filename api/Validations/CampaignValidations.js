@@ -97,6 +97,7 @@ exports.editCampaign = async (req, res, next) => {
         legalTerm : Joi.string().optional(),
         islegal : Joi.boolean().optional(),
         status : Joi.string().optional().valid("active","deactive"),
+        isArchive : Joi.boolean().optional(),
         
     });
     return await Validate(schema, req, res);

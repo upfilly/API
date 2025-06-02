@@ -695,6 +695,7 @@ exports.getAllCampaignsForBrand = async (req, res) => {
                     legalTerm : 1,
                     islegal : 1,
                     status : 1,
+                    isArchive : 1,
                 }
             },
             {
@@ -1158,5 +1159,23 @@ exports.deleteCampaign = async (req, res) => {
         throw constants.CAMPAIGN.INVALID_ID;
     } catch (err) {
         return response.failed(null, `${err}`, req, res);
+    }
+}
+
+exports.removeAffiliate = async(req,res) => {
+    try {
+        const {affiliate_id,brand_id,campaign_id} = req.body
+        if(!affiliate_id || !brand_id || !campaign_id){
+            return response.failed(null,"Payload missing",req,res)
+        }
+        const association = await BrandAffiliateAssociation.findOne({brand_id : brand_id,campaign_id:campaign_id,affiliate_id:affiliate_id })
+        if(association){
+            await BrandAffiliateAssociation.destroy({id:association.id})
+            return response.success(null,"Association removed",req,res)
+        }else {
+            return response.failed(null,"No Association found",req,res)
+        }
+    } catch (error) {
+        return response.failed(null,error,req,res)
     }
 }
