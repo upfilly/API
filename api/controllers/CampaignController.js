@@ -489,7 +489,7 @@ exports.getAllCampaignRequestsForAffiliate = async (req, res) => {
 exports.getAllCampaignsForBrand = async (req, res) => {
     try {
         let user_id = req.identity.id;
-        let {category,sub_category,category_type,sub_child_category,region,status} = req.query
+        let {category,sub_category,category_type,sub_child_category,region,status,isArchive} = req.query
         let loggedInUser = await Users.findOne({ id: user_id, isDeleted: false });
         if (loggedInUser.addedBy) {
 
@@ -567,7 +567,7 @@ exports.getAllCampaignsForBrand = async (req, res) => {
         if(region) {
             query.region = {$in:[region]}
         }
-        console.log(new_query,'new_query')
+        query.isArchive = isArchive == "true"?true:false
         // Pipeline Stages
         let pipeline = [
              // lookups for categories
