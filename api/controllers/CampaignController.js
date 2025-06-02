@@ -1170,7 +1170,7 @@ exports.removeAffiliate = async(req,res) => {
         }
         const association = await BrandAffiliateAssociation.findOne({brand_id : brand_id,campaign_id:campaign_id,affiliate_id:affiliate_id })
         if(association){
-            await BrandAffiliateAssociation.destroy({id:association.id})
+            await BrandAffiliateAssociation.updateOne({id:association.id},{status:"removed"})
             return response.success(null,"Association removed",req,res)
         }else {
             return response.failed(null,"No Association found",req,res)
