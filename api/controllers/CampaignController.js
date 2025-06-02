@@ -1179,3 +1179,36 @@ exports.removeAffiliate = async(req,res) => {
         return response.failed(null,error,req,res)
     }
 }
+
+exports.campaignAffiliates = async (req, res) => {
+    try {
+        let { brand, campaign, page, count } = req.query;
+
+        if (!brand || !campaign) {
+            return response.failed(null, "Payload missing", req, res);
+        }
+
+        page = parseInt(page) || 1;
+        count = parseInt(count) || 20;
+        const skip = (page - 1) * count;
+
+        const total = await BrandAffiliateAssociation.count({ brand_id: brand, campaign_id: campaign });
+
+        const affiliates = await BrandAffiliateAssociation
+            .find({ brand_id: brand, campaign_id: campaign })
+            .sort({ "createdAt": -1 })
+            .skip(skip)
+            .limit(count)
+            .populate("affiliate_id");
+
+        const data = {
+            total,
+            data: affiliates
+        };
+
+        return response.success(data, "Affiliates fetched with pagination", req, res);
+    } catch (error) {
+        console.error("Error fetching campaign affiliates:", error);
+        return response.failed(null, "Internal Server Error", req, res);
+    }
+};
