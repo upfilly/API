@@ -1193,10 +1193,10 @@ exports.campaignAffiliates = async (req, res) => {
         count = parseInt(count) || 20;
         const skip = (page - 1) * count;
 
-        const total = await BrandAffiliateAssociation.count({ brand_id: brand, campaign_id: campaign });
+        const total = await BrandAffiliateAssociation.count({ brand_id: brand, campaign_id: campaign, status:"accepted" });
 
         const affiliates = await BrandAffiliateAssociation
-            .find({ brand_id: brand, campaign_id: campaign })
+            .find({ brand_id: brand, campaign_id: campaign, status: "accepted" })
             .sort({ "createdAt": -1 })
             .skip(skip)
             .limit(count)
