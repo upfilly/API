@@ -462,15 +462,16 @@ exports.getAllCampaignRequestsForAffiliate = async (req, res) => {
         ];
 
         let totalresult = await db.collection('brandaffiliateassociation').aggregate(pipeline).toArray();
+         pipeline.push({
+            $sort: sortquery,
+        });
         pipeline.push({
             $skip: Number(skipNo)
         });
         pipeline.push({
             $limit: Number(count)
         });
-        pipeline.push({
-            $sort: sortquery,
-        });
+       
         let result = await db.collection("brandaffiliateassociation").aggregate(pipeline).toArray();
         let resData = {
             total_count: totalresult ? totalresult.length : 0,
