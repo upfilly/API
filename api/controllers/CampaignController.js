@@ -1083,7 +1083,7 @@ exports.changeCampaignStatus = async (req, res) => {
             notification_payload.type = "campaign"
             notification_payload.addedBy = req.identity.id;
             notification_payload.title = `Campaign ${Services.Utils.title_case(get_campaign.status)} | ${Services.Utils.title_case(get_campaign.campaign_id.name)} | ${req.identity.fullName}`;
-            notification_payload.message = `Your campaign request is ${Services.Utils.title_case(get_campaign.status)}`;
+            notification_payload.message = `Your campaign request is ${Services.Utils.title_case(req.body.status)}`;
             notification_payload.send_to = get_campaign.brand_id;
             notification_payload.campaign_id = get_campaign.id;
             let brandDetail = await Users.findOne({ id: get_campaign.brand_id, isDeleted: false });
