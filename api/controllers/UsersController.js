@@ -28,7 +28,7 @@ function string_ids_toObjectIds_array(string) {
   if (string) {
     let string_arr = string.split(",");
     let string_arr2 = [];
-    for(let item of string_arr) {
+    for (let item of string_arr) {
       string_arr2.push(new ObjectId(item));
     }
     return string_arr2;
@@ -207,242 +207,242 @@ module.exports = {
         });
 
         //Create checkout link for this brand
-      
-            var find_plan = await SubscriptionPlans.findOne({ id: data.plan_id, isDeleted: false, status: "active" });
-            //   if (req.body.promoId) {
-            //     let findPromo = await db.promocode.findOne({
-            //       coupon_stripe_code: req.body.promoId,isDeleted:false
-            //     });
-            //     if (findPromo.amount && findPromo.amount > req.body.amount) {
-            //       return res.status(400).json({
-            //         success: false,
-            //         message:"Coupon amount exceeds the plan amount."
-            //       });
-            //     }
-            //   }
-            if(!find_plan) {
-                return res.status(404).json({message: "Plan not found!", success: false});
-            }
-        
-        
-              if(data.network_plan_amount === 0 && data.managed_services_plan_amount === 0) {
-                let get_existing_subscription = await Subscriptions.findOne({user_id: add_user.id, status: "active"});
-        
-                    if (get_existing_subscription && get_existing_subscription.stripe_subscription_id) {
-            
-                        let get_stripe_existing_subscription = await Services.StripeServices.retrieve_subscrition({
-                            stripe_subscription_id: get_existing_subscription.stripe_subscription_id
-                        })
-            
-                        if (get_stripe_existing_subscription) {
-                            let delete_old_subscription = await Services.StripeServices.delete_subscription({
-                                stripe_subscription_id: get_existing_subscription.stripe_subscription_id
-                            })
-            
-                            if (delete_old_subscription && delete_old_subscription.status == "canceled") {
-                                let updated_payload = {
-                                    status: "cancelled"
-                                }
-                                if (get_existing_subscription.valid_upto >= new Date()) {
-                                    updated_payload.status = "inactive"
-                                }
-            
-                                let updateSubscription = await Subscriptions.updateOne({ id: get_existing_subscription.id }, updated_payload);
-            
-                                if (updateSubscription && (updateSubscription.status == "cancelled" || updateSubscription.status == "inactive")) {
-                                    await Users.updateOne({id: add_user.id}).set({plan_id: null, special_plan_id: null, isPayment: false});
-                                }
-                            }
-                        }
-                    } else if(get_existing_subscription){
-                        //cancel existing subscription
-                        let updateSubscription = await Subscriptions.updateOne({ id: get_existing_subscription.id, status: "active" }).set({status: "cancelled"});
-                        await Users.updateOne({id: add_user.id}).set({plan_id: null, special_plan_id: null, isPayment: false});
-                    }
-                    let currentDate = new Date();
-                    currentDate.setDate(currentDate.getDate() + Number(data.interval_count)*30);
-                    //set current subscription as active
-                    let subscriptionPayload = {
-                        user_id: add_user.id,
-                        stripe_subscription_id: '',
-                        subscription_plan_id: data.plan_id,
-                        status: "active",
-                        amount: 0,
-                        network_plan_amount: 0,
-                        managed_services_plan_amount: 0,
-                        interval: data.interval,
-                        interval_count: data.interval_count,
-                        valid_upto: currentDate,
-                        special_plan_id: null,
-                        addedBy: add_user.id,
-                        updatedBy: add_user.id
-                    }
-                    // console.log(subscriptionPayload);
-                    let subscription = await Subscriptions.create(subscriptionPayload).fetch();
-                    let user = await Users.updateOne({id: add_user.id}).set({
-                        plan_id: subscription.subscription_plan_id,
-                        special_plan_id: subscription.special_plan_id,
-                        isPayment: true
-                    });
-                    return res.status(200).json({
-                        success: true,
-                        code: 200,
-                        message: "Registration successful!",
-                      });
-              }
-        
-            let product1 = await stripe.products.create({
-                name: find_plan.name
-              });
-        
-            let price1 = await stripe.prices.create({
-                product: product1.id,
-                unit_amount: Number(data.network_plan_amount) * 100,
-                currency: "usd",
-                recurring: {
-                    interval: "month",
-                    interval_count: data.interval_count? data.interval_count: 1,
+
+        var find_plan = await SubscriptionPlans.findOne({ id: data.plan_id, isDeleted: false, status: "active" });
+        //   if (req.body.promoId) {
+        //     let findPromo = await db.promocode.findOne({
+        //       coupon_stripe_code: req.body.promoId,isDeleted:false
+        //     });
+        //     if (findPromo.amount && findPromo.amount > req.body.amount) {
+        //       return res.status(400).json({
+        //         success: false,
+        //         message:"Coupon amount exceeds the plan amount."
+        //       });
+        //     }
+        //   }
+        if (!find_plan) {
+          return res.status(404).json({ message: "Plan not found!", success: false });
+        }
+
+
+        if (data.network_plan_amount === 0 && data.managed_services_plan_amount === 0) {
+          let get_existing_subscription = await Subscriptions.findOne({ user_id: add_user.id, status: "active" });
+
+          if (get_existing_subscription && get_existing_subscription.stripe_subscription_id) {
+
+            let get_stripe_existing_subscription = await Services.StripeServices.retrieve_subscrition({
+              stripe_subscription_id: get_existing_subscription.stripe_subscription_id
+            })
+
+            if (get_stripe_existing_subscription) {
+              let delete_old_subscription = await Services.StripeServices.delete_subscription({
+                stripe_subscription_id: get_existing_subscription.stripe_subscription_id
+              })
+
+              if (delete_old_subscription && delete_old_subscription.status == "canceled") {
+                let updated_payload = {
+                  status: "cancelled"
                 }
+                if (get_existing_subscription.valid_upto >= new Date()) {
+                  updated_payload.status = "inactive"
+                }
+
+                let updateSubscription = await Subscriptions.updateOne({ id: get_existing_subscription.id }, updated_payload);
+
+                if (updateSubscription && (updateSubscription.status == "cancelled" || updateSubscription.status == "inactive")) {
+                  await Users.updateOne({ id: add_user.id }).set({ plan_id: null, special_plan_id: null, isPayment: false });
+                }
+              }
+            }
+          } else if (get_existing_subscription) {
+            //cancel existing subscription
+            let updateSubscription = await Subscriptions.updateOne({ id: get_existing_subscription.id, status: "active" }).set({ status: "cancelled" });
+            await Users.updateOne({ id: add_user.id }).set({ plan_id: null, special_plan_id: null, isPayment: false });
+          }
+          let currentDate = new Date();
+          currentDate.setDate(currentDate.getDate() + Number(data.interval_count) * 30);
+          //set current subscription as active
+          let subscriptionPayload = {
+            user_id: add_user.id,
+            stripe_subscription_id: '',
+            subscription_plan_id: data.plan_id,
+            status: "active",
+            amount: 0,
+            network_plan_amount: 0,
+            managed_services_plan_amount: 0,
+            interval: data.interval,
+            interval_count: data.interval_count,
+            valid_upto: currentDate,
+            special_plan_id: null,
+            addedBy: add_user.id,
+            updatedBy: add_user.id
+          }
+          // console.log(subscriptionPayload);
+          let subscription = await Subscriptions.create(subscriptionPayload).fetch();
+          let user = await Users.updateOne({ id: add_user.id }).set({
+            plan_id: subscription.subscription_plan_id,
+            special_plan_id: subscription.special_plan_id,
+            isPayment: true
+          });
+          return res.status(200).json({
+            success: true,
+            code: 200,
+            message: "Registration successful!",
+          });
+        }
+
+        let product1 = await stripe.products.create({
+          name: find_plan.name
+        });
+
+        let price1 = await stripe.prices.create({
+          product: product1.id,
+          unit_amount: Number(data.network_plan_amount) * 100,
+          currency: "usd",
+          recurring: {
+            interval: "month",
+            interval_count: data.interval_count ? data.interval_count : 1,
+          }
+        });
+
+        if (req.body.isSpecial == true) {
+          let special_plan = await SubscriptionPlans.findOne({ id: data.special_plan_id, isDeleted: false });
+          let product2 = await stripe.products.create({
+            name: special_plan?.name
+          });
+
+          let price2 = await stripe.prices.create({
+            product: product2.id,
+            unit_amount: Number(data.managed_services_plan_amount) * 100,
+            currency: "usd",
+            recurring: {
+              interval: "month",
+              interval_count: data.interval_count ? data.interval_count : 1,
+            },
+          });
+          // console.log(price, "++price");
+          // itm.stripe_price_id = price.id;
+
+          let line_items = [
+            {
+              price: price1.id ? price1.id : "",
+              quantity: 1,
+            },
+            {
+              price: price2.id ? price2.id : "",
+              quantity: 1,
+            }
+          ];
+          // console.log(
+          //   find_plan.id,
+          //   req.identity.id,
+          //   transaction_payload.plan_id,
+          //   req.body.specialAmount,
+          //   req.body.interval_count,
+          //   "++++++"
+          // );
+
+          var create_sessions = await Services.StripeServices.one_time_payment({
+            line_items: line_items,
+
+            email: email,
+            metadata: {
+              plan_id: data.plan_id,
+              special_plan_id: data.special_plan_id,
+              user_id: String(add_user.id),
+              network_plan_amount: data.network_plan_amount,
+              managed_services_plan_amount: data.managed_services_plan_amount,
+              interval_count: data.interval_count,
+              promoId: data.promoId ? data.promoId : "",
+            },
+            subscription_data: {
+              metadata: {
+                plan_id: data.plan_id,
+                special_plan_id: data.special_plan_id,
+                user_id: String(add_user.id),
+                network_plan_amount: data.network_plan_amount,
+                managed_services_plan_amount: data.managed_services_plan_amount,
+                interval_count: data.interval_count,
+                interval: data.interval,
+                promoId: data.promoId ? data.promoId : ""
+              },
+            },
+            discounts: data.promoId ? [{ coupon: data.promoId }] : [],
+            // trial_period_days: find_plan.trial_period_days
+            //   ? find_plan.trial_period_days
+            //   : 0,
+          });
+
+          if (create_sessions) {
+            let Data = {
+              url: create_sessions.url,
+            };
+
+            await Users.updateOne(
+              { id: add_user.id },
+              {
+                isSpecialPlanInclude: true,
+                totalSpecialAmount: req.body.specialAmount,
+              }
+            );
+            return res.status(200).json({
+              success: true,
+              code: 200,
+              data: Data,
             });
-        
-            if (req.body.isSpecial == true) {
-                let special_plan = await SubscriptionPlans.findOne({id: data.special_plan_id, isDeleted: false});
-                let product2 = await stripe.products.create({
-                    name: special_plan?.name
-                });
-        
-                let price2 = await stripe.prices.create({
-                    product: product2.id,
-                    unit_amount: Number(data.managed_services_plan_amount) * 100,
-                    currency: "usd",
-                    recurring: {
-                      interval: "month",
-                      interval_count: data.interval_count? data.interval_count: 1,
-                    },
-                });
-                // console.log(price, "++price");
-                // itm.stripe_price_id = price.id;
-        
-                let line_items = [
-                    {
-                        price: price1.id ? price1.id : "",
-                        quantity: 1,
-                    },
-                    {
-                        price: price2.id ? price2.id : "",
-                        quantity: 1, 
-                    }
-                ];
-                // console.log(
-                //   find_plan.id,
-                //   req.identity.id,
-                //   transaction_payload.plan_id,
-                //   req.body.specialAmount,
-                //   req.body.interval_count,
-                //   "++++++"
-                // );
-        
-                var create_sessions = await Services.StripeServices.one_time_payment({
-                    line_items: line_items,
-        
-                    email: email,
-                    metadata: {
-                        plan_id: data.plan_id,
-                        special_plan_id: data.special_plan_id,
-                        user_id: String(add_user.id),
-                        network_plan_amount: data.network_plan_amount,
-                        managed_services_plan_amount: data.managed_services_plan_amount,
-                        interval_count: data.interval_count,
-                        promoId:data.promoId? data.promoId: "",
-                    },
-                    subscription_data: {
-                        metadata: {
-                            plan_id: data.plan_id,
-                            special_plan_id: data.special_plan_id,
-                            user_id: String(add_user.id),
-                            network_plan_amount: data.network_plan_amount,
-                            managed_services_plan_amount: data.managed_services_plan_amount,
-                            interval_count: data.interval_count,
-                            interval: data.interval,
-                            promoId: data.promoId? data.promoId: ""
-                        },
-                    },
-                    discounts: data.promoId ? [{ coupon: data.promoId }] : [],
-                    // trial_period_days: find_plan.trial_period_days
-                    //   ? find_plan.trial_period_days
-                    //   : 0,
-                });
-        
-                if (create_sessions) {
-                    let Data = {
-                      url: create_sessions.url,
-                    };
-        
-                    await Users.updateOne(
-                    { id: add_user.id },
-                    {
-                        isSpecialPlanInclude: true,
-                        totalSpecialAmount: req.body.specialAmount,
-                    }
-                    );
-                    return res.status(200).json({
-                      success: true,
-                      code: 200,
-                      data: Data,
-                    });
-                }
-            } else {
-        
-              let get_admin = await Services.UserServices.get_users_with_role(["admin"]);
-              let line_items = [
-                {
-                  price: price1.id ? price1.id : "",
-                  quantity: 1
-                }
-              ];
-              let create_session = await Services.StripeServices.one_time_payment({
-                line_items: line_items,
-                email: email,
-                metadata: {
-                    plan_id: data.plan_id,
-                    special_plan_id: data.special_plan_id,
-                    user_id: String(add_user.id),
-                    network_plan_amount: data.network_plan_amount,
-                    managed_services_plan_amount: 0,
-                    interval_count: data.interval_count,
-                    promoId: data.promoId? data.promoId: ""
-                },
-                subscription_data: {
-                    metadata: {
-                        plan_id: data.plan_id,
-                        special_plan_id: data.special_plan_id,
-                        user_id: String(add_user.id),
-                        network_plan_amount: data.network_plan_amount,
-                        managed_services_plan_amount: data.managed_services_plan_amount,
-                        interval_count: data.interval_count,
-                        interval: data.interval,
-                        promoId:data.promoId?data.promoId: "",
-                    },
-                },
-                discounts: data.promoId ? [{ coupon: data.promoId }] : []
-                // trial_period_days: find_plan.trial_period_days
-                //   ? find_plan.trial_period_days
-                //   : 0,
-              });
-        
-              // console.log(discounts,"++++++++++++++++++")
-        
-              if (create_session) {
-                let resData = {
-                  url: create_session.url,
-                };
-                return res.status(200).json({
-                  success: true,
-                  code: 200,
-                  data: resData,
-                });
-              }
+          }
+        } else {
+
+          let get_admin = await Services.UserServices.get_users_with_role(["admin"]);
+          let line_items = [
+            {
+              price: price1.id ? price1.id : "",
+              quantity: 1
             }
+          ];
+          let create_session = await Services.StripeServices.one_time_payment({
+            line_items: line_items,
+            email: email,
+            metadata: {
+              plan_id: data.plan_id,
+              special_plan_id: data.special_plan_id,
+              user_id: String(add_user.id),
+              network_plan_amount: data.network_plan_amount,
+              managed_services_plan_amount: 0,
+              interval_count: data.interval_count,
+              promoId: data.promoId ? data.promoId : ""
+            },
+            subscription_data: {
+              metadata: {
+                plan_id: data.plan_id,
+                special_plan_id: data.special_plan_id,
+                user_id: String(add_user.id),
+                network_plan_amount: data.network_plan_amount,
+                managed_services_plan_amount: data.managed_services_plan_amount,
+                interval_count: data.interval_count,
+                interval: data.interval,
+                promoId: data.promoId ? data.promoId : "",
+              },
+            },
+            discounts: data.promoId ? [{ coupon: data.promoId }] : []
+            // trial_period_days: find_plan.trial_period_days
+            //   ? find_plan.trial_period_days
+            //   : 0,
+          });
+
+          // console.log(discounts,"++++++++++++++++++")
+
+          if (create_session) {
+            let resData = {
+              url: create_session.url,
+            };
+            return res.status(200).json({
+              success: true,
+              code: 200,
+              data: resData,
+            });
+          }
+        }
       }
     } catch (err) {
       return response.failed(null, `${err}`, req, res);
@@ -822,7 +822,7 @@ module.exports = {
 
       let permission_query = {}
 
-      if (['affiliate', 'brand','staff'].includes(user.role)) {
+      if (['affiliate', 'brand', 'staff'].includes(user.role)) {
         permission_query.role = user.role
       } else if (['operator', 'analyzer', 'publisher', 'super_user'].includes(user.role)) {
         // console.log(user, "==user");
@@ -1021,6 +1021,7 @@ module.exports = {
         category_id,
         sub_child_category_id,
         addedBy,
+        campaign,
       } = req.query;
       let skipNo = (Number(page) - 1) * Number(count);
       let query = { isDeleted: false };
@@ -1063,6 +1064,9 @@ module.exports = {
       if (invite_status) {
         query.invite_status = invite_status;
       }
+      // if(campaign){
+      //   query.campaign  = new ObjectId(campaign)
+      // }
       if (role) {
         // console.log(role);
         query.role = role;
@@ -1079,8 +1083,8 @@ module.exports = {
 
       if (isDeleted) {
         query.isDeleted = isDeleted === 'true'
-        ? true
-        : false;
+          ? true
+          : false;
       }
 
       if (isTrusted) {
@@ -1106,34 +1110,34 @@ module.exports = {
       if (category_id) {
         // query.category_id = new ObjectId(category_id);
         category_id = await Services.Utils.string_ids_toObjectIds_array(category_id);
-        query.category_id = {$in : category_id}
+        query.category_id = { $in: category_id }
       }
       if (sub_child_category_id) {
         // query.sub_child_category_id = new ObjectId(sub_child_category_id);
 
         sub_child_category_id = await Services.Utils.string_ids_toObjectIds_array(sub_child_category_id);
-        query.sub_child_category_id = {$in : sub_child_category_id}
+        query.sub_child_category_id = { $in: sub_child_category_id }
       }
       if (sub_category_id) {
         // query.sub_category_id = new ObjectId(sub_category_id);
         sub_category_id = await Services.Utils.string_ids_toObjectIds_array(sub_category_id);
-        query.sub_category_id = {$in : sub_category_id}
+        query.sub_category_id = { $in: sub_category_id }
       }
 
       if (cat_type) {
         cat_type = await Services.Utils.string_to_array(cat_type);
-        query.cat_type = {$in : cat_type}
-      } 
+        query.cat_type = { $in: cat_type }
+      }
 
       if (start_date && end_date) {
         const date = new Date(start_date);
         const endDate = new Date(end_date);
         // Set endDate to the end of the day for better inclusiveness
         endDate.setHours(23, 59, 59, 999);
-        
+
         query.$and = [
-            { createdAt: { $gte: date } },
-            { createdAt: { $lte: endDate } }
+          { createdAt: { $gte: date } },
+          { createdAt: { $lte: endDate } }
         ];
       }
 
@@ -1208,6 +1212,46 @@ module.exports = {
             preserveNullAndEmptyArrays: true,
           },
         },
+        {
+          $lookup: {
+            from: "brandaffiliateassociation",
+            let: {
+              campaign_id: new ObjectId(campaign),
+              isDeleted: false,
+              brand_id: new ObjectId(req.identity.id),
+              status: "accepted",
+            },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $eq: ["$campaign_id", "$$campaign_id"] },
+                      { $eq: ["$isDeleted", "$$isDeleted"] },
+                      { $eq: ["$brand_id", "$$brand_id"] },
+                      { $eq: ["$status", "$$status"] },
+                    ]
+                  }
+                }
+              }
+            ],
+            as: "associatedAffiliates"
+          }
+        },
+        ...(campaign ? [{
+          $match: {
+            $expr: {
+              $in: ["$_id", {
+                $map: {
+                  input: "$associatedAffiliates",
+                  as: "assoc",
+                  in: "$$assoc.affiliate_id"
+                }
+              }]
+            }
+          }
+        }] : [])
+
       ];
 
       let projection = {
@@ -1251,6 +1295,7 @@ module.exports = {
           cat_type: "$categories_details.cat_type",
           sub_category_id: "$sub_category_id",
           sub_child_category_id: "$sub_child_category_id",
+          associatedAffiliates: "$associatedAffiliates",
         },
       };
       pipeline.push(projection);
@@ -1412,23 +1457,23 @@ module.exports = {
         query.addedBy = new ObjectId(addedBy);
       }
       if (sub_category_id) {
-            // query.sub_category_id = new ObjectId(sub_category_id);
-            sub_category_id = await Services.Utils.string_to_array(sub_category_id);
-            query.sub_category_id = {$in : sub_category_id}
-          }
-        if(category_id){
-            category = await Services.Utils.string_to_array(category);
-            query.category = {$in : category}
-        }
-        if (category_type) {
-            category_type = await Services.Utils.string_to_array(category_type);
-            query.category_type = {$in : category_type}
-        } 
-        if (sub_child_category_id) {
-          sub_child_category_id = await Services.Utils.string_to_array(sub_child_category_id);
-            query.sub_child_category = {$in : sub_child_category_id}
-        } 
-      
+        // query.sub_category_id = new ObjectId(sub_category_id);
+        sub_category_id = await Services.Utils.string_to_array(sub_category_id);
+        query.sub_category_id = { $in: sub_category_id }
+      }
+      if (category_id) {
+        category = await Services.Utils.string_to_array(category);
+        query.category = { $in: category }
+      }
+      if (category_type) {
+        category_type = await Services.Utils.string_to_array(category_type);
+        query.category_type = { $in: category_type }
+      }
+      if (sub_child_category_id) {
+        sub_child_category_id = await Services.Utils.string_to_array(sub_child_category_id);
+        query.sub_child_category = { $in: sub_child_category_id }
+      }
+
       // if (category_id) {
       //   query.category_id = new ObjectId(category_id);
       // }
@@ -1567,7 +1612,7 @@ module.exports = {
           isTrusted: "$isTrusted",
           category_id: "$category_id",
           // cat_type: "$categories_details.cat_type",
-          category_type : "$category_type",
+          category_type: "$category_type",
           sub_category_id: "$sub_category_id",
           sub_child_category_id: "$sub_child_category_id",
           request_status: "$request_status"
@@ -1992,13 +2037,13 @@ module.exports = {
 
           get_user.listOfOtherUsers.push(current_user);
         }
-        
+
         let all_category = []
         let all_sub_category = []
         let all_sub_child_category = []
-        if (get_user && get_user.category_id && get_user.category_id != "" && get_user.category_id.length>0) {
+        if (get_user && get_user.category_id && get_user.category_id != "" && get_user.category_id.length > 0) {
           // console.log(get_user.category_id, "---------get_user.category_id");
-          for await (let category of get_user.category_id){
+          for await (let category of get_user.category_id) {
             let get_category = await CommonCategories.findOne({
               id: category,
             }).select("name");
@@ -2012,9 +2057,9 @@ module.exports = {
         }
         // sub category data
 
-        if (get_user && get_user.sub_category_id && get_user.sub_child_category_id.length>0) {
+        if (get_user && get_user.sub_category_id && get_user.sub_child_category_id.length > 0) {
           // console.log(get_user.category_id, "---------get_user.category_id");
-          for await (let category of get_user.sub_category_id){
+          for await (let category of get_user.sub_category_id) {
             let get_category = await CommonCategories.findOne({
               id: category,
             }).select("name");
@@ -2028,9 +2073,9 @@ module.exports = {
         }
 
         // sub child categories 
-        if (get_user && get_user.sub_child_category_id && get_user.sub_child_category_id.length>0) {
+        if (get_user && get_user.sub_child_category_id && get_user.sub_child_category_id.length > 0) {
           // console.log(get_user.category_id, "---------get_user.category_id");
-          for await (let category of get_user.sub_child_category_id){
+          for await (let category of get_user.sub_child_category_id) {
             let get_category = await SubChildCategory.findOne({
               id: category,
             }).select("name");
@@ -2139,21 +2184,21 @@ module.exports = {
         } else {
           delete get_user.listOfOtherUsers
         }
-        if(get_user.role === "admin"){
+        if (get_user.role === "admin") {
           let balance = await Services.StripeServices.retrieve_balance()
           get_user.stripe_account_balance = balance.available[0].amount
           get_user.pending_balance = balance.pending[0].amount
         }
-        
-        if(get_user.role === "brand"){
-          get_user.total_campaign = await Campaign.count({brand_id:id,isDeleted:false})
+
+        if (get_user.role === "brand") {
+          get_user.total_campaign = await Campaign.count({ brand_id: id, isDeleted: false })
         }
 
         return response.success(get_user, constants.user.FETCHED, req, res);
       }
       throw constants.user.INVALID_ID;
     } catch (error) {
-      console.log(error,'====eer')
+      console.log(error, '====eer')
       return response.failed(null, `${error}`, req, res);
     }
   },
@@ -2325,7 +2370,7 @@ module.exports = {
       if (!get_user) {
         throw constants.user.INVALID_ID;
       }
-      console.log(get_user.role,'get_user.role')
+      console.log(get_user.role, 'get_user.role')
       if (get_user.isVerified == "Y" && get_user.role == "brand") {
         console.log("dkhfisdjflsjflsdjfksjdfdslfd")
         return res.redirect(
@@ -2627,11 +2672,11 @@ module.exports = {
 
         }
 
-        const allCampaign = await Campaign.find({addedBy: id, isDeleted:false, currencies: {"!=" : ""}})
-        if(req.body.currencies && allCampaign.length>0){
-          for await (const campaign of allCampaign){
-            if(!req.body.currencies.includes(campaign.currencies)){
-              return response.failed(null,`Can't delete ${campaign.currencies} currency because it is exist in campaign ${campaign.name}`,req,res)
+        const allCampaign = await Campaign.find({ addedBy: id, isDeleted: false, currencies: { "!=": "" } })
+        if (req.body.currencies && allCampaign.length > 0) {
+          for await (const campaign of allCampaign) {
+            if (!req.body.currencies.includes(campaign.currencies)) {
+              return response.failed(null, `Can't delete ${campaign.currencies} currency because it is exist in campaign ${campaign.name}`, req, res)
             }
           }
         }
@@ -2782,17 +2827,17 @@ module.exports = {
           tax_payload.user_id = newUser.id;
           let create_tax = await Tax.create(tax_payload).fetch();
           //Add prev campaign requests
-          let allPublicCampaigns = await Campaign.find({isDeleted: false, access_type: "public"});
-          if(allPublicCampaigns && allPublicCampaigns.length > 0) {
+          let allPublicCampaigns = await Campaign.find({ isDeleted: false, access_type: "public" });
+          if (allPublicCampaigns && allPublicCampaigns.length > 0) {
             let createPPCampaignsPromises = allPublicCampaigns.map(campaign => {
               return BrandAffiliateAssociation.create({
-                  affiliate_id: newUser.id,
-                  campaign_id: campaign.id,
-                  brand_id: campaign.brand_id,
-                  addedBy: req.identity.id
+                affiliate_id: newUser.id,
+                campaign_id: campaign.id,
+                brand_id: campaign.brand_id,
+                addedBy: req.identity.id
               });
-          });
-          await Promise.all(createPPCampaignsPromises);
+            });
+            await Promise.all(createPPCampaignsPromises);
           }
         }
         // let affiliate_link = credentials.FRONT_WEB_URL + "/affiliate/status/" + newUser.id + "?" + newUser.affilaite_unique_id
@@ -4795,10 +4840,10 @@ module.exports = {
           sub_category_id: "$sub_category_id",
           sub_child_category_id: "$sub_child_category_id",
           request_status: "$request_status",
-          timezone:"$timezone",
+          timezone: "$timezone",
           currencies: "$currencies",
           defaultCurrency: "$defaultCurrency",
-          propertyType:"$propertyType",
+          propertyType: "$propertyType",
         },
       };
       pipeline.push(projection);
@@ -4873,19 +4918,19 @@ module.exports = {
         };
 
         await Emails.OnboardingEmails.changeRequestStatus(email_payload);
-        if(status === 'accepted') {
+        if (status === 'accepted') {
           //get all public campaigns on the platform and send requests to this affiliate for them
-          let allPublicCampaigns = await Campaign.find({isDeleted: false, access_type: "public"});
-          if(allPublicCampaigns && allPublicCampaigns.length > 0) {
+          let allPublicCampaigns = await Campaign.find({ isDeleted: false, access_type: "public" });
+          if (allPublicCampaigns && allPublicCampaigns.length > 0) {
             let createPPCampaignsPromises = allPublicCampaigns.map(campaign => {
               return BrandAffiliateAssociation.create({
-                  affiliate_id: id,
-                  campaign_id: campaign.id,
-                  brand_id: campaign.brand_id,
-                  addedBy: req.identity.id
+                affiliate_id: id,
+                campaign_id: campaign.id,
+                brand_id: campaign.brand_id,
+                addedBy: req.identity.id
               });
-          });
-          await Promise.all(createPPCampaignsPromises);
+            });
+            await Promise.all(createPPCampaignsPromises);
           }
         }
 
