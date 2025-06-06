@@ -63,7 +63,7 @@ exports.editCoupon = async (req, res, next) => {
 
     commissionType: Joi.string()
       .valid("Percentage Commission", "Fixed amount")
-      .required(),
+      .optional(),
 
     applicable: Joi.array().items(Joi.string()), // Adjust the type of items if necessary
 
