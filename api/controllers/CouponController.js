@@ -329,7 +329,8 @@ exports.getAllCoupon = async (req, res) => {
                 updatedAt: "$updatedAt",
                 createdAt: "$createdAt",
                 i : "$addedBy",
-                fullName: "$addedByDetails.fullName"
+                fullName: "$addedByDetails.fullName",
+                couponAmount:"$couponAmount",
             }
         };
         pipeline.push(projection);

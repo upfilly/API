@@ -38,7 +38,12 @@ module.exports = {
     commissionType: {
       type: "string",
       isIn: ["Percentage Commission", "Fixed amount"],
-      required: true,
+      // required: true,
+    },
+
+    couponAmount : {
+      type  : "number",
+      defaultsTo:0
     },
 
     // Applicable Products or Categories
@@ -77,7 +82,7 @@ module.exports = {
     // Coupon commission
     couponCommission: {
       type: "string",
-      required: true,
+      // required: true,
     },
     addedBy: { model: "users" },
     updatedBy: { model: "users" },
