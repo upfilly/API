@@ -21,7 +21,7 @@ module.exports = {
     },
     purpose: {
       type: "string",
-      required: true,
+      // required: true,
     },
     audience: {
       type: "string",
