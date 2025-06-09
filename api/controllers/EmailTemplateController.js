@@ -460,24 +460,35 @@ exports.getUserEmailTemplate = async (req, res) => {
     return response.failed(null, `${error}`, req, res);
   }
 }
-exports.affiliateCount = async(req,res) => {
+exports.affiliateCount = async (req, res) => {
   try {
-    const joined = await BrandAffiliateAssociation.count({brand_id : req.identity.id , status:"accepted"})
-    const active_aff = await BrandAffiliateAssociation.find({status:"accepted",brand_id : req.identity.id,isActive:true}).populate("affiliate_id")
-    let active_affiliate = 0
-    if(active_aff.length>0){
-      for await (const itm of active_aff){
-        if(itm?.affiliate_id?.status == "active" && itm.isDeleted == false){
-          active_affiliate++
-        }
-      }
-    }
-    const data = {
-      totalJoined : joined,
-      totalActive : active_affiliate,
-    }
-    return response.success(data,"Data",req,res)
+    const brandId = req.identity.id;
+
+    // Count accepted associations
+    const totalJoined = await BrandAffiliateAssociation.count({
+      brand_id: brandId,
+      status: "accepted",
+    });
+
+    // Get only needed associations with affiliate populated
+    const acceptedAffiliates = await BrandAffiliateAssociation.find({
+      brand_id: brandId,
+      status: "accepted",
+      isActive: true,
+      isDeleted: false,
+    }).populate("affiliate_id");
+
+    // Count active affiliates
+    const totalActive = acceptedAffiliates.filter(
+      item => item.affiliate_id && item.affiliate_id.status === "active"
+    ).length;
+
+    return response.success({
+      totalJoined,
+      totalActive,
+    }, "Affiliate count fetched successfully", req, res);
+
   } catch (error) {
     return response.failed(null, `${error}`, req, res);
   }
-}
+};
