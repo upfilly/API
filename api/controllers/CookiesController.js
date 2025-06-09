@@ -145,46 +145,69 @@ exports.savedCookies = async (req, res) => {
     }
 }
 
-exports.getLink = async(req,res) => {
-    let redirectLink  =  req.param("link")
+exports.getLink = async (req, res) => {
+  try {
+    let redirectLink = req.param("link");
     const params = new URLSearchParams(redirectLink);
-    const affiliate_id = params.get("affiliate_id")
-    const merchant_id = params.get("merchant_id")
+    const paramObj = Object.fromEntries(params.entries());
 
-    let url = params.get("url")
-    const ext = params.get("ext")
-    
-    url = "https://"+ url + "." +ext
-    redirectLink = `${url}?affiliate_id=${affiliate_id}&merchant_id=${merchant_id}`
-    
-    let get_ip = req.headers['x-forwarded-for']?.split(',')[0] // First IP in the list
-    || req.headers['cf-connecting-ip'] // Cloudflare
-    || req.headers['x-real-ip'] // Nginx Proxy
-    || req.connection.remoteAddress; // Fallback
+    // Extract known/static keys
+    const affiliate_id = paramObj.affiliate_id;
+    const merchant_id = paramObj.merchant_id;
+    const campaign_id = paramObj.campaign_id;
+    const url = paramObj.url;
+    const ext = paramObj.ext;
+    const hUrl = paramObj.hUrl;
 
-    
-    let ipResponse = geoip.lookup(get_ip);
-    const lat = ipResponse.ll[0]
-    const lng = ipResponse.ll[1]
-    
-    ipResponse.country_name = iso3166.whereAlpha2(ipResponse.country)?.country || "Unknown";
-    let userAgentString = await getDeviceInfo(req)
-    
-    const paylaodDetail = {
-        affiliate_id : affiliate_id ,
-        affiliate_link : url,
-        brand_id : merchant_id,
-        lat : lat,
-        lng:lng,
-        ip_address : get_ip,
-        device  : userAgentString.deviceType,
-        os: userAgentString.os,
-        browser : userAgentString.browser,
-        country : ipResponse.country_name,
-        city : ipResponse.city,
-        timezone : ipResponse.timezone,
+    // Construct base URL
+    const baseUrl = hUrl ? `https://${hUrl}.${url}.${ext}` : `https://${url}.${ext}`;
+
+    // Exclude static keys to get dynamic ones
+    const excludedKeys = ['affiliate_id', 'merchant_id', 'campaign_id', 'url', 'ext', 'hUrl'];
+    const dynamicParams = Object.entries(paramObj)
+      .filter(([key]) => !excludedKeys.includes(key))
+      .map(([key, val]) => `${key}=${encodeURIComponent(val)}`)
+      .join('&');
+
+    // Construct final redirect link
+    let redirectURL = `${baseUrl}?affiliate_id=${affiliate_id}&merchant_id=${merchant_id}&campaign_id=${campaign_id}`;
+    if (dynamicParams) {
+      redirectURL += `&${dynamicParams}`;
     }
-    await axios.post(`${credentials.BACK_WEB_URL}/saved-cookies`, paylaodDetail)
-    
-    return res.redirect(redirectLink)
-}
+
+    // Get IP and location info
+    let get_ip = req.headers['x-forwarded-for']?.split(',')[0]
+      || req.headers['cf-connecting-ip']
+      || req.headers['x-real-ip']
+      || req.connection.remoteAddress;
+
+    let ipResponse = geoip.lookup(get_ip) || {};
+    const lat = ipResponse?.ll?.[0] || null;
+    const lng = ipResponse?.ll?.[1] || null;
+    ipResponse.country_name = iso3166.whereAlpha2(ipResponse.country)?.country || "Unknown";
+
+    const userAgentString = await getDeviceInfo(req);
+
+    const paylaodDetail = {
+      affiliate_id: affiliate_id,
+      affiliate_link: baseUrl,
+      brand_id: merchant_id,
+      lat: lat,
+      lng: lng,
+      ip_address: get_ip,
+      device: userAgentString.deviceType,
+      os: userAgentString.os,
+      browser: userAgentString.browser,
+      country: ipResponse.country_name,
+      city: ipResponse.city,
+      timezone: ipResponse.timezone,
+    };
+
+    await axios.post(`${credentials.BACK_WEB_URL}/saved-cookies`, paylaodDetail);
+
+    return res.redirect(redirectURL);
+  } catch (error) {
+    console.log("Error in getLink:", error);
+    return res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
