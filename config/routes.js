@@ -525,6 +525,7 @@ module.exports.routes = {
   "PUT /emailtemplate": "EmailTemplateController.update",
   "DELETE /emailtemplate": "EmailTemplateController.delete",
   "get /getUserEmailTemplate": "EmailTemplateController.getUserEmailTemplate",
+  "get /affiliate/count": "EmailTemplateController.affiliateCount",
 
   "get /affiliate/banners": "BannerController.getAllAffiliateBanner",
 

@@ -460,3 +460,24 @@ exports.getUserEmailTemplate = async (req, res) => {
     return response.failed(null, `${error}`, req, res);
   }
 }
+exports.affiliateCount = async(req,res) => {
+  try {
+    const joined = await BrandAffiliateAssociation.count({brand_id : req.identity.id , status:"accepted"})
+    const active_aff = await BrandAffiliateAssociation.find({status:"accepted",brand_id : req.identity.id,isActive:true}).populate("affiliate_id")
+    let active_affiliate = 0
+    if(active_aff.length>0){
+      for await (const itm of active_aff){
+        if(itm?.affiliate_id?.status == "active" && itm.isDeleted == false){
+          active_affiliate++
+        }
+      }
+    }
+    const data = {
+      totalJoined : joined,
+      totalActive : active_affiliate,
+    }
+    return response.success(data,"Data",req,res)
+  } catch (error) {
+    return response.failed(null, `${error}`, req, res);
+  }
+}
