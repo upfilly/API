@@ -1216,7 +1216,7 @@ module.exports = {
           $lookup: {
             from: "brandaffiliateassociation",
             let: {
-              campaign_id: new ObjectId(campaign),
+              campaign_id: campaign ? new ObjectId(campaign) : null,
               isDeleted: false,
               brand_id: new ObjectId(req.identity.id),
               status: "accepted",
