@@ -103,7 +103,7 @@ exports.getAllCommission = async (req, res) => {
         let count = req.param('count') || 10;
         let page = req.param('page') || 1;
 
-        let { search, isDeleted, status, sortBy, upload_method, commission_type, mobile_creative ,addedBy} = req.query;
+        let { search, isDeleted, status, sortBy, upload_method, commission_type, mobile_creative ,addedBy, affiliate} = req.query;
         let skipNo = (Number(page) - 1) * Number(count);
 
         if (search) {
@@ -123,6 +123,7 @@ exports.getAllCommission = async (req, res) => {
         if (upload_method) { query.upload_method = upload_method; }
         if (commission_type) { query.commission_type = commission_type; }
         if (addedBy) { query.addedBy = new ObjectId(addedBy); }
+        if (affiliate) { query.affiliate_id = new ObjectId(affiliate); }
 
 
         let sortquery = {};

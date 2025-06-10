@@ -1037,10 +1037,10 @@ exports.sendEmailMessage = async (req, res) => {
             affiliateEmail: findUser.email,
             emailMessage: data.description,
           };
-
-          // await Emails.EmailMessageTemplate.sendEmailMessageTemplate(
-          //   emailPayload
-          // );
+          
+          await Emails.EmailMessageTemplate.sendEmailMessageTemplate(
+            emailPayload
+          );
         }
       }
     }
