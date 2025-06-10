@@ -1038,9 +1038,9 @@ exports.sendEmailMessage = async (req, res) => {
             emailMessage: data.description,
           };
 
-          await Emails.EmailMessageTemplate.sendEmailMessageTemplate(
-            emailPayload
-          );
+          // await Emails.EmailMessageTemplate.sendEmailMessageTemplate(
+          //   emailPayload
+          // );
         }
       }
     }
@@ -1195,7 +1195,8 @@ exports.sendEmailMessage = async (req, res) => {
       listOfAcceptedInvites = removeDuplicates(combinedList, "affiliate_id");
 
       for (let invites of listOfAcceptedInvites) {
-        let findUser = await Users.findOne({ id: invites.affiliate_id, status: data.affiliateStatus, isDeleted: false });
+        
+        let findUser = await Users.findOne({ id: invites.affiliate_id,  isDeleted: false }); ///status: data.affiliateStatus,
         if (findUser) {
           let emailPayload = {
             brandFullName: req.identity.fullName,
@@ -1203,7 +1204,6 @@ exports.sendEmailMessage = async (req, res) => {
             affiliateEmail: findUser.email,
             emailMessage: data.description,
           };
-
           await Emails.EmailMessageTemplate.sendEmailMessageTemplate(
             emailPayload
           );

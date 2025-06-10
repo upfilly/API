@@ -22,8 +22,8 @@ exports.sendEmailMessageTemplate = async (options) => {
            <div style=" background: url('${credentials.BACK_WEB_URL}/images/banner.png');  background-size: 100% !important;width: 100% !important; height: 260px; ">
            </div>
            <div style="margin-top:-190px !important;">
-           <div style=" width: 225px; height: 225px;  box-shadow: 10px 4px 3px 0px #0000000d; padding: 1rem;
-           text-align: center;  display: -webkit-flex; border: 5px solid #00BAFF; background: #fff; margin: auto;  border-radius: 50%; display: flex; justify-content: center;align-items: center;">
+           <div style=" width: 225px; height: 225px;  padding: 1rem;
+           text-align: center;  background: #fff; margin: auto;">
                <div>
                         <img src="${credentials.BACK_WEB_URL}/images/upfilly.png"style="width:115px; height: 40px; object-fit: contain;">
                 <h1 style="  margin-bottom: 0px;  margin-top: 10px; font-size: 18px;"><span style="font-weight: 400;color:#373737;">Hi </span>${affiliateFullName}, </h1>
@@ -37,10 +37,10 @@ exports.sendEmailMessageTemplate = async (options) => {
 </div>
 
 <div style="margin-bottom: 2rem;">
-  <span  > <img src="${credentials.BACK_WEB_URL}/images/Image1.png"style="width: 40px;"></span>
-   <span ><img src="${credentials.BACK_WEB_URL}/images/Image2.png"style="width: 40px;"></span>
-       <span ><img src="${credentials.BACK_WEB_URL}/images/Image3.png"style="width: 40px;"></span>
-           <span ><img src="${credentials.BACK_WEB_URL}/images/Image4.png"style="width: 40px;"></span>
+  <span  > <img src="${credentials.BACK_WEB_URL}/Image1.png"style="width: 40px;"></span>
+   <span ><img src="${credentials.BACK_WEB_URL}/Image2.png"style="width: 40px;"></span>
+       <span ><img src="${credentials.BACK_WEB_URL}/Image3.png"style="width: 40px;"></span>
+           <span ><img src="${credentials.BACK_WEB_URL}/Image4.png"style="width: 40px;"></span>
 </div>
 
            <p style="color: #626262;font-size: 11px;margin-bottom: 0px;">Copyright © 2023</p>
