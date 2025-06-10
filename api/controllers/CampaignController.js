@@ -13,7 +13,6 @@ const Services = require('../services/index');
 const ObjectId = require('mongodb').ObjectId;
 const Emails = require('../Emails/index');
 const credentials = require('../../config/local.js'); //sails.config.env.production;
-const { pipeline } = require("form-data");
 
 generateName = function () {
     // action are perform to generate random name for every file
@@ -46,17 +45,17 @@ exports.addCampaign = async (req, res) => {
 
             let get_account_manager_detail = await Users.findOne({ id: loggedInUser.addedBy, isDeleted: false });
             if (get_account_manager_detail && get_account_manager_detail.role) {
-                if(loggedInUser.role === 'brand' || loggedInUser.role === 'affiliate') {
+                if (loggedInUser.role === 'brand' || loggedInUser.role === 'affiliate') {
                     var isPermissionExists = await Permissions.findOne({
-                      role: loggedInUser.role,
-                      //account_manager: get_account_manager_detail.role
+                        role: loggedInUser.role,
+                        //account_manager: get_account_manager_detail.role
                     });
-                  }
+                }
                 else {
                     var isPermissionExists = await Permissions.findOne({
                         role: loggedInUser.role,
                         account_manager: get_account_manager_detail.role
-                });
+                    });
                 }
 
                 if (!isPermissionExists) {
@@ -80,27 +79,27 @@ exports.addCampaign = async (req, res) => {
 
         req.body.addedBy = req.identity.id;
         let brand_id = req.body.brand_id;
-        let get_brand = await Users.findOne({id: brand_id, isDeleted: false});
-        if(!get_brand) {
+        let get_brand = await Users.findOne({ id: brand_id, isDeleted: false });
+        if (!get_brand) {
             return response.failed(null, constants.CAMPAIGN.INVALID_BRAND_ID, req, res);
         }
-        req.body.isDefault = req.body.isDefault === 'true'? true: false;
-        if(req.body.isDefault) {
+        req.body.isDefault = req.body.isDefault === 'true' ? true : false;
+        if (req.body.isDefault) {
             //make all other campaigns non-default
-            await Campaign.update({brand_id: brand_id, isDefault: true}).set({isDefault: false});
+            await Campaign.update({ brand_id: brand_id, isDefault: true }).set({ isDefault: false });
         } else {
-            let defaultCampaign = await Campaign.findOne({brand_id: brand_id, isDefault: true, isDeleted: false});
-            if(!defaultCampaign) {
+            let defaultCampaign = await Campaign.findOne({ brand_id: brand_id, isDefault: true, isDeleted: false });
+            if (!defaultCampaign) {
                 req.body.isDefault = true;
             }
         }
 
         req.body.campaign_unique_id = generateRandom8DigitNumber();
         let affiliate_id_list;
-        if(req.body.affiliate_id && req.body.access_type === 'private') {
-            affiliate_id_list = [...req.body.affiliate_id]; 
+        if (req.body.affiliate_id && req.body.access_type === 'private') {
+            affiliate_id_list = [...req.body.affiliate_id];
         } else {
-            affiliate_id_list = await Users.find({role: "affiliate", isDeleted: false});
+            affiliate_id_list = await Users.find({ role: "affiliate", isDeleted: false });
             affiliate_id_list = affiliate_id_list.map(affiliate => affiliate.id);
         }
         let add_campaign = await Campaign.create(req.body).fetch();
@@ -115,10 +114,10 @@ exports.addCampaign = async (req, res) => {
                     addedBy: req.identity.id
                 });
             });
-            
+
             // Wait for all the promises to resolve
             await Promise.all(createPPCampaignsPromises);
-            for(let current_affiliate_id of affiliate_id_list) {
+            for (let current_affiliate_id of affiliate_id_list) {
                 let notification_payload = {};
                 notification_payload.send_to = current_affiliate_id;
                 notification_payload.title = `Campaign | ${Services.Utils.title_case(add_campaign.name)} | ${Services.Utils.title_case(req.identity.fullName)}`;
@@ -161,17 +160,17 @@ exports.editCampaign = async (req, res) => {
 
             let get_account_manager_detail = await Users.findOne({ id: loggedInUser.addedBy, isDeleted: false });
             if (get_account_manager_detail && get_account_manager_detail.role) {
-                if(loggedInUser.role === 'brand' || loggedInUser.role === 'affiliate') {
+                if (loggedInUser.role === 'brand' || loggedInUser.role === 'affiliate') {
                     var isPermissionExists = await Permissions.findOne({
-                      role: loggedInUser.role,
-                      //account_manager: get_account_manager_detail.role
+                        role: loggedInUser.role,
+                        //account_manager: get_account_manager_detail.role
                     });
-                  }
+                }
                 else {
                     var isPermissionExists = await Permissions.findOne({
                         role: loggedInUser.role,
                         account_manager: get_account_manager_detail.role
-                });
+                    });
                 }
 
                 if (!isPermissionExists) {
@@ -197,12 +196,12 @@ exports.editCampaign = async (req, res) => {
             throw constants.COMMON.UNAUTHORIZED;
         }
 
-        if(req.body.isDefault) {
+        if (req.body.isDefault) {
             //make all other campaigns non-default
-            req.body.isDefault = req.body.isDefault === 'true'? true: false;
-            if(req.body.isDefault)
-                await Campaign.update({brand_id: (req.body.brand_id), isDefault: true}).set({isDefault: false});
-            
+            req.body.isDefault = req.body.isDefault === 'true' ? true : false;
+            if (req.body.isDefault)
+                await Campaign.update({ brand_id: (req.body.brand_id), isDefault: true }).set({ isDefault: false });
+
         }
 
         req.body.updatedBy = req.identity.id;
@@ -230,9 +229,9 @@ exports.editCampaign = async (req, res) => {
 
 exports.listPublicCampaignsOfAllBrands = async (req, res) => {
     try {
-        let campaigns = await Campaign.find({access_type: 'public', isDeleted: false}).populate('brand_id');
+        let campaigns = await Campaign.find({ access_type: 'public', isDeleted: false }).populate('brand_id');
         return response.success(campaigns, constants.CAMPAIGN.FETCHED_ALL, req, res);
-    } catch(err) {
+    } catch (err) {
         return response.failed(null, `${err}`, req, res);
     }
 }
@@ -240,24 +239,24 @@ exports.listPublicCampaignsOfAllBrands = async (req, res) => {
 exports.getAllCampaignRequestsForAffiliate = async (req, res) => {
     try {
         let user_id = req.identity.id;
-        let {category,sub_category,category_type,sub_child_category,region,search, isDeleted, status, sortBy, brand_id, affiliate_id} = req.query
+        let { category, sub_category, category_type, sub_child_category, region, search, isDeleted, status, sortBy, brand_id, affiliate_id } = req.query
 
         let loggedInUser = await Users.findOne({ id: user_id, isDeleted: false });
         if (loggedInUser.addedBy) {
 
             let get_account_manager_detail = await Users.findOne({ id: loggedInUser.addedBy, isDeleted: false });
             if (get_account_manager_detail && get_account_manager_detail.role) {
-                if(loggedInUser.role === 'brand' || loggedInUser.role === 'affiliate') {
+                if (loggedInUser.role === 'brand' || loggedInUser.role === 'affiliate') {
                     var isPermissionExists = await Permissions.findOne({
-                      role: loggedInUser.role,
-                      //account_manager: get_account_manager_detail.role
+                        role: loggedInUser.role,
+                        //account_manager: get_account_manager_detail.role
                     });
-                  }
+                }
                 else {
                     var isPermissionExists = await Permissions.findOne({
                         role: loggedInUser.role,
                         account_manager: get_account_manager_detail.role
-                });
+                    });
                 }
                 if (!isPermissionExists) {
                     throw "Permission not exists";
@@ -274,7 +273,7 @@ exports.getAllCampaignRequestsForAffiliate = async (req, res) => {
         if (search) {
             search = Services.Utils.remove_special_char_exept_underscores(search);
             query.$or = [
-                
+
             ]
             new_query.$or = [
                 { "campaign_name": { $regex: search, '$options': 'i' } }
@@ -286,7 +285,7 @@ exports.getAllCampaignRequestsForAffiliate = async (req, res) => {
 
         if (status) {
             query.$or = [
-                {source: "campaign", status: status}
+                { source: "campaign", status: status }
             ];
             // if(status != 'accepted') {
             //     query.$or = [
@@ -295,14 +294,14 @@ exports.getAllCampaignRequestsForAffiliate = async (req, res) => {
             // }
         } else {
             query.$or = [
-                {source: "campaign", status: "accepted"},
-                {source: "campaign", status: "rejected"},
-                {source: "campaign", status: "pending"},
-                {source: "campaign", status: "requested"},
-                {source: "campaign", status: "removed"},
-                {source: "invite", status: "accepted"},
-                {source: "make_offer", status: "accepted"},
-                {source: "affiliate_request", status: "accepted"}
+                { source: "campaign", status: "accepted" },
+                { source: "campaign", status: "rejected" },
+                { source: "campaign", status: "pending" },
+                { source: "campaign", status: "requested" },
+                { source: "campaign", status: "removed" },
+                { source: "invite", status: "accepted" },
+                { source: "make_offer", status: "accepted" },
+                { source: "affiliate_request", status: "accepted" }
             ]
         }
 
@@ -313,7 +312,7 @@ exports.getAllCampaignRequestsForAffiliate = async (req, res) => {
         if (affiliate_id) {
             query.affiliate_id = new ObjectId(affiliate_id);
         }
-        new_query.campaign_commission = {$gt : 0}
+        new_query.campaign_commission = { $gt: 0 }
         let sortquery = {};
         if (sortBy) {
             let typeArr = [];
@@ -327,23 +326,23 @@ exports.getAllCampaignRequestsForAffiliate = async (req, res) => {
         if (sub_category) {
             // query.sub_category_id = new ObjectId(sub_category_id);
             sub_category = await Services.Utils.string_to_array(sub_category);
-            new_query.sub_category = {$in : sub_category}
-          }
-        if(category){
+            new_query.sub_category = { $in: sub_category }
+        }
+        if (category) {
             category = await Services.Utils.string_to_array(category);
-            new_query.category = {$in : category}
+            new_query.category = { $in: category }
         }
         if (category_type) {
             category_type = await Services.Utils.string_to_array(category_type);
-            new_query.category_type = {$in : category_type}
-        } 
+            new_query.category_type = { $in: category_type }
+        }
         if (sub_child_category) {
             sub_child_category = await Services.Utils.string_to_array(sub_child_category);
-            new_query.sub_child_category = {$in : sub_child_category}
-        } 
-        if(region) {
+            new_query.sub_child_category = { $in: sub_child_category }
+        }
+        if (region) {
             region = await Services.Utils.string_to_array(region);
-            new_query.region = {$in:region}
+            new_query.region = { $in: region }
         }
         // Pipeline Stages
         // console.log(new_query,'new_query')
@@ -421,20 +420,20 @@ exports.getAllCampaignRequestsForAffiliate = async (req, res) => {
                     preserveNullAndEmptyArrays: true
                 }
             },
-            
+
             {
                 $match: query
             },
             {
                 $project: {
-                    affiliate_id:1,
-                    campaign_id:1,
-                    campaign_detail:"$campaign_detail",
-                    campaign_commission : "$campaign_detail.commission",
-                    campaign_name : "$campaign_detail.name",
+                    affiliate_id: 1,
+                    campaign_id: 1,
+                    campaign_detail: "$campaign_detail",
+                    campaign_commission: "$campaign_detail.commission",
+                    campaign_name: "$campaign_detail.name",
                     brand_id: 1,
                     brand_detail: 1,
-                    brand_name : "$brand_detail.fullName",
+                    brand_name: "$brand_detail.fullName",
                     isDeleted: 1,
                     status: 1,
                     deletedBy: 1,
@@ -445,24 +444,24 @@ exports.getAllCampaignRequestsForAffiliate = async (req, res) => {
                     accepted_at: 1,
                     updatedAt: 1,
                     isActive: 1,
-                    category_detail : "$category_detail",
-                    sub_category_detail :"$sub_category_detail",
+                    category_detail: "$category_detail",
+                    sub_category_detail: "$sub_category_detail",
                     sub_child_category_detail: "$sub_child_category_detail",
-                    category : "$campaign_detail.category",
-                    sub_category:"$campaign_detail.sub_category",
-                    category_type:"$campaign_detail.category_type",
-                    sub_child_category:"$campaign_detail.sub_child_category",
-                    region:"$campaign_detail.region",
-                    region_continents : "$campaign_detail.region_continents",
-                    lead_amount : "$campaign_detail.lead_amount",
-                    campaign_type:"$campaign_detail.campaign_type",
+                    category: "$campaign_detail.category",
+                    sub_category: "$campaign_detail.sub_category",
+                    category_type: "$campaign_detail.category_type",
+                    sub_child_category: "$campaign_detail.sub_child_category",
+                    region: "$campaign_detail.region",
+                    region_continents: "$campaign_detail.region_continents",
+                    lead_amount: "$campaign_detail.lead_amount",
+                    campaign_type: "$campaign_detail.campaign_type",
                 }
             },
-            {$match:new_query}
+            { $match: new_query }
         ];
 
         let totalresult = await db.collection('brandaffiliateassociation').aggregate(pipeline).toArray();
-         pipeline.push({
+        pipeline.push({
             $sort: sortquery,
         });
         pipeline.push({
@@ -471,7 +470,7 @@ exports.getAllCampaignRequestsForAffiliate = async (req, res) => {
         pipeline.push({
             $limit: Number(count)
         });
-       
+
         let result = await db.collection("brandaffiliateassociation").aggregate(pipeline).toArray();
         let resData = {
             total_count: totalresult ? totalresult.length : 0,
@@ -483,7 +482,7 @@ exports.getAllCampaignRequestsForAffiliate = async (req, res) => {
         return response.success(resData, constants.CAMPAIGN.FETCHED_ALL, req, res);
 
 
-    } catch(err) {
+    } catch (err) {
         return response.failed(null, `${err}`, req, res);
     }
 }
@@ -491,23 +490,23 @@ exports.getAllCampaignRequestsForAffiliate = async (req, res) => {
 exports.getAllCampaignsForBrand = async (req, res) => {
     try {
         let user_id = req.identity.id;
-        let {category,sub_category,category_type,sub_child_category,region,status,isArchive} = req.query
+        let { category, sub_category, category_type, sub_child_category, region, status, isArchive } = req.query
         let loggedInUser = await Users.findOne({ id: user_id, isDeleted: false });
         if (loggedInUser.addedBy) {
 
             let get_account_manager_detail = await Users.findOne({ id: loggedInUser.addedBy, isDeleted: false });
             if (get_account_manager_detail && get_account_manager_detail.role) {
-                if(loggedInUser.role === 'brand' || loggedInUser.role === 'affiliate') {
+                if (loggedInUser.role === 'brand' || loggedInUser.role === 'affiliate') {
                     var isPermissionExists = await Permissions.findOne({
-                      role: loggedInUser.role,
-                      //account_manager: get_account_manager_detail.role
+                        role: loggedInUser.role,
+                        //account_manager: get_account_manager_detail.role
                     });
-                  }
+                }
                 else {
                     var isPermissionExists = await Permissions.findOne({
                         role: loggedInUser.role,
                         account_manager: get_account_manager_detail.role
-                });
+                    });
                 }
                 if (!isPermissionExists) {
                     throw "Permission not exists";
@@ -516,11 +515,11 @@ exports.getAllCampaignsForBrand = async (req, res) => {
         }
 
         let query = {};
-        let new_query  = {}
+        let new_query = {}
         let count = req.param('count') || 10;
         let page = req.param('page') || 1;
         let { search, sortBy, brand_id } = req.query;
-        
+
         let skipNo = (Number(page) - 1) * Number(count);
 
         if (search) {
@@ -529,12 +528,12 @@ exports.getAllCampaignsForBrand = async (req, res) => {
             //     { "name": { $regex: search, '$options': 'i' } },
             // ]
             new_query.$or = [
-                {commissionToString : {$regex : search, "$options": "i"}}
+                { commissionToString: { $regex: search, "$options": "i" } }
             ]
         }
         query.isDeleted = false;
-        if(status){
-            query.status =status
+        if (status) {
+            query.status = status
         }
         if (brand_id) {
             query.brand_id = new ObjectId(brand_id);
@@ -550,29 +549,29 @@ exports.getAllCampaignsForBrand = async (req, res) => {
             sortquery = { updatedAt: -1 }
         }
         if (sub_category) {
-                // query.sub_category_id = new ObjectId(sub_category_id);
-                sub_category = await Services.Utils.string_ids_toObjectIds_array(sub_category);
-                query.sub_category = {$in : sub_category}
-              }
-        if(category){
+            // query.sub_category_id = new ObjectId(sub_category_id);
+            sub_category = await Services.Utils.string_ids_toObjectIds_array(sub_category);
+            query.sub_category = { $in: sub_category }
+        }
+        if (category) {
             query.category = await Services.Utils.string_ids_toObjectIds_array(category);
-            query.category = {$in : category}
+            query.category = { $in: category }
         }
         if (category_type) {
             category_type = await Services.Utils.string_to_array(category_type);
-            query.category_type = {$in : category_type}
-        } 
+            query.category_type = { $in: category_type }
+        }
         if (category_type) {
             sub_child_category = await Services.Utils.string_to_array(sub_child_category);
-            query.sub_child_category = {$in : sub_child_category}
-        } 
-        if(region) {
-            query.region = {$in:[region]}
+            query.sub_child_category = { $in: sub_child_category }
         }
-        query.isArchive = isArchive == "true"?true:false
+        if (region) {
+            query.region = { $in: [region] }
+        }
+        query.isArchive = isArchive == "true" ? true : false
         // Pipeline Stages
         let pipeline = [
-             // lookups for categories
+            // lookups for categories
             //  {
             //     $lookup: {
             //         from: "commoncategories",
@@ -649,6 +648,25 @@ exports.getAllCampaignsForBrand = async (req, res) => {
                 }
             },
 
+            {
+                $lookup: {
+                    from: "brandaffiliateassociation",
+                    let: { brand_id: new ObjectId(req.identity.id), campaign: "$_id", status:"accepted" },
+                    pipeline: [{
+                        $match: {
+                            $expr: {
+                                $and: [
+                                    { $eq: ["$brand_id", "$$brand_id"] },
+                                    { $eq: ["$campaign_id", "$$campaign"] },
+                                    { $eq: ["$status", "$$status"] },
+                                ]
+                            }
+                        }
+                    }],
+                    as: "affiliateCount"
+                }
+            },
+
 
             {
                 $match: query
@@ -657,8 +675,8 @@ exports.getAllCampaignsForBrand = async (req, res) => {
                 $project: {
                     _id: 1,
                     brand_id: 1,
-                    parent_id:1,
-                    parent_role:1,
+                    parent_id: 1,
+                    parent_role: 1,
                     name: 1,
                     description: 1,
                     images: 1,
@@ -674,34 +692,35 @@ exports.getAllCampaignsForBrand = async (req, res) => {
                     updatedAt: 1,
                     isDefault: 1,
                     isDeleted: 1,
-                    commission:1,
-                    commissionToString : {$toString : "$commission"},
-                    commission_event_type:1,
-                    commission_type:1,
-                    category : 1,
-                    sub_category:1,
-                    category_type:1,
-                    sub_child_category:1,
-                    region:1,
-                    region_continents:1,
-                    category_detail : "$category_detail",
-                    sub_category_detail :"$sub_category_detail",
+                    commission: 1,
+                    commissionToString: { $toString: "$commission" },
+                    commission_event_type: 1,
+                    commission_type: 1,
+                    category: 1,
+                    sub_category: 1,
+                    category_type: 1,
+                    sub_child_category: 1,
+                    region: 1,
+                    region_continents: 1,
+                    category_detail: "$category_detail",
+                    sub_category_detail: "$sub_category_detail",
                     sub_child_category_detail: "$sub_child_category_detail",
-                    lead_amount : 1,
-                    campaign_type:1,
-                    currencies : 1,
-                    deDuplicate : 1,
-                    publisher : 1,
-                    ppc : 1,
-                    transaction : 1,
-                    legalTerm : 1,
-                    islegal : 1,
-                    status : 1,
-                    isArchive : 1,
+                    lead_amount: 1,
+                    campaign_type: 1,
+                    currencies: 1,
+                    deDuplicate: 1,
+                    publisher: 1,
+                    ppc: 1,
+                    transaction: 1,
+                    legalTerm: 1,
+                    islegal: 1,
+                    status: 1,
+                    isArchive: 1,
+                    affiliateCount: { $size: "$affiliateCount" },
                 }
             },
             {
-                $match : new_query
+                $match: new_query
             },
             {
                 $sort: sortquery
@@ -725,7 +744,7 @@ exports.getAllCampaignsForBrand = async (req, res) => {
         return response.success(resData, constants.CAMPAIGN.FETCHED_ALL, req, res);
 
 
-    } catch(err) {
+    } catch (err) {
         return response.failed(null, `${err}`, req, res);
     }
 }
@@ -941,17 +960,17 @@ exports.getCampaignById = async (req, res) => {
 
             let get_account_manager_detail = await Users.findOne({ id: loggedInUser.addedBy, isDeleted: false });
             if (get_account_manager_detail && get_account_manager_detail.role) {
-                if(loggedInUser.role === 'brand' || loggedInUser.role === 'affiliate') {
+                if (loggedInUser.role === 'brand' || loggedInUser.role === 'affiliate') {
                     var isPermissionExists = await Permissions.findOne({
-                      role: loggedInUser.role,
-                      //account_manager: get_account_manager_detail.role
+                        role: loggedInUser.role,
+                        //account_manager: get_account_manager_detail.role
                     });
-                  }
+                }
                 else {
                     var isPermissionExists = await Permissions.findOne({
                         role: loggedInUser.role,
                         account_manager: get_account_manager_detail.role
-                });
+                    });
                 }
                 if (!isPermissionExists) {
                     throw "Permission not exists";
@@ -965,29 +984,29 @@ exports.getCampaignById = async (req, res) => {
             throw constants.CAMPAIGN.ID_REQUIRED;
         }
         let get_campaign = await Campaign.findOne({ id: id, isDeleted: false }).populate('brand_id')
-        if(get_campaign.category && get_campaign.category.length > 0){
+        if (get_campaign.category && get_campaign.category.length > 0) {
             let category = []
-            for await (let cat of get_campaign.category){
-                let data = await CommonCategories.findOne({id : cat}).select(["id","name"])
-                console.log(data,'category')
+            for await (let cat of get_campaign.category) {
+                let data = await CommonCategories.findOne({ id: cat }).select(["id", "name"])
+                console.log(data, 'category')
                 category.push(data)
             }
             get_campaign.category = category
         }
 
-        if(get_campaign.sub_category && get_campaign.sub_category.length > 0){
+        if (get_campaign.sub_category && get_campaign.sub_category.length > 0) {
             let sub_category = []
-            for await (let cat of get_campaign.sub_category){
-                let data = await CommonCategories.findOne({id : cat}).select(["id","name"])
+            for await (let cat of get_campaign.sub_category) {
+                let data = await CommonCategories.findOne({ id: cat }).select(["id", "name"])
                 sub_category.push(data)
             }
             get_campaign.sub_category = sub_category
         }
 
-        if(get_campaign.sub_child_category && get_campaign.sub_child_category.length > 0){
+        if (get_campaign.sub_child_category && get_campaign.sub_child_category.length > 0) {
             let sub_child_category = []
-            for await (let cat of get_campaign.sub_category){
-                let data = await SubChildCategory.findOne({id : cat.id}).select(["id","name"])
+            for await (let cat of get_campaign.sub_category) {
+                let data = await SubChildCategory.findOne({ id: cat.id }).select(["id", "name"])
                 sub_child_category.push(data)
             }
             get_campaign.sub_child_category = sub_child_category
@@ -1015,17 +1034,17 @@ exports.changeCampaignStatus = async (req, res) => {
 
             let get_account_manager_detail = await Users.findOne({ id: loggedInUser.addedBy, isDeleted: false });
             if (get_account_manager_detail && get_account_manager_detail.role) {
-                if(loggedInUser.role === 'brand' || loggedInUser.role === 'affiliate') {
+                if (loggedInUser.role === 'brand' || loggedInUser.role === 'affiliate') {
                     var isPermissionExists = await Permissions.findOne({
-                      role: loggedInUser.role,
-                      //account_manager: get_account_manager_detail.role
+                        role: loggedInUser.role,
+                        //account_manager: get_account_manager_detail.role
                     });
-                  }
+                }
                 else {
                     var isPermissionExists = await Permissions.findOne({
                         role: loggedInUser.role,
                         account_manager: get_account_manager_detail.role
-                });
+                    });
                 }
 
                 if (!isPermissionExists) {
@@ -1041,13 +1060,13 @@ exports.changeCampaignStatus = async (req, res) => {
         }
         let { id } = req.body;
 
-        let get_campaign = await BrandAffiliateAssociation.findOne({ id: id, isDeleted: false, status: {in: ["pending","requested"]} }).populate('campaign_id');
+        let get_campaign = await BrandAffiliateAssociation.findOne({ id: id, isDeleted: false, status: { in: ["pending", "requested"] } }).populate('campaign_id');
 
         if (!get_campaign) {
             throw constants.CAMPAIGN.INVALID_ID;
         }
 
-        if (get_campaign) { 
+        if (get_campaign) {
             // if (!['affiliate'].includes(req.identity.role)) {
             //     throw constants.COMMON.UNAUTHORIZED;
             // }
@@ -1060,16 +1079,16 @@ exports.changeCampaignStatus = async (req, res) => {
 
             }
             req.body.addedBy = user_id;
-            if(req.body.status === 'accepted') {
-                await BrandAffiliateAssociation.update({affiliate_id: req.body.affiliate_id, brand_id: get_campaign.brand_id}).set({isActive: false});
-                await BrandAffiliateAssociation.updateOne({id: id}).set({status: req.body.status, isActive: true});
-                
-            } else if(req.body.status === 'rejected'){
-                await BrandAffiliateAssociation.updateOne({id: get_campaign.id}).set({status: "rejected"});
+            if (req.body.status === 'accepted') {
+                await BrandAffiliateAssociation.update({ affiliate_id: req.body.affiliate_id, brand_id: get_campaign.brand_id }).set({ isActive: false });
+                await BrandAffiliateAssociation.updateOne({ id: id }).set({ status: req.body.status, isActive: true });
+
+            } else if (req.body.status === 'rejected') {
+                await BrandAffiliateAssociation.updateOne({ id: get_campaign.id }).set({ status: "rejected" });
             } else {
                 return response.failed(null, constants.CAMPAIGN.INVALID_STATUS, req, res);
             }
-            
+
             // await PublicCampaigns.create({ affiliate_id: req.identity.id, campaign_id: get_campaign.id, brand_id: get_campaign.addedBy, addedBy: req.identity.id });
             //Email to brand when status of a campaign changes
             let email_payload = {
@@ -1098,9 +1117,9 @@ exports.changeCampaignStatus = async (req, res) => {
 
             //     await Services.FCM.send_fcm_push_notification(fcm_payload)
             // }
-            return response.success(null, constants.CAMPAIGN.STATUS_UPDATE, req, res)    
+            return response.success(null, constants.CAMPAIGN.STATUS_UPDATE, req, res)
         } else {
-           return response.failed(null, constants.CAMPAIGN.NOT_FOUND);
+            return response.failed(null, constants.CAMPAIGN.NOT_FOUND);
         }
     } catch (error) {
         return response.failed(null, `${error}`, req, res)
@@ -1119,17 +1138,17 @@ exports.deleteCampaign = async (req, res) => {
 
             let get_account_manager_detail = await Users.findOne({ id: loggedInUser.addedBy, isDeleted: false });
             if (get_account_manager_detail && get_account_manager_detail.role) {
-                if(loggedInUser.role === 'brand' || loggedInUser.role === 'affiliate') {
+                if (loggedInUser.role === 'brand' || loggedInUser.role === 'affiliate') {
                     var isPermissionExists = await Permissions.findOne({
-                      role: loggedInUser.role,
-                      //account_manager: get_account_manager_detail.role
+                        role: loggedInUser.role,
+                        //account_manager: get_account_manager_detail.role
                     });
-                  }
+                }
                 else {
                     var isPermissionExists = await Permissions.findOne({
                         role: loggedInUser.role,
                         account_manager: get_account_manager_detail.role
-                });
+                    });
                 }
 
                 if (!isPermissionExists) {
@@ -1142,19 +1161,19 @@ exports.deleteCampaign = async (req, res) => {
         if (!id) {
             throw constants.CAMPAIGN.ID_REQUIRED;
         }
-        let brandAffiliateAssociation = await BrandAffiliateAssociation.find({campaign_id: id, isActive: true, status: "accepted"});
-        if(brandAffiliateAssociation && brandAffiliateAssociation.length > 0) {
+        let brandAffiliateAssociation = await BrandAffiliateAssociation.find({ campaign_id: id, isActive: true, status: "accepted" });
+        if (brandAffiliateAssociation && brandAffiliateAssociation.length > 0) {
             return response.failed(null, constants.CAMPAIGN.NOT_ALLOWED_AFFS_EXIST, req, res);
         }
-        let campaign = await Campaign.findOne({id: id});
-        if(campaign.isDefault) {
-            let campaignsForBrand = await Campaign.find({brand_id: campaign.brand_id, isDeleted: false}).sort({updatedAt: -1});
-            if(campaignsForBrand && campaignsForBrand.length > 0) {
-                await Campaign.updateOne({id: campaignsForBrand[0].id}).set({isDefault: true});
+        let campaign = await Campaign.findOne({ id: id });
+        if (campaign.isDefault) {
+            let campaignsForBrand = await Campaign.find({ brand_id: campaign.brand_id, isDeleted: false }).sort({ updatedAt: -1 });
+            if (campaignsForBrand && campaignsForBrand.length > 0) {
+                await Campaign.updateOne({ id: campaignsForBrand[0].id }).set({ isDefault: true });
             }
         }
         const update_campaign = await Campaign.updateOne({ id: id }).set({ isDefault: false, isDeleted: true, updatedBy: req.identity.id });
-        await BrandAffiliateAssociation.update({campaign_id: id}).set({isDeleted: true});
+        await BrandAffiliateAssociation.update({ campaign_id: id }).set({ isDeleted: true });
         if (update_campaign) {
             return response.success(null, constants.CAMPAIGN.DELETED, req, res);
         }
@@ -1164,21 +1183,21 @@ exports.deleteCampaign = async (req, res) => {
     }
 }
 
-exports.removeAffiliate = async(req,res) => {
+exports.removeAffiliate = async (req, res) => {
     try {
-        const {affiliate_id,brand_id,campaign_id} = req.body
-        if(!affiliate_id || !brand_id || !campaign_id){
-            return response.failed(null,"Payload missing",req,res)
+        const { affiliate_id, brand_id, campaign_id } = req.body
+        if (!affiliate_id || !brand_id || !campaign_id) {
+            return response.failed(null, "Payload missing", req, res)
         }
-        const association = await BrandAffiliateAssociation.findOne({brand_id : brand_id,campaign_id:campaign_id,affiliate_id:affiliate_id })
-        if(association){
-            await BrandAffiliateAssociation.updateOne({id:association.id},{status:"removed"})
-            return response.success(null,"Association removed",req,res)
-        }else {
-            return response.failed(null,"No Association found",req,res)
+        const association = await BrandAffiliateAssociation.findOne({ brand_id: brand_id, campaign_id: campaign_id, affiliate_id: affiliate_id })
+        if (association) {
+            await BrandAffiliateAssociation.updateOne({ id: association.id }, { status: "removed" })
+            return response.success(null, "Association removed", req, res)
+        } else {
+            return response.failed(null, "No Association found", req, res)
         }
     } catch (error) {
-        return response.failed(null,error,req,res)
+        return response.failed(null, error, req, res)
     }
 }
 
@@ -1194,7 +1213,7 @@ exports.campaignAffiliates = async (req, res) => {
         count = parseInt(count) || 20;
         const skip = (page - 1) * count;
 
-        const total = await BrandAffiliateAssociation.count({ brand_id: brand, campaign_id: campaign, status:"accepted" });
+        const total = await BrandAffiliateAssociation.count({ brand_id: brand, campaign_id: campaign, status: "accepted" });
 
         const affiliates = await BrandAffiliateAssociation
             .find({ brand_id: brand, campaign_id: campaign, status: "accepted" })
