@@ -78,7 +78,7 @@ exports.create = async (req, res) => {
     req.body.addedBy = req.identity.id;
     req.body.updatedBy = req.identity.id;
     let newTemplate = await EmailTemplate.create(req.body).fetch();
-    
+
     for (let affiliate of listOfAcceptedInvites) {
       // console.log(affiliate);
       let findUser = await Users.findOne({
@@ -102,7 +102,7 @@ exports.create = async (req, res) => {
     }
     return response.success(newTemplate, constants.EMAILTEMPLATE.CREATED, req, res);
   } catch (err) {
-    console.log(err,'err')
+    console.log(err, 'err')
     return response.failed(null, `${err}`, req, res);
   }
 };
@@ -148,8 +148,8 @@ exports.update = async (req, res) => {
 
     data.updatedBy = req.identity.id;
 
-    let templates = await EmailTemplate.updateOne({ id: id }, {isDeleted:true});
-    await EmailTemplateAffiliate.update({email_template_id:id},{isDeleted:true});
+    let templates = await EmailTemplate.updateOne({ id: id }, { isDeleted: true });
+    await EmailTemplateAffiliate.update({ email_template_id: id }, { isDeleted: true });
     // return response.success(templates, constants.EMAILTEMPLATE.DELETED, req, res);
     let query1 = {
       addedBy: req.identity.id,
@@ -235,19 +235,19 @@ exports.getAll = async (req, res) => {
     let count = req.param('count') || 10;
     let page = req.param('page') || 1;
     let skipNo = (Number(page) - 1) * Number(count);
-    let { search, sortBy, status, isDeleted, format, addedBy ,startDate,endDate} = req.query;
+    let { search, sortBy, status, isDeleted, format, addedBy, startDate, endDate } = req.query;
     let sortquery = {};
 
-    if (startDate || endDate) {
-  query.createdAt = {};
-  if (startDate) {
-    query.createdAt.$gte = new Date(startDate);
-  }
-  if (endDate) {
-    query.createdAt.$lte = new Date(endDate);
-  }
-}
+    if (startDate && endDate) {
 
+        const start = new Date(startDate);
+        start.setUTCHours(0, 0, 0, 0);
+    
+        const end = new Date(endDate);
+        end.setUTCHours(23, 59, 59, 999); 
+      
+      query.createdAt = {$gte:start,$lte:end};
+    }
 
     if (search) {
       search = await Services.Utils.remove_special_char_exept_underscores(search);
@@ -317,29 +317,29 @@ exports.getAll = async (req, res) => {
       $sort: sortquery
     });
 
-   let totalresult = await  db.collection('emailtemplate').aggregate(pipeline).toArray();
-     
+    let totalresult = await db.collection('emailtemplate').aggregate(pipeline).toArray();
 
-      pipeline.push({
-        $skip: Number(skipNo)
-      });
-      pipeline.push({
-        $limit: Number(count)
-      });
 
-      let result = await db.collection('emailtemplate').aggregate(pipeline).toArray();
-        
+    pipeline.push({
+      $skip: Number(skipNo)
+    });
+    pipeline.push({
+      $limit: Number(count)
+    });
 
-        let resData = {
-          total_count: totalresult ? totalresult.length : 0,
-          data: result ? result : []
-        };
+    let result = await db.collection('emailtemplate').aggregate(pipeline).toArray();
 
-        if (!req.param('page') && !req.param('count')) {
-          resData.data = totalresult ? totalresult : [];
-        }
 
-        return response.success(resData, constants.EMAILTEMPLATE.FETCHED, req, res);
+    let resData = {
+      total_count: totalresult ? totalresult.length : 0,
+      data: result ? result : []
+    };
+
+    if (!req.param('page') && !req.param('count')) {
+      resData.data = totalresult ? totalresult : [];
+    }
+
+    return response.success(resData, constants.EMAILTEMPLATE.FETCHED, req, res);
 
   } catch (error) {
     return response.failed(null, `${error}`, req, res);
@@ -423,10 +423,10 @@ exports.getUserEmailTemplate = async (req, res) => {
     let projection = {
       $project: {
         emailtemplate_details: "$emailtemplate_details",
-        brand_details:"$brand_details",
-        affiliate_id:"$affiliate_id",
+        brand_details: "$brand_details",
+        affiliate_id: "$affiliate_id",
         isDeleted: '$isDeleted',
-        textJSONContent:"$textJSONContent",
+        textJSONContent: "$textJSONContent",
         status: '$status',
         addedBy: '$addedBy',
         updatedBy: '$updatedBy',
@@ -443,30 +443,30 @@ exports.getUserEmailTemplate = async (req, res) => {
       $sort: sortquery
     });
 
-    let totalresult=await db.collection('emailtemplateaffiliate').aggregate(pipeline).toArray();
-    
+    let totalresult = await db.collection('emailtemplateaffiliate').aggregate(pipeline).toArray();
 
-      pipeline.push({
-        $skip: Number(skipNo)
-      });
-      pipeline.push({
-        $limit: Number(count)
-      });
 
-      let result =await  db.collection('emailtemplateaffiliate').aggregate(pipeline).toArray();
-       
+    pipeline.push({
+      $skip: Number(skipNo)
+    });
+    pipeline.push({
+      $limit: Number(count)
+    });
 
-        let resData = {
-          total_count: totalresult ? totalresult.length : 0,
-          data: result ? result : []
-        };
+    let result = await db.collection('emailtemplateaffiliate').aggregate(pipeline).toArray();
 
-        if (!req.param('page') && !req.param('count')) {
-          resData.data = totalresult ? totalresult : [];
-        }
 
-        return response.success(resData, constants.EMAILTEMPLATE.FETCHED, req, res);
-     
+    let resData = {
+      total_count: totalresult ? totalresult.length : 0,
+      data: result ? result : []
+    };
+
+    if (!req.param('page') && !req.param('count')) {
+      resData.data = totalresult ? totalresult : [];
+    }
+
+    return response.success(resData, constants.EMAILTEMPLATE.FETCHED, req, res);
+
   } catch (error) {
     return response.failed(null, `${error}`, req, res);
   }
