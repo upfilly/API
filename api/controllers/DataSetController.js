@@ -1043,7 +1043,7 @@ exports.sendEmailMessage = async (req, res) => {
           await Emails.EmailMessageTemplate.sendEmailMessageTemplate(
             {
               emailTemp : data.emailTemplate,
-              affiliateEmail : affiliateEmail,
+              affiliateEmail : emailPayload.affiliateEmail,
 
             }
 
@@ -1163,7 +1163,7 @@ exports.sendEmailMessage = async (req, res) => {
           await Emails.EmailMessageTemplate.sendEmailMessageTemplate(
             {
               emailTemp : data.emailTemplate,
-              affiliateEmail : affiliateEmail,
+              affiliateEmail : emailPayload.affiliateEmail,
 
             }
           )
@@ -1222,7 +1222,7 @@ exports.sendEmailMessage = async (req, res) => {
           await Emails.EmailMessageTemplate.sendEmailMessageTemplate(
             {
               emailTemp : data.emailTemplate,
-              affiliateEmail : affiliateEmail,
+              affiliateEmail : emailPayload.affiliateEmail,
 
             }
           )
@@ -1237,6 +1237,7 @@ exports.sendEmailMessage = async (req, res) => {
 
     response.success(null, constants.EMAILMESSAGE.ADDED, req, res);
   } catch (error) {
+    console.log(error,'===errror')
     return res.status(400).json({
       success: false,
       error: { code: 400, message: "" + error },
