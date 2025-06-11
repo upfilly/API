@@ -235,8 +235,19 @@ exports.getAll = async (req, res) => {
     let count = req.param('count') || 10;
     let page = req.param('page') || 1;
     let skipNo = (Number(page) - 1) * Number(count);
-    let { search, sortBy, status, isDeleted, format, addedBy } = req.query;
+    let { search, sortBy, status, isDeleted, format, addedBy ,startDate,endDate} = req.query;
     let sortquery = {};
+
+    if (startDate || endDate) {
+  query.createdAt = {};
+  if (startDate) {
+    query.createdAt.$gte = new Date(startDate);
+  }
+  if (endDate) {
+    query.createdAt.$lte = new Date(endDate);
+  }
+}
+
 
     if (search) {
       search = await Services.Utils.remove_special_char_exept_underscores(search);
