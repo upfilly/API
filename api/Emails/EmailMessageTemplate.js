@@ -9,8 +9,8 @@ exports.sendEmailMessageTemplate = async (options) => {
    let affiliateFullName = options.affiliateFullName
    let affiliateEmail = options.affiliateEmail;
    let emailMessage = options.emailMessage;
-   const emailTemp= options.emailTemp
-   const message = emailTemp
+   let emailTemp= options.emailTemp
+   emailTemp  += `<div style = "width : 100%"> ${emailTemp} </div>`
 //    message = '';
 
 //    message += `
