@@ -957,7 +957,7 @@ exports.sendEmailMessage = async (req, res) => {
     let query2 = {};
 
     let data = req.body;
-    if (data.isAllJoined) {
+    if (data.isAllJoined) { // All Joined filter
 
       query1 = {
         addedBy: req.identity.id,
@@ -1037,9 +1037,16 @@ exports.sendEmailMessage = async (req, res) => {
             affiliateEmail: findUser.email,
             emailMessage: data.description,
           };
-          
+
+          data.emailTemplate = data.emailTemplate.replace("{affiliateFullName}", findUser.fullName);
+
           await Emails.EmailMessageTemplate.sendEmailMessageTemplate(
-            emailPayload
+            {
+              emailTemp : data.emailTemplate,
+              affiliateEmail : affiliateEmail,
+
+            }
+
           );
         }
       }
@@ -1151,9 +1158,15 @@ exports.sendEmailMessage = async (req, res) => {
             emailMessage: data.description,
           };
 
+          data.emailTemplate = data.emailTemplate.replace("{affiliateFullName}", findUser.fullName);
+
           await Emails.EmailMessageTemplate.sendEmailMessageTemplate(
-            emailPayload
-          );
+            {
+              emailTemp : data.emailTemplate,
+              affiliateEmail : affiliateEmail,
+
+            }
+          )
         }
       }
     }
@@ -1204,9 +1217,15 @@ exports.sendEmailMessage = async (req, res) => {
             affiliateEmail: findUser.email,
             emailMessage: data.description,
           };
+           data.emailTemplate = data.emailTemplate.replace("{affiliateFullName}", findUser.fullName);
+
           await Emails.EmailMessageTemplate.sendEmailMessageTemplate(
-            emailPayload
-          );
+            {
+              emailTemp : data.emailTemplate,
+              affiliateEmail : affiliateEmail,
+
+            }
+          )
         }
       }
     }
