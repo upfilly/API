@@ -103,7 +103,7 @@ exports.getAllCommission = async (req, res) => {
         let count = req.param('count') || 10;
         let page = req.param('page') || 1;
 
-        let { search, isDeleted, status, sortBy, upload_method, commission_type, mobile_creative ,addedBy, affiliate} = req.query;
+        let { search, isDeleted, status, sortBy, upload_method, commission_type, mobile_creative ,addedBy, affiliate,commission_status} = req.query;
         let skipNo = (Number(page) - 1) * Number(count);
 
         if (search) {
@@ -118,6 +118,7 @@ exports.getAllCommission = async (req, res) => {
         if (isDeleted) { if (isDeleted === 'true') { isDeleted = true; } else { isDeleted = false; } query.isDeleted = isDeleted; } else { query.isDeleted = false; }
 
         if (status) { query.status = status; }
+        if(commission_status){query.commission_status = commission_status}
 
         if (status) { query.status = status; }
         if (upload_method) { query.upload_method = upload_method; }
@@ -208,6 +209,7 @@ exports.getAllCommission = async (req, res) => {
                 isDeleted: "$isDeleted",
                 createdAt: "$createdAt",
                 updatedAt: "$updatedAt",
+                commission_status:"$commission_status",
             }
         };
 

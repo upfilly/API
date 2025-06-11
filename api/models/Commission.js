@@ -25,6 +25,7 @@ module.exports = {
     status: { type: "string", isIn: ["confirmed", "pending"], defaultsTo: "pending" },
     date:{type:"ref",columnType:"dateTime"},
     campaign:{model:"Campaign"},
+    commission_status:{type:"string"},
     //Common keys
     isDeleted: { type: 'Boolean', defaultsTo: false },
     deletedBy: { model: 'users' },

@@ -277,6 +277,7 @@ exports.find = async function (req, res) {
         campaignId: "$brand_association_details.campaign_id",
         brand_association_details : {_id : "$brand_association_details._id",campaign_id:"$brand_association_details.campaign_id"},
         campaign_details:"$campaign_details",
+        commission:{$toString:"$campaign_details.commission"},
         discount: "$discount",
         event: '$event',
         timestamp: '$timestamp',

@@ -15,7 +15,8 @@ exports.addCommission = async (req, res, next) => {
         batch_file: Joi.string().optional(),
         
         locality: Joi.string().optional(),
-        isContain_headers: Joi.string().optional()
+        isContain_headers: Joi.string().optional(),
+        commission_status: Joi.string().optional(),
     });
     return await Validate(schema, req, res);
 
@@ -37,7 +38,8 @@ exports.editCommission = async (req, res, next) => {
         is_animation: Joi.boolean().optional(),
         is_deep_linking: Joi.boolean().optional(),
         mobile_creative: Joi.boolean().optional(),
-        category_id: Joi.string().optional().allow(null)
+        category_id: Joi.string().optional().allow(null),
+        commission_status: Joi.string().optional(),
 
     });
     return await Validate(schema, req, res);

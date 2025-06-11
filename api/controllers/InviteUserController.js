@@ -771,7 +771,7 @@ module.exports = {
             invitationAccepted: "$invitationAccepted",
             brand_id: "$brand_id",
             isDeleted: "$isDeleted",
-            status: "$status",
+            status: "$user_details.status",
           },
         },
         {
