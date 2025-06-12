@@ -11,7 +11,7 @@ module.exports = {
   attributes: {
     commission: { type: "string", isIn: ["manual"] },
     upload_method: { type: "string", isIn: ["single", "batch"] },
-    commission_type: { type: "string", isIn: ["sales", "lead"] },
+    commission_type: { type: "string", isIn: ["sales", "lead","bonus"] },
     publisher_id: { type: 'number', defaultsTo: 0 },
     amount_of_sale: { type: 'number', defaultsTo: 0 },
     amount_of_commission: { type: 'number', defaultsTo: 0 },

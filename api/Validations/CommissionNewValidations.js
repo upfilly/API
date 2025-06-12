@@ -4,7 +4,7 @@ const Validate = require('./Validate').validate;
 exports.addCommission = async (req, res, next) => {
     const schema = Joi.object({
         upload_method: Joi.string().optional().valid("single", "batch"),
-        commission_type: Joi.string().optional().valid("sales", "lead"),
+        commission_type: Joi.string().optional().valid("sales", "lead","bonus"),
         publisher_id: Joi.number().optional(),
         amount_of_sale: Joi.number().optional(),
         amount_of_commission: Joi.number().optional(),
