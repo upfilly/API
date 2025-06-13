@@ -693,7 +693,7 @@ module.exports = {
 
       let { device_token } = req.body;
 
-      let isUserDeleted=  await Users.findOne({
+      let isUserDeleted=  await Users.find({
         where: {
           email: req.body.email.toLowerCase(),
           isDeleted: true,
@@ -712,7 +712,7 @@ module.exports = {
           },
         },
       });
-      if(isUserDeleted){
+      if(isUserDeleted.length>0){
         throw constants.user.DELETED_ACCOUNT;
       }
       let user = await Users.findOne({
