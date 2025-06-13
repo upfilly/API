@@ -42,10 +42,11 @@ exports.addCommission = async (req, res) => {
         const affiliate_commission_payload = {
             affiliate_id : affiliate_id,
             amount_of_commission:amount_of_commission,
-            amount_of_sale:amount_of_sale,
+            price:amount_of_sale,
             commission_type:commission_type,
-            order_reference:order_reference,
+            order_id:order_reference,
         }
+        await AffiliateLink.create(affiliate_commission_payload)
         if (add_detail) {
             if (add_detail.is_send_email_to_publisher == true) {
                 let get_affiliate = await Users.findOne({ id: add_detail.affiliate_id, isDeleted: false });

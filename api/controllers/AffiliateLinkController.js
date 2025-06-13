@@ -298,9 +298,8 @@ exports.find = async function (req, res) {
         admin_paid: "$admin_paid",
         lead_id: "$lead_id",
         amount_of_commission : "$amount_of_commission",
-        amount_of_sale : "$amount_of_sale",
         commission_type : "$commission_type",
-        order_reference : "$order_reference",
+        
       }
     };
 
