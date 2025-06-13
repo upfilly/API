@@ -107,6 +107,7 @@ module.exports = {
           isVerified: "Y",
           addedBy: req.identity.id,
           updatedBy: req.identity.id,
+          request_status: "accepted"
         }).fetch();
 
         user = await InviteUsers.create({
