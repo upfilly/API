@@ -45,6 +45,7 @@ exports.addCommission = async (req, res) => {
             price:amount_of_sale,
             commission_type:commission_type,
             order_id:order_reference,
+            brand_id : req.identity.id
         }
         await AffiliateLink.create(affiliate_commission_payload)
         if (add_detail) {
