@@ -29,7 +29,7 @@ exports.generateLink = async (req, res) => {
     let query = {
       affiliate_id: req.identity.id
     }
-    let isExist = await AffiliateLink.find(query).sort({"createdAt" : -1});
+    let isExist = await AffiliateLink.find(query).sort({ "createdAt": -1 });
     isExist = isExist[0]
     if (!isExist) {
       let create_link = await AffiliateLink.create({ affiliate_id: req.identity.id, link: get_link }).fetch()
@@ -78,7 +78,7 @@ exports.generateLinkOfAffiliate = async (req, res) => {
       affiliate_id: req.identity.id,
       isDeleted: false
     }
-    let get_affilaite_link = await AffiliateLink.find(query).sort({"createdAt":-1});
+    let get_affilaite_link = await AffiliateLink.find(query).sort({ "createdAt": -1 });
     get_affilaite_link = get_affilaite_link[0]
     return response.success(get_affilaite_link, constants.TRACKING.LINK, req, res);
 
@@ -116,7 +116,7 @@ exports.find = async function (req, res) {
     let count = req.param('count') || 10;
     let page = req.param('page') || 1;
     let skipNo = (Number(page) - 1) * Number(count);
-    let { search, sortBy, status, isDeleted, format, addedBy, affiliate_id, brand_id, campaignId,commission_status,commission_paid,admin_paid  } = req.query;
+    let { search, sortBy, status, isDeleted, format, addedBy, affiliate_id, brand_id, campaignId, commission_status, commission_paid, admin_paid } = req.query;
     let sortquery = {};
 
     // Handle search
@@ -161,21 +161,21 @@ exports.find = async function (req, res) {
     if (affiliate_id) {
       query.affiliate_id = new ObjectId(affiliate_id);
     }
-    if(campaignId) {
+    if (campaignId) {
       query.campaignId = new ObjectId(campaignId);
     }
 
-    if(commission_status){
+    if (commission_status) {
       query.commission_status = commission_status
     }
 
-    if(commission_paid){
+    if (commission_paid) {
       query.commission_paid = commission_paid
     }
-    if(admin_paid){
+    if (admin_paid) {
       query.admin_paid = admin_paid
     }
-    
+
     // Handle format
     if (format) {
       query.format = format;
@@ -229,8 +229,8 @@ exports.find = async function (req, res) {
           ],
           as: "brand_association_details"  // The final result will be stored in "campaign_details"
         }
-      },      
-      
+      },
+
       {
         $unwind: {
           path: "$brand_association_details",
@@ -275,9 +275,9 @@ exports.find = async function (req, res) {
         currency: "$currency",
         price: "$price",
         campaignId: "$brand_association_details.campaign_id",
-        brand_association_details : {_id : "$brand_association_details._id",campaign_id:"$brand_association_details.campaign_id"},
-        campaign_details:"$campaign_details",
-        commission:{$toString:"$campaign_details.commission"},
+        brand_association_details: { _id: "$brand_association_details._id", campaign_id: "$brand_association_details.campaign_id" },
+        campaign_details: "$campaign_details",
+        commission: { $toString: "$campaign_details.commission" },
         discount: "$discount",
         event: '$event',
         timestamp: '$timestamp',
@@ -285,18 +285,22 @@ exports.find = async function (req, res) {
         data: '$data',
         affiliate_name: "$affiliate_details.fullName",
         brand_name: "$brand_details.fullName",
-        brand_details : {_id : "$brand_details._id", plan_id : "$brand_details.plan_id" },
-        plan_details : "$plan_details",
+        brand_details: { _id: "$brand_details._id", plan_id: "$brand_details.plan_id" },
+        plan_details: "$plan_details",
         isDeleted: '$isDeleted',
         status: '$status',
         addedBy: '$addedBy',
         updatedBy: '$updatedBy',
         updatedAt: '$updatedAt',
         createdAt: '$createdAt',
-        commission_status : "$commission_status",
+        commission_status: "$commission_status",
         commission_paid: "$commission_paid",
-        admin_paid : "$admin_paid",
-        lead_id : "$lead_id",
+        admin_paid: "$admin_paid",
+        lead_id: "$lead_id",
+        amount_of_commission : "$amount_of_commission",
+        amount_of_sale : "$amount_of_sale",
+        commission_type : "$commission_type",
+        order_reference : "$order_reference",
       }
     };
 
@@ -336,10 +340,10 @@ exports.find = async function (req, res) {
   }
 };
 
-exports.findGraph = async(req,res)=>{
+exports.findGraph = async (req, res) => {
   try {
     const { startDate, endDate, filter } = req.query;
-  
+
     const moment = require('moment');
     let start, end;
     let filterType = filter || "this_month";
@@ -470,212 +474,212 @@ exports.destroy = async function (req, res) {
 
 exports.report = async function (req, res) {
   let query = {};
-      let count = req.param('count') || 10;
-      let page = req.param('page') || 1;
-      let skipNo = (Number(page) - 1) * Number(count);
-      let { search, sortBy, status, isDeleted, format, campaignId, affiliate_id, brand_id, startDate, endDate } = req.query;
-      let sortquery = {};
+  let count = req.param('count') || 10;
+  let page = req.param('page') || 1;
+  let skipNo = (Number(page) - 1) * Number(count);
+  let { search, sortBy, status, isDeleted, format, campaignId, affiliate_id, brand_id, startDate, endDate } = req.query;
+  let sortquery = {};
 
-      // Handle search
-      if (search) {
-          search = Services.Utils.remove_special_char_exept_underscores(search);
-          query.$or = [
-              { event: { $regex: search, '$options': 'i' } },
-              { 'urlParams.page': { $regex: search, '$options': 'i' } },
-              { 'data.page': { $regex: search, '$options': 'i' } }
-          ];
+  // Handle search
+  if (search) {
+    search = Services.Utils.remove_special_char_exept_underscores(search);
+    query.$or = [
+      { event: { $regex: search, '$options': 'i' } },
+      { 'urlParams.page': { $regex: search, '$options': 'i' } },
+      { 'data.page': { $regex: search, '$options': 'i' } }
+    ];
+  }
+
+  // Handle isDeleted
+  if (isDeleted) {
+    query.isDeleted = isDeleted === 'true';
+  } else {
+    query.isDeleted = false;
+  }
+
+  // Handle sorting
+  if (sortBy) {
+    let typeArr = sortBy.split(" ");
+    let sortType = typeArr[1];
+    let field = typeArr[0];
+    sortquery[field ? field : 'createdAt'] = sortType === 'desc' ? -1 : 1;
+  } else {
+    sortquery = { createdAt: -1 };
+  }
+
+  // Handle status
+  if (status) {
+    query.status = status;
+  }
+
+  let group_query = {};
+  group_query.campaignId = "$campaignId";
+  group_query.affiliate_id = "$affiliate_id";
+  group_query.brand_id = "$brand_id";
+  if (campaignId) {
+    query.campaignId = { $in: campaignId.split(",").map(id => new ObjectId(id)) };
+  } else if (affiliate_id) {
+    query.affiliate_id = { $in: affiliate_id.split(",").map(id => new ObjectId(id)) };
+  } else if (brand_id) {
+    query.brand_id = { $in: brand_id.split(",").map(id => new ObjectId(id)) };
+  }
+
+  // Handle format
+  if (format) {
+    query.format = format;
+  }
+
+  if (startDate && endDate) {
+    startDate = new Date(startDate);
+    endDate = new Date(endDate);
+    query.createdAt = { $gte: startDate, $lte: endDate };
+  }
+
+  let pipeline = [
+
+    {
+      $project: {
+        id: "$_id",
+        affiliate_id: "$affiliate_id",
+        brand_id: "$brand_id",
+        order_id: "$order_id",
+        currency: "$currency",
+        price: "$price",
+        campaignId: "$campaignId",
+        discount: "$discount",
+        event: '$event',
+        timestamp: '$timestamp',
+        urlParams: '$urlParams',
+        data: '$data',
+        isDeleted: '$isDeleted',
+        status: '$status',
+        addedBy: '$addedBy',
+        updatedBy: '$updatedBy',
+        updatedAt: '$updatedAt',
+        createdAt: '$createdAt',
+        month: { $month: "$createdAt" },
       }
-
-      // Handle isDeleted
-      if (isDeleted) {
-          query.isDeleted = isDeleted === 'true';
-      } else {
-          query.isDeleted = false;
-      }
-
-      // Handle sorting
-      if (sortBy) {
-          let typeArr = sortBy.split(" ");
-          let sortType = typeArr[1];
-          let field = typeArr[0];
-          sortquery[field ? field : 'createdAt'] = sortType === 'desc' ? -1 : 1;
-      } else {
-          sortquery = { createdAt: -1 };
-      }
-
-      // Handle status
-      if (status) {
-          query.status = status;
-      }
-
-      let group_query = {};
-      group_query.campaignId = "$campaignId";
-      group_query.affiliate_id = "$affiliate_id";
-      group_query.brand_id = "$brand_id";
-      if(campaignId) {
-          query.campaignId = {$in: campaignId.split(",").map(id=>new ObjectId(id))};
-      }else if(affiliate_id) {
-          query.affiliate_id = {$in: affiliate_id.split(",").map(id=>new ObjectId(id))};
-      }else if(brand_id) {
-          query.brand_id = {$in: brand_id.split(",").map(id=>new ObjectId(id))};
-      }
-
-      // Handle format
-      if (format) {
-          query.format = format;
-      }
-      
-      if(startDate && endDate) {
-          startDate = new Date(startDate);
-          endDate = new Date(endDate);
-          query.createdAt = { $gte: startDate, $lte: endDate };
-      }
-
-      let pipeline = [
-
+    },
+    {
+      $match: query
+    },
+    {
+      $facet: {
+        data: [
           {
-              $project: {
-                  id: "$_id",
-                  affiliate_id: "$affiliate_id",
-                  brand_id: "$brand_id",
-                  order_id: "$order_id",
-                  currency: "$currency",
-                  price: "$price",
-                  campaignId: "$campaignId",
-                  discount: "$discount",
-                  event: '$event',
-                  timestamp: '$timestamp',
-                  urlParams: '$urlParams',
-                  data: '$data',
-                  isDeleted: '$isDeleted',
-                  status: '$status',
-                  addedBy: '$addedBy',
-                  updatedBy: '$updatedBy',
-                  updatedAt: '$updatedAt',
-                  createdAt: '$createdAt',
-                  month: { $month: "$createdAt" },
-              }
+            $group: {
+              _id: group_query,
+              revenue: { $sum: '$price' },
+              click_count: { $sum: 1 }
+            }
+
+          },
+          // {
+          //     $unset: ['_id']
+          // },
+          {
+            $skip: Number(skipNo)
           },
           {
-              $match: query
+
+            $limit: Number(count)
           },
           {
-              $facet: {
-                  data: [
-                      {
-                          $group: {
-                              _id: group_query,
-                              revenue: { $sum: '$price' },
-                              click_count: { $sum: 1}
-                          }
-
-                      },
-                      // {
-                      //     $unset: ['_id']
-                      // },
-                      {
-                          $skip: Number(skipNo)
-                      },
-                      {
-
-                          $limit: Number(count)
-                      },
-                      {
-                          $project: {
-                              affiliate_id: "$_id.affiliate_id",
-                              campaignId: "$_id.campaignId",
-                              brand_id: "$_id.brand_id",
-                              revenue: "$revenue",
-                              click_count: "$click_count"
-                          }
-                      },
-                      {
-                          $lookup: {
-                              from: "users",
-                              localField: "affiliate_id",
-                              foreignField: "_id",
-                              as: "affiliate_details"
-                          }
-                      },
-                      {
-                          $unwind: {
-                              path: '$affiliate_details',
-                              preserveNullAndEmptyArrays: true
-                          }
-                      },
-                      {
-                          $lookup: {
-                              from: "campaign",
-                              localField: "campaignId",
-                              foreignField: "_id",
-                              as: "campaign_details"
-                          }
-                      },
-                      {
-                          $unwind: {
-                              path: '$campaign_details',
-                              preserveNullAndEmptyArrays: true
-                          }
-                      },
-                      {
-                          $lookup: {
-                              from: "users",
-                              localField: "brand_id",
-                              foreignField: "_id",
-                              as: "brand_details"
-                          }
-                      },
-                      {
-                          $unwind: {
-                              path: '$brand_details',
-                              preserveNullAndEmptyArrays: true
-                          }
-                      },
-                      {
-                          $unset: ["_id", "brand_id", "affiliate_id", "campaignId"]
-                      }
-                  ]
-
-              }
+            $project: {
+              affiliate_id: "$_id.affiliate_id",
+              campaignId: "$_id.campaignId",
+              brand_id: "$_id.brand_id",
+              revenue: "$revenue",
+              click_count: "$click_count"
+            }
           },
-      ];
-
-      let projection = {
-          $project: {
-              data: "$data"
+          {
+            $lookup: {
+              from: "users",
+              localField: "affiliate_id",
+              foreignField: "_id",
+              as: "affiliate_details"
+            }
+          },
+          {
+            $unwind: {
+              path: '$affiliate_details',
+              preserveNullAndEmptyArrays: true
+            }
+          },
+          {
+            $lookup: {
+              from: "campaign",
+              localField: "campaignId",
+              foreignField: "_id",
+              as: "campaign_details"
+            }
+          },
+          {
+            $unwind: {
+              path: '$campaign_details',
+              preserveNullAndEmptyArrays: true
+            }
+          },
+          {
+            $lookup: {
+              from: "users",
+              localField: "brand_id",
+              foreignField: "_id",
+              as: "brand_details"
+            }
+          },
+          {
+            $unwind: {
+              path: '$brand_details',
+              preserveNullAndEmptyArrays: true
+            }
+          },
+          {
+            $unset: ["_id", "brand_id", "affiliate_id", "campaignId"]
           }
+        ]
 
-      };
+      }
+    },
+  ];
 
-      pipeline.push(projection);
+  let projection = {
+    $project: {
+      data: "$data"
+    }
 
-      pipeline.push({ $sort: sortquery });
-      try {
-          // pipeline.push({
-          //     $skip: Number(skipNo)
-          // });
-          // pipeline.push({
-          //     $limit: Number(count)
-          // });
+  };
 
-          let result = await db.collection('affiliatelink').aggregate(pipeline, { allowDiskUse: true }).toArray()
-          let resData = {
-              total: result[0] ? result[0].data.length : 0,
-              data: result[0] ? result[0].data: []
-          }
-          if (!req.param('page') && !req.param('count')) {
-              resData.data = result[0].data ? result[0].data : []
-          }
-          return Response.success(resData, constants.COMMON.SUCCESS, req, res);
-      } catch (error) {
-      console.error(error, "=================err");
-      return Response.failed(null, `${error}`, req, res);
+  pipeline.push(projection);
+
+  pipeline.push({ $sort: sortquery });
+  try {
+    // pipeline.push({
+    //     $skip: Number(skipNo)
+    // });
+    // pipeline.push({
+    //     $limit: Number(count)
+    // });
+
+    let result = await db.collection('affiliatelink').aggregate(pipeline, { allowDiskUse: true }).toArray()
+    let resData = {
+      total: result[0] ? result[0].data.length : 0,
+      data: result[0] ? result[0].data : []
+    }
+    if (!req.param('page') && !req.param('count')) {
+      resData.data = result[0].data ? result[0].data : []
+    }
+    return Response.success(resData, constants.COMMON.SUCCESS, req, res);
+  } catch (error) {
+    console.error(error, "=================err");
+    return Response.failed(null, `${error}`, req, res);
   }
 }
 
-exports.updateCommission = async(req,res)=>{ 
+exports.updateCommission = async (req, res) => {
   try {
-    const {commission_status,commission_paid, id } = req.body
+    const { commission_status, commission_paid, id } = req.body
     if ((commission_status || commission_paid) && !id) {
       return res
         .status(400)

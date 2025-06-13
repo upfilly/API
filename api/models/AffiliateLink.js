@@ -42,6 +42,11 @@ module.exports = {
     commission_paid : {type:'string',isIn:["pending", "paid", "unPaid"],defaultsTo:"pending"},
     admin_paid : {type : "string",isIn:["pending", "paid", "not_paid"],defaultsTo:"pending"},
     lead_id : {type:"string"},
+    // manual_commission keys
+    amount_of_sale: { type: 'number', defaultsTo: 0 },
+    amount_of_commission: { type: 'number', defaultsTo: 0 },
+    commission_type: { type: "string", isIn: ["sales", "lead","bonus"] },
+    order_reference: {type:"string"},
   }
 };
 

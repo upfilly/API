@@ -22,7 +22,7 @@ exports.addCommission = async (req, res) => {
             throw validation_result.message;
         }
 
-        let { } = req.body;
+        const { affiliate_id,amount_of_commission,amount_of_sale,commission_type,order_reference} = req.body;
 
         // let query = {};
         // query.title = title.toLowerCase();
@@ -38,6 +38,14 @@ exports.addCommission = async (req, res) => {
         req.body.commission = "manual"
 
         let add_detail = await Commission.create(req.body).fetch();
+        // cretae affiliate commission
+        const affiliate_commission_payload = {
+            affiliate_id : affiliate_id,
+            amount_of_commission:amount_of_commission,
+            amount_of_sale:amount_of_sale,
+            commission_type:commission_type,
+            order_reference:order_reference,
+        }
         if (add_detail) {
             if (add_detail.is_send_email_to_publisher == true) {
                 let get_affiliate = await Users.findOne({ id: add_detail.affiliate_id, isDeleted: false });
