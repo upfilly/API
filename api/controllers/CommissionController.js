@@ -36,7 +36,7 @@ exports.addCommission = async (req, res) => {
 
         req.body.addedBy = req.identity.id;
         req.body.commission = "manual"
-
+        req.body.transaction_date = new Date(transaction_date)
         let add_detail = await Commission.create(req.body).fetch();
         // cretae affiliate commission
         const affiliate_commission_payload = {
@@ -45,7 +45,8 @@ exports.addCommission = async (req, res) => {
             price:amount_of_sale,
             commission_type:commission_type,
             order_id:order_reference,
-            brand_id : req.identity.id
+            brand_id : req.identity.id,
+            timestamp : transaction_date
         }
         await AffiliateLink.create(affiliate_commission_payload)
         if (add_detail) {
@@ -220,6 +221,7 @@ exports.getAllCommission = async (req, res) => {
                 createdAt: "$createdAt",
                 updatedAt: "$updatedAt",
                 commission_status:"$commission_status",
+                transaction_date : "$transaction_date",
             }
         };
 

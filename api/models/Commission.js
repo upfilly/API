@@ -26,6 +26,7 @@ module.exports = {
     date:{type:"ref",columnType:"dateTime"},
     campaign:{model:"Campaign"},
     commission_status:{type:"string"},
+    transaction_date:{type:"ref"},
     //Common keys
     isDeleted: { type: 'Boolean', defaultsTo: false },
     deletedBy: { model: 'users' },

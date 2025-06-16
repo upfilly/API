@@ -13,7 +13,7 @@ exports.addCommission = async (req, res, next) => {
         affiliate_id: Joi.string().optional().allow(null),
         is_send_email_to_publisher: Joi.boolean().optional(),
         batch_file: Joi.string().optional(),
-        
+        transaction_date : Joi.date().optional(),
         locality: Joi.string().optional(),
         isContain_headers: Joi.string().optional(),
         commission_status: Joi.string().optional(),
@@ -40,6 +40,7 @@ exports.editCommission = async (req, res, next) => {
         mobile_creative: Joi.boolean().optional(),
         category_id: Joi.string().optional().allow(null),
         commission_status: Joi.string().optional(),
+        transaction_date : Joi.date().optional(),
 
     });
     return await Validate(schema, req, res);
