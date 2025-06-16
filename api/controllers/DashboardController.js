@@ -8,6 +8,7 @@
 const response = require("../services/Response");
 const constants = require('../../config/constants').constants;
 const db = sails.getDatastore().manager
+const ObjectId = require("mongodb").ObjectId;
 
 exports.totalUsers = async (req, res) => {
     try {
@@ -53,26 +54,74 @@ exports.myTotalUsers = async (req, res) => {
 exports.totalCampaigns = async (req, res) => {
     try {
 
-        let get_total_campaigns = await Campaign.count({isDeleted: false});
+        let get_total_campaigns = await Campaign.count({ isDeleted: false });
         let get_my_total_campaigns = 0;
         let associated_affiliates_count = 0;
-        if(req.param('brand_id')) {
+        let affiliates_active_count = 0;
+        if (req.param('brand_id')) {
             get_my_total_campaigns = await Campaign.count({ isDeleted: false, brand_id: req.param('brand_id') });
             let campaigns = await BrandAffiliateAssociation.find({
                 isActive: true,
                 brand_id: req.param('brand_id')
             }).populate('affiliate_id');
-            
-            let filteredCampaigns = campaigns.filter(c => c.affiliate_id && !c.affiliate_id.isDeleted);
-            associated_affiliates_count = filteredCampaigns.length;
+
+            // let filteredCampaigns = campaigns.filter(c => c.affiliate_id && !c.affiliate_id.isDeleted);
+            const filteredCampaigns = await BrandAffiliateAssociation.count({ status: "accepted", isDeleted: false, brand_id: req.param('brand_id'), source: "invite" })
+            associated_affiliates_count = filteredCampaigns;
+
+            /**
+             * @active affiliates
+             */
+            const activeAffiliates = await db
+                .collection("brandaffiliateassociation")
+                .aggregate([
+                    {
+                        $match: {
+                            status: "accepted",
+                            isDeleted: false,
+                            brand_id: new ObjectId(req.param("brand_id")),
+                            source: "campaign"
+                        }
+                    },
+                    {
+                        $group: {
+                            _id: "$affiliate_id", // group by affiliate_id
+                            doc: { $first: "$$ROOT" }
+                        }
+                    },
+                    {
+                        $replaceRoot: { newRoot: "$doc" }
+                    },
+                    {
+                        $lookup: {
+                            from: "users", // make sure this is the correct collection name
+                            localField: "affiliate_id",
+                            foreignField: "_id",
+                            as: "affiliateDetails"
+                        }
+                    },
+                    {
+                        $unwind: "$affiliateDetails"
+                    },
+                    {
+                        $match: {
+                            "affiliateDetails.status": "active"
+                        }
+                    }
+                ])
+                .toArray();
+                 affiliates_active_count = activeAffiliates.length
+
+
         }
-            
+
 
         return res.status(200).json({
             sucess: true,
             totalCampaigns: get_total_campaigns ? get_total_campaigns : 0,
             myTotalCampaigns: get_my_total_campaigns ? get_my_total_campaigns : 0,
-            associatedAffiliatesCount: associated_affiliates_count? associated_affiliates_count: 0
+            associatedAffiliatesCount: associated_affiliates_count ? associated_affiliates_count : 0,
+            affiliates_active_count: affiliates_active_count ? affiliates_active_count : 0
         });
 
     } catch (error) {
@@ -153,24 +202,24 @@ exports.recentUser = async (req, res) => {
                 }
             })
         }
-        let totalResult= await db.collection('users').aggregate(pipeline).toArray();
-            pipeline.push({
-                $skip: Number(skipNo)
-            });
-            pipeline.push({
-                $limit: Number(count)
-            });
+        let totalResult = await db.collection('users').aggregate(pipeline).toArray();
+        pipeline.push({
+            $skip: Number(skipNo)
+        });
+        pipeline.push({
+            $limit: Number(count)
+        });
 
-            let result = await db.collection('users').aggregate(pipeline).toArray();
-                let resData = {
-                    total: totalResult ? totalResult.length : 0,
-                    data: result ? result : []
-                }
-                if (!req.param('page') && !req.param('count')) {
-                    resData.data = totalResult ? totalResult : []
-                }
-                return response.success(resData, constants.user.FETCHED_ALL, req, res);
-          
+        let result = await db.collection('users').aggregate(pipeline).toArray();
+        let resData = {
+            total: totalResult ? totalResult.length : 0,
+            data: result ? result : []
+        }
+        if (!req.param('page') && !req.param('count')) {
+            resData.data = totalResult ? totalResult : []
+        }
+        return response.success(resData, constants.user.FETCHED_ALL, req, res);
+
 
     } catch (error) {
         // console.log(error, "---err");
@@ -180,16 +229,16 @@ exports.recentUser = async (req, res) => {
 
 exports.totalCampaignsRequests = async (req, res) => {
     try {
-        let acceptedRequestsCount = await BrandAffiliateAssociation.count({isDeleted: false, status: 'accepted', affiliate_id: req.param('affiliate_id')});
-        let rejectedRequestsCount = await BrandAffiliateAssociation.count({isDeleted: false, status: 'rejected', affiliate_id: req.param('affiliate_id')});
-        let pendingRequestsCount = await BrandAffiliateAssociation.count({isDeleted: false, status: 'pending', affiliate_id: req.param('affiliate_id'), source: "campaign"});
-        let brandsAssociatedCount = await BrandAffiliateAssociation.count({isDeleted: false, isActive: true, affiliate_id: req.param('affiliate_id')});
+        let acceptedRequestsCount = await BrandAffiliateAssociation.count({ isDeleted: false, status: 'accepted', affiliate_id: req.param('affiliate_id') });
+        let rejectedRequestsCount = await BrandAffiliateAssociation.count({ isDeleted: false, status: 'rejected', affiliate_id: req.param('affiliate_id') });
+        let pendingRequestsCount = await BrandAffiliateAssociation.count({ isDeleted: false, status: 'pending', affiliate_id: req.param('affiliate_id'), source: "campaign" });
+        let brandsAssociatedCount = await BrandAffiliateAssociation.count({ isDeleted: false, isActive: true, affiliate_id: req.param('affiliate_id') });
         return res.status(200).json({
             sucess: true,
-            acceptedRequestCount: acceptedRequestsCount? acceptedRequestsCount: 0,
-            rejectedRequestsCount: rejectedRequestsCount? rejectedRequestsCount: 0,
-            pendingRequestsCount: pendingRequestsCount? pendingRequestsCount: 0,
-            brandsAssociatedCount: brandsAssociatedCount? brandsAssociatedCount: 0
+            acceptedRequestCount: acceptedRequestsCount ? acceptedRequestsCount : 0,
+            rejectedRequestsCount: rejectedRequestsCount ? rejectedRequestsCount : 0,
+            pendingRequestsCount: pendingRequestsCount ? pendingRequestsCount : 0,
+            brandsAssociatedCount: brandsAssociatedCount ? brandsAssociatedCount : 0
         });
 
     } catch (error) {
