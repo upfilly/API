@@ -9,11 +9,27 @@ const constants = require('../../config/constants').constants;
 const response = require("../services/Response");
 const db = sails.getDatastore().manager;
 const excel = require('exceljs');
+const moment = require("moment")
 const ObjectId = require('mongodb').ObjectId;
 // const {customAlphabet} = require('nanoid');
 // const nanoid = customAlphabet('1234567890abcdef', 6);
 // const baseUrl = 'https://upfilly.com';
 
+function calculatetotalCommission(commission_type, price, commission,commission_override) {
+  let CalPrice;
+
+  if (commission_type === "percentage") {
+    CalPrice = price * commission / 100;
+  } else {
+    CalPrice = price - commission;
+  }
+
+  const finalPrice = CalPrice * commission_override / 100
+
+  return (finalPrice + CalPrice).toFixed(2)
+
+
+}
 
 exports.generateLink = async (req, res) => {
   try {
@@ -30,7 +46,6 @@ exports.generateLink = async (req, res) => {
     let query = {
       affiliate_id: req.identity.id
     }
-    let isExist = await AffiliateLink.find(query).sort({ "createdAt": -1 });
     let isExist = await AffiliateLink.find(query).sort({ "createdAt": -1 });
     isExist = isExist[0]
     if (!isExist) {
@@ -301,8 +316,8 @@ exports.find = async function (req, res) {
         commission_paid: "$commission_paid",
         admin_paid: "$admin_paid",
         lead_id: "$lead_id",
-        amount_of_commission : "$amount_of_commission",
-        commission_type : "$commission_type",
+        amount_of_commission: "$amount_of_commission",
+        commission_type: "$commission_type",
       },
     };
 
@@ -325,59 +340,61 @@ exports.find = async function (req, res) {
     });
 
     let result = await db.collection('affiliatelink').aggregate(pipeline).toArray();
+    const planData = await SubscriptionPlans.findOne({id:req.identity.plan_id})
+    const commission_override = planData.commission_override
+    if (export_to_xls === "yes") {
+      let transactionData = [];
+      let counter = 1;
+      for (let obj of result) {
+        transactionData.push({
+          createdAt: obj.timestamp ? moment(obj.timestamp).format("D-MM-YYYY") : moment(obj.createdAt).format("D-MM-YYYY"),
+          affiliate: obj?.affiliate_name,
+          brand_name: obj?.brand_name,
+          currency: obj?.currency || "USD",
+          price: obj?.price,
+          order_id: obj?.order_id,
+          commission: obj?.commission,
+          amount_of_commission: obj?.amount_of_commission,
+          commission_paid: calculatetotalCommission(obj?.commission_type, obj?.price,obj?.commission, commission_override),
+          commission_status: obj?.commission_status,
+          counter: counter
+        });
 
-    if (export_to_xls == "yes") {
-      if (result && result.length > 0) {
-        let workbook = new excel.Workbook();
-        let worksheet = workbook.addWorksheet("Transactions");
-        worksheet.columns = [
-          { header: "Affiliate", key: "affiliate_name", width: 10 },
-          { header: "Brand", key: "brand_name", width: 30 },
-          { header: "Currency", key: "currency", width: 20 },
-          { header: "Order Price", key: "price", width: 20 },
-          { header: "Order Id ", key: "order_id", width: 25 },
-          { header: "Transaction Date", key: "createdAt", width: 20 },
-          { header: "Commission", key: "commission", width: 15 },
-          { header: "Commission Paid", key: "commission_paid", width: 15 },
-          { header: "Commission Status", key: "commission_status", width: 15 },
-          { header: "Payment Status", key: "commission_paid", width: 15 },
-        ];
-        let counter = 0;
-        for await (let values of result) {
-          let id = counter;
-          if (counter) {
-            values.serial_number = `${1 + counter}`;
-          } else {
-            values.serial_number = `${1}`;
-          }
+        counter++;
+      }
 
-          if (values.amount) {
-            values.amount = `$${values.amount}`;
-          }
-          worksheet.addRow(values);
-          counter++;
-        }
+      let excelFileName = `TransactionData.xlsx`;
+      let workbook = new excel.Workbook();
+      let worksheet = workbook.addWorksheet("Logs");
 
-        try {
-          res.setHeader(
-            "Content-Type",
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-          );
-          res.setHeader(
-            "Content-Disposition",
-            "attachment; filename=" + "transactions.xlsx"
-          );
+      worksheet.columns = [
+        { header: "Serial No.", key: "counter", width: 15, style: { alignment: { horizontal: "center" } } },
+        { header: "Affiliate", key: "affiliate", width: 10 },
+        { header: "Brand", key: "brand_name", width: 10, style: { alignment: { horizontal: "center" } } },
+        { header: "Order price", key: "price", width: 25 },
+        { header: "Order Id", key: "order_id", width: 25 },
+        { header: "Transaction Date", key: "createdAt", width: 25 },
+        { header: "Commission", key: "commission", width: 25 },
+        { header: "Commission paid", key: "amount_of_commission", width: 25 },
+        { header: "Commission Status", key: "commission_status", width: 25 },
+        { header: "Payment Status", key: "commission_paid", width: 25 },
+      ];
+      worksheet.addRows(transactionData);
+      // Sending the response as an Excel file
+      try {
+        res.setHeader(
+          "Content-Type",
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        );
+        res.setHeader(
+          "Content-Disposition",
+          `attachment; filename=${excelFileName}`
+        );
 
-          return workbook.xlsx.write(res).then(function () {
-            res.status(200).end();
-          });
-
-        } catch (err) {
-          return response.failed(null, `${err}`, req, res);
-        }
-
-      } else {
-        return response.failed(null, `No data found to export`, req, res)
+        await workbook.xlsx.write(res);
+        return res.status(200).end();
+      } catch (err) {
+        return response.failed(null, err, req, res)
       }
     } else {
       let resData = {
@@ -390,6 +407,7 @@ exports.find = async function (req, res) {
       return response.success(resData, constants.AFFILIATELINK.FETCHED, req, res);
     }
   } catch (error) {
+    console.log(error, '==df')
     return response.failed(null, `${error}`, req, res);
   }
 };

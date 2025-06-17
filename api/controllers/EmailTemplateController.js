@@ -240,13 +240,13 @@ exports.getAll = async (req, res) => {
 
     if (startDate && endDate) {
 
-        const start = new Date(startDate);
-        start.setUTCHours(0, 0, 0, 0);
-    
-        const end = new Date(endDate);
-        end.setUTCHours(23, 59, 59, 999); 
-      
-      query.createdAt = {$gte:start,$lte:end};
+      const start = new Date(startDate);
+      start.setUTCHours(0, 0, 0, 0);
+
+      const end = new Date(endDate);
+      end.setUTCHours(23, 59, 59, 999);
+
+      query.createdAt = { $gte: start, $lte: end };
     }
 
     if (search) {
@@ -482,17 +482,61 @@ exports.affiliateCount = async (req, res) => {
     });
 
     // Get only needed associations with affiliate populated
-    const acceptedAffiliates = await BrandAffiliateAssociation.find({
-      brand_id: brandId,
-      status: "accepted",
-      isActive: true,
-      isDeleted: false,
-    }).populate("affiliate_id");
+    // const acceptedAffiliates = await BrandAffiliateAssociation.find({
+    //   brand_id: brandId,
+    //   status: "accepted",
+    //   isActive: true,
+    //   isDeleted: false,
+    // }).populate("affiliate_id");
 
-    // Count active affiliates
-    const totalActive = acceptedAffiliates.filter(
-      item => item.affiliate_id && item.affiliate_id.status === "active"
-    ).length;
+    // // Count active affiliates
+    // const totalActive = acceptedAffiliates.filter(
+    //   item => item.affiliate_id && item.affiliate_id.status === "active"
+    // ).length;
+
+    /**
+          * @active affiliates
+          */
+    const activeAffiliates = await db
+      .collection("brandaffiliateassociation")
+      .aggregate([
+        {
+          $match: {
+            status: "accepted",
+            isDeleted: false,
+            brand_id: new ObjectId(req.param("brand_id")),
+            source: "campaign"
+          }
+        },
+        {
+          $group: {
+            _id: "$affiliate_id", // group by affiliate_id
+            doc: { $first: "$$ROOT" }
+          }
+        },
+        {
+          $replaceRoot: { newRoot: "$doc" }
+        },
+        {
+          $lookup: {
+            from: "users", // make sure this is the correct collection name
+            localField: "affiliate_id",
+            foreignField: "_id",
+            as: "affiliateDetails"
+          }
+        },
+        {
+          $unwind: "$affiliateDetails"
+        },
+        {
+          $match: {
+            "affiliateDetails.status": "active"
+          }
+        }
+      ])
+      .toArray();
+
+    const affiliates_active_count = activeAffiliates.length
 
     return response.success({
       totalJoined,
