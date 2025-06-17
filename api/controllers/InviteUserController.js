@@ -816,4 +816,36 @@ module.exports = {
       });
     }
   },
+  changeStatus : async(req,res) =>{
+    const {id,status} = req.body
+    let validation_result = await Validations.InviteUserValidation.changeStatus(
+        req,
+        res
+      );
+      if (validation_result && !validation_result.success) {
+        throw validation_result.message;
+      }
+    try {
+      const get_invite_data = await InviteUsers.findOne({id:id,isDeleted:false})
+      if(!get_invite_data){
+        return res.status(400).json({
+        success: false,
+        error: { code: 400, message: "No Invite found" },
+      });  
+      }
+      const userData  = await Users.findOne({id:get_invite_data.user_id,isDeleted:false})
+      if(userData){
+        await Users.updateOne({id:userData.id},{status:status})
+      }
+      return res.status(200).json({
+        success: true,
+        message: "Status change successfully"
+      });
+    } catch (error) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 400, message: "" + err },
+      });
+    }
+  }
 };

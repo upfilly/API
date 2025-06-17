@@ -16,3 +16,13 @@ exports.addInvite = async (req, res, next) => {
     return await Validate(schema, req, res);
 
 }
+exports.changeStatus = async (req, res, next) => {
+
+    const schema = Joi.object({
+       id:Joi.string().required(),
+       status : Joi.string().required(),
+    });
+
+    return await Validate(schema, req, res);
+
+}
