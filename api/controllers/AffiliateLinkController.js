@@ -8,6 +8,7 @@ const Services = require('../services/index');
 const constants = require('../../config/constants').constants;
 const response = require("../services/Response");
 const db = sails.getDatastore().manager;
+const excel = require('exceljs');
 const ObjectId = require('mongodb').ObjectId;
 // const {customAlphabet} = require('nanoid');
 // const nanoid = customAlphabet('1234567890abcdef', 6);
@@ -29,6 +30,7 @@ exports.generateLink = async (req, res) => {
     let query = {
       affiliate_id: req.identity.id
     }
+    let isExist = await AffiliateLink.find(query).sort({ "createdAt": -1 });
     let isExist = await AffiliateLink.find(query).sort({ "createdAt": -1 });
     isExist = isExist[0]
     if (!isExist) {
@@ -113,10 +115,12 @@ exports.create = async function (req, res) {
 exports.find = async function (req, res) {
   try {
     let query = {};
-    let count = req.param('count') || 10;
-    let page = req.param('page') || 1;
-    let skipNo = (Number(page) - 1) * Number(count);
-    let { search, sortBy, status, isDeleted, format, addedBy, affiliate_id, brand_id, campaignId, commission_status, commission_paid, admin_paid } = req.query;
+    let count = parseInt(req.query.count) || 10;
+    let page = parseInt(req.query.page) || 1;
+
+    let skipNo = (page - 1) * count;
+
+    let { search, sortBy, status, isDeleted, format, addedBy, affiliate_id, brand_id, campaignId, commission_status, commission_paid, admin_paid, export_to_xls } = req.query;
     let sortquery = {};
 
     // Handle search
@@ -299,8 +303,7 @@ exports.find = async function (req, res) {
         lead_id: "$lead_id",
         amount_of_commission : "$amount_of_commission",
         commission_type : "$commission_type",
-        
-      }
+      },
     };
 
     pipeline.push(projection);
@@ -323,17 +326,69 @@ exports.find = async function (req, res) {
 
     let result = await db.collection('affiliatelink').aggregate(pipeline).toArray();
 
+    if (export_to_xls == "yes") {
+      if (result && result.length > 0) {
+        let workbook = new excel.Workbook();
+        let worksheet = workbook.addWorksheet("Transactions");
+        worksheet.columns = [
+          { header: "Affiliate", key: "affiliate_name", width: 10 },
+          { header: "Brand", key: "brand_name", width: 30 },
+          { header: "Currency", key: "currency", width: 20 },
+          { header: "Order Price", key: "price", width: 20 },
+          { header: "Order Id ", key: "order_id", width: 25 },
+          { header: "Transaction Date", key: "createdAt", width: 20 },
+          { header: "Commission", key: "commission", width: 15 },
+          { header: "Commission Paid", key: "commission_paid", width: 15 },
+          { header: "Commission Status", key: "commission_status", width: 15 },
+          { header: "Payment Status", key: "commission_paid", width: 15 },
+        ];
+        let counter = 0;
+        for await (let values of result) {
+          let id = counter;
+          if (counter) {
+            values.serial_number = `${1 + counter}`;
+          } else {
+            values.serial_number = `${1}`;
+          }
 
-    let resData = {
-      total_count: totalresult ? totalresult.length : 0,
-      data: result ? result : []
-    };
+          if (values.amount) {
+            values.amount = `$${values.amount}`;
+          }
+          worksheet.addRow(values);
+          counter++;
+        }
 
-    if (!req.param('page') && !req.param('count')) {
-      resData.data = totalresult ? totalresult : [];
+        try {
+          res.setHeader(
+            "Content-Type",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+          );
+          res.setHeader(
+            "Content-Disposition",
+            "attachment; filename=" + "transactions.xlsx"
+          );
+
+          return workbook.xlsx.write(res).then(function () {
+            res.status(200).end();
+          });
+
+        } catch (err) {
+          return response.failed(null, `${err}`, req, res);
+        }
+
+      } else {
+        return response.failed(null, `No data found to export`, req, res)
+      }
+    } else {
+      let resData = {
+        total_count: totalresult ? totalresult.length : 0,
+        data: result ? result : []
+      };
+      if (!req.param('page') && !req.param('count')) {
+        resData.data = totalresult ? totalresult : [];
+      }
+      return response.success(resData, constants.AFFILIATELINK.FETCHED, req, res);
     }
-
-    return response.success(resData, constants.AFFILIATELINK.FETCHED, req, res);
   } catch (error) {
     return response.failed(null, `${error}`, req, res);
   }
@@ -387,7 +442,7 @@ exports.findGraph = async (req, res) => {
       {
         $match: {
           createdAt: { $gte: start, $lte: end }
-        }
+        },
       },
       {
         $group: {
@@ -402,7 +457,8 @@ exports.findGraph = async (req, res) => {
           count: 1,
           _id: 0
         }
-      },
+      }, { $skip: skipNo },
+      { $limit: count },
     ]).toArray();
 
     return res.status(200).json({ success: true, data: result });
