@@ -473,6 +473,7 @@ module.exports.routes = {
   "put /updateInviteUser": "InviteUserController.updateInviteUser",
   "get /getinviteuser": "InviteUserController.getInviteUser",
   "get /getAllInvitedUsers": "InviteUserController.getAllInvitedUsers",
+  "put /changeStatus": "InviteUserController.changeStatus",
 
   /**
    * @AffiliateBrandInviteController
@@ -608,6 +609,6 @@ module.exports.routes = {
   "post /transfer/payment" : "BankAccountController.transferPayment",
 
   // new api which take only link
-  "get /:link" : "CookiesController.getLink"
+  "get /link/:link" : "CookiesController.getLink"
 
 };   
