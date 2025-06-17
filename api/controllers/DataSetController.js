@@ -957,7 +957,7 @@ exports.sendEmailMessage = async (req, res) => {
     let query2 = {};
 
     let data = req.body;
-    if (data.isAllJoined) { // All Joined filter
+    if (data.isAllJoined && !data.acceptedDate) { // All Joined filter
 
       query1 = {
         addedBy: req.identity.id,
@@ -1048,6 +1048,65 @@ exports.sendEmailMessage = async (req, res) => {
             }
 
           );
+        }
+      }
+    }
+
+    if (data.affiliateStatus && !data.acceptedDate) {
+      query2 = {
+        brand_id: req.identity.id,
+        // status: "accepted",
+        isDeleted: false,
+        // status: data.affiliateStatus,
+      };
+      query1 = {
+        addedBy: req.identity.id,
+        // status: "accepted",
+        isDeleted: false,
+        // status: data.affiliateStatus,
+      };
+
+      // console.log(query1);
+      let listOfAcceptedInvites = await AffiliateInvite.find(query1);
+      let listOfBrandInvite = await AffiliateBrandInvite.find(query2);
+
+      function removeDuplicates(array, key) {
+        const seen = new Set();
+        return array.filter((item) => {
+          const keyValue = item[key];
+          if (seen.has(keyValue)) {
+            return false;
+          }
+          seen.add(keyValue);
+          return true;
+        });
+      }
+
+      // Combine the two lists
+      let combinedList = [...listOfBrandInvite, ...listOfAcceptedInvites];
+      // console.log(combinedList);
+      // Remove duplicates based on the 'id' key
+      listOfAcceptedInvites = removeDuplicates(combinedList, "affiliate_id");
+
+      for (let invites of listOfAcceptedInvites) {
+        
+        let findUser = await Users.findOne({ id: invites.affiliate_id,  isDeleted: false }); ///status: data.affiliateStatus,
+        if (findUser) {
+          let emailPayload = {
+            brandFullName: req.identity.fullName,
+            affiliateFullName: findUser.fullName,
+            affiliateEmail: findUser.email,
+            emailMessage: data.description,
+          };
+           data.emailTemplate = data.emailTemplate.replace("{affiliateFullName}", findUser.fullName);
+
+          await Emails.EmailMessageTemplate.sendEmailMessageTemplate(
+            {
+              emailTemp : data.emailTemplate,
+              affiliateEmail : emailPayload.affiliateEmail,
+
+            }
+          )
         }
       }
     }
@@ -1171,64 +1230,7 @@ exports.sendEmailMessage = async (req, res) => {
       }
     }
 
-    if (data.affiliateStatus) {
-      query2 = {
-        brand_id: req.identity.id,
-        // status: "accepted",
-        isDeleted: false,
-        // status: data.affiliateStatus,
-      };
-      query1 = {
-        addedBy: req.identity.id,
-        // status: "accepted",
-        isDeleted: false,
-        // status: data.affiliateStatus,
-      };
-
-      // console.log(query1);
-      let listOfAcceptedInvites = await AffiliateInvite.find(query1);
-      let listOfBrandInvite = await AffiliateBrandInvite.find(query2);
-
-      function removeDuplicates(array, key) {
-        const seen = new Set();
-        return array.filter((item) => {
-          const keyValue = item[key];
-          if (seen.has(keyValue)) {
-            return false;
-          }
-          seen.add(keyValue);
-          return true;
-        });
-      }
-
-      // Combine the two lists
-      let combinedList = [...listOfBrandInvite, ...listOfAcceptedInvites];
-      // console.log(combinedList);
-      // Remove duplicates based on the 'id' key
-      listOfAcceptedInvites = removeDuplicates(combinedList, "affiliate_id");
-
-      for (let invites of listOfAcceptedInvites) {
-        
-        let findUser = await Users.findOne({ id: invites.affiliate_id,  isDeleted: false }); ///status: data.affiliateStatus,
-        if (findUser) {
-          let emailPayload = {
-            brandFullName: req.identity.fullName,
-            affiliateFullName: findUser.fullName,
-            affiliateEmail: findUser.email,
-            emailMessage: data.description,
-          };
-           data.emailTemplate = data.emailTemplate.replace("{affiliateFullName}", findUser.fullName);
-
-          await Emails.EmailMessageTemplate.sendEmailMessageTemplate(
-            {
-              emailTemp : data.emailTemplate,
-              affiliateEmail : emailPayload.affiliateEmail,
-
-            }
-          )
-        }
-      }
-    }
+    
     // let isExists = await Users.findOne({ id: data.user_id, isDeleted: false });
 
     // if (!isExists) {
