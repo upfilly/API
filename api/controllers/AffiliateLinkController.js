@@ -26,7 +26,7 @@ function calculatetotalCommission(commission_type, price, commission,commission_
 
   const finalPrice = CalPrice * commission_override / 100
 
-  return (finalPrice + CalPrice).toFixed(2)
+  return "$"+(finalPrice + CalPrice).toFixed(2)
 
 
 }
@@ -353,7 +353,7 @@ exports.find = async function (req, res) {
           currency: obj?.currency || "USD",
           price: obj?.price,
           order_id: obj?.order_id,
-          commission: obj?.commission,
+          commission:  obj?.commission ? obj?.commission_type === "amount" ?  `$${obj?.commission}` : `${obj?.commission}%`: "--",
           amount_of_commission: obj?.amount_of_commission,
           commission_paid: calculatetotalCommission(obj?.commission_type, obj?.price,obj?.commission, commission_override),
           commission_status: obj?.commission_status,

@@ -22,7 +22,7 @@ exports.addCommission = async (req, res) => {
             throw validation_result.message;
         }
 
-        const { affiliate_id,amount_of_commission,amount_of_sale,commission_type,order_reference} = req.body;
+        const { affiliate_id,amount_of_commission,amount_of_sale,commission_type,order_reference,commission_status} = req.body;
 
         // let query = {};
         // query.title = title.toLowerCase();
@@ -46,7 +46,8 @@ exports.addCommission = async (req, res) => {
             commission_type:commission_type,
             order_id:order_reference,
             brand_id : req.identity.id,
-            timestamp : transaction_date
+            timestamp : transaction_date,
+            commission_status : commission_status === "confirmed" ? "accepted" :"pending"
         }
         await AffiliateLink.create(affiliate_commission_payload)
         if (add_detail) {
