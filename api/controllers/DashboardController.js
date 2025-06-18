@@ -59,11 +59,10 @@ exports.totalCampaigns = async (req, res) => {
         let associated_affiliates_count = 0;
         let affiliates_active_count = 0;
         if (req.param('brand_id')) {
-            get_my_total_campaigns = await Campaign.count({ isDeleted: false, brand_id: req.param('brand_id') });
+            get_my_total_campaigns = await Campaign.count({ isDeleted: false, brand_id: req.param('brand_id'),isArchive:false, });
             let campaigns = await BrandAffiliateAssociation.find({
                 isActive: true,
                 brand_id: req.param('brand_id'),
-                isArchive:false,
             }).populate('affiliate_id');
 
             // let filteredCampaigns = campaigns.filter(c => c.affiliate_id && !c.affiliate_id.isDeleted);
