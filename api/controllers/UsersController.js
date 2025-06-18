@@ -693,7 +693,7 @@ module.exports = {
 
       let { device_token } = req.body;
 
-      let isUserDeleted=  await Users.find({
+      let isUserDeleted = await Users.find({
         where: {
           email: req.body.email.toLowerCase(),
           isDeleted: true,
@@ -712,7 +712,7 @@ module.exports = {
           },
         },
       });
-      if(isUserDeleted.length>0){
+      if (isUserDeleted.length > 0) {
         throw constants.user.DELETED_ACCOUNT;
       }
       let user = await Users.findOne({
@@ -1233,6 +1233,19 @@ module.exports = {
             path: "$invite_affiliate_details",
             preserveNullAndEmptyArrays: true,
           },
+        }, {
+          $lookup: {
+            from: "campaign",
+            localField: "invite_affiliate_details.campaign_id",
+            foreignField: "_id",
+            as: "campaign_details"
+          }
+        },
+        {
+          $unwind: {
+            path: "$campaign_details",
+            preserveNullAndEmptyArrays: true
+          }
         },
         {
           $lookup: {
@@ -1304,6 +1317,7 @@ module.exports = {
               "not_invited",
             ],
           },
+          campaign_details: { _id: "$campaign_details._id", name: "$campaign_details.name" },
           invite_affiliate_details_status: "$invite_affiliate_details.status",
           status: "$status",
           createdAt: "$createdAt",
