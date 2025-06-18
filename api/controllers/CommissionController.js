@@ -22,7 +22,7 @@ exports.addCommission = async (req, res) => {
             throw validation_result.message;
         }
 
-        const { affiliate_id,amount_of_commission,amount_of_sale,commission_type,order_reference,commission_status} = req.body;
+        const { affiliate_id,amount_of_commission,amount_of_sale,commission_type,order_reference,commission_status,campaign_id} = req.body;
 
         // let query = {};
         // query.title = title.toLowerCase();
@@ -33,7 +33,7 @@ exports.addCommission = async (req, res) => {
         // if (get_commission) {
         //     throw constants.COMMISSION.ALREADY_EXIST
         // }
-
+        req.body.campaign = campaign_id;
         req.body.addedBy = req.identity.id;
         req.body.commission = "manual"
         req.body.transaction_date = new Date(transaction_date)
