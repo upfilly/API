@@ -475,8 +475,7 @@ exports.findGraph = async (req, res) => {
           count: 1,
           _id: 0
         }
-      }, { $skip: skipNo },
-      { $limit: count },
+      },
     ]).toArray();
 
     return res.status(200).json({ success: true, data: result });
