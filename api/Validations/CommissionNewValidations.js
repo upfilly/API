@@ -42,6 +42,7 @@ exports.editCommission = async (req, res, next) => {
         category_id: Joi.string().optional().allow(null),
         commission_status: Joi.string().optional(),
         transaction_date : Joi.date().optional(),
+        campaign_id:  Joi.string().optional().allow(null),
 
     });
     return await Validate(schema, req, res);
