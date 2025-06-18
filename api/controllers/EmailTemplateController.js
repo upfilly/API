@@ -633,8 +633,8 @@ exports.affiliateCount = async (req, res) => {
     sucess: true,
     totalCampaigns: get_total_campaigns || 0,
     myTotalCampaigns: get_my_total_campaigns || 0,
-    associatedAffiliatesCount: associated_affiliates_count || 0,
-    affiliates_active_count: affiliates_active_count || 0
+    totalJoined: associated_affiliates_count || 0,
+    totalActive: affiliates_active_count || 0
   });
 
 } catch (error) {
