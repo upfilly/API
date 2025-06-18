@@ -554,8 +554,8 @@ exports.affiliateCount = async (req, res) => {
 
   // Build the date filter if any
   const dateFilter = {};
-  if (before) dateFilter["$lte"] = new Date(before);
-  if (after) dateFilter["$gte"] = new Date(after);
+  if (before) dateFilter["<="] = new Date(before);
+  if (after) dateFilter[">="] = new Date(after);
 
   // Helper function to conditionally attach date filter
   const withDate = (baseQuery, dateField = "createdAt") => {
