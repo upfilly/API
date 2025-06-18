@@ -10,7 +10,8 @@ const db = sails.getDatastore().manager;
 const ObjectId = require("mongodb").ObjectId;
 const Services = require("../services/index");
 const Validations = require("../Validations/index");
-const credentials = require("../../config/local")
+const credentials = require("../../config/local");
+const excel = require('exceljs');
 
 const { Parser } = require("json2csv");
 const xml2js = require("xml2js");
@@ -42,6 +43,8 @@ exports.addCoupon = async (req, res) => {
       status,
       url,
       couponCommission,
+      description,
+      title
     } = req.body;
     let validation_result = await Validations.CouponValidations.addCoupon(
       req,
@@ -131,6 +134,8 @@ exports.editCoupon = async function (req, res) {
       status,
       url,
       couponCommission,
+      title,
+      description
     } = req.body;
     let validation_result = await Validations.CouponValidations.editCoupon(
       req,
@@ -240,7 +245,7 @@ exports.getAllCoupon = async (req, res) => {
         let count = req.param('count') || 1000;
         let page = req.param('page') || 1;
         let skipNo = (Number(page) - 1) * Number(count);
-        let { search, sortBy, status, isDeleted, plan_type, couponType, addedBy, visibility, media,csv,xml } = req.query;
+        let { search, sortBy, status, isDeleted, plan_type, couponType, addedBy, visibility, media,csv,xml,export_to_xls } = req.query;
         let sortquery = {};
 
         if (search) {
@@ -320,6 +325,7 @@ exports.getAllCoupon = async (req, res) => {
                 visibility: "$visibility",
                 url: "$url",
                 addedByDetails : {fullName : "$addedByDetails.fullName",email : "$addedByDetails.email"},
+                brand_name : "$addedByDetails.fullName",
                 couponCommission: "$couponCommission",
                 isDeleted: "$isDeleted",
                 deletedAt: "$deletedAt",
@@ -358,6 +364,59 @@ exports.getAllCoupon = async (req, res) => {
             $limit: Number(count)
         });
         let result = await db.collection('coupon').aggregate(pipeline).toArray();
+
+         if (export_to_xls == "yes") {
+      if (result && result.length > 0) {
+        let workbook = new excel.Workbook();
+        let worksheet = workbook.addWorksheet("Transactions");
+        worksheet.columns = [
+          { header: "Coupon Code", key: "couponCode", width: 20 },
+          { header: "Coupon Type", key: "couponType", width: 20 },
+          { header: "Brand Name", key: "brand_name", width: 20 },
+          { header: "Visibility", key: "visibility", width: 35 },
+          { header: "Start Date ", key: "startDate", width: 20 },
+          { header: "Expiration Date", key: "expirationDate", width: 20 },
+          { header: "Status", key: "status", width: 15 },
+          { header: "Created Date", key: "createdAt", width: 20 },
+        ];
+        let counter = 0;
+        for await (let values of result) {
+          let id = counter;
+          if (counter) {
+            values.serial_number = `${1 + counter}`;
+          } else {
+            values.serial_number = `${1}`;
+          }
+
+          if (values.amount) {
+            values.amount = `$${values.amount}`;
+          }
+          worksheet.addRow(values);
+          counter++;
+        }
+
+        try {
+          res.setHeader(
+            "Content-Type",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+          );
+          res.setHeader(
+            "Content-Disposition",
+            "attachment; filename=" + "transactions.xlsx"
+          );
+
+          return workbook.xlsx.write(res).then(function () {
+            res.status(200).end();
+          });
+
+        } catch (err) {
+          return response.failed(null, `${err}`, req, res);
+        }
+
+      } else {
+        return response.failed(null, `No data found to export`, req, res)
+      }
+    } 
 
         if (csv || xml) {
             const dirPath = path.join(__dirname, "../documents");

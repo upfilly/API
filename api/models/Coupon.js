@@ -46,6 +46,10 @@ module.exports = {
       defaultsTo:0
     },
 
+    title: { type: "string" },
+    
+    description: { type: "string" },
+
     // Applicable Products or Categories
     applicable: {
       type: "json",

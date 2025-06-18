@@ -40,6 +40,9 @@ exports.addCoupon = async (req, res, next) => {
 
     couponCommission: Joi.string().optional().allow(""),
     couponAmount: Joi.number(),
+    title: Joi.string().optional().allow(""),
+    description: Joi.string().optional().allow(""),
+    
   });
   return await Validate(schema, req, res);
 };
@@ -83,6 +86,8 @@ exports.editCoupon = async (req, res, next) => {
 
     couponCommission: Joi.string().optional(),
     couponAmount: Joi.number(),
+    title: Joi.string().optional().allow(""),
+    description: Joi.string().optional().allow(""),
   });
   return await Validate(schema, req, res);
 };
