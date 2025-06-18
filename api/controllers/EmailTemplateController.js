@@ -577,7 +577,7 @@ exports.affiliateCount = async (req, res) => {
   if (brandId) {
     // My total campaigns (with date filter)
     get_my_total_campaigns = await Campaign.count(
-      withDate({ isDeleted: false, brand_id: brandId })
+      withDate({ isDeleted: false, brand_id: brandId, isArchive:false })
     );
 
     // Associated affiliates (invited)
