@@ -22,7 +22,7 @@ exports.addCommission = async (req, res) => {
             throw validation_result.message;
         }
 
-        const { affiliate_id,amount_of_commission,amount_of_sale,commission_type,order_reference,commission_status,campaign_id} = req.body;
+        const { affiliate_id,amount_of_commission,amount_of_sale,commission_type,order_reference,commission_status,campaign_id,transaction_date} = req.body;
 
         // let query = {};
         // query.title = title.toLowerCase();
