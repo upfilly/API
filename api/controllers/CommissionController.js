@@ -169,7 +169,7 @@ exports.getAllCommission = async (req, res) => {
             },
             {
                 $lookup: {
-                    from: 'Campaign',
+                    from: 'campaign',
                     localField: 'campaign',
                     foreignField: '_id',
                     as: "campaign_details"
@@ -215,7 +215,7 @@ exports.getAllCommission = async (req, res) => {
                 addedBy: "$addedBy",
                 addedBy_name: "$addedBy_details.fullName",
                 affiliate_name: "$affiliate_details.fullName",
-                campaign_details:"$campaign_details",
+                campaign_details:{ _id: "$campaign_details._id", name: "$campaign_details.name" },
                 updatedBy: "$updatedBy",
                 updatedAt: "$updatedAt",
                 isDeleted: "$isDeleted",
