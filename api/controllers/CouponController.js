@@ -374,10 +374,10 @@ exports.getAllCoupon = async (req, res) => {
           { header: "Coupon Type", key: "couponType", width: 20 },
           { header: "Brand Name", key: "brand_name", width: 20 },
           { header: "Visibility", key: "visibility", width: 35 },
-          { header: "Start Date ", key: "startDate", width: 20 },
-          { header: "Expiration Date", key: "expirationDate", width: 20 },
-          { header: "Status", key: "status", width: 15 },
-          { header: "Created Date", key: "createdAt", width: 20 },
+          { header: "Start Date ", key: "startDate", width: 20 ,style: { alignment: { horizontal: "center" } }},
+          { header: "Expiration Date", key: "expirationDate", width: 20 ,style: { alignment: { horizontal: "center" } }},
+          { header: "Status", key: "status", width: 15 ,style: { alignment: { horizontal: "center" } }},
+          { header: "Created Date", key: "createdAt", width: 20 ,style: { alignment: { horizontal: "center" } }},
         ];
         let counter = 0;
         for await (let values of result) {
