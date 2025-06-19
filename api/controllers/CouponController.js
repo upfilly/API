@@ -368,7 +368,7 @@ exports.getAllCoupon = async (req, res) => {
          if (export_to_xls == "yes") {
       if (result && result.length > 0) {
         let workbook = new excel.Workbook();
-        let worksheet = workbook.addWorksheet("Transactions");
+        let worksheet = workbook.addWorksheet("Coupons");
         worksheet.columns = [
           { header: "Coupon Code", key: "couponCode", width: 20 },
           { header: "Coupon Type", key: "couponType", width: 20 },
@@ -402,7 +402,7 @@ exports.getAllCoupon = async (req, res) => {
           );
           res.setHeader(
             "Content-Disposition",
-            "attachment; filename=" + "transactions.xlsx"
+            "attachment; filename=" + "Coupons.xlsx"
           );
 
           return workbook.xlsx.write(res).then(function () {
