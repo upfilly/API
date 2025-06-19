@@ -21,7 +21,12 @@ module.exports = {
     is_animation: { type: "Boolean", defaultsTo: false },
     is_deep_linking: { type: "Boolean", defaultsTo: false },
     mobile_creative: { type: "Boolean", defaultsTo: false },
-    category_id: { model: "commoncategories" },
+    // category_id: { model: "commoncategories" },
+    category_id: { type: "json", defaultsTo: [] },
+    subCategory: { type: "json", defaultsTo: [] },
+    subChildCategory: { type: "json", defaultsTo: [] },
+
+
     //Common keys
     isDeleted: { type: "Boolean", defaultsTo: false },
     status: {

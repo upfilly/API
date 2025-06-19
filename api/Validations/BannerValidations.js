@@ -18,7 +18,10 @@ exports.addBanner = async (req, res, next) => {
         is_deep_linking: Joi.boolean().optional(),
         
         mobile_creative: Joi.boolean().optional(),
-        category_id: Joi.string().optional().allow(null),
+        category_id: Joi.array().optional().allow(null),
+        subCategory: Joi.array().optional().allow(null),
+        subChildCategory: Joi.array().optional().allow(null),
+
 
     });
     return await Validate(schema, req, res);
@@ -41,7 +44,9 @@ exports.editBanner = async (req, res, next) => {
         is_animation: Joi.boolean().optional(),
         is_deep_linking: Joi.boolean().optional(),
         mobile_creative: Joi.boolean().optional(),
-        category_id: Joi.string().optional().allow(null)
+        category_id: Joi.array().optional().allow(null),
+        subCategory: Joi.array().optional().allow(null),
+        subChildCategory: Joi.array().optional().allow(null),
 
     });
     return await Validate(schema, req, res);

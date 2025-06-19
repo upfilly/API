@@ -13,6 +13,11 @@ const Services = require("../services/index");
 const ObjectId = require("mongodb").ObjectId;
 const Emails = require("../Emails/index");
 
+
+function isValidObjectId(id) {
+  return /^[a-f\d]{24}$/i.test(id);
+}
+
 exports.addBanner = async (req, res) => {
   try {
     let validation_result = await Validations.Banner.addBanner(req, res);
@@ -27,6 +32,8 @@ exports.addBanner = async (req, res) => {
       availability_date,
       expiration_date,
       category_id,
+      subCategory,
+      subChildCategory,
       access_type,
       affiliate_id,
     } = req.body;
@@ -41,11 +48,50 @@ exports.addBanner = async (req, res) => {
       throw constants.BANNER.ALREADY_EXIST;
     }
 
-    if (category_id) {
-      let get_category = await CommonCategories.findOne({ id: category_id });
+    if (affiliate_id) {
+      let get_affiliateId = await Users.findOne({ id: affiliate_id });
 
-      if (!get_category) {
-        throw constants.BANNER.INVALID_CATEGORY;
+      if (!get_affiliateId) {
+        throw constants.BANNER.INVALID_AFFILIATE;
+      }
+    }
+
+    if (category_id && category_id.length > 0) {
+      for (const id of category_id) {
+        if (!isValidObjectId(id)) {
+          throw new Error(`Invalid category ID format: ${id}`);
+        }
+
+        const exists = await CommonCategories.findOne({ id });
+        if (!exists) {
+          throw constants.BANNER.INVALID_CATEGORY;
+        }
+      }
+    }
+
+    if (subCategory && subCategory.length > 0) {
+      for (const id of subCategory) {
+        if (!isValidObjectId(id)) {
+          throw new Error(`Invalid subcategory ID format: ${id}`);
+        }
+
+        const exists = await CommonCategories.findOne({ id });
+        if (!exists) {
+          throw constants.BANNER.INVALID_SUBCATEGORY;
+        }
+      }
+    }
+
+    if (subChildCategory && subChildCategory.length > 0) {
+      for (const id of subChildCategory) {
+        if (!isValidObjectId(id)) {
+          throw new Error(`Invalid subChildCategory ID format: ${id}`);
+        }
+
+        const exists = await SubChildCategory.findOne({ id });
+        if (!exists) {
+          throw constants.BANNER.INVALID_SUBCHILDCATEGORY;
+        }
       }
     }
 
@@ -158,7 +204,7 @@ exports.addBanner = async (req, res) => {
         let get_all_admin = await Services.UserServices.get_users_with_role(["admin"])
         let get_account_manager = get_all_admin[0].id
         await Services.activityHistoryServices.create_activity_history(req.identity.id, 'banner', 'created', add_detail, add_detail, get_account_manager ? get_account_manager.id : null)
-        
+
       }
 
       return response.success(add_detail, constants.BANNER.ADDED, req, res);
@@ -177,7 +223,7 @@ exports.editBanner = async (req, res) => {
       throw validation_result.message;
     }
 
-    let { title, id, activation_date, availability_date, expiration_date } =
+    let { title, id, activation_date, availability_date, expiration_date, affiliate_id,category_id, subCategory, subChildCategory } =
       req.body;
 
     let query = {
@@ -205,6 +251,54 @@ exports.editBanner = async (req, res) => {
     if (expiration_date) {
       req.body.expiration_date = new Date(expiration_date);
     }
+
+    if (affiliate_id) {
+      let get_affiliateId = await Users.findOne({ id: affiliate_id });
+
+      if (!get_affiliateId) {
+        throw constants.BANNER.INVALID_AFFILIATE;
+      }
+    }
+
+   if (category_id && category_id.length > 0) {
+      for (const id of category_id) {
+        if (!isValidObjectId(id)) {
+          throw new Error(`Invalid category ID format: ${id}`);
+        }
+
+        const exists = await CommonCategories.findOne({ id });
+        if (!exists) {
+          throw constants.BANNER.INVALID_CATEGORY;
+        }
+      }
+    }
+
+    if (subCategory && subCategory.length > 0) {
+      for (const id of subCategory) {
+        if (!isValidObjectId(id)) {
+          throw new Error(`Invalid subcategory ID format: ${id}`);
+        }
+
+        const exists = await CommonCategories.findOne({ id });
+        if (!exists) {
+          throw constants.BANNER.INVALID_SUBCATEGORY;
+        }
+      }
+    }
+
+    if (subChildCategory && subChildCategory.length > 0) {
+      for (const id of subChildCategory) {
+        if (!isValidObjectId(id)) {
+          throw new Error(`Invalid subChildCategory ID format: ${id}`);
+        }
+
+        const exists = await SubChildCategory.findOne({ id });
+        if (!exists) {
+          throw constants.BANNER.INVALID_SUBCHILDCATEGORY;
+        }
+      }
+    }
+
 
     let get_banner = await Banner.findOne({ id: id, isDeleted: false });
     if (!get_banner) {
@@ -260,7 +354,7 @@ exports.editBanner = async (req, res) => {
         let get_all_admin = await Services.UserServices.get_users_with_role(["admin"])
         let get_account_manager = get_all_admin[0].id
         await Services.activityHistoryServices.create_activity_history(req.identity.id, 'banner', 'updated', update_detail, get_banner, get_account_manager ? get_account_manager.id : null)
-        
+
       }
 
 
@@ -437,7 +531,7 @@ exports.getAllBanner = async (req, res) => {
         status: "$status",
         addedBy: "$addedBy",
         addedBy_name: "$addedBy_details.fullName",
-        addedBy_details : "$addedBy_details",
+        addedBy_details: "$addedBy_details",
         updatedBy: "$updatedBy",
         updatedAt: "$updatedAt",
         isDeleted: "$isDeleted",
@@ -483,7 +577,19 @@ exports.getById = async (req, res) => {
     if (!id) {
       throw constants.BANNER.ID_REQUIRED;
     }
-    let get_detail = await Banner.findOne({ id: id }).populate("category_id");
+    let get_detail = await Banner.findOne({ id: id })
+    
+    const [categories, subCategories, childSubCategories] = await Promise.all([
+      CommonCategories.find({ id: get_detail.category_id }),
+      CommonCategories.find({ id: get_detail.subCategory }),
+      SubChildCategory.find({ id: get_detail.subChildCategory }),
+    ]);
+
+    get_detail.categoryData = categories;
+    get_detail.subCategoryData = subCategories;
+    get_detail.childSubCategoryData = childSubCategories;
+
+
     if (get_detail) {
       return response.success(get_detail, constants.BANNER.FETCHED, req, res);
     }

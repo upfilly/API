@@ -574,7 +574,11 @@ module.exports.constants = {
     DELETED: "Banner Deleted successfully",
     FETCHED_ALL: "All Banner Fetched successfully",
     ALREADY_EXIST: "Already exists",
+    INVALID_AFFILIATE: "Invalid affiliate_id",
     INVALID_CATEGORY: "Invalid category",
+    INVALID_SUBCATEGORY: "Invalid subCategory",
+    INVALID_SUBCHILDCATEGORY: "Invalid subChildCategory",
+
   },
   USERINVITE: {
     USERINVITED: "User invited successfully",
