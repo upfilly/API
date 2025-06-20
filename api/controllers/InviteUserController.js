@@ -257,7 +257,7 @@ module.exports = {
       }
       let deletedUser = {};
 
-      deletedUser = await InviteUsers.updateOne(
+      deletedUser = await InviteUsers.updateMany(
         { user_id: id, addedBy: req.identity.id },
         { isDeleted: true }
       );
