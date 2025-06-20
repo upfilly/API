@@ -407,6 +407,9 @@ exports.getAllBanner = async (req, res) => {
       is_deep_linking,
       mobile_creative,
       addedBy,
+      category_id,
+      subChildCategory,
+      subCategory,
     } = req.query;
     let skipNo = (Number(page) - 1) * Number(count);
 
