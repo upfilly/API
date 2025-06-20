@@ -341,7 +341,7 @@ exports.find = async function (req, res) {
 
     let result = await db.collection('affiliatelink').aggregate(pipeline).toArray();
     const planData = await SubscriptionPlans.findOne({id:req.identity.plan_id})
-    const commission_override = planData.commission_override
+    const commission_override = planData?.commission_override
     if (export_to_xls === "yes") {
       let transactionData = [];
       let counter = 1;
