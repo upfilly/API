@@ -223,7 +223,7 @@ exports.editBanner = async (req, res) => {
       throw validation_result.message;
     }
 
-    let { title, id, activation_date, availability_date, expiration_date, affiliate_id,category_id, subCategory, subChildCategory } =
+    let { title, id, activation_date, availability_date, expiration_date, affiliate_id, category_id, subCategory, subChildCategory } =
       req.body;
 
     let query = {
@@ -260,7 +260,7 @@ exports.editBanner = async (req, res) => {
       }
     }
 
-   if (category_id && category_id.length > 0) {
+    if (category_id && category_id.length > 0) {
       for (const id of category_id) {
         if (!isValidObjectId(id)) {
           throw new Error(`Invalid category ID format: ${id}`);
@@ -478,7 +478,22 @@ exports.getAllBanner = async (req, res) => {
     } else {
       sortquery = { updatedAt: -1 };
     }
+    if (category_id) {
+      // query.category_id = new ObjectId(category_id);
+      category_id = await Services.Utils.string_ids_toObjectIds_array(category_id);
+      query.category_id = { $in: category_id }
+    }
+    if (subChildCategory) {
+      // query.sub_child_category_id = new ObjectId(sub_child_category_id);
 
+      subChildCategory = await Services.Utils.string_ids_toObjectIds_array(subChildCategory);
+      query.subChildCategory = { $in: subChildCategory }
+    }
+    if (subCategory) {
+      // query.sub_category_id = new ObjectId(sub_category_id);
+      subCategory = await Services.Utils.string_ids_toObjectIds_array(subCategory);
+      query.subCategory = { $in: subCategory }
+    }
     // Pipeline Stages
     let pipeline = [
       {
@@ -509,6 +524,7 @@ exports.getAllBanner = async (req, res) => {
           preserveNullAndEmptyArrays: true,
         },
       },
+
     ];
 
     let projection = {
@@ -527,6 +543,8 @@ exports.getAllBanner = async (req, res) => {
         mobile_creative: "$mobile_creative",
         seo_attributes: "$seo_attributes",
         category_id: "$category_id",
+        subChildCategory: "$subChildCategory",
+        subCategory: "$subCategory",
         categories_details: "$categories_details",
         status: "$status",
         addedBy: "$addedBy",
@@ -578,7 +596,7 @@ exports.getById = async (req, res) => {
       throw constants.BANNER.ID_REQUIRED;
     }
     let get_detail = await Banner.findOne({ id: id })
-    
+
     const [categories, subCategories, childSubCategories] = await Promise.all([
       CommonCategories.find({ id: get_detail.category_id }),
       CommonCategories.find({ id: get_detail.subCategory }),
