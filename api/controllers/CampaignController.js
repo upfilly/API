@@ -544,6 +544,11 @@ exports.getAllCampaignsForBrand = async (req, res) => {
             typeArr = sortBy.split(" ");
             let sortType = typeArr[1];
             let field = typeArr[0];
+            if (field === 'event_type') {
+                sortquery['event_type_length'] = sortType ? (sortType == 'desc' ? -1 : 1) : -1;
+            } else {
+                sortquery[field ? field : 'createdAt'] = sortType ? (sortType == 'desc' ? -1 : 1) : -1;
+            }
             sortquery[field ? field : 'createdAt'] = sortType ? (sortType == 'desc' ? -1 : 1) : -1;
         } else {
             sortquery = { updatedAt: -1 }
@@ -651,7 +656,7 @@ exports.getAllCampaignsForBrand = async (req, res) => {
             {
                 $lookup: {
                     from: "brandaffiliateassociation",
-                    let: { brand_id: new ObjectId(req.identity.id), campaign: "$_id", status:"accepted" },
+                    let: { brand_id: new ObjectId(req.identity.id), campaign: "$_id", status: "accepted" },
                     pipeline: [{
                         $match: {
                             $expr: {
@@ -664,6 +669,11 @@ exports.getAllCampaignsForBrand = async (req, res) => {
                         }
                     }],
                     as: "affiliateCount"
+                }
+            },
+            {
+                $addFields: {
+                    event_type_length: { $size: { $ifNull: ["$event_type", []] } }
                 }
             },
 
@@ -717,6 +727,7 @@ exports.getAllCampaignsForBrand = async (req, res) => {
                     status: 1,
                     isArchive: 1,
                     affiliateCount: { $size: "$affiliateCount" },
+                    event_type_length: 1,
                 }
             },
             {
