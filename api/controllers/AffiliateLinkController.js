@@ -135,7 +135,7 @@ exports.find = async function (req, res) {
 
     let skipNo = (page - 1) * count;
 
-    let { search, sortBy, status, isDeleted, format, addedBy, affiliate_id, brand_id, campaignId, commission_status, commission_paid, admin_paid, export_to_xls } = req.query;
+    let { search, sortBy, status, isDeleted, format, addedBy, affiliate_id, brand_id, campaignId, commission_status, commission_paid, admin_paid, export_to_xls,startDate,endDate } = req.query;
     let sortquery = {};
 
     // Handle search
@@ -198,6 +198,12 @@ exports.find = async function (req, res) {
     // Handle format
     if (format) {
       query.format = format;
+    }
+
+    if (startDate && endDate) {
+      startDate = new Date(startDate);
+      endDate = new Date(endDate);
+      query.createdAt = { $gte: startDate, $lte: endDate };
     }
 
     let pipeline = [
