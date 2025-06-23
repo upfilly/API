@@ -15,7 +15,7 @@ const ObjectId = require('mongodb').ObjectId;
 // const nanoid = customAlphabet('1234567890abcdef', 6);
 // const baseUrl = 'https://upfilly.com';
 
-function calculatetotalCommission(commission_type, price, commission,commission_override) {
+function calculatetotalCommission(commission_type, price, commission, commission_override) {
   let CalPrice;
 
   if (commission_type === "percentage") {
@@ -26,7 +26,7 @@ function calculatetotalCommission(commission_type, price, commission,commission_
 
   const finalPrice = CalPrice * commission_override / 100
 
-  return "$"+(finalPrice + CalPrice).toFixed(2)
+  return "$" + (finalPrice + CalPrice).toFixed(2)
 
 
 }
@@ -135,7 +135,7 @@ exports.find = async function (req, res) {
 
     let skipNo = (page - 1) * count;
 
-    let { search, sortBy, status, isDeleted, format, addedBy, affiliate_id, brand_id, campaignId, commission_status, commission_paid, admin_paid, export_to_xls,startDate,endDate } = req.query;
+    let { search, sortBy, status, isDeleted, format, addedBy, affiliate_id, brand_id, campaignId, commission_status, commission_paid, admin_paid, export_to_xls, startDate, endDate } = req.query;
     let sortquery = {};
 
     // Handle search
@@ -201,10 +201,20 @@ exports.find = async function (req, res) {
     }
 
     if (startDate && endDate) {
-      startDate = new Date(startDate);
-      endDate = new Date(endDate);
-      query.createdAt = { $gte: startDate, $lte: endDate };
+      const start = new Date(startDate);
+      start.setUTCHours(0, 0, 0, 0);
+
+      const end = new Date(endDate);
+      end.setUTCHours(23, 59, 59, 999);
+
+      query.createdAt = {
+        $gte: start,
+        $lte: end
+      };
+
+      console.log("Query createdAt filter:", query.createdAt);
     }
+
 
     let pipeline = [
       {
@@ -346,7 +356,7 @@ exports.find = async function (req, res) {
     });
 
     let result = await db.collection('affiliatelink').aggregate(pipeline).toArray();
-    const planData = await SubscriptionPlans.findOne({id:req.identity.plan_id})
+    const planData = await SubscriptionPlans.findOne({ id: req.identity.plan_id })
     const commission_override = planData?.commission_override
     if (export_to_xls === "yes") {
       let transactionData = [];
@@ -359,9 +369,9 @@ exports.find = async function (req, res) {
           currency: obj?.currency || "USD",
           price: obj?.price,
           order_id: obj?.order_id,
-          commission:  obj?.commission ? obj?.commission_type === "amount" ?  `$${obj?.commission}` : `${obj?.commission}%`: "--",
+          commission: obj?.commission ? obj?.commission_type === "amount" ? `$${obj?.commission}` : `${obj?.commission}%` : "--",
           amount_of_commission: obj?.amount_of_commission,
-          commission_paid: calculatetotalCommission(obj?.commission_type, obj?.price,obj?.commission, commission_override),
+          commission_paid: calculatetotalCommission(obj?.commission_type, obj?.price, obj?.commission, commission_override),
           commission_status: obj?.commission_status,
           counter: counter
         });
