@@ -56,7 +56,9 @@ exports.create = async (req, res) => {
       isDeleted: false,
       isActive: true
     });
-    listOfAcceptedInvites = BrandAffiliateAssociations;
+    let listOfAcceptedInvites = BrandAffiliateAssociations;
+
+    console.log("list of accepted invites-----------------------",listOfAcceptedInvites)
 
     function removeDuplicates(array, key) {
       const seen = new Set();
@@ -85,6 +87,8 @@ exports.create = async (req, res) => {
         id: affiliate.affiliate_id,
         isDeleted: false,
       });
+     
+      if(findUser){
       let emailPayload = {
         brandFullName: req.identity.fullName,
         affiliateFullName: findUser.fullName,
@@ -100,7 +104,9 @@ exports.create = async (req, res) => {
         updatedBy: req.identity.id,
       });
     }
+  }
     return response.success(newTemplate, constants.EMAILTEMPLATE.CREATED, req, res);
+  
   } catch (err) {
     console.log(err, 'err')
     return response.failed(null, `${err}`, req, res);
