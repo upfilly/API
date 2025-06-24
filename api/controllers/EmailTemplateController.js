@@ -58,8 +58,6 @@ exports.create = async (req, res) => {
     });
     let listOfAcceptedInvites = BrandAffiliateAssociations;
 
-    console.log("list of accepted invites-----------------------",listOfAcceptedInvites)
-
     function removeDuplicates(array, key) {
       const seen = new Set();
       return array.filter((item) => {
