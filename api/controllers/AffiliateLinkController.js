@@ -200,22 +200,6 @@ exports.find = async function (req, res) {
       query.format = format;
     }
 
-    if (startDate && endDate) {
-      const start = new Date(startDate);
-      start.setUTCHours(0, 0, 0, 0);
-
-      const end = new Date(endDate);
-      end.setUTCHours(23, 59, 59, 999);
-
-      query.createdAt = {
-        $gte: start,
-        $lte: end
-      };
-
-      console.log("Query createdAt filter:", query.createdAt);
-    }
-
-
     let pipeline = [
       {
         $lookup: {
@@ -341,6 +325,38 @@ exports.find = async function (req, res) {
     pipeline.push({
       $match: query
     });
+
+
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      start.setUTCHours(0, 0, 0, 0);
+
+      const end = new Date(endDate);
+      end.setUTCHours(23, 59, 59, 999);
+
+      pipeline.push({
+        $addFields: {
+          timestampAsDate: {
+            $cond: {
+              if: { $and: [{ $ne: ["$timestamp", null] }, { $ne: ["$timestamp", ""] }] },
+              then: { $toDate: "$timestamp" },
+              else: null
+            }
+          }
+        }
+      });
+
+      pipeline.push({
+        $match: {
+          timestampAsDate: {
+            $gte: start,
+            $lte: end
+          }
+        }
+      });
+    }
+
+
     pipeline.push({
       $sort: sortquery
     });
