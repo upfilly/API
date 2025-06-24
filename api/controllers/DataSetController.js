@@ -1043,7 +1043,7 @@ exports.sendEmailMessage = async (req, res) => {
           await Emails.EmailMessageTemplate.sendEmailMessageTemplate(
             {
               emailTemp: data.emailTemplate,
-              affiliateEmail: emailPayload.brandFullName,
+              affiliateEmail: emailPayload.affiliateEmail,
 
             }
 
