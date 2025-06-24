@@ -980,7 +980,7 @@ exports.sendEmailMessage = async (req, res) => {
         isDeleted: false,
         isActive: true
       });
-      listOfAcceptedInvites = BrandAffiliateAssociations;
+      let listOfAcceptedInvites = BrandAffiliateAssociations;
 
       function removeDuplicates(array, key) {
         const seen = new Set();
@@ -1043,7 +1043,7 @@ exports.sendEmailMessage = async (req, res) => {
           await Emails.EmailMessageTemplate.sendEmailMessageTemplate(
             {
               emailTemp: data.emailTemplate,
-              affiliateEmail: emailPayload.affiliateEmail,
+              affiliateEmail: emailPayload.brandFullName,
 
             }
 
