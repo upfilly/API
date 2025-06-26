@@ -455,7 +455,7 @@ exports.getCategoryWithSub = async (req, res) => {
         }
 
 
-        query.type = "sub";
+        // query.type = "sub";
 
 
         let sortquery = {};
