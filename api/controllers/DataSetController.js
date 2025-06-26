@@ -1439,6 +1439,8 @@ exports.listOfEmailMessage = async (req, res) => {
         $project: {
           title: "$title",
           affiliate_id: "$affiliate_id",
+          affiliate_name: "$user_details.fullName",
+          affiliate_email: "$user_details.email",
           description: "$description",
           user_details: "$user_details",
           addedBy_details: "$addedBy_details",
