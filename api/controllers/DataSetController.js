@@ -957,6 +957,17 @@ exports.sendEmailMessage = async (req, res) => {
     let query2 = {};
 
     let data = req.body;
+
+    const now = new Date();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const yyyy = String(now.getFullYear());
+    const currentDate = `${mm}/${dd}/${yyyy}`;
+
+
+    const brandId = req.identity.id;
+    const brandFullName = req.identity.fullName;
+
     if (data.isAllJoined && !data.acceptedDate) { // All Joined filter
 
       query1 = {
@@ -1030,48 +1041,48 @@ exports.sendEmailMessage = async (req, res) => {
           // if (!emailMessage) {
           //   throw constants.EMAILMESSAGE.ERROR_SENDING_EMAIL;
           // }
-          const now = new Date();
-          const mm = String(now.getMonth() + 1).padStart(2, '0');
-          const dd = String(now.getDate()).padStart(2, '0');
-          const yyyy = String(now.getFullYear()); 
-          const currentDate = `${mm}/${dd}/${yyyy}`;
+          // const now = new Date();
+          // const mm = String(now.getMonth() + 1).padStart(2, '0');
+          // const dd = String(now.getDate()).padStart(2, '0');
+          // const yyyy = String(now.getFullYear());
+          // const currentDate = `${mm}/${dd}/${yyyy}`;
 
 
-          const brandId = req.identity.id; 
-          const affiliateId = findUser.id; 
+          // const brandId = req.identity.id;
+          const affiliateId = findUser.id;
 
           const affiliateLink = `${req.identity.website}?brand_id=${brandId}&affiliate_id=${affiliateId}`;
 
-          let emailPayload = {
-            brand_id: req.identity.id,
-            affiliateLink: affiliateLink,
-            brandFullName: req.identity.fullName,
-            affiliateFullName: findUser.fullName,
-            affiliateEmail: findUser.email,
-            emailMessage: data.description,
-          };
-          
+          // let emailPayload = {
+          //   brand_id: req.identity.id,
+          //   affiliateLink: affiliateLink,
+          //   brandFullName: req.identity.fullName,
+          //   affiliateFullName: findUser.fullName,
+          //   affiliateEmail: findUser.email,
+          //   emailMessage: data.description,
+          // };
+
           if (data.emailTemplate) {
 
-            if (data.emailTemplate.includes("{affiliateFullName}")) {              
-            data.emailTemplate = data.emailTemplate.replace("{affiliateFullName}", findUser.fullName);
-            } 
+            if (data.emailTemplate.includes("{affiliateFullName}")) {
+              data.emailTemplate = data.emailTemplate.replace("{affiliateFullName}", findUser.fullName);
+            }
 
             if (data.emailTemplate.includes("{brandFullName}")) {
-            data.emailTemplate = data.emailTemplate.replace("{brandFullName}", emailPayload.brandFullName);
+              data.emailTemplate = data.emailTemplate.replace("{brandFullName}", brandFullName);
             }
 
             if (data.emailTemplate.includes("{affiliateLink}")) {
-            data.emailTemplate = data.emailTemplate.replace("{affiliateLink}", emailPayload.affiliateLink);
-            } 
+              data.emailTemplate = data.emailTemplate.replace("{affiliateLink}", affiliateLink);
+            }
 
             if (data.emailTemplate.includes("{currentDate}")) {
               data.emailTemplate = data.emailTemplate.replace("{currentDate}", currentDate);
-            } 
+            }
 
             await Emails.EmailMessageTemplate.sendEmailMessageTemplate({
               emailTemp: data.emailTemplate,
-              affiliateEmail: emailPayload.affiliateEmail,
+              affiliateEmail: findUser.email,
             });
           }
         }
@@ -1118,50 +1129,50 @@ exports.sendEmailMessage = async (req, res) => {
 
         let findUser = await Users.findOne({ id: invites.affiliate_id, isDeleted: false }); ///status: data.affiliateStatus,
         if (findUser) {
-           const now = new Date();
-          const mm = String(now.getMonth() + 1).padStart(2, '0');
-          const dd = String(now.getDate()).padStart(2, '0');
-          const yyyy = String(now.getFullYear()); 
-          const currentDate = `${mm}/${dd}/${yyyy}`;
+          // const now = new Date();
+          // const mm = String(now.getMonth() + 1).padStart(2, '0');
+          // const dd = String(now.getDate()).padStart(2, '0');
+          // const yyyy = String(now.getFullYear());
+          // const currentDate = `${mm}/${dd}/${yyyy}`;
 
 
-          const brandId = req.identity.id; 
-          const affiliateId = findUser.id; 
+          // const brandId = req.identity.id;
+          const affiliateId = findUser.id;
 
           const affiliateLink = `${req.identity.website}?brand_id=${brandId}&affiliate_id=${affiliateId}`;
 
 
 
-          let emailPayload = {
-            brand_id: req.identity.id,
-            affiliateLink: affiliateLink,
-            brandFullName: req.identity.fullName,
-            affiliateFullName: findUser.fullName,
-            affiliateEmail: findUser.email,
-            emailMessage: data.description,
-          };
-          
+          // let emailPayload = {
+          //   brand_id: req.identity.id,
+          //   affiliateLink: affiliateLink,
+          //   brandFullName: req.identity.fullName,
+          //   affiliateFullName: findUser.fullName,
+          //   affiliateEmail: findUser.email,
+          //   emailMessage: data.description,
+          // };
+
           if (data.emailTemplate) {
 
-            if (data.emailTemplate.includes("{affiliateFullName}")) {              
-            data.emailTemplate = data.emailTemplate.replace("{affiliateFullName}", findUser.fullName);
-            } 
+            if (data.emailTemplate.includes("{affiliateFullName}")) {
+              data.emailTemplate = data.emailTemplate.replace("{affiliateFullName}", findUser.fullName);
+            }
 
             if (data.emailTemplate.includes("{brandFullName}")) {
-            data.emailTemplate = data.emailTemplate.replace("{brandFullName}", emailPayload.brandFullName);
+              data.emailTemplate = data.emailTemplate.replace("{brandFullName}", brandFullName);
             }
 
             if (data.emailTemplate.includes("{affiliateLink}")) {
-            data.emailTemplate = data.emailTemplate.replace("{affiliateLink}", emailPayload.affiliateLink);
-            } 
+              data.emailTemplate = data.emailTemplate.replace("{affiliateLink}", affiliateLink);
+            }
 
             if (data.emailTemplate.includes("{currentDate}")) {
               data.emailTemplate = data.emailTemplate.replace("{currentDate}", currentDate);
-            } 
+            }
 
             await Emails.EmailMessageTemplate.sendEmailMessageTemplate({
               emailTemp: data.emailTemplate,
-              affiliateEmail: emailPayload.affiliateEmail,
+              affiliateEmail: findUser.affiliateEmail,
             });
           }
         }
@@ -1267,48 +1278,48 @@ exports.sendEmailMessage = async (req, res) => {
             }
           }
 
-          const now = new Date();
-          const mm = String(now.getMonth() + 1).padStart(2, '0');
-          const dd = String(now.getDate()).padStart(2, '0');
-          const yyyy = String(now.getFullYear()); 
-          const currentDate = `${mm}/${dd}/${yyyy}`;
+          // const now = new Date();
+          // const mm = String(now.getMonth() + 1).padStart(2, '0');
+          // const dd = String(now.getDate()).padStart(2, '0');
+          // const yyyy = String(now.getFullYear());
+          // const currentDate = `${mm}/${dd}/${yyyy}`;
 
 
-          const brandId = req.identity.id; 
-          const affiliateId = findUser.id; 
+          // const brandId = req.identity.id;
+          const affiliateId = findUser.id;
 
           const affiliateLink = `${req.identity.website}?brand_id=${brandId}&affiliate_id=${affiliateId}`;
 
-          let emailPayload = {
-            brand_id: req.identity.id,
-            affiliateLink: affiliateLink,
-            brandFullName: req.identity.fullName,
-            affiliateFullName: findUser.fullName,
-            affiliateEmail: findUser.email,
-            emailMessage: data.description,
-          };
-          
+          // let emailPayload = {
+          //   brand_id: req.identity.id,
+          //   affiliateLink: affiliateLink,
+          //   brandFullName: req.identity.fullName,
+          //   affiliateFullName: findUser.fullName,
+          //   affiliateEmail: findUser.email,
+          //   emailMessage: data.description,
+          // };
+
           if (data.emailTemplate) {
 
-            if (data.emailTemplate.includes("{affiliateFullName}")) {              
-            data.emailTemplate = data.emailTemplate.replace("{affiliateFullName}", findUser.fullName);
-            } 
+            if (data.emailTemplate.includes("{affiliateFullName}")) {
+              data.emailTemplate = data.emailTemplate.replace("{affiliateFullName}", findUser.fullName);
+            }
 
             if (data.emailTemplate.includes("{brandFullName}")) {
-            data.emailTemplate = data.emailTemplate.replace("{brandFullName}", emailPayload.brandFullName);
+              data.emailTemplate = data.emailTemplate.replace("{brandFullName}", brandFullName);
             }
 
             if (data.emailTemplate.includes("{affiliateLink}")) {
-            data.emailTemplate = data.emailTemplate.replace("{affiliateLink}", emailPayload.affiliateLink);
-            } 
+              data.emailTemplate = data.emailTemplate.replace("{affiliateLink}", affiliateLink);
+            }
 
             if (data.emailTemplate.includes("{currentDate}")) {
               data.emailTemplate = data.emailTemplate.replace("{currentDate}", currentDate);
-            } 
+            }
 
             await Emails.EmailMessageTemplate.sendEmailMessageTemplate({
               emailTemp: data.emailTemplate,
-              affiliateEmail: emailPayload.affiliateEmail,
+              affiliateEmail: findUser.affiliateEmail,
             });
           }
         }
