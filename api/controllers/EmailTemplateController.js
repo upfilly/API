@@ -85,26 +85,26 @@ exports.create = async (req, res) => {
         id: affiliate.affiliate_id,
         isDeleted: false,
       });
-     
-      if(findUser){
-      let emailPayload = {
-        brandFullName: req.identity.fullName,
-        affiliateFullName: findUser.fullName,
-        affiliateEmail: findUser.email,
-      };
 
-      await Emails.EmailTemplate.sendEmailTemplate(emailPayload);
+      if (findUser) {
+        let emailPayload = {
+          brandFullName: req.identity.fullName,
+          affiliateFullName: findUser.fullName,
+          affiliateEmail: findUser.email,
+        };
 
-      await EmailTemplateAffiliate.create({
-        affiliate_id: affiliate.affiliate_id,
-        email_template_id: newTemplate.id,
-        addedBy: req.identity.id,
-        updatedBy: req.identity.id,
-      });
+        await Emails.EmailTemplate.sendEmailTemplate(emailPayload);
+
+        await EmailTemplateAffiliate.create({
+          affiliate_id: affiliate.affiliate_id,
+          email_template_id: newTemplate.id,
+          addedBy: req.identity.id,
+          updatedBy: req.identity.id,
+        });
+      }
     }
-  }
     return response.success(newTemplate, constants.EMAILTEMPLATE.CREATED, req, res);
-  
+
   } catch (err) {
     console.log(err, 'err')
     return response.failed(null, `${err}`, req, res);
@@ -553,96 +553,102 @@ exports.affiliateCount = async (req, res) => {
   //   return response.failed(null, `${error}`, req, res);
   // }
   try {
-  const brandId = req.identity.id;
-  const { before, after } = req.query;
+    const brandId = req.identity.id;
+    const { before, after } = req.query;
 
-  // Build the date filter if any
-  const dateFilter = {};
-  if (before) dateFilter["<="] = new Date(before);
-  if (after) dateFilter[">="] = new Date(after);
+    // Build the date filter if any
+    const dateFilter = {};
+    if (before) dateFilter["<="] = new Date(before);
+    if (after) dateFilter[">="] = new Date(after);
 
-  // Helper function to conditionally attach date filter
-  const withDate = (baseQuery, dateField = "createdAt") => {
-    if (Object.keys(dateFilter).length > 0) {
-      baseQuery[dateField] = dateFilter;
+    // Helper function to conditionally attach date filter
+    const withDate = (baseQuery, dateField = "createdAt") => {
+      if (Object.keys(dateFilter).length > 0) {
+        baseQuery[dateField] = dateFilter;
+      }
+      return baseQuery;
+    };
+
+    // Apply date filter to Campaign count
+    const get_total_campaigns = await Campaign.count(
+      withDate({ isDeleted: false })
+    );
+
+    let get_my_total_campaigns = 0;
+    let associated_affiliates_count = 0;
+    let affiliates_active_count = 0;
+
+    if (brandId) {
+      // My total campaigns (with date filter)
+      get_my_total_campaigns = await Campaign.count(
+        withDate({ isDeleted: false, brand_id: brandId, isArchive: false })
+      );
+
+      // Associated affiliates (invited)
+      associated_affiliates_count = await BrandAffiliateAssociation.count(
+        withDate({
+          status: "accepted",
+          isDeleted: false,
+          brand_id: brandId,
+          // source: "invite"
+        })
+      );
+
+      // Active affiliates (via campaign)
+      // const activeAffiliates = await db
+      //   .collection("brandaffiliateassociation")
+      //   .aggregate([
+      //     {
+      //       $match: withDate({
+      //         status: "accepted",
+      //         isDeleted: false,
+      //         brand_id: new ObjectId(brandId),
+      //         source: "campaign"
+      //       })
+      //     },
+      //     {
+      //       $group: {
+      //         _id: "$affiliate_id",
+      //         doc: { $first: "$$ROOT" }
+      //       }
+      //     },
+      //     { $replaceRoot: { newRoot: "$doc" } },
+      //     {
+      //       $lookup: {
+      //         from: "users",
+      //         localField: "affiliate_id",
+      //         foreignField: "_id",
+      //         as: "affiliateDetails"
+      //       }
+      //     },
+      //     { $unwind: "$affiliateDetails" },
+      //     {
+      //       $match: {
+      //         "affiliateDetails.status": "active"
+      //       }
+      //     }
+      //   ])
+      //   .toArray();
+      console.log(brandId, 'brandId`')
+      // const affiliateIds = await Cookies.find({ brandId: new ObjectId(brandId) });
+      // const affiliates_active_count = affiliateIds.length;
+
+      affiliates_active_count = await Cookies.find({ brand_id: brandId })
+      affiliates_active_count= [...new Set(
+  affiliates_active_count.map(cookie => cookie.affiliate_id).filter(id => id != null)
+)];
     }
-    return baseQuery;
-  };
 
-  // Apply date filter to Campaign count
-  const get_total_campaigns = await Campaign.count(
-    withDate({ isDeleted: false })
-  );
+    return res.status(200).json({
+      sucess: true,
+      totalCampaigns: get_total_campaigns || 0,
+      myTotalCampaigns: get_my_total_campaigns || 0,
+      totalJoined: associated_affiliates_count || 0,
+      totalActive: affiliates_active_count.length || 0
+    });
 
-  let get_my_total_campaigns = 0;
-  let associated_affiliates_count = 0;
-  let affiliates_active_count = 0;
-
-  if (brandId) {
-    // My total campaigns (with date filter)
-    get_my_total_campaigns = await Campaign.count(
-      withDate({ isDeleted: false, brand_id: brandId, isArchive:false })
-    );
-
-    // Associated affiliates (invited)
-    associated_affiliates_count = await BrandAffiliateAssociation.count(
-      withDate({
-        status: "accepted",
-        isDeleted: false,
-        brand_id: brandId,
-        source: "invite"
-      })
-    );
-
-    // Active affiliates (via campaign)
-    const activeAffiliates = await db
-      .collection("brandaffiliateassociation")
-      .aggregate([
-        {
-          $match: withDate({
-            status: "accepted",
-            isDeleted: false,
-            brand_id: new ObjectId(brandId),
-            source: "campaign"
-          })
-        },
-        {
-          $group: {
-            _id: "$affiliate_id",
-            doc: { $first: "$$ROOT" }
-          }
-        },
-        { $replaceRoot: { newRoot: "$doc" } },
-        {
-          $lookup: {
-            from: "users",
-            localField: "affiliate_id",
-            foreignField: "_id",
-            as: "affiliateDetails"
-          }
-        },
-        { $unwind: "$affiliateDetails" },
-        {
-          $match: {
-            "affiliateDetails.status": "active"
-          }
-        }
-      ])
-      .toArray();
-
-    affiliates_active_count = activeAffiliates.length;
+  } catch (error) {
+    return response.failed(null, `${error}`, req, res);
   }
-
-  return res.status(200).json({
-    sucess: true,
-    totalCampaigns: get_total_campaigns || 0,
-    myTotalCampaigns: get_my_total_campaigns || 0,
-    totalJoined: associated_affiliates_count || 0,
-    totalActive: affiliates_active_count || 0
-  });
-
-} catch (error) {
-  return response.failed(null, `${error}`, req, res);
-}
 
 };

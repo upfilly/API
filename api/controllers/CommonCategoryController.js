@@ -424,19 +424,186 @@ exports.getAllSubsCommonCategory = async (req, res) => {
     }
 }
 
+// exports.getCategoryWithSub = async (req, res) => {
+//     try {
+//         let query = {};
+//         let count = req.param('count') || 10;
+//         let page = req.param('page') || 1;
+//         let { search, isDeleted, status, sortBy, type, cat_type } = req.query;
+//         let skipNo = (Number(page) - 1) * Number(count);
+
+//         if (search) {
+//             search = Services.Utils.remove_special_char_exept_underscores(search);
+//             query.$or = [
+//                 { name: { $regex: search, '$options': 'i' } },
+//             ]
+//         }
+
+//         if (isDeleted) {
+//             if (isDeleted === 'true') {
+//                 isDeleted = true;
+//             } else {
+//                 isDeleted = false;
+//             }
+//             query.isDeleted = isDeleted;
+//         } else {
+//             query.isDeleted = false;
+//         }
+
+//         if (status) {
+//             query.status = status;
+//         }
+
+
+//         // query.type = "sub";
+
+
+//         let sortquery = {};
+//         if (sortBy) {
+//             let typeArr = [];
+//             typeArr = sortBy.split(" ");
+//             let sortType = typeArr[1];
+//             let field = typeArr[0];
+//             sortquery[field ? field : 'createdAt'] = sortType ? (sortType == 'desc' ? -1 : 1) : -1;
+//         } else {
+//             sortquery = { updatedAt: -1 }
+//         }
+
+//         if (type) {
+//             query.type = type;
+//         }
+//         // if (cat_type) {
+//         //     query.cat_type = cat_type;
+//         // }
+//         if (cat_type) {
+//                 cat_type = await Services.Utils.string_to_array(cat_type);
+//                 query.cat_type = {$in : cat_type}
+//             }
+      
+
+//         // Pipeline Stages
+//         let pipeline = [
+//             {
+//                 $lookup: {
+//                     from: 'commoncategories',
+//                     localField: 'parent_id',
+//                     foreignField: '_id',
+//                     as: "categories_details"
+//                 }
+//             },
+//             {
+//                 $unwind: {
+//                     path: '$categories_details',
+//                     preserveNullAndEmptyArrays: true
+//                 }
+//             },
+//             {
+//                 $lookup:
+//                 {
+//                     from: "subchildcategory",
+//                     let: { category_id: "$parent_id", sub_category_id: "$_id", isDeleted: false },
+//                     pipeline: [
+//                         {
+//                             $match:
+//                             {
+//                                 $expr:
+//                                 {
+//                                     $and:
+//                                         [
+//                                             { $eq: ["$category_id", "$$category_id"] },
+//                                             { $eq: ["$sub_category_id", "$$sub_category_id"] },
+//                                             { $eq: ["$isDeleted", "$$isDeleted"] }
+
+//                                         ]
+//                                 }
+//                             }
+//                         }
+//                     ],
+//                     as: "subchildcategory"
+//                 }
+//             }
+//         ];
+
+//         let projection = {
+//             $project: {
+//                 id: "$_id",
+//                 type: "$type",
+//                 parent_id: "$parent_id",
+//                 name: { $toLower: "$name" },
+//                 parent_cat_name: "$categories_details.name",
+//                 cat_type: "$cat_type",
+//                 subchildcategory: "$subchildcategory",
+
+//                 status: "$status",
+//                 addedBy: "$addedBy",
+//                 updatedBy: "$updatedBy",
+//                 updatedAt: "$updatedAt",
+//                 isDeleted: "$isDeleted",
+//                 createdAt: "$createdAt",
+//                 updatedAt: "$updatedAt",
+//             }
+//         };
+
+//         pipeline.push(projection);
+//         pipeline.push({
+//             $match: query
+//         });
+//         let group_stage = {
+//             $group: {
+//                 _id: "$parent_id",
+//                 parent_cat_name: { $first: "$parent_cat_name" },
+//                 cat_type: { $first: "$cat_type" },
+//                 subCategories: {
+//                     $push: {
+//                         id: "$id",
+//                         name: "$name",
+//                         subchildcategory: "$subchildcategory"
+//                     }
+//                 }
+//             },
+//         };
+
+//         pipeline.push(group_stage)
+//         pipeline.push({
+//             $sort: sortquery
+//         });
+
+
+//         // Pipeline Stages
+//         let totalresult =await db.collection('commoncategories').aggregate(pipeline).toArray();
+//             pipeline.push({
+//                 $skip: Number(skipNo)
+//             });
+//             pipeline.push({
+//                 $limit: Number(count)
+//             });
+//             let result =await  db.collection("commoncategories").aggregate(pipeline).toArray();
+//                 let resData = {
+//                     total_count: totalresult ? totalresult.length : 0,
+//                     data: result ? result : [],
+//                 }
+//                 if (!req.param('page') && !req.param('count')) {
+//                     resData.data = totalresult ? totalresult : [];
+//                 }
+//                 return response.success(resData, constants.COMMON_CATEGORIES.FETCHED_ALL, req, res);
+
+//     } catch (err) {
+//         return response.failed(null, `${err}`, req, res);
+//     }
+// }
 exports.getCategoryWithSub = async (req, res) => {
     try {
         let query = {};
         let count = req.param('count') || 10;
         let page = req.param('page') || 1;
-        let { search, isDeleted, status, sortBy, type, cat_type } = req.query;
+        let { search, isDeleted, status, sortBy, type, cat_type, parent_id } = req.query;
         let skipNo = (Number(page) - 1) * Number(count);
 
         if (search) {
             search = Services.Utils.remove_special_char_exept_underscores(search);
             query.$or = [
                 { name: { $regex: search, '$options': 'i' } },
-            ]
+            ];
         }
 
         if (isDeleted) {
@@ -454,36 +621,34 @@ exports.getCategoryWithSub = async (req, res) => {
             query.status = status;
         }
 
-
-        // query.type = "sub";
-
-
         let sortquery = {};
         if (sortBy) {
-            let typeArr = [];
-            typeArr = sortBy.split(" ");
+            let typeArr = sortBy.split(" ");
             let sortType = typeArr[1];
             let field = typeArr[0];
             sortquery[field ? field : 'createdAt'] = sortType ? (sortType == 'desc' ? -1 : 1) : -1;
         } else {
-            sortquery = { updatedAt: -1 }
+            sortquery = { updatedAt: -1 };
         }
 
         if (type) {
             query.type = type;
         }
 
-        // if (cat_type) {
-        //     query.cat_type = cat_type;
-        // }
         if (cat_type) {
-                cat_type = await Services.Utils.string_to_array(cat_type);
-                query.cat_type = {$in : cat_type}
-            }
-      
+            cat_type = await Services.Utils.string_to_array(cat_type);
+            query.cat_type = { $in: cat_type };
+        }
+
+        if (parent_id) {
+            query.parent_id = parent_id;
+        }
 
         // Pipeline Stages
         let pipeline = [
+            {
+                $match: query // Apply initial filters
+            },
             {
                 $lookup: {
                     from: 'commoncategories',
@@ -499,28 +664,63 @@ exports.getCategoryWithSub = async (req, res) => {
                 }
             },
             {
-                $lookup:
-                {
+                $lookup: {
                     from: "subchildcategory",
                     let: { category_id: "$parent_id", sub_category_id: "$_id", isDeleted: false },
                     pipeline: [
                         {
-                            $match:
-                            {
-                                $expr:
-                                {
-                                    $and:
-                                        [
-                                            { $eq: ["$category_id", "$$category_id"] },
-                                            { $eq: ["$sub_category_id", "$$sub_category_id"] },
-                                            { $eq: ["$isDeleted", "$$isDeleted"] }
-
-                                        ]
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ["$category_id", "$$category_id"] },
+                                        { $eq: ["$sub_category_id", "$$sub_category_id"] },
+                                        { $eq: ["$isDeleted", "$$isDeleted"] }
+                                    ]
                                 }
                             }
                         }
                     ],
                     as: "subchildcategory"
+                }
+            },
+            {
+                $addFields: {
+                    parent_cat_name: {
+                        $cond: {
+                            if: { $eq: ["$parent_id", null] },
+                            then: { $toLower: "$name" },
+                            else: { $toLower: { $ifNull: ["$categories_details.name", ""] } }
+                        }
+                    },
+                    parent_details: {
+                        $cond: {
+                            if: { $eq: ["$parent_id", null] },
+                            then: {
+                                id: "$_id",
+                                name: { $toLower: "$name" },
+                                type: "$type",
+                                status: "$status",
+                                cat_type: "$cat_type",
+                                createdAt: "$createdAt",
+                                updatedAt: "$updatedAt",
+                                addedBy: "$addedBy",
+                                updatedBy: "$updatedBy",
+                                isDeleted: "$isDeleted"
+                            },
+                            else: {
+                                id: "$categories_details._id",
+                                name: { $toLower: { $ifNull: ["$categories_details.name", ""] } },
+                                type: "$categories_details.type",
+                                status: "$categories_details.status",
+                                cat_type: "$categories_details.cat_type",
+                                createdAt: "$categories_details.createdAt",
+                                updatedAt: "$categories_details.updatedAt",
+                                addedBy: "$categories_details.addedBy",
+                                updatedBy: "$categories_details.updatedBy",
+                                isDeleted: "$categories_details.isDeleted"
+                            }
+                        }
+                    }
                 }
             }
         ];
@@ -531,62 +731,98 @@ exports.getCategoryWithSub = async (req, res) => {
                 type: "$type",
                 parent_id: "$parent_id",
                 name: { $toLower: "$name" },
-                parent_cat_name: "$categories_details.name",
+                parent_cat_name: "$parent_cat_name",
+                parent_details: "$parent_details",
                 cat_type: "$cat_type",
                 subchildcategory: "$subchildcategory",
-
                 status: "$status",
                 addedBy: "$addedBy",
                 updatedBy: "$updatedBy",
                 updatedAt: "$updatedAt",
                 isDeleted: "$isDeleted",
-                createdAt: "$createdAt",
-                updatedAt: "$updatedAt",
+                createdAt: "$createdAt"
             }
         };
 
         pipeline.push(projection);
-        pipeline.push({
-            $match: query
-        });
+
         let group_stage = {
             $group: {
-                _id: "$parent_id",
+                _id: {
+                    $cond: {
+                        if: { $eq: ["$parent_id", null] },
+                        then: "$id",
+                        else: "$parent_id"
+                    }
+                },
                 parent_cat_name: { $first: "$parent_cat_name" },
+                parent_details: { $first: "$parent_details" },
                 cat_type: { $first: "$cat_type" },
                 subCategories: {
                     $push: {
-                        id: "$id",
-                        name: "$name",
-                        subchildcategory: "$subchildcategory"
+                        $cond: {
+                            if: { $eq: ["$type", "sub"] },
+                            then: {
+                                id: "$id",
+                                name: "$name",
+                                subchildcategory: "$subchildcategory"
+                            },
+                            else: "$$REMOVE"
+                        }
                     }
                 }
-            },
+            }
         };
 
-        pipeline.push(group_stage)
+        pipeline.push(group_stage);
         pipeline.push({
             $sort: sortquery
         });
 
+        // Ensure empty subCategories array when no subcategories exist
+        pipeline.push({
+            $addFields: {
+                subCategories: {
+                    $cond: {
+                        if: { $eq: [{ $size: "$subCategories" }, 0] },
+                        then: [],
+                        else: "$subCategories"
+                    }
+                }
+            }
+        });
 
-        // Pipeline Stages
-        let totalresult =await db.collection('commoncategories').aggregate(pipeline).toArray();
-            pipeline.push({
-                $skip: Number(skipNo)
-            });
-            pipeline.push({
-                $limit: Number(count)
-            });
-            let result =await  db.collection("commoncategories").aggregate(pipeline).toArray();
-                let resData = {
-                    total_count: totalresult ? totalresult.length : 0,
-                    data: result ? result : [],
-                }
-                if (!req.param('page') && !req.param('count')) {
-                    resData.data = totalresult ? totalresult : [];
-                }
-                return response.success(resData, constants.COMMON_CATEGORIES.FETCHED_ALL, req, res);
+        // Clean up the output
+        pipeline.push({
+            $project: {
+                _id: 1,
+                parent_cat_name: 1,
+                parent_details: 1,
+                cat_type: 1,
+                subCategories: 1
+            }
+        });
+
+        // Execute pipeline
+        let totalresult = await db.collection('commoncategories').aggregate(pipeline).toArray();
+        pipeline.push({
+            $skip: Number(skipNo)
+        });
+        pipeline.push({
+            $limit: Number(count)
+        });
+        let result = await db.collection("commoncategories").aggregate(pipeline).toArray();
+
+        let resData = {
+            total_count: totalresult ? totalresult.length : 0,
+            data: result ? result : []
+        };
+
+        if (!req.param('page') && !req.param('count')) {
+            resData.data = totalresult ? totalresult : [];
+        }
+
+        return response.success(resData, constants.COMMON_CATEGORIES.FETCHED_ALL, req, res);
 
     } catch (err) {
         return response.failed(null, `${err}`, req, res);
