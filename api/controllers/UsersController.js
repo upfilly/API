@@ -1083,9 +1083,7 @@ module.exports = {
         query.status = status;
       }
 
-      if (invite_status) {
-        query.invite_status = invite_status;
-      }
+      
       // if(campaign){
       //   query.campaign  = new ObjectId(campaign)
       // }
@@ -1167,6 +1165,9 @@ module.exports = {
         query.affiliate_group = {
           $in: string_ids_toObjectIds_array(affiliate_group_id),
         };
+      }
+      if (invite_status) {
+        query.invite_status = invite_status;
       }
       // if (role != "users") {
       //   query.addedBy = { $eq: null };
@@ -1273,7 +1274,7 @@ module.exports = {
             as: "associatedAffiliates"
           }
         },
-        ...(campaign ? [{
+        ...(campaign && invite_status != "not_invited" ? [{
           $match: {
             $expr: {
               $in: ["$_id", {
