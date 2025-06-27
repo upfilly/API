@@ -115,5 +115,8 @@ module.exports.policies = {
   },
   ScriptController : {
     getById : true
-  }
+  },
+  CouponController : {
+    getAllCoupon : true
+  },
 };
