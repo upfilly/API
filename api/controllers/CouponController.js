@@ -316,6 +316,8 @@ exports.getAllCoupon = async (req, res) => {
             $project: {
                 id: '$_id',
                 media: '$media',
+                title: '$title',
+                description: '$description',
                 couponCode: "$couponCode",
                 couponType: "$couponType",
                 startDate: "$startDate",
