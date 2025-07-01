@@ -299,6 +299,7 @@ module.exports.routes = {
   "put /affiliate-group": "AffiliateManagementController.editAffiliateGroup",
   "get /default/affiliate-group":
     "AffiliateManagementController.getDefaultAffiliateGroup",
+  "get /campaign-data": "AffiliateManagementController.getCampaignsByAffiliate",
 
   /**
    * @PaypalController
