@@ -1019,7 +1019,6 @@ exports.sendEmailMessage = async (req, res) => {
           isDeleted: false,
         });
         if (findUser) {
-          // console.log(findUser, "===findUser");
 
           data.addedBy = req.identity.id;
           data.affiliate_id = findUser.id
@@ -1084,6 +1083,13 @@ exports.sendEmailMessage = async (req, res) => {
               emailTemp: data.emailTemplate,
               affiliateEmail: findUser.email,
             });
+
+              data.emailTemplate = data.emailTemplate.replace(findUser.fullName, "{affiliateFullName}");
+              data.emailTemplate = data.emailTemplate.replace(brandFullName,"{brandFullName}");
+              data.emailTemplate = data.emailTemplate.replace( affiliateLink,"{affiliateLink}");
+              data.emailTemplate = data.emailTemplate.replace(currentDate,"{currentDate}");
+
+
           }
         }
       }
@@ -1174,6 +1180,11 @@ exports.sendEmailMessage = async (req, res) => {
               emailTemp: data.emailTemplate,
               affiliateEmail: findUser.affiliateEmail,
             });
+
+            data.emailTemplate = data.emailTemplate.replace(findUser.fullName, "{affiliateFullName}");
+            data.emailTemplate = data.emailTemplate.replace(brandFullName, "{brandFullName}");
+            data.emailTemplate = data.emailTemplate.replace(affiliateLink, "{affiliateLink}");
+            data.emailTemplate = data.emailTemplate.replace(currentDate, "{currentDate}");
           }
         }
       }
@@ -1321,6 +1332,11 @@ exports.sendEmailMessage = async (req, res) => {
               emailTemp: data.emailTemplate,
               affiliateEmail: findUser.affiliateEmail,
             });
+
+            data.emailTemplate = data.emailTemplate.replace(findUser.fullName, "{affiliateFullName}");
+            data.emailTemplate = data.emailTemplate.replace(brandFullName, "{brandFullName}");
+            data.emailTemplate = data.emailTemplate.replace(affiliateLink, "{affiliateLink}");
+            data.emailTemplate = data.emailTemplate.replace(currentDate, "{currentDate}");
           }
         }
       }
