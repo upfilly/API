@@ -328,7 +328,8 @@ exports.getAffiliateGroupById = async (req, res) => {
             let get_affiliate_details = await Users.find({ affiliate_group: get_group.id });
             if (get_affiliate_details) {
                 for await (var UsersObj of get_affiliate_details) {
-                    userArr.push(UsersObj.fullName);
+                    // userArr.push(UsersObj.fullName);
+                    userArr.push( UsersObj );
                 }
             }
             get_group.addedAffiliates = userArr
