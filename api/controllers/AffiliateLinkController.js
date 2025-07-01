@@ -387,7 +387,8 @@ exports.find = async function (req, res) {
           order_id: obj?.order_id,
           commission: obj?.commission ? obj?.commission_type === "amount" ? `$${obj?.commission}` : `${obj?.commission}%` : "--",
           amount_of_commission: obj?.amount_of_commission,
-          commission_paid: calculatetotalCommission(obj?.commission_type, obj?.price, obj?.commission, commission_override),
+          // commission_paid: calculatetotalCommission(obj?.commission_type, obj?.price, obj?.commission, commission_override),
+          commission_paid: obj?.commission_paid,
           commission_status: obj?.commission_status,
           counter: counter
         });
