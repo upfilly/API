@@ -524,9 +524,9 @@ exports.getAllCampaignsForBrand = async (req, res) => {
 
         if (search) {
             search = Services.Utils.remove_special_char_exept_underscores(search);
-            // query.$or = [
-            //     { "name": { $regex: search, '$options': 'i' } },
-            // ]
+            query.$or = [
+                { name: { $regex: search, '$options': 'i' } },
+            ]
             new_query.$or = [
                 { commissionToString: { $regex: search, "$options": "i" } }
             ]
