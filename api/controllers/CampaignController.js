@@ -270,16 +270,26 @@ exports.getAllCampaignRequestsForAffiliate = async (req, res) => {
         let page = req.param('page') || 1;
         let skipNo = (Number(page) - 1) * Number(count);
 
-        if (search) {
-            search = Services.Utils.remove_special_char_exept_underscores(search);
-            query.$or = [
+        // if (search) {
+        //     search = Services.Utils.remove_special_char_exept_underscores(search);
+        //     query.$or = [
 
-            ]
+        //     ]
+        //     new_query.$or = [
+        //         { "campaign_name": { $regex: search, '$options': 'i' } }
+
+        //     ]
+        // }
+
+        if (search && search.trim()) {
+            search = Services.Utils.remove_special_char_exept_underscores(search.trim());
+
             new_query.$or = [
                 { "campaign_name": { $regex: search, '$options': 'i' } }
-
-            ]
+            ];
         }
+
+    
 
         query.isDeleted = false;
 
@@ -522,15 +532,25 @@ exports.getAllCampaignsForBrand = async (req, res) => {
 
         let skipNo = (Number(page) - 1) * Number(count);
 
-        if (search) {
-            search = Services.Utils.remove_special_char_exept_underscores(search);
-            query.$or = [
-                { name: { $regex: search, '$options': 'i' } },
-            ]
+        // if (search) {
+        //     search = Services.Utils.remove_special_char_exept_underscores(search);
+        //     query.$or = [
+        //         { name: { $regex: search, '$options': 'i' } },
+        //     ]
+        //     new_query.$or = [
+        //         { commissionToString: { $regex: search, "$options": "i" } }
+        //     ]
+        // }
+
+        if (search && search.trim()) {
+            search = Services.Utils.remove_special_char_exept_underscores(search.trim());
+
             new_query.$or = [
+                { name: { $regex: search, '$options': 'i' } },
                 { commissionToString: { $regex: search, "$options": "i" } }
-            ]
+            ];
         }
+
         query.isDeleted = false;
         if (status) {
             query.status = status
