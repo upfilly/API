@@ -378,54 +378,54 @@ exports.getCampaignsByAffiliate = async (req, res) => {
       });
     }
 
-    const associations = await BrandAffiliateAssociation.find({
+    const campaigns = await BrandAffiliateAssociation.findOne({
       affiliate_id: affiliateId,
       isDeleted: false,
-    //   isActive: true,
-    //   status: "accepted",
-    });
+      isActive: true,
+      status: "accepted",
+    })
 
-    const brandIds = associations.map(a => a.brand_id);
+//     const brandIds = associations.map(a => a.brand_id);
 
-    if (brandIds.length === 0) {
-      return res.status(200).json({
-        message: "No associated brands found for this affiliate.",
-        campaigns: [],
-        total: 0,
-        currentPage: page,
-        totalPages: 0
-      });
-    }
+//     if (brandIds.length === 0) {
+//       return res.status(200).json({
+//         message: "No associated brands found for this affiliate.",
+//         campaigns: [],
+//         total: 0,
+//         currentPage: page,
+//         totalPages: 0
+//       });
+//     }
 
-let campaignWhereClause = {
-  brand_id: { in: brandIds },
-  isDeleted: false,
-};
+// let campaignWhereClause = {
+//   brand_id: { in: brandIds },
+//   isDeleted: false,
+// };
 
-if (status) {
-  campaignWhereClause.status = status;
-}
+// if (status) {
+//   campaignWhereClause.status = status;
+// }
 
 
-const [campaigns, total] = await Promise.all([
-  Campaign.find({
-    where: campaignWhereClause
-  })
-    .populate('brand_id')
-    .skip(skip)
-    .limit(limit)
-    .sort('createdAt DESC'),
+// const [campaigns, total] = await Promise.all([
+//   Campaign.find({
+//     where: campaignWhereClause
+//   })
+//     .populate('brand_id')
+//     .skip(skip)
+//     .limit(limit)
+//     .sort('createdAt DESC'),
 
-  Campaign.count(campaignWhereClause), 
-]);
+//   Campaign.count(campaignWhereClause), 
+// ]);
 
 
     return res.status(200).json({
       message: "Campaigns associated with this affiliate fetched successfully.",
       campaigns,
-      total,
-      currentPage: page,
-      totalPages: Math.ceil(total / limit),
+    //   total,
+    //   currentPage: page,
+    //   totalPages: Math.ceil(total / limit),
     });
 
   } catch (error) {
