@@ -1004,9 +1004,9 @@ exports.getCampaignById = async (req, res) => {
                 category.push(data)
             }
             get_campaign.category = category
-            if (!get_campaign.category || get_campaign.category.length === 0) {
-                return new error
-            }
+            // if (!get_campaign.category || get_campaign.category.length === 0) {
+            //     return new error
+            // }
         }
 
         if (get_campaign.sub_category && get_campaign.sub_category.length > 0) {
