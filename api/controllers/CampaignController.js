@@ -998,17 +998,21 @@ exports.getCampaignById = async (req, res) => {
         if (get_campaign.category && get_campaign.category.length > 0) {
             let category = []
             for await (let cat of get_campaign.category) {
-                let data = await CommonCategories.findOne({ id: cat }).select(["id", "name"])
-                console.log(data, 'category')
+                // let data = await CommonCategories.findOne({ id: cat }).select(["id", "name"])
+                let data = await CommonCategories.findOne({ id: cat.id || cat }).select(["id", "name"]);
+
                 category.push(data)
             }
             get_campaign.category = category
+            if (!get_campaign.category || get_campaign.category.length === 0) {
+                return new error
+            }
         }
 
         if (get_campaign.sub_category && get_campaign.sub_category.length > 0) {
             let sub_category = []
             for await (let cat of get_campaign.sub_category) {
-                let data = await CommonCategories.findOne({ id: cat }).select(["id", "name"])
+                let data = await CommonCategories.findOne({ id: cat.id || cat }).select(["id", "name"])
                 sub_category.push(data)
             }
             get_campaign.sub_category = sub_category
@@ -1016,8 +1020,8 @@ exports.getCampaignById = async (req, res) => {
 
         if (get_campaign.sub_child_category && get_campaign.sub_child_category.length > 0) {
             let sub_child_category = []
-            for await (let cat of get_campaign.sub_category) {
-                let data = await SubChildCategory.findOne({ id: cat.id }).select(["id", "name"])
+            for await (let cat of get_campaign.sub_child_category) {
+                let data = await SubChildCategory.findOne({ id: cat.id || cat  }).select(["id", "name"])
                 sub_child_category.push(data)
             }
             get_campaign.sub_child_category = sub_child_category
