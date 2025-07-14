@@ -167,30 +167,42 @@ exports.salesAnalytics = async (req, res) => {
         let group_query = {};
         if (brand_id) {
             group_query.brand_id = "$brand_id";
-            query.brand_id = {$in: brand_id.split(",").map(id=>new ObjectId(id))};
+            query.brand_id = { $in: brand_id.split(",").map(id => new ObjectId(id)) };
         }
 
         if (affiliate_id) {
             group_query.affiliate_id = "$affiliate_id";
-            query.affiliate_id = {$in: affiliate_id.split(",").map(id=>new ObjectId(id))};
-        }
+            query.affiliate_id = { $in: affiliate_id.split(",").map(id => new ObjectId(id)) };
+        } 
+        // else {
+        //     const allAffiliatesOfBrand = await BrandAffiliateAssociation
+        //         .getDatastore()
+        //         .manager
+        //         .collection('brandaffiliateassociation')
+        //         .distinct('affiliate_id', {
+        //             brand_id: new ObjectId(req.identity.id),
+        //             isDeleted: false
+        //         });
+        //         console.log(allAffiliatesOfBrand,'allAffiliatesOfBrand')
+        //     query.affiliate_id = { $in: allAffiliatesOfBrand };
+        // }
 
-        if(campaignId) {
+        if (campaignId) {
             group_query.campaignId = "$campaignId";
-            query.campaignId = {$in: campaignId.split(",").map(id=>new ObjectId(id))};;
+            query.campaignId = { $in: campaignId.split(",").map(id => new ObjectId(id)) };;
         }
 
         // Handle format
         if (format) {
             query.format = format;
         }
-        
-        if(startDate && endDate) {
+
+        if (startDate && endDate) {
             startDate = new Date(startDate);
             endDate = new Date(endDate);
             query.createdAt = { $gte: startDate, $lte: endDate };
         }
-
+        // console.log(query, 'query')
         let pipeline = [
 
             {
@@ -251,7 +263,7 @@ exports.salesAnalytics = async (req, res) => {
                                     month: "$month"
                                 },
                                 price: { $sum: '$price' },
-                                click_count: {$sum: 1}
+                                click_count: { $sum: 1 }
                             },
 
                         },
@@ -271,7 +283,7 @@ exports.salesAnalytics = async (req, res) => {
                             $group: {
                                 _id: group_query,
                                 price: { $sum: '$price' },
-                                click_count: { $sum: 1}
+                                click_count: { $sum: 1 }
                             }
                         },
                         // {
@@ -326,13 +338,13 @@ exports.salesAnalytics = async (req, res) => {
     }
 };
 
-exports.reportAnalytics = async(req,res) => {
+exports.reportAnalytics = async (req, res) => {
     try {
         let query = {};
         let count = req.param('count') || 10;
         let page = req.param('page') || 1;
         let skipNo = (Number(page) - 1) * Number(count);
-        let { search, sortBy, status, isDeleted,  brand_id, affiliate_id, startDate2, endDate2, startDate, endDate,campaign } = req.query;
+        let { search, sortBy, status, isDeleted, brand_id, affiliate_id, startDate2, endDate2, startDate, endDate, campaign } = req.query;
         let sortquery = {};
         let new_query = {}
 
@@ -353,38 +365,38 @@ exports.reportAnalytics = async(req,res) => {
             query.isDeleted = false;
         }
 
-      
+
 
         // Handle status
         if (status) {
             query.status = status;
         }
 
-        if(startDate && endDate) {
+        if (startDate && endDate) {
             startDate = new Date(startDate);
             endDate = new Date(endDate);
             query.createdAt = { $gte: startDate, $lte: endDate };
         }
-        
 
-        if(affiliate_id){
+
+        if (affiliate_id) {
             affiliate_id = await Services.Utils.string_to_array(affiliate_id)
-            query.affiliate_id = {$in: affiliate_id}
+            query.affiliate_id = { $in: affiliate_id }
         }
 
-        if(brand_id){
+        if (brand_id) {
             brand_id = await Services.Utils.string_to_array(brand_id)
-            query.brand_id = {$in: brand_id}
+            query.brand_id = { $in: brand_id }
         }
 
-        if(campaign){
+        if (campaign) {
             campaign = await Services.Utils.string_to_array(campaign)
-            query.campaignId = {$in:campaign}
+            query.campaignId = { $in: campaign }
         }
 
-        new_query = {...query}
+        new_query = { ...query }
 
-        if(startDate2 && endDate2) {
+        if (startDate2 && endDate2) {
             startDate2 = new Date(startDate2);
             endDate2 = new Date(endDate2);
             new_query.createdAt = { $gte: startDate2, $lte: endDate2 };
@@ -398,7 +410,7 @@ exports.reportAnalytics = async(req,res) => {
                     id: "$_id",
                     affiliate_id: "$affiliate_id",
                     brand_id: "$brand_id",
-                    order_id: {$cond : {if:"$order_id",then:"$order_id",else : null}},
+                    order_id: { $cond: { if: "$order_id", then: "$order_id", else: null } },
                     currency: "$currency",
                     price: "$price",
                     campaignId: "$campaignId",
@@ -436,12 +448,12 @@ exports.reportAnalytics = async(req,res) => {
                             $group: {
                                 _id: {
                                     day: "$day",
-                                    month :"$month",
-                                    year : "$year",
+                                    month: "$month",
+                                    year: "$year",
                                 },
                                 price: { $sum: "$price" },
                                 // affiliate_id:{$first:"$affiliate_id"},
-                                createdAt : {$first:"$createdAt"},
+                                createdAt: { $first: "$createdAt" },
                                 // day: { $first: "$day" }
 
                             }
@@ -455,15 +467,17 @@ exports.reportAnalytics = async(req,res) => {
                             $group: {
                                 _id: {
                                     day: "$day",
-                                    month :"$month",
-                                    year : "$year",
+                                    month: "$month",
+                                    year: "$year",
                                 },
                                 // price: { $sum: '$price' },
-                                createdAt : {$first:"$createdAt"},
-                                order_id : {$first:"$order_id"},
-                                action: {$sum: { 
-                                    $cond: { if: { $ne : ["$order_id", ""] }, then: 1, else: 0 } 
-                                } }
+                                createdAt: { $first: "$createdAt" },
+                                order_id: { $first: "$order_id" },
+                                action: {
+                                    $sum: {
+                                        $cond: { if: { $ne: ["$order_id", ""] }, then: 1, else: 0 }
+                                    }
+                                }
                             },
 
                         },
@@ -495,7 +509,7 @@ exports.reportAnalytics = async(req,res) => {
                     id: "$_id",
                     affiliate_id: "$affiliate_id",
                     brand_id: "$brand_id",
-                    order_id: {$cond : {if:"$order_id",then:"$order_id",else : null}},
+                    order_id: { $cond: { if: "$order_id", then: "$order_id", else: null } },
                     currency: "$currency",
                     price: "$price",
                     campaignId: "$campaignId",
@@ -512,7 +526,8 @@ exports.reportAnalytics = async(req,res) => {
                     createdAt: '$createdAt',
                     day: { $dayOfMonth: "$createdAt" },
                     month: { $month: "$createdAt" },
-                    year: { $year: "$createdAt" },                }
+                    year: { $year: "$createdAt" },
+                }
             },
             {
                 $match: new_query
@@ -532,12 +547,12 @@ exports.reportAnalytics = async(req,res) => {
                             $group: {
                                 _id: {
                                     day: "$day",
-                                    month :"$month",
-                                    year : "$year",
+                                    month: "$month",
+                                    year: "$year",
                                 },
                                 price: { $sum: "$price" },
                                 // affiliate_id:{$first:"$affiliate_id"},
-                                createdAt : {$first:"$createdAt"},
+                                createdAt: { $first: "$createdAt" },
                                 // day: { $first: "$day" }
 
                             }
@@ -551,15 +566,17 @@ exports.reportAnalytics = async(req,res) => {
                             $group: {
                                 _id: {
                                     day: "$day",
-                                    month :"$month",
-                                    year : "$year",
+                                    month: "$month",
+                                    year: "$year",
                                 },
                                 // price: { $sum: '$price' },
-                                createdAt : {$first:"$createdAt"},
-                                order_id : {$first:"$order_id"},
-                                action: {$sum: { 
-                                    $cond: { if: { $ne : ["$order_id", ""] }, then: 1, else: 0 } 
-                                } }
+                                createdAt: { $first: "$createdAt" },
+                                order_id: { $first: "$order_id" },
+                                action: {
+                                    $sum: {
+                                        $cond: { if: { $ne: ["$order_id", ""] }, then: 1, else: 0 }
+                                    }
+                                }
                             },
 
                         },
@@ -602,8 +619,8 @@ exports.reportAnalytics = async(req,res) => {
         let totalResult = await db.collection('affiliatelink').aggregate(pipeline, { allowDiskUse: true }).toArray();
 
         let totalResult2 = await db.collection('affiliatelink').aggregate(pipeline2, { allowDiskUse: true }).toArray();
-        
-      
+
+
 
 
         // let result = await db.collection('affiliatelink').aggregate(pipeline, { allowDiskUse: true }).toArray()
@@ -614,8 +631,8 @@ exports.reportAnalytics = async(req,res) => {
         let resData = {
             total: totalResult ? totalResult.length : 0,
             data: totalResult ? totalResult : [],
-            total2 : totalResult2 ? totalResult2.length : 0,
-            data2 : totalResult ? totalResult : 0
+            total2: totalResult2 ? totalResult2.length : 0,
+            data2: totalResult ? totalResult : 0
         }
         if (!req.param('page') && !req.param('count')) {
             resData.data = totalResult ? totalResult : []
@@ -629,13 +646,13 @@ exports.reportAnalytics = async(req,res) => {
     }
 }
 
-exports.clickAnalytics = async(req,res) => {
+exports.clickAnalytics = async (req, res) => {
     try {
         let query = {};
         let count = req.param('count') || 10;
         let page = req.param('page') || 1;
         let skipNo = (Number(page) - 1) * Number(count);
-        let { search,  isDeleted,   affiliate_id, brand_id, startDate2, endDate2, startDate, endDate, filter, campaign } = req.query;
+        let { search, isDeleted, affiliate_id, brand_id, startDate2, endDate2, startDate, endDate, filter, campaign } = req.query;
         let new_query = {}
 
         // Handle search
@@ -655,107 +672,107 @@ exports.clickAnalytics = async(req,res) => {
             query.isDeleted = false;
         }
         const filterType = filter
-        
-        if(startDate && endDate) {
+
+        if (startDate && endDate) {
             startDate = new Date(startDate);
             endDate = new Date(endDate);
             query.createdAt = { $gte: startDate, $lte: endDate };
-        }else {
+        } else {
             switch (filterType) {
                 case "this_week":
-                  startDate = moment().startOf("week").toDate();
-                  endDate= moment().endOf("week").toDate();
-                  break;
+                    startDate = moment().startOf("week").toDate();
+                    endDate = moment().endOf("week").toDate();
+                    break;
                 case "last_week":
-                  startDate= moment().subtract(1, "week").startOf("week").toDate();
-                  endDate= moment().subtract(1, "week").endOf("week").toDate();
-                  break;
+                    startDate = moment().subtract(1, "week").startOf("week").toDate();
+                    endDate = moment().subtract(1, "week").endOf("week").toDate();
+                    break;
                 case "this_month":
-                  startDate= moment().startOf("month").toDate();
-                  endDate = moment().endOf("month").toDate();
-                  break;
+                    startDate = moment().startOf("month").toDate();
+                    endDate = moment().endOf("month").toDate();
+                    break;
                 case "last_month":
-                  startDate= moment().subtract(1, "month").startOf("month").toDate();
-                  endDate= moment().subtract(1, "month").endOf("month").toDate();
-                  break;
+                    startDate = moment().subtract(1, "month").startOf("month").toDate();
+                    endDate = moment().subtract(1, "month").endOf("month").toDate();
+                    break;
                 case "this_year":
-                  startDate= moment().startOf("year").toDate();
-                  endDate= moment().endOf("year").toDate();
-                  break;
+                    startDate = moment().startOf("year").toDate();
+                    endDate = moment().endOf("year").toDate();
+                    break;
                 case "last_year":
-                  startDate= moment().subtract(1, "year").startOf("year").toDate();
-                  endDate= moment().subtract(1, "year").endOf("year").toDate();
-                  break;
+                    startDate = moment().subtract(1, "year").startOf("year").toDate();
+                    endDate = moment().subtract(1, "year").endOf("year").toDate();
+                    break;
                 default:
-                  startDate= moment().startOf("month").toDate();
-                  endDate= moment().endOf("month").toDate();
-              }
-              query.createdAt = { $gte: startDate, $lte: endDate };
+                    startDate = moment().startOf("month").toDate();
+                    endDate = moment().endOf("month").toDate();
+            }
+            query.createdAt = { $gte: startDate, $lte: endDate };
         }
-    
-        if(affiliate_id){
+
+        if (affiliate_id) {
             affiliate_id = await Services.Utils.string_to_array(affiliate_id)
-            query.affiliate_id = {$in: affiliate_id}
+            query.affiliate_id = { $in: affiliate_id }
         }
 
-        if(brand_id){
+        if (brand_id) {
             brand_id = await Services.Utils.string_to_array(brand_id)
-            query.brand_id = {$in: brand_id}
+            query.brand_id = { $in: brand_id }
         }
 
-        if(campaign){
+        if (campaign) {
             campaign = await Services.Utils.string_to_array(campaign)
-            query.campaignId = {$in:campaign}
+            query.campaignId = { $in: campaign }
         }
 
-        new_query = {...query}
+        new_query = { ...query }
 
-        if(startDate2 && endDate2) {
+        if (startDate2 && endDate2) {
             startDate2 = new Date(startDate2);
             endDate2 = new Date(endDate2);
             new_query.createdAt = { $gte: startDate2, $lte: endDate2 };
-        }else {
+        } else {
             switch (filterType) {
                 case "this_week":
-                  startDate2 = moment().startOf("week").toDate();
-                  endDate2= moment().endOf("week").toDate();
-                  break;
+                    startDate2 = moment().startOf("week").toDate();
+                    endDate2 = moment().endOf("week").toDate();
+                    break;
                 case "last_week":
-                  startDate2= moment().subtract(1, "week").startOf("week").toDate();
-                  endDate2= moment().subtract(1, "week").endOf("week").toDate();
-                  break;
+                    startDate2 = moment().subtract(1, "week").startOf("week").toDate();
+                    endDate2 = moment().subtract(1, "week").endOf("week").toDate();
+                    break;
                 case "this_month":
-                  startDate2= moment().startOf("month").toDate();
-                  endDate2 = moment().endOf("month").toDate();
-                  break;
+                    startDate2 = moment().startOf("month").toDate();
+                    endDate2 = moment().endOf("month").toDate();
+                    break;
                 case "last_month":
-                  startDate2= moment().subtract(1, "month").startOf("month").toDate();
-                  endDate2= moment().subtract(1, "month").endOf("month").toDate();
-                  break;
+                    startDate2 = moment().subtract(1, "month").startOf("month").toDate();
+                    endDate2 = moment().subtract(1, "month").endOf("month").toDate();
+                    break;
                 case "this_year":
-                  startDate2= moment().startOf("year").toDate();
-                  endDate2= moment().endOf("year").toDate();
-                  break;
+                    startDate2 = moment().startOf("year").toDate();
+                    endDate2 = moment().endOf("year").toDate();
+                    break;
                 case "last_year":
-                  startDate2= moment().subtract(1, "year").startOf("year").toDate();
-                  endDate2= moment().subtract(1, "year").endOf("year").toDate();
-                  break;
+                    startDate2 = moment().subtract(1, "year").startOf("year").toDate();
+                    endDate2 = moment().subtract(1, "year").endOf("year").toDate();
+                    break;
                 default:
-                  startDate2= moment().startOf("month").toDate();
-                  endDate2= moment().endOf("month").toDate();
-              }
-              query.createdAt = { $gte: startDate2, $lte: endDate2 };
+                    startDate2 = moment().startOf("month").toDate();
+                    endDate2 = moment().endOf("month").toDate();
+            }
+            query.createdAt = { $gte: startDate2, $lte: endDate2 };
         }
         // console.log(query,'query')
         // console.log(new_query,'new_query')
-        
+
         let pipeline = [
             {
                 $project: {
                     id: "$_id",
                     affiliate_id: "$affiliate_id",
                     brand_id: "$brand_id",
-                    campaignId :"$campaignId",
+                    campaignId: "$campaignId",
                     isDeleted: '$isDeleted',
                     updatedBy: '$updatedBy',
                     updatedAt: '$updatedAt',
@@ -778,18 +795,20 @@ exports.clickAnalytics = async(req,res) => {
                             $group: {
                                 _id: {
                                     day: "$day",
-                                    month : "$month",
-                                    year : "$year",
+                                    month: "$month",
+                                    year: "$year",
                                 },
                                 // price: { $sum: '$price' },
-                                createdAt : {$first:"$createdAt"},
-                                count:  {$sum: { 
-                                    $cond: { if: { $ne : ["$affiliate_id", ""] }, then: 1, else: 0 } 
-                                } }
+                                createdAt: { $first: "$createdAt" },
+                                count: {
+                                    $sum: {
+                                        $cond: { if: { $ne: ["$affiliate_id", ""] }, then: 1, else: 0 }
+                                    }
+                                }
                             },
 
                         },
-                       
+
                     ],
 
                 }
@@ -807,7 +826,7 @@ exports.clickAnalytics = async(req,res) => {
                     id: "$_id",
                     affiliate_id: "$affiliate_id",
                     brand_id: "$brand_id",
-                    campaignId :"$campaignId",
+                    campaignId: "$campaignId",
                     isDeleted: '$isDeleted',
                     updatedBy: '$updatedBy',
                     updatedAt: '$updatedAt',
@@ -830,18 +849,20 @@ exports.clickAnalytics = async(req,res) => {
                             $group: {
                                 _id: {
                                     day: "$day",
-                                    month : "$month",
-                                    year : "$year",
+                                    month: "$month",
+                                    year: "$year",
                                 },
                                 // price: { $sum: '$price' },
-                                createdAt : {$first:"$createdAt"},
-                                count: {$sum: { 
-                                    $cond: { if: { $ne : ["$affiliate_id", ""] }, then: 1, else: 0 } 
-                                } }
+                                createdAt: { $first: "$createdAt" },
+                                count: {
+                                    $sum: {
+                                        $cond: { if: { $ne: ["$affiliate_id", ""] }, then: 1, else: 0 }
+                                    }
+                                }
                             },
 
                         },
-                       
+
                     ],
 
                 }
@@ -868,8 +889,8 @@ exports.clickAnalytics = async(req,res) => {
         let totalResult = await db.collection('cookies').aggregate(pipeline, { allowDiskUse: true }).toArray();
 
         let totalResult2 = await db.collection('cookies').aggregate(pipeline2, { allowDiskUse: true }).toArray();
-        
-      
+
+
 
 
         // let result = await db.collection('cookies').aggregate(pipeline, { allowDiskUse: true }).toArray()
@@ -880,8 +901,8 @@ exports.clickAnalytics = async(req,res) => {
         let resData = {
             total: totalResult ? totalResult.length : 0,
             data: totalResult ? totalResult : [],
-            total2 : totalResult2 ? totalResult2.length : 0,
-            data2 : totalResult2 ? totalResult2 : 0
+            total2: totalResult2 ? totalResult2.length : 0,
+            data2: totalResult2 ? totalResult2 : 0
         }
         if (!req.param('page') && !req.param('count')) {
             resData.data = totalResult ? totalResult : []

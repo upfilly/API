@@ -28,7 +28,6 @@ module.exports = {
     isDeleted: { type: 'Boolean', defaultsTo: false },
     createdAt: { type: 'ref', autoCreatedAt: true },
     updatedAt: { type: 'ref', autoUpdatedAt: true },
-    status: {type: 'string', isIn: ['accepted', 'rejected'], defaultsTo: "pending",}
 },
 
 };

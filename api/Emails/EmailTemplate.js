@@ -42,7 +42,7 @@ exports.sendEmailTemplate = async (options) => {
            <span ><img src="${credentials.BACK_WEB_URL}/images/Image4.png"style="width: 40px;"></span>
 </div>
 
-           <p style="color: #626262;font-size: 11px;margin-bottom: 0px;">Copyright © 2023</p>
+           <p style="color: #626262;font-size: 11px;margin-bottom: 0px;">Copyright © ${new Date().getFullYear()}</p>
        </div>
        </div>
      

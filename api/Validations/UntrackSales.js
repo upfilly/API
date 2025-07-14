@@ -36,7 +36,8 @@ exports.updatesales = async (req, res) => {
         title: Joi.string().optional(),
         image: Joi.string().optional(),
         description: Joi.string().optional(),
-        brand_id: Joi.string().required().allow(null)
+        brand_id: Joi.string().required().allow(null),
+        status: Joi.string().optional().valid("accepted","rejected")
 
     })
     return await Validate(schema, req, res);
