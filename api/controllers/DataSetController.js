@@ -1974,7 +1974,7 @@ exports.ListDataFeedsBrand = async (req, res) => {
       }
 
       total = dataFeeds.length;
-      dataFeeds = dataFeeds.slice(skip, skip + limit); // paginate manually after filtering
+      dataFeeds = dataFeeds.slice(skip, skip + count); // paginate manually after filtering
     }
 
     return res.status(200).json({
