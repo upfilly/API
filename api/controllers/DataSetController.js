@@ -537,8 +537,9 @@ exports.sendDataSets = async (req, res) => {
       isActive: true
     });
     listOfAcceptedInvites = BrandAffiliateAssociations;
-
-    for (let invite of listOfAcceptedInvites) {
+    
+    
+    for (let invite of listOfAcceptedInvites) {      
       let findUser = await Users.findOne({
         id: invite.affiliate_id,
         // status: data.affiliateStatus,
@@ -560,7 +561,7 @@ exports.sendDataSets = async (req, res) => {
       url: data.url || "",
     }
 
-    await DataSet.create(payload);
+    let createdDataSet = await DataSet.create(payload).fetch();
 
     if (data.type == "url") {
       const url = data.url
@@ -579,7 +580,6 @@ exports.sendDataSets = async (req, res) => {
           let newXmlPath = rootpath + "/assets/"
           let csv_path = rootpath + "/assets/url_docs/" + generateName() + ".csv"
           let csvData = await xmlToCsv(newXmlPath + xml, csv_path)
-
           csvData = csvData.split("/")
           csvData = csvData.splice(-2)
           csvData = csvData.join("/")
@@ -618,7 +618,6 @@ exports.sendDataSets = async (req, res) => {
         var urlData = saveCSVToFile(csvData, filename);
 
         let csv_url = urlData
-        // console.log(csv_url,'=====')
         csv_url = csv_url.split("/") // on server 
         csv_url = csv_url.splice(-2)
         csv_url = csv_url.join("/")
@@ -785,6 +784,7 @@ exports.sendDataSets = async (req, res) => {
       }
 
     }
+    await DataSet.updateOne({id:createdDataSet.id},{noOfProducts:student_arr.length,lastImportedDate: new Date(),})
     return response.success(student_arr, constants.DATASET.ADDED, req, res);
   } catch (err) {
     console.log(err, '============errr')
@@ -896,6 +896,8 @@ exports.listOfDataSet = async (req, res) => {
           addedBy_details: "$addedBy_details",
           url: "$url",
           doc_name: "$doc_name",
+          noOfProducts :"$noOfProducts",
+          lastImportedDate :"$lastImportedDate",
           xml: "$xml",// its path in docuemnts
           status: "$status",
           isDeleted: "$isDeleted",

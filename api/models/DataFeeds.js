@@ -65,6 +65,9 @@ module.exports = {
     url :{type:'string'}, // when brand share url
     filePath : {type:'string'}, // when brand share csv file and that file path store in this
     xml :{type:'string'}, // when brand share url
+    noOfProducts :{type:"Number"},
+    lastImportedDate : {type: 'ref', columnType: 'datetime'},
+
 
 
   }

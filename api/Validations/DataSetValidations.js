@@ -8,6 +8,7 @@ exports.addDataSet = async (req, res, next) => {
     brand_id: Joi.string().required(),
     type : Joi.string().optional(),
     url : Joi.string().optional(),
+    doc_name : Joi.string().optional(),
   });
   return await Validate(schema, req, res);
 };
