@@ -216,21 +216,32 @@ function saveCSVToFile(csvData, filename) {
     console.error("Error writing CSV file:", error);
   }
 }
-
 async function processCSVAndRespond(csvFilePath, newColumnName, affliate_id, brand_id) {
   try {
-    let resolvedPath = csvFilePath //path.resolve(csvFilePath);
+    let resolvedPath = csvFilePath; //path.resolve(csvFilePath);
 
+    // Read raw file data
     const csvData = fs.readFileSync(resolvedPath, 'utf8');
+
+    // Count the number of lines in the CSV file
+    const rawLines = csvData.split('\n').length;
+    console.log(`Raw lines in the file: ${rawLines}`);
 
     const results = Papa.parse(csvData, {
       header: true,
       dynamicTyping: true,
-      skipEmptyLines: true,
+      skipEmptyLines: true, // Ignore empty lines in the CSV
     });
 
     const data = results.data;
 
+    // Log the number of rows after parsing
+    console.log(`Parsed rows count: ${data.length}`);
+
+    // Log a sample of the rows to check if they seem correct
+    console.log('Sample rows:', data.slice(0, 5));
+
+    // Process each row
     data.forEach(row => {
       if (row['Product ID'] && row['Product URL']) {
         row[newColumnName] = `https://upfilly.com/?affiliate_id=${affliate_id}&brand_id=${brand_id}&url=${row['Product URL']}`;
@@ -242,13 +253,11 @@ async function processCSVAndRespond(csvFilePath, newColumnName, affliate_id, bra
     const csv = Papa.unparse(data, { header: true });
 
     // Optional: Save the updated CSV
-    // console.log(resolvedPath,'resolvedPath')
-
     fs.writeFileSync(resolvedPath, csv, 'utf8');
 
-    resolvedPath = resolvedPath.split("/")
-    resolvedPath = "/" + resolvedPath[6] + "/" + resolvedPath[7] //constant.BACK_WEB_URL + 
-    return resolvedPath; // Return the CSV data
+    resolvedPath = resolvedPath.split("/");
+    resolvedPath = "/" + resolvedPath[6] + "/" + resolvedPath[7];
+    return resolvedPath;
 
   } catch (error) {
     console.error('Error processing CSV:', error);
