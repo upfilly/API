@@ -1982,7 +1982,7 @@ exports.ListDataFeedsBrand = async (req, res) => {
       data: dataFeeds,
       total,
       page,
-      pages: Math.ceil(total / limit),
+      pages: Math.ceil(total / count),
     });
 
   } catch (err) {
