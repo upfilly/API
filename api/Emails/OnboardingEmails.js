@@ -2220,7 +2220,7 @@ exports.send_mail_to_brand = async (options) => {
                 <div>
                          <img src="${credentials.BACK_WEB_URL}/images/upfilly.png"style="width:115px; height: 40px; object-fit: contain;">
                  <h1 style="  margin-bottom: 0px;  margin-top: 10px; font-size: 18px;"><span style="font-weight: 400;color:#373737;">Hi ${Services.Utils.title_case(name)},</h1>
-                 <p style="margin-top: 0px;    font-size: 14px; color:#373737; margin-bottom: 0;">This is an notification email to let you know about Untrack sales.
+                 <p style="margin-top: 0px;    font-size: 14px; color:#373737; margin-bottom: 0;">This is an notification email to let you know about a reported untracked sale.
                  </p>
                  </div>
                  </div>
