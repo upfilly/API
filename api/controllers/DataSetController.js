@@ -559,6 +559,7 @@ exports.sendDataSets = async (req, res) => {
       addedBy: req.identity.id,
       filePath: data.filePath || "",
       url: data.url || "",
+      doc_name : data.doc_name || ""
     }
 
     let createdDataSet = await DataSet.create(payload).fetch();
