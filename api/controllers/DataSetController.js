@@ -657,6 +657,9 @@ exports.sendDataSets = async (req, res) => {
           }
         }
         const student_arr = await parseCSV(csvData);  // get product list
+        console.log(createdDataSet.id,"createdDataSet.id");
+        console.log(student_arr.length,'student_arr.length');
+        
         await DataSet.updateOne(
           { id: createdDataSet.id },
           { noOfProducts: student_arr.length, lastImportedDate: new Date() }
