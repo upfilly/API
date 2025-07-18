@@ -459,7 +459,7 @@ async function parseExcelFile(fileBuffer, addedBy) {
   const workbook = xlsx.read(fileBuffer, { type: 'buffer' });
   const sheetName = workbook.SheetNames[0];
   const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
-  return data;
+  return data;``
 }
 
 async function parseCSV(csvData, addedBy) {
@@ -537,9 +537,9 @@ exports.sendDataSets = async (req, res) => {
       isActive: true
     });
     listOfAcceptedInvites = BrandAffiliateAssociations;
-    
-    
-    for (let invite of listOfAcceptedInvites) {      
+
+
+    for (let invite of listOfAcceptedInvites) {
       let findUser = await Users.findOne({
         id: invite.affiliate_id,
         // status: data.affiliateStatus,
@@ -559,7 +559,7 @@ exports.sendDataSets = async (req, res) => {
       addedBy: req.identity.id,
       filePath: data.filePath || "",
       url: data.url || "",
-      doc_name : data.doc_name || ""
+      doc_name: data.doc_name || ""
     }
 
     let createdDataSet = await DataSet.create(payload).fetch();
@@ -656,6 +656,12 @@ exports.sendDataSets = async (req, res) => {
             await DataFeeds.updateOne({ url: data.url, brand_id: req.identity.id, xml: xmlPath }, payload);
           }
         }
+        const student_arr = await parseCSV(csvData);  // get product list
+        await DataSet.updateOne(
+          { id: createdDataSet.id },
+          { noOfProducts: student_arr.length, lastImportedDate: new Date() }
+        )
+        await DataSet.updateOne({ id: createdDataSet.id }, { noOfProducts: student_arr.length, lastImportedDate: new Date(), })
         return response.success(null, constants.DATASET.ADDED, req, res);
       } else {
         console.error('Failed to download CSV data');
@@ -785,7 +791,7 @@ exports.sendDataSets = async (req, res) => {
       }
 
     }
-    await DataSet.updateOne({id:createdDataSet.id},{noOfProducts:student_arr.length,lastImportedDate: new Date(),})
+    await DataSet.updateOne({ id: createdDataSet.id }, { noOfProducts: student_arr.length, lastImportedDate: new Date(), })
     return response.success(student_arr, constants.DATASET.ADDED, req, res);
   } catch (err) {
     console.log(err, '============errr')
@@ -897,8 +903,8 @@ exports.listOfDataSet = async (req, res) => {
           addedBy_details: "$addedBy_details",
           url: "$url",
           doc_name: "$doc_name",
-          noOfProducts :"$noOfProducts",
-          lastImportedDate :"$lastImportedDate",
+          noOfProducts: "$noOfProducts",
+          lastImportedDate: "$lastImportedDate",
           xml: "$xml",// its path in docuemnts
           status: "$status",
           isDeleted: "$isDeleted",
@@ -1091,10 +1097,10 @@ exports.sendEmailMessage = async (req, res) => {
               affiliateEmail: findUser.email,
             });
 
-              data.emailTemplate = data.emailTemplate.replace(findUser.fullName, "{affiliateFullName}");
-              data.emailTemplate = data.emailTemplate.replace(brandFullName,"{brandFullName}");
-              data.emailTemplate = data.emailTemplate.replace( affiliateLink,"{affiliateLink}");
-              data.emailTemplate = data.emailTemplate.replace(currentDate,"{currentDate}");
+            data.emailTemplate = data.emailTemplate.replace(findUser.fullName, "{affiliateFullName}");
+            data.emailTemplate = data.emailTemplate.replace(brandFullName, "{brandFullName}");
+            data.emailTemplate = data.emailTemplate.replace(affiliateLink, "{affiliateLink}");
+            data.emailTemplate = data.emailTemplate.replace(currentDate, "{currentDate}");
 
 
           }
