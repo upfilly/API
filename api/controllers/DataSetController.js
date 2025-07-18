@@ -704,7 +704,9 @@ exports.sendDataSets = async (req, res) => {
           await DataFeeds.updateOne({ url: data.filePath, brand_id: req.identity.id, xml: xmlPath }, payload);
         }
       }
-
+      console.log(updatedCSV.length,'updatedCSV.length');
+      
+      await DataSet.updateOne({ id: createdDataSet.id }, { noOfProducts: updatedCSV.length, lastImportedDate: new Date(), })
       return response.success(student_arr, constants.DATASET.ADDED, req, res);
 
     }
@@ -794,7 +796,7 @@ exports.sendDataSets = async (req, res) => {
       }
 
     }
-    await DataSet.updateOne({ id: createdDataSet.id }, { noOfProducts: student_arr.length, lastImportedDate: new Date(), })
+    
     return response.success(student_arr, constants.DATASET.ADDED, req, res);
   } catch (err) {
     console.log(err, '============errr')
