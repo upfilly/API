@@ -634,9 +634,14 @@ exports.affiliateCount = async (req, res) => {
       // const affiliates_active_count = affiliateIds.length;
 
       affiliates_active_count = await Cookies.find({ brand_id: brandId })
-      affiliates_active_count= [...new Set(
-  affiliates_active_count.map(cookie => cookie.affiliate_id).filter(id => id != null)
-)];
+      let affiliatLinkCount = await AffiliateLink.find({ brand_id: brandId })
+      if (affiliatLinkCount.length > 0) {
+        affiliates_active_count = [...affiliates_active_count, ...affiliatLinkCount];
+      }
+      affiliates_active_count = [...new Set(
+        affiliates_active_count.map(cookie => cookie.affiliate_id).filter(id => id != null)
+      )];
+
     }
 
     return res.status(200).json({
