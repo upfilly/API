@@ -811,7 +811,10 @@ exports.listOfDataSet = async (req, res) => {
     var query = {};
 
     if (search) {
-      query.$or = [{ event: { $regex: search, $options: "i" } }];
+      query.$or = [
+        { event: { $regex: search, $options: "i" } },
+        { doc_name: { $regex: search, $options: "i" } }
+      ];
     }
     let sortquery = {};
     if (sortBy) {
@@ -892,6 +895,7 @@ exports.listOfDataSet = async (req, res) => {
           brand_details: "$brand_details",
           addedBy_details: "$addedBy_details",
           url: "$url",
+          doc_name: "$doc_name",
           xml: "$xml",// its path in docuemnts
           status: "$status",
           isDeleted: "$isDeleted",

@@ -4,6 +4,7 @@ module.exports = {
     user_id: { model: "users" },
     filePath: { type: "string" },
     url :{type:'string'},
+    doc_name :{type:'string'},
     addedBy: { model: "users" },
     updatedBy: { model: "users" },
     isDeleted: { type: "Boolean", defaultsTo: false },
