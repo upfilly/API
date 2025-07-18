@@ -674,8 +674,9 @@ exports.sendDataSets = async (req, res) => {
       const csvPath = rootpath + "/assets" + data.filePath //path.join(__dirname, 'data.csv'); // Path relative to script
 
       const newColumn = "Affiliate Link";
+      let updatedCSV
       for await (let itm of listOfAcceptedInvites) {
-        let updatedCSV = await processCSVAndRespond(csvPath, newColumn, itm.affiliate_id, req.identity.id)
+        updatedCSV = await processCSVAndRespond(csvPath, newColumn, itm.affiliate_id, req.identity.id)
         // converting csv file into xml
 
         let xmlPath = await convertCSVtoXML(csvPath)
