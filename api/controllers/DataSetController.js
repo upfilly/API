@@ -1925,44 +1925,64 @@ exports.ListDataSetsBrand = async (req, res) => {
 
 exports.ListDataFeedsBrand = async (req, res) => {
   try {
-    let affiliate_id = req.param('affiliate_id');
-    let brand_id = req.param('brand_id');
-    let search = req.param('search');
-    // let BrandAffiliateAssociations = await BrandAffiliateAssociation.find({
-    //   affiliate_id: affiliate_id,
-    //   status: "accepted",
-    //   isDeleted: false,
-    //   isActive: true
-    // });
-    // let listOfBrandIds = BrandAffiliateAssociations.map((cur)=>String(cur.brand_id));
-    let dataFeeds;
+    const affiliate_id = req.param('affiliate_id');
+    const brand_id = req.param('brand_id');
+    const search = req.param('search');
+
+    const page = parseInt(req.query.page) || 1;
+    const count = parseInt(req.query.count) || 10;
+    const skip = (page - 1) * count;
+
+    let dataFeeds = [];
+    let total = 0;
+
     if (brand_id) {
-      if (listOfBrandIds.includes(brand_id)) {
-        // previous code ----> dataFeeds = await DataFeeds.find({brand_id: brand_id})
-        dataFeeds = await DataFeeds.find({ brand_id: brand_id }).select(["doc_name","noOfProducts","lastImportedDate","url", "xml", "filePath", "brand_id"]).populate("brand_id").sort("createdAt Desc");
-      } else {
-        dataFeeds = [];
-      }
+      // Uncomment and fetch listOfBrandIds if needed
+      // let BrandAffiliateAssociations = await BrandAffiliateAssociation.find({
+      //   affiliate_id: affiliate_id,
+      //   status: "accepted",
+      //   isDeleted: false,
+      //   isActive: true,
+      // });
+      // let listOfBrandIds = BrandAffiliateAssociations.map((cur) => String(cur.brand_id));
+
+      // if (listOfBrandIds.includes(brand_id)) {
+        dataFeeds = await DataFeeds.find({ brand_id: brand_id })
+          .select(["doc_name", "noOfProducts", "lastImportedDate", "url", "xml", "filePath", "brand_id"])
+          .populate("brand_id")
+          .sort("createdAt DESC")
+          .skip(skip)
+          .limit(count);
+
+        total = await DataFeeds.countDocuments({ brand_id: brand_id });
+      // } else {
+      //   dataFeeds = [];
+      // }
     } else {
-      // previous code ----> dataFeeds = await DataFeeds.find({brand_id: brand_id})
+      const query = { affiliate_id: affiliate_id };
+      dataFeeds = await DataFeeds.find(query)
+        .select(["url", "xml", "filePath", "brand_id"])
+        .populate("brand_id")
+        .sort("createdAt DESC");
 
-      // dataFeeds = await DataFeeds.find({brand_id: listOfBrandIds}).select(["url","xml","filePath","brand_id"]).populate("brand_id").sort("createdAt Desc");
-      dataFeeds = await DataFeeds.find({ affiliate_id: affiliate_id }).select(["url", "xml", "filePath", "brand_id"]).populate("brand_id").sort("createdAt Desc");
+      // 🔍 Filter by brand name if search is present
+      if (search) {
+        const regex = new RegExp(search, 'i');
+        dataFeeds = dataFeeds.filter(feed =>
+          feed.brand_id && regex.test(feed.brand_id.fullName)
+        );
+      }
 
-    }
-
-    // 🔥 After fetching, manually filter by brand.fullName if search is provided
-    if (search) {
-      const regex = new RegExp(search, 'i'); // case-insensitive regex
-      dataFeeds = dataFeeds.filter(feed =>
-        feed.brand_id && regex.test(feed.brand_id.fullName)
-      );
+      total = dataFeeds.length;
+      dataFeeds = dataFeeds.slice(skip, skip + limit); // paginate manually after filtering
     }
 
     return res.status(200).json({
       success: true,
       data: dataFeeds,
-      total: dataFeeds.length,
+      total,
+      page,
+      pages: Math.ceil(total / limit),
     });
 
   } catch (err) {
@@ -1972,8 +1992,8 @@ exports.ListDataFeedsBrand = async (req, res) => {
       error: { code: 400, message: "" + err },
     });
   }
-
 }
+
 
 exports.viewCSVAffiliate = async (req, res) => {
   try {
