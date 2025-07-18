@@ -680,6 +680,8 @@ exports.sendDataSets = async (req, res) => {
         // converting csv file into xml
 
         let xmlPath = await convertCSVtoXML(csvPath)
+        console.log(xmlPath,"xmlPath");
+        
         xmlPath = xmlPath.split("/")
         xmlPath = xmlPath.splice(-2)
         xmlPath = xmlPath.join("/")
