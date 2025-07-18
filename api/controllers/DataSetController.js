@@ -459,7 +459,7 @@ async function parseExcelFile(fileBuffer, addedBy) {
   const workbook = xlsx.read(fileBuffer, { type: 'buffer' });
   const sheetName = workbook.SheetNames[0];
   const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
-  return data;``
+  return data; ``
 }
 
 async function parseCSV(csvData, addedBy) {
@@ -657,9 +657,9 @@ exports.sendDataSets = async (req, res) => {
           }
         }
         const student_arr = await parseCSV(csvData);  // get product list
-        console.log(createdDataSet.id,"createdDataSet.id");
-        console.log(student_arr.length,'student_arr.length');
-        
+        console.log(createdDataSet.id, "createdDataSet.id");
+        console.log(student_arr.length, 'student_arr.length');
+
         await DataSet.updateOne(
           { id: createdDataSet.id },
           { noOfProducts: student_arr.length, lastImportedDate: new Date() }
@@ -669,33 +669,30 @@ exports.sendDataSets = async (req, res) => {
       } else {
         console.error('Failed to download CSV data');
       }
-    } else {
-      var rootpath = process.cwd();
-      const csvPath = rootpath + "/assets" + data.filePath //path.join(__dirname, 'data.csv'); // Path relative to script
+    }
+    else {
+      const rootpath = process.cwd();
+      const csvPath = rootpath + "/assets" + data.filePath;
 
       const newColumn = "Affiliate Link";
-      let updatedCSV
+      let finalUpdatedCSVPath;
+
       for await (let itm of listOfAcceptedInvites) {
-        updatedCSV = await processCSVAndRespond(csvPath, newColumn, itm.affiliate_id, req.identity.id)
-        // converting csv file into xml
+        // Add new column and save CSV
+        finalUpdatedCSVPath = await processCSVAndRespond(csvPath, newColumn, itm.affiliate_id, req.identity.id);
 
-        let xmlPath = await convertCSVtoXML(csvPath)
-        console.log(xmlPath,"xmlPath");
-        
-        xmlPath = xmlPath.split("/")
-        xmlPath = xmlPath.splice(-2)
-        xmlPath = xmlPath.join("/")
-        // console.log(listOfAcceptedInvites.length,"listOfAcceptedInvites")
+        // Convert to XML
+        let xmlPath = await convertCSVtoXML(finalUpdatedCSVPath);
+        xmlPath = xmlPath.split("/").slice(-2).join("/");
 
-        console.log('data.filePath')
-        payload = {
+        const payload = {
           brand_id: req.identity.id,
-          filePath: updatedCSV, //data.filePath   contain file path + new column which is added
+          filePath: finalUpdatedCSVPath,
           xml: xmlPath,
           affiliate_id: itm.affiliate_id
+        };
 
-        }
-        let existingData = await DataFeeds.findOne({
+        const existingData = await DataFeeds.findOne({
           filePath: data.filePath,
           brand_id: req.identity.id,
           affiliate_id: itm.affiliate_id
@@ -704,15 +701,81 @@ exports.sendDataSets = async (req, res) => {
         if (!existingData) {
           await DataFeeds.create(payload);
         } else {
-          await DataFeeds.updateOne({ url: data.filePath, brand_id: req.identity.id, xml: xmlPath }, payload);
+          await DataFeeds.updateOne(
+            { url: data.filePath, brand_id: req.identity.id, xml: xmlPath },
+            payload
+          );
         }
       }
-      console.log(updatedCSV.length,'updatedCSV.length');
-      
-      await DataSet.updateOne({ id: createdDataSet.id }, { noOfProducts: updatedCSV.length, lastImportedDate: new Date(), })
-      return response.success(student_arr, constants.DATASET.ADDED, req, res);
 
+      // Correct way to parse CSV and get row count
+      const student_arr = await parseCSV(finalUpdatedCSVPath); // finalUpdatedCSVPath is the latest updated file
+      console.log(student_arr.length, 'Rows in updated CSV');
+
+      // Update DataSet with actual number of rows
+      await DataSet.updateOne({
+        id: createdDataSet.id
+      }, {
+        noOfProducts: student_arr.length,
+        lastImportedDate: new Date()
+      });
+
+      return response.success(student_arr, constants.DATASET.ADDED, req, res);
     }
+
+    // else {
+    //   var rootpath = process.cwd();
+    //   const csvPath = rootpath + "/assets" + data.filePath //path.join(__dirname, 'data.csv'); // Path relative to script
+
+    //   const newColumn = "Affiliate Link";
+    //   let updatedCSV
+    //   for await (let itm of listOfAcceptedInvites) {
+    //     updatedCSV = await processCSVAndRespond(csvPath, newColumn, itm.affiliate_id, req.identity.id)
+    //     // converting csv file into xml
+
+    //     let xmlPath = await convertCSVtoXML(csvPath)
+    //     console.log(xmlPath.length, "xmlPath");
+
+    //     xmlPath = xmlPath.split("/")
+    //     xmlPath = xmlPath.splice(-2)
+    //     xmlPath = xmlPath.join("/")
+    //     // console.log(listOfAcceptedInvites.length,"listOfAcceptedInvites")
+
+
+    //     payload = {
+    //       brand_id: req.identity.id,
+    //       filePath: updatedCSV, //data.filePath   contain file path + new column which is added
+    //       xml: xmlPath,
+    //       affiliate_id: itm.affiliate_id
+
+    //     }
+    //     let existingData = await DataFeeds.findOne({
+    //       filePath: data.filePath,
+    //       brand_id: req.identity.id,
+    //       affiliate_id: itm.affiliate_id
+    //     });
+
+    //     if (!existingData) {
+    //       await DataFeeds.create(payload);
+    //     } else {
+    //       await DataFeeds.updateOne({ url: data.filePath, brand_id: req.identity.id, xml: xmlPath }, payload);
+    //     }
+    //   }
+    //   console.log(updatedCSV.length, 'updatedCSV.length');
+    //   const student_arr = await parseCSV(updatedCSV); // updatedCSV is the new file path
+    //   console.log(student_arr.length,'==sdkjfhsdjkjfl');
+
+    //   // await DataSet.updateOne({
+    //   //   id: createdDataSet.id
+    //   // }, {
+    //   //   noOfProducts: student_arr.length,
+    //   //   lastImportedDate: new Date()
+    //   // });
+
+    //   await DataSet.updateOne({ id: createdDataSet.id }, { noOfProducts: updatedCSV.length, lastImportedDate: new Date(), })
+    //   return response.success(student_arr, constants.DATASET.ADDED, req, res);
+
+    // }
 
     // here we are storing data feeds
 
@@ -799,7 +862,7 @@ exports.sendDataSets = async (req, res) => {
       }
 
     }
-    
+
     return response.success(student_arr, constants.DATASET.ADDED, req, res);
   } catch (err) {
     console.log(err, '============errr')
