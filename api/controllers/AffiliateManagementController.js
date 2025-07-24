@@ -362,14 +362,11 @@ exports.getDefaultAffiliateGroup = async (req, res) => {
 
 exports.getCampaignsByAffiliate = async (req, res) => {
   try {
-    const {
+    let {
       affiliateId,
-      status,
+      brandId,
+      status
     } = req.query;
-
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.count) || 10;
-    const skip = (page - 1) * limit;
 
     if (!affiliateId) {
       return res.status(400).json({
@@ -378,64 +375,35 @@ exports.getCampaignsByAffiliate = async (req, res) => {
       });
     }
 
-    const campaigns = await BrandAffiliateAssociation.findOne({
-      affiliate_id: affiliateId,
-      isDeleted: false,
-      isActive: true,
-      status: "accepted",
-    })
+      let query = {
+          affiliate_id: affiliateId,
+          brand_id: brandId,
+          isDeleted: false,
+          isActive: true,
+          status: status || "accepted"
+      }
 
-//     const brandIds = associations.map(a => a.brand_id);
+    let findCampaigns = await BrandAffiliateAssociation.findOne(query);
 
-//     if (brandIds.length === 0) {
-//       return res.status(200).json({
-//         message: "No associated brands found for this affiliate.",
-//         campaigns: [],
-//         total: 0,
-//         currentPage: page,
-//         totalPages: 0
-//       });
-//     }
-
-// let campaignWhereClause = {
-//   brand_id: { in: brandIds },
-//   isDeleted: false,
-// };
-
-// if (status) {
-//   campaignWhereClause.status = status;
-// }
-
-
-// const [campaigns, total] = await Promise.all([
-//   Campaign.find({
-//     where: campaignWhereClause
-//   })
-//     .populate('brand_id')
-//     .skip(skip)
-//     .limit(limit)
-//     .sort('createdAt DESC'),
-
-//   Campaign.count(campaignWhereClause), 
-// ]);
-
+      if (findCampaigns) {
+          return res.status(200).json({
+              message: "Campaigns associated with this affiliate fetched successfully.",
+        findCampaigns,  
+      });
+    }
+      let defaultCampaigns = await Campaign.findOne({brand_id:brandId,isDefault:true})
 
     return res.status(200).json({
-      message: "Campaigns associated with this affiliate fetched successfully.",
-      campaigns,
-    //   total,
-    //   currentPage: page,
-    //   totalPages: Math.ceil(total / limit),
+      message: "No affiliate-specific campaign found. Showing default campaigns.",
+      campaigns: defaultCampaigns,  
     });
 
   } catch (error) {
-    console.error("Error in getCampaignsByAffiliate:", error);
-    return res.status(500).json({
-      success: false,
-      error: error.message || "Internal server error",
-    });
+    console.log("Error in getCampaignsByAffiliate:", error);
+    return response.failed(null, `${error}`, req, res)
   }
 };
+
 
 
 
