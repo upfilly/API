@@ -324,15 +324,16 @@ exports.getAllCampaignRequestsForAffiliate = async (req, res) => {
         }
         new_query.campaign_commission = { $gt: 0 }
         let sortquery = {};
-        if (sortBy) {
-            let typeArr = [];
-            typeArr = sortBy.split(" ");
-            let sortType = typeArr[1];
-            let field = typeArr[0];
-            sortquery[field ? field : 'updatedAt'] = sortType ? (sortType == 'desc' ? -1 : 1) : -1;
+        
+        if (sortBy && typeof sortBy === 'string') {
+            const [rawField, rawOrder] = sortBy.trim().split(/\s+/); 
+            const field = rawField || 'createdAt';
+            const sortType = rawOrder?.toLowerCase() === 'asc' ? 1 : -1;
+            sortquery[field] = sortType;
         } else {
-            sortquery = { createdAt: -1 }
+            sortquery = { updatedAt: -1 };
         }
+
         if (sub_category) {
             // query.sub_category_id = new ObjectId(sub_category_id);
             sub_category = await Services.Utils.string_to_array(sub_category);
@@ -440,10 +441,10 @@ exports.getAllCampaignRequestsForAffiliate = async (req, res) => {
                     campaign_id: 1,
                     campaign_detail: "$campaign_detail",
                     campaign_commission: "$campaign_detail.commission",
-                    campaign_name: "$campaign_detail.name",
+                    campaign_name:  { $toLower: "$campaign_detail.name" },
                     brand_id: 1,
                     brand_detail: 1,
-                    brand_name: "$brand_detail.fullName",
+                    brand_name: { $toLower: "$brand_detail.fullName" },
                     isDeleted: 1,
                     status: 1,
                     deletedBy: 1,
