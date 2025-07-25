@@ -173,7 +173,9 @@ exports.salesAnalytics = async (req, res) => {
         if (affiliate_id) {
             group_query.affiliate_id = "$affiliate_id";
             query.affiliate_id = { $in: affiliate_id.split(",").map(id => new ObjectId(id)) };
-        } 
+        }else {
+            query.brand_id = new ObjectId(req.identity.id)
+        }
         // else {
         //     const allAffiliatesOfBrand = await BrandAffiliateAssociation
         //         .getDatastore()
