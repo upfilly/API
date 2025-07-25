@@ -255,7 +255,7 @@ exports.getAllCoupon = async (req, res) => {
         let count = req.param('count') || 1000;
         let page = req.param('page') || 1;
         let skipNo = (Number(page) - 1) * Number(count);
-        let { search, sortBy, status, isDeleted, plan_type, couponType, addedBy, visibility, media,csv,xml,export_to_xls,campaign } = req.query;
+        let { search, sortBy, status, isDeleted, plan_type, couponType, addedBy, visibility, media,csv,xml,export_to_xls,campaign, selectedCoupon } = req.query;
         let sortquery = {};
 
         if (search) {
@@ -301,6 +301,11 @@ exports.getAllCoupon = async (req, res) => {
             query.couponType = couponType;
         }
 
+        if(selectedCoupon){
+          selectedCoupon = selectedCoupon.split(",")
+          selectedCoupon = selectedCoupon.map((itm) => new ObjectId(itm))
+          query.id = {$in:selectedCoupon}
+        }
         if (visibility || media) {
             query.$or = [
                 { visibility: "Public" },
