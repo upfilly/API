@@ -24,6 +24,8 @@ exports.addCoupon = async (req, res, next) => {
 
     applicable: Joi.array().items(Joi.string()), // Adjust the type of items if necessary
 
+    campaign_id: Joi.array().optional().items(Joi.string()),
+
     visibility: Joi.string()
       .valid(
         "Public",
@@ -57,6 +59,8 @@ exports.editCoupon = async (req, res, next) => {
       }),
 
     couponCode: Joi.string().alphanum().required(),
+
+    campaign_id: Joi.array().optional().items(Joi.string()),
 
     couponType: Joi.string().required(),
 

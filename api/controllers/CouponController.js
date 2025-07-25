@@ -37,6 +37,7 @@ exports.addCoupon = async (req, res) => {
       couponType,
       startDate,
       expirationDate,
+      campaign_id,
       commissionType,
       applicable,
       visibility,
@@ -75,6 +76,15 @@ exports.addCoupon = async (req, res) => {
       throw constants.COUPON.START_DATE_OVERLAPED;
     }
 
+    if (campaign_id && campaign_id.length > 0) {
+    for (let itm of campaign_id) {
+      console.log("campaign",itm)
+        let check = await Campaign.findOne({ id: itm });
+        if (!check) {
+         throw constants.COUPON.CAMAPIGN;
+        } 
+    }
+  }
     req.body.addedBy = req.identity.id;
 
     const coupon = await Coupon.create(req.body).fetch();
@@ -245,7 +255,7 @@ exports.getAllCoupon = async (req, res) => {
         let count = req.param('count') || 1000;
         let page = req.param('page') || 1;
         let skipNo = (Number(page) - 1) * Number(count);
-        let { search, sortBy, status, isDeleted, plan_type, couponType, addedBy, visibility, media,csv,xml,export_to_xls } = req.query;
+        let { search, sortBy, status, isDeleted, plan_type, couponType, addedBy, visibility, media,csv,xml,export_to_xls,campaign } = req.query;
         let sortquery = {};
 
         if (search) {
@@ -281,6 +291,9 @@ exports.getAllCoupon = async (req, res) => {
         if (addedBy) {
             query.addedBy = new ObjectId(addedBy);
         }
+         if (campaign) {
+            query.campaign = new ObjectId(campaign);
+        }
         // else {
         //     query.addedBy = new ObjectId(req.identity.id);
         // }
@@ -307,6 +320,20 @@ exports.getAllCoupon = async (req, res) => {
             {
                 $unwind : {
                 path : "$addedByDetails",
+                preserveNullAndEmptyArrays : true
+                }
+            },
+             {
+                $lookup :{
+                from  :"campaign",
+                localField : "campaign_id",
+                foreignField : "_id",
+                as : "campaignData"
+             }
+            },
+            {
+                $unwind : {
+                path : "$campaignData",
                 preserveNullAndEmptyArrays : true
                 }
             },
@@ -339,6 +366,9 @@ exports.getAllCoupon = async (req, res) => {
                 i : "$addedBy",
                 fullName: "$addedByDetails.fullName",
                 couponAmount:"$couponAmount",
+                campaign_id:"$campaign_id",
+                campaignDetails : "$campaignData"
+
             }
         };
         pipeline.push(projection);

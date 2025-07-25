@@ -93,5 +93,10 @@ module.exports = {
     createdAt: { type: "ref", autoCreatedAt: true },
     updatedAt: { type: "ref", autoUpdatedAt: true },
     isDeleted: { type: "Boolean", defaultsTo: false },
+    campaign_id:{
+      type: "json",
+      columnType: "array",
+    },
+
   },
 };
