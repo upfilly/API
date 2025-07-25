@@ -784,6 +784,39 @@ exports.getAllCampaignsForBrand = async (req, res) => {
         return response.failed(null, `${err}`, req, res);
     }
 }
+exports.getAllCampaignsForAffiliate = async (req, res) => {
+    try {
+        const { campaign } = req.query;
+
+        if (!campaign || campaign.length === 0) {
+            return res.status(400).json({ message: "No campaign provided." });
+        }
+        const idArray = campaign.split(',');
+
+        const affiliateFetch = [];
+
+        for (let campaignId of idArray) {
+            const campaignData = await BrandAffiliateAssociation.find({
+              where: { campaign_id: campaignId, isDeleted: false,status:"accepted" }
+            }).populate('affiliate_id');
+
+            if (!campaignData) {
+                console.log(`Campaign with ID ${campaignId} not found. Skipping...`);
+                continue;
+            }
+             affiliateFetch.push(...campaignData.map(item => item.affiliate_id));
+        }
+        let data = {
+             affiliateFetch
+        }
+        return response.success(data, constants.CAMPAIGN.AFFILIATE_FETCH_IN_CAMPAIGN, req, res);
+
+        res.status(200).json({ message: constants.CAMPAIGN.AFFILIATE_FETCH_IN_CAMPAIGN, data });
+    } catch (err) {
+        console.log("err", err)
+        return response.failed(null, `${err}`, req, res);
+    }
+}
 /*
 exports.getAllCampaigns = async (req, res) => {
     try {
