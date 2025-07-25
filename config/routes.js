@@ -281,6 +281,8 @@ module.exports.routes = {
   "get /campaign/public/all": "CampaignController.listPublicCampaignsOfAllBrands",
   "post /campaign/remove": "CampaignController.removeAffiliate",
   "get /campaign/all/affiliates": "CampaignController.campaignAffiliates",
+  "get /campaign/affiliate": "CampaignController.getAllCampaignsForAffiliate",
+
 
   /**
    * @Proposals

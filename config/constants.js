@@ -425,7 +425,8 @@ module.exports.constants = {
     INVALID_INFLUENCER_ID: "Invaild influencer Id",
     NOT_FOUND: "Campaign not found!",
     INVALID_STATUS: "Invalid status",
-    NOT_ALLOWED_AFFS_EXIST: "Deletion denied as affiliates are part of this campaign!"
+    NOT_ALLOWED_AFFS_EXIST: "Deletion denied as affiliates are part of this campaign!",
+    AFFILIATE_FETCH_IN_CAMPAIGN: "Affiliate associated with campaign fetch successfuilly"
   },
 
   PROPOSAL: {
