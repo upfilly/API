@@ -1083,7 +1083,7 @@ module.exports = {
         query.status = status;
       }
 
-      
+
       // if(campaign){
       //   query.campaign  = new ObjectId(campaign)
       // }
@@ -2194,14 +2194,235 @@ module.exports = {
         if (get_user.role === "brand") {
           get_user.total_campaign = await Campaign.count({ brand_id: id, isDeleted: false })
         }
-        if(get_user.role == "affiliate"){
-          let get_data = await AffiliateInvite.findOne({affiliate_id:id, brand_id:  brand_id})
-          if(get_data){
-            let get_campaign = await Campaign.findOne({id : get_data.campaign_id})
+        if (get_user.role == "affiliate") {
+          let get_data = await AffiliateInvite.findOne({ affiliate_id: id, brand_id: brand_id })
+          if (get_data) {
+            let get_campaign = await Campaign.findOne({ id: get_data.campaign_id })
             get_user.campaign_details = get_campaign
           }
         }
-        
+
+        return response.success(get_user, constants.user.FETCHED, req, res);
+      }
+      throw constants.user.INVALID_ID;
+    } catch (error) {
+      console.log(error, '====eer')
+      return response.failed(null, `${error}`, req, res);
+    }
+  },
+  affiliateDetail: async (req, res, next) => {
+    try {
+      let id = req.param("id");
+      let brand_id = req.param("brand_id");
+      let listOfOtherUsers = [];
+      let get_user = await Users.findOne({ id: id }).populate("activeUser").populate("plan_id");
+      // console.log(get_user,'=====')
+      // return
+      if (get_user) {
+        // console.log(get_user.role);
+        if (get_user.role === "brand" || get_user.role === "affiliate") {
+          let active_user = get_user;
+          // get_user = await Users.findOne({id:get_user.addedBy,isDeleted:false});
+          //throw msg here if not exists then throw brand not exists
+          await Users.updateOne({ id: get_user.id }, { activeUser: id });
+          listOfOtherUsers = await InviteUsers.find({
+            addedBy: get_user.id,
+            isDeleted: false,
+          });
+          let current_user = {};
+
+          current_user.createdAt = get_user.createdAt;
+          current_user.updatedAt = get_user.updatedAt;
+          current_user.id = get_user.id;
+          current_user.firstName = get_user.firstName;
+          current_user.lastName = get_user.lastName;
+          current_user.email = get_user.email;
+          current_user.role = get_user.role;
+          current_user.isDeleted = get_user.isDeleted;
+          current_user.user_id = get_user.id;
+          current_user.addedBy = get_user.addedBy;
+          current_user.updatedBy = get_user.updatedBy;
+          // listOfOtherUsers.push(current_user);
+          // console.log("===========>",listOfOtherUsers);
+          get_user.listOfOtherUsers = listOfOtherUsers;
+
+          get_user.listOfOtherUsers.push(current_user);
+          // get_user.activeUser = active_user;
+        } else {
+          // listOfOtherUsers = await InviteUsers.find({addedBy:get_user.addedBy,isDeleted:false});
+          let listOfUsers = await InviteUsers.find({
+            email: get_user.email,
+            isDeleted: false,
+          });
+          // console.log(listOfUsers)
+          for (let otherUsers of listOfUsers) {
+            // console.log("=============>",otherUsers);
+            let parentUser = await Users.findOne({
+              id: otherUsers.addedBy,
+              isDeleted: false,
+            });
+            let currentparentUser = {};
+            currentparentUser.createdAt = parentUser.createdAt;
+            currentparentUser.updatedAt = parentUser.updatedAt;
+            currentparentUser.id = parentUser.id;
+            currentparentUser.firstName = parentUser.firstName;
+            currentparentUser.lastName = parentUser.lastName;
+            currentparentUser.email = parentUser.email;
+            currentparentUser.role = parentUser.role;
+            currentparentUser.isDeleted = parentUser.isDeleted;
+            currentparentUser.user_id = parentUser.id;
+            currentparentUser.addedBy = parentUser.addedBy;
+            currentparentUser.updatedBy = parentUser.updatedBy;
+
+            listOfOtherUsers.push(currentparentUser);
+          }
+
+          let current_user = {};
+
+          current_user.createdAt = get_user.createdAt;
+          current_user.updatedAt = get_user.updatedAt;
+          current_user.id = get_user.id;
+          current_user.firstName = get_user.firstName;
+          current_user.lastName = get_user.lastName;
+          current_user.email = get_user.email;
+          current_user.role = get_user.role;
+          current_user.isDeleted = get_user.isDeleted;
+          current_user.user_id = get_user.id;
+          current_user.addedBy = get_user.addedBy;
+          current_user.updatedBy = get_user.updatedBy;
+
+          get_user.listOfOtherUsers = listOfOtherUsers ? listOfOtherUsers : [];
+          // get_user.activeUser = req.identity;
+
+          get_user.listOfOtherUsers.push(current_user);
+        }
+
+        let all_category = []
+        let all_sub_category = []
+        let all_sub_child_category = []
+        if (get_user && get_user.category_id && get_user.category_id != "" && get_user.category_id.length > 0) {
+          // console.log(get_user.category_id, "---------get_user.category_id");
+          for await (let category of get_user.category_id) {
+            let get_category = await CommonCategories.findOne({
+              id: category,
+            }).select("name");
+            if (get_category) {
+              // console.log(get_category, "------------get_category");
+              // get_user.category_name = get_category.name;
+              all_category.push(get_category)
+            }
+
+          }
+        }
+        // sub category data
+
+        if (get_user && get_user.sub_category_id && get_user.sub_child_category_id.length > 0) {
+          // console.log(get_user.category_id, "---------get_user.category_id");
+          for await (let category of get_user.sub_category_id) {
+            let get_category = await CommonCategories.findOne({
+              id: category,
+            }).select("name");
+            if (get_category) {
+              // console.log(get_category, "------------get_category");
+              // get_user.category_name = get_category.name;
+              all_sub_category.push(get_category)
+            }
+
+          }
+        }
+
+        // sub child categories 
+        if (get_user && get_user.sub_child_category_id && get_user.sub_child_category_id.length > 0) {
+          // console.log(get_user.category_id, "---------get_user.category_id");
+          for await (let category of get_user.sub_child_category_id) {
+            let get_category = await SubChildCategory.findOne({
+              id: category,
+            }).select("name");
+            if (get_category) {
+              // console.log(get_category, "------------get_category");
+              // get_user.category_name = get_category.name;
+              all_sub_child_category.push(get_category)
+            }
+
+          }
+        }
+
+        get_user.all_category = all_category
+        get_user.all_sub_category = all_sub_category
+        get_user.all_sub_child_category = all_sub_child_category
+
+        if (
+          get_user &&
+          get_user.affiliate_group &&
+          get_user.affiliate_group != ""
+        ) {
+          let get_affiliate_group = await AffiliateManagement.findOne({
+            id: get_user.affiliate_group,
+          });
+          if (get_affiliate_group) {
+            // console.log(get_affiliate_group,"get_affiliate_group");
+            get_user.affiliate_group_name = get_affiliate_group.group_name;
+          }
+        }
+
+        if (
+          get_user &&
+          get_user.createdByBrand &&
+          get_user.createdByBrand != ""
+        ) {
+          let get_brand = await Users.findOne({ id: get_user.createdByBrand });
+          if (get_brand) {
+            get_user.brand_name = get_brand.fullName;
+          }
+        }
+
+        let get_tax = await Tax.findOne({ user_id: get_user.id });
+
+        if (get_tax) {
+          get_user.tax_detail = get_tax;
+        }
+
+        let permission_query = {}
+
+        if (['affiliate', 'brand', 'staff'].includes(get_user.role)) {
+          permission_query.role = get_user.role
+        } else if (['operator', 'analyzer', 'publisher', 'super_user'].includes(get_user.role)) {
+          if (get_user.addedBy) {
+            let get_account_manager_detail = await Users.findOne({ id: get_user.addedBy, isDeleted: false });
+            if (get_account_manager_detail.role) {
+              permission_query.role = get_user.role
+              permission_query.account_manager = get_account_manager_detail.role
+            }
+
+          }
+        }
+
+        if (get_user.role != "admin") {
+          let get_permission = await Permissions.findOne(permission_query);
+
+          if (get_permission) {
+            get_user.permission_detail = get_permission;
+          }
+        } else {
+          delete get_user.listOfOtherUsers
+        }
+        if (get_user.role === "admin") {
+          let balance = await Services.StripeServices.retrieve_balance()
+          get_user.stripe_account_balance = balance.available[0].amount
+          get_user.pending_balance = balance.pending[0].amount
+        }
+
+        if (get_user.role === "brand") {
+          get_user.total_campaign = await Campaign.count({ brand_id: id, isDeleted: false })
+        }
+        if (get_user.role == "affiliate") {
+          let get_data = await AffiliateInvite.findOne({ affiliate_id: id, brand_id: brand_id })
+          if (get_data) {
+            let get_campaign = await Campaign.findOne({ id: get_data.campaign_id })
+            get_user.campaign_details = get_campaign
+          }
+        }
+
         return response.success(get_user, constants.user.FETCHED, req, res);
       }
       throw constants.user.INVALID_ID;
