@@ -558,6 +558,7 @@ exports.getAllBanner = async (req, res) => {
         isDeleted: "$isDeleted",
         createdAt: "$createdAt",
         updatedAt: "$updatedAt",
+        affiliate_id:"$affiliate_id"
       },
     };
 
