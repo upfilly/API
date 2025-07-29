@@ -1127,10 +1127,14 @@ module.exports = {
         query.addedBy = new ObjectId(addedBy);
       }
 
-      if (category_id) {
-        // query.category_id = new ObjectId(category_id);
-        category_id = await Services.Utils.string_ids_toObjectIds_array(category_id);
-        query.category_id = { $in: category_id }
+      // if (category_id) {
+      //   // query.category_id = new ObjectId(category_id);
+      //   category_id = await Services.Utils.string_ids_toObjectIds_array(category_id);
+      //   query.category_id = { $in: category_id }
+      // }
+       if (category_id) {
+        category = await Services.Utils.string_to_array(category_id);
+        query.category_id = { $in: category }
       }
       if (sub_child_category_id) {
         // query.sub_child_category_id = new ObjectId(sub_child_category_id);
