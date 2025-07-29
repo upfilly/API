@@ -10,7 +10,7 @@ module.exports = {
   attributes: {
     title: { type: "string" },
     destination_url: { type: "string" },
-    affiliate_id:{model:"users"},
+    affiliate_id:{type:"string"},
     description: { type: "string" },
     seo_attributes: { type: "string" },
     access_type: { type: "string" },
