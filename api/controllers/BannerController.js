@@ -464,9 +464,10 @@ exports.getAllBanner = async (req, res) => {
 
     if (addedBy) {
       query.addedBy = new ObjectId(addedBy);
-    } else {
-      query.addedBy = new ObjectId(req.identity.id);
     }
+    //  else {
+    //   query.addedBy = new ObjectId(req.identity.id);
+    // }
 
     let sortquery = {};
     if (sortBy) {
