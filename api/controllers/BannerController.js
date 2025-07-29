@@ -410,6 +410,7 @@ exports.getAllBanner = async (req, res) => {
       category_id,
       subChildCategory,
       subCategory,
+      affiliate_id,
     } = req.query;
     let skipNo = (Number(page) - 1) * Number(count);
 
@@ -497,6 +498,10 @@ exports.getAllBanner = async (req, res) => {
       subCategory = await Services.Utils.string_ids_toObjectIds_array(subCategory);
       query.subCategory = { $in: subCategory }
     }
+    if (affiliate_id) {
+      // affiliate_id = await Services.Utils.string_ids_toObjectIds_array(affiliate_id);
+      query.affiliate_id = affiliate_id
+    }
     // Pipeline Stages
     let pipeline = [
       {
@@ -527,7 +532,36 @@ exports.getAllBanner = async (req, res) => {
           preserveNullAndEmptyArrays: true,
         },
       },
-
+      {
+        $addFields: {
+          affiliateObjectId: {
+            $cond: [
+              {
+                $and: [
+                  { $ne: ["$affiliate_id", null] },
+                  { $ne: ["$affiliate_id", ""] },
+                ],
+              },
+              { $toObjectId: "$affiliate_id" },
+              null,
+            ],
+          },
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "affiliateObjectId",
+          foreignField: "_id",
+          as: "affiliate_details",
+        },
+      },
+      {
+        $unwind: {
+          path: "$affiliate_details",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
     ];
 
     let projection = {
@@ -558,6 +592,13 @@ exports.getAllBanner = async (req, res) => {
         isDeleted: "$isDeleted",
         createdAt: "$createdAt",
         updatedAt: "$updatedAt",
+        affiliate_id: "$affiliate_id",
+        affiliate_details: {
+          id: "$affiliate_details._id",
+          name: "$affiliate_details.fullName",
+          email: "$affiliate_details.email",
+          isDeleted: "$affiliate_details.isDeleted",
+        },
       },
     };
 
