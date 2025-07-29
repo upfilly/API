@@ -83,7 +83,7 @@ exports.updateEmailSentSetting = async (req, res) => {
 
     let updateData = await EmailSentSetting.updateOne({ id: id }, req.body);
 
-      // return response.success(updateData, constants.EMAILSETTING.UPDATED, req, res);
+      return response.success(updateData, constants.EMAILSETTING.UPDATED, req, res);
       
       return res.status(200).json({
         status:true,
@@ -98,24 +98,20 @@ exports.updateEmailSentSetting = async (req, res) => {
 
 exports.getAllEmailSentSettingList = async (req, res) => {
   try {
-    // console.log('in script');
     let query = {};
     let count = req.param("count") || 10;
     let page = req.param("page") || 1;
     let {
       search,
       sortBy,
-      script_type,
       status,
       isDeleted,
-      brand_id,
-      isDefault,
     } = req.query;
 
     skipNo = Number(page - 1) * Number(count);
 
     if (search) {
-      query.$or = [{ script_content: { $regex: search, $options: "i" } }];
+      query.$or = [{ name: { $regex: search, $options: "i" } }];
     }
 
     let sortquery = {};
@@ -143,21 +139,6 @@ exports.getAllEmailSentSettingList = async (req, res) => {
       query.isDeleted = false;
     }
 
-    if (script_type) {
-      query.script_type = script_type;
-    }
-
-    if (status) {
-      query.status = status;
-    }
-
-    if (brand_id) {
-      query.brand_id = brand_id;
-    }
-    if (isDefault) {
-      query.isDefault = isDefault;
-    }
-    // console.log(query);
     let pipeline = [
       {
         $lookup: {
@@ -193,6 +174,7 @@ exports.getAllEmailSentSettingList = async (req, res) => {
       $project: {
         id: "$_id",
         name: "$name",
+        emailSent: "$emailSent",
         isDeleted: "$isDeleted",
         addedBy: "$addedBy",
         addedByDetails: {
@@ -218,14 +200,13 @@ exports.getAllEmailSentSettingList = async (req, res) => {
     pipeline.push({
       $sort: sortquery,
     });
-    // Pipeline Stages
 
     let totalresult = await db
-      .collection("script")
+      .collection("emailsentsetting")
       .aggregate(pipeline)
       .toArray();
-    // console.log(totalresult,"-------ff");
-    pipeline.push({
+
+      pipeline.push({
       $skip: Number(skipNo),
     });
     pipeline.push({
@@ -245,59 +226,49 @@ exports.getAllEmailSentSettingList = async (req, res) => {
   }
 };
 
-// exports.getById = async (req, res) => {
-//   try {
-//     const id = req.param("id");
-//     const brand_id = req.param("brand_id");
-//     if (brand_id) {
-//       let get_script = await Script.findOne({
-//         id: id,
-//         brand_id: brand_id,
-//       })
-//       if (get_script) {
-//         return response.success(get_script, constants.SCRIPT.FETCHED, req, res);
-//       } else {
-//         get_script = await Script.findOne({ isDefault: true });
-//         if (!get_script) {
-//           throw constants.SCRIPT.NO_DEFAULT_SCRIPT;
-//         }
-//         return response.success(get_script, constants.SCRIPT.FETCHED, req, res);
-//       }
-//     }
+exports.getById = async (req, res) => {
+  try {
+    const id = req.param("id");
 
-//     if (!id) {
-//       throw constants.SCRIPT.ID_REQUIRED;
-//     }
-//     const get_script = await Script.findOne({ id: id }).populate("brand_id");;
-//     if (get_script) {
-//       return response.success(get_script, constants.SCRIPT.FETCHED, req, res);
-//     }
-//     throw constants.SCRIPT.INVALID_ID;
-//   } catch (error) {
-//     return response.failed(null, `${error}`, req, res);
-//   }
-// };
+    if (!id) {
+      throw constants.EMAILSETTING.ID_REQUIRED;
+    }
+    const fetchData = await EmailSentSetting.findOne({ id: id }).populate('addedBy').populate('updatedBy');
+    if (fetchData) {
+      return response.success(fetchData, constants.EMAILSETTING.FETCHED, req, res);
+    }
+    throw constants.EMAILSETTING.ID_REQUIRED;
+  } catch (error) {
+    console.log("error",error)
+    return response.failed(null, `${error}`, req, res);
+  }
+};
 
-// exports.editScript = async (req, res) => {
-//   try {
-//     let validation_result = await Validations.ScriptValidations.editScript(
-//       req,
-//       res
-//     );
+exports.deleteEmailSent = async (req, res) => {
+    try {
+      const id = req.param("id");
 
-//     if (validation_result && !validation_result) {
-//       throw validation_result.message;
-//     }
-//     let { id } = req.body;
+      let idCheck =  await EmailSentSetting.findOne({ id: id,isDeleted:false })
+      if(!idCheck){
+         return res.status(400).json({
+          success: false,
+          error: { code: 400, message: constants.user.INVALID_ID },
+        });
+      }
+      const deletedData = await EmailSentSetting.findOneAndUpdate(idCheck._id, { isDeleted: true },{new:true});
+      return response.success(null, constants.EMAILSETTING.DELETED, req, res);
 
-//     req.identity.updatedBy = req.identity.id;
-//     let updatefeatureData = await Script.updateOne({ id: id }, req.body);
-//     if (updatefeatureData) {
-//       return response.success(null, constants.SCRIPT.UPDATED, req, res);
-//     }
-//     throw constants.SCRIPT.INVALID_ID;
-//   } catch (error) {
-//     // console.log(error, "err");
-//     return response.failed(null, `${error}`, req, res);
-//   }
-// };
+      return res.status(200).json({
+        success: true,
+        message: constants.EMAILSETTING.DELETED,
+        data:deletedData
+      });
+    } catch (err) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 400, message: "" + err },
+      });
+    }
+};
+
+
