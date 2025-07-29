@@ -1992,6 +1992,7 @@ module.exports = {
   userDetail: async (req, res, next) => {
     try {
       let id = req.param("id");
+      let brand_id = req.param("brand_id");
       let listOfOtherUsers = [];
       let get_user = await Users.findOne({ id: id }).populate("activeUser").populate("plan_id");
       // console.log(get_user,'=====')
@@ -2143,21 +2144,6 @@ module.exports = {
           }
         }
 
-        // if (get_user && get_user.parter_manager_id && get_user.parter_manager_id != "") {
-        //   let get_parter_manager = await Users.findOne({ id: get_user.parter_manager_id });
-        //   if (get_parter_manager) {
-        //     // console.log(get_affiliate_group,"get_affiliate_group");
-        //     get_user.parter_manager_name = get_parter_manager.fullName;
-        //   }
-        // }
-        // if (get_user && get_user.account_executive_id && get_user.account_executive_id != "") {
-        //   let get_account_executive = await Users.findOne({ id: get_user.account_executive_id });
-        //   if (get_account_executive) {
-        //     // console.log(get_affiliate_group,"get_affiliate_group");
-        //     get_user.account_executive_name = get_account_executive.fullName;
-        //   }
-        // }
-
         if (
           get_user &&
           get_user.createdByBrand &&
@@ -2175,28 +2161,6 @@ module.exports = {
           get_user.tax_detail = get_tax;
         }
 
-        // let get_permission = await Permissions.findOne({ role: get_user.role });
-
-        // if (get_permission) {
-        //   get_user.permission_detail = get_permission;
-
-        // }
-
-        // if (get_user) {
-        //   let get_campaign = await Campaign.find({ affiliate_id: id });
-        //   if (get_campaign) {
-        //     for await (let track of get_campaign) {
-        //       let get_track = await TrackingManagement.find({ campaign_unique_id: track.campaign_unique_id }).groupBy('campaign_unique_id');
-        //       // const groupedRecords = groupBy(get_track, 'campaign_unique_id');
-        //       console.log(get_track,"----------get_track");
-        //       // for await (let trackObj of get_track) {
-        //       //   // const uniqueObjectsById = findUniqueObjects(get_track, trackObj.campaign_unique_id);
-        //       //   // console.log(uniqueObjectsById, "----uniqueObjectsById");
-        //       // }
-        //       get_user.tracking_list = get_track;
-        //     }
-        //   }
-        // }
         let permission_query = {}
 
         if (['affiliate', 'brand', 'staff'].includes(get_user.role)) {
@@ -2230,7 +2194,14 @@ module.exports = {
         if (get_user.role === "brand") {
           get_user.total_campaign = await Campaign.count({ brand_id: id, isDeleted: false })
         }
-
+        if(get_user.role == "affiliate"){
+          let get_data = await AffiliateInvite.findOne({affiliate_id:id, brand_id:  brand_id})
+          if(get_data){
+            let get_campaign = await Campaign.findOne({id : get_data.campaign_id})
+            get_user.campaign_details = get_campaign
+          }
+        }
+        
         return response.success(get_user, constants.user.FETCHED, req, res);
       }
       throw constants.user.INVALID_ID;
