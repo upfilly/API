@@ -415,9 +415,7 @@ exports.getAllBanner = async (req, res) => {
     let skipNo = (Number(page) - 1) * Number(count);
 
     if (search) {
-      search = Services.Utils.remove_special_char_exept_underscores(
-        search
-      );
+      search = Services.Utils.remove_special_char_exept_underscores(search);
       query.$or = [
         { title: { $regex: search, $options: "i" } },
         { destination_url: { $regex: search, $options: "i" } },
@@ -600,9 +598,35 @@ exports.getAllBanner = async (req, res) => {
           email: "$affiliate_details.email",
           isDeleted: "$affiliate_details.isDeleted",
         },
+       isExpired: "$isExpired",  
       },
     };
-
+    pipeline.push({ $addFields: {
+        isExpired: {
+          $cond: [
+            {
+              $and: [
+                { $ne: ["$expiration_date", null] },
+                { $lt: ["$expiration_date", new Date()] },
+              ],
+            },
+            true,
+            false,
+          ],
+        },
+        status: {
+          $cond: [
+            {
+              $and: [
+                { $ne: ["$expiration_date", null] },
+                { $lt: ["$expiration_date", new Date()] },
+              ],
+            },
+            "deactive", 
+            "$status",
+          ],
+        },
+      },})
     pipeline.push(projection);
     pipeline.push({
       $match: query,
