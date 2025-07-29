@@ -1992,7 +1992,7 @@ module.exports = {
   userDetail: async (req, res, next) => {
     try {
       let id = req.param("id");
-      let brand_id = req.param("brand_id");
+      
       let listOfOtherUsers = [];
       let get_user = await Users.findOne({ id: id }).populate("activeUser").populate("plan_id");
       // console.log(get_user,'=====')
@@ -2194,13 +2194,13 @@ module.exports = {
         if (get_user.role === "brand") {
           get_user.total_campaign = await Campaign.count({ brand_id: id, isDeleted: false })
         }
-        if (get_user.role == "affiliate") {
-          let get_data = await AffiliateInvite.findOne({ affiliate_id: id, brand_id: brand_id })
-          if (get_data) {
-            let get_campaign = await Campaign.findOne({ id: get_data.campaign_id })
-            get_user.campaign_details = get_campaign
-          }
-        }
+        // if (get_user.role == "affiliate") {
+        //   let get_data = await AffiliateInvite.findOne({ affiliate_id: id, brand_id: brand_id })
+        //   if (get_data) {
+        //     let get_campaign = await Campaign.findOne({ id: get_data.campaign_id })
+        //     get_user.campaign_details = get_campaign
+        //   }
+        // }
 
         return response.success(get_user, constants.user.FETCHED, req, res);
       }
