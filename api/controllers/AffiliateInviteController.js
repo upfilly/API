@@ -14,6 +14,13 @@ const Validations = require("../Validations/AffiliateInviteValidations.js");
 const response = require("../services/Response");
 const Emails = require("../Emails/index");
 
+const emailCheck = async () => {
+   let emailSentCheck = await EmailSentSetting.findOne({
+              name: "affiliate invite",
+              isDeleted: false,
+            });
+return emailSentCheck
+}
 module.exports = {
   addInvite: async (req, res) => {
     try {
@@ -111,12 +118,8 @@ module.exports = {
               brand_name: brand_detail.fullName,
               affiliate_name: affiliateInfo.fullName,
             };
-            let emailSentCheck = await EmailSentSetting.findOne({
-              name: "affiliate invite",
-              isDeleted: false,
-            });
-
-            if (emailSentCheck.emailSent == true) {
+           const exist = emailCheck()
+            if (exist.emailSent) {
               Emails.OnboardingEmails.send_mail_to_affiliate(emailpayload);
             }
           }
