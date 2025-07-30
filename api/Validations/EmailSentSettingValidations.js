@@ -11,7 +11,7 @@ exports.addEmailSentSetting = async (req, res, next) => {
 exports.editEmailSentSetting = async (req, res, next) => {
     const schema = Joi.object({
         id: Joi.string().required(),
-        name: Joi.string().optional().allow(""),
+        name: Joi.string().optional(),
         emailSent: Joi.boolean().optional(),
         isDeleted: Joi.boolean().optional()
     });

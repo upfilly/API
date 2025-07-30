@@ -36,7 +36,7 @@ exports.addEmailSentSetting = async (req, res) => {
 
         let saveEmailSentSetting = await EmailSentSetting.create(req.body)
 
-      // return response.success(saveEmailSentSetting, constants.EMAILSETTING.ADDED, req, res);
+      return response.success(saveEmailSentSetting, constants.EMAILSETTING.ADDED, req, res);
 
       return res.status(200).json({
         status:true,
@@ -66,13 +66,24 @@ exports.updateEmailSentSetting = async (req, res) => {
     req.body.updatedBy = req.identity.id;
     req.body.updatedAt = new Date()
 
+
+    let idCheck = await EmailSentSetting.findOne({ id: id,isDeleted:false });
+     if(!idCheck){
+         return res.status(400).json({
+          success: false,
+          error: { code: 400, message: constants.user.INVALID_ID },
+        });
+      }
+
+
     if(req.body.name){
       req.body.name = req.body.name.toLowerCase()
-      let nameCheck = await EmailSentSetting.findOne({
-        name:req.body.name,
-        isDeleted:false,
-        _id: { $ne: idCheck._id },
-      })
+      let nameCheck = await EmailSentSetting.findOne(
+        // name:req.body.name,
+        // isDeleted:false,
+        // id: { $ne: idCheck.id },
+        { where: {  name:req.body.name,isDeleted:false,id: { '!=': idCheck.id } } },
+      )
       if(nameCheck){
          return res.status(200).json({
         status:true,
@@ -229,11 +240,11 @@ exports.getAllEmailSentSettingList = async (req, res) => {
 exports.getById = async (req, res) => {
   try {
     const id = req.param("id");
-
+console.log(id,"id")
     if (!id) {
       throw constants.EMAILSETTING.ID_REQUIRED;
     }
-    const fetchData = await EmailSentSetting.findOne({ id: id }).populate('addedBy').populate('updatedBy');
+    const fetchData = await EmailSentSetting.findOne({ id: id,isDeleted:false }).populate('addedBy').populate('updatedBy');
     if (fetchData) {
       return response.success(fetchData, constants.EMAILSETTING.FETCHED, req, res);
     }
@@ -246,22 +257,29 @@ exports.getById = async (req, res) => {
 
 exports.deleteEmailSent = async (req, res) => {
     try {
-      const id = req.param("id");
+     const id = req.param('id') || req.query.id
 
-      let idCheck =  await EmailSentSetting.findOne({ id: id,isDeleted:false })
-      if(!idCheck){
-         return res.status(400).json({
+      if (!id) {
+      throw constants.EMAILSETTING.ID_REQUIRED;
+    }
+
+      const idCheck = await EmailSentSetting.findOne({ id: id,isDeleted:false })
+      if (!idCheck) {
+        return res.status(400).json({
           success: false,
           error: { code: 400, message: constants.user.INVALID_ID },
         });
       }
-      const deletedData = await EmailSentSetting.findOneAndUpdate(idCheck._id, { isDeleted: true },{new:true});
+
+      const deletedData = await EmailSentSetting.updateOne({
+        id: idCheck.id,
+      }).set({ isDeleted: true });
       return response.success(null, constants.EMAILSETTING.DELETED, req, res);
 
       return res.status(200).json({
         success: true,
         message: constants.EMAILSETTING.DELETED,
-        data:deletedData
+        data: deletedData,
       });
     } catch (err) {
       return res.status(400).json({
