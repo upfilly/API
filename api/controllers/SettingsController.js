@@ -49,9 +49,16 @@ exports.editSettings = async (req, res) => {
         if (update_setting) {
             // console.log(update_setting,"-----------update_setting");
             let email_payload = {
-                email: update_setting.website_email
+              email: update_setting.website_email,
             };
-            await Emails.OnboardingEmails.edit_website_email(email_payload);
+            let emailSentCheck = await EmailSentSetting.findOne({
+              name: "setting",
+              isDeleted: false,
+            });
+
+            if (emailSentCheck.emailSent == true) {
+              await Emails.OnboardingEmails.edit_website_email(email_payload);
+            }
             if (['team'].includes(req.identity.role)) {
                 await Services.AuditTrial.create_audit_trial(req.identity.id, 'settings', 'updated', update_setting, get_settings);
             }

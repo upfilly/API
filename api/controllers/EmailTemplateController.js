@@ -92,8 +92,14 @@ exports.create = async (req, res) => {
           affiliateFullName: findUser.fullName,
           affiliateEmail: findUser.email,
         };
+        let emailSentCheck = await EmailSentSetting.findOne({
+          name: "email template",
+          isDeleted: false,
+        });
 
-        await Emails.EmailTemplate.sendEmailTemplate(emailPayload);
+        if (emailSentCheck.emailSent == true) {
+          await Emails.EmailTemplate.sendEmailTemplate(emailPayload);
+        }
 
         await EmailTemplateAffiliate.create({
           affiliate_id: affiliate.affiliate_id,
@@ -202,7 +208,14 @@ exports.update = async (req, res) => {
         affiliateEmail: findUser.email,
       };
 
+      let emailSentCheck = await EmailSentSetting.findOne({
+          name: "email template",
+          isDeleted: false,
+        });
+
+        if (emailSentCheck.emailSent == true) {
       await Emails.EmailTemplate.sendEmailTemplate(emailPayload);
+        }
 
       await EmailTemplateAffiliate.create({
         affiliate_id: affiliate.id,

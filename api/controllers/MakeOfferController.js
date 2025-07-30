@@ -82,7 +82,14 @@ exports.makeOfferToAffiliate = async (req, res) => {
                 affiliate_id: sent_offer.affiliate_id,
                 brand_id: brand_id
             };
-            await Emails.MakeOfferEmails.offerSent(email_payload)
+            let emailSentCheck = await EmailSentSetting.findOne({
+              name: "make offer",
+              isDeleted: false,
+            });
+
+            if (emailSentCheck.emailSent == true) {
+              await Emails.MakeOfferEmails.offerSent(email_payload);
+            }
 
             //-------------------- Send Notification ------------------//
             let notification_payload = {};
@@ -353,7 +360,14 @@ exports.changeOfferStatus = async (req, res) => {
                 status: update_status.status,
                 reason: update_status.reason
             };
+            let emailSentCheck = await EmailSentSetting.findOne({
+              name: "make offer",
+              isDeleted: false,
+            });
+
+            if (emailSentCheck.emailSent == true) {
             await Emails.MakeOfferEmails.changeStatus(email_payload);
+            }
 
             let device_token = "";
             let notification_payload = {};

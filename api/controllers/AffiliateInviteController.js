@@ -7,7 +7,7 @@
 
 const constants = require("../../config/constants").constants;
 const db = sails.getDatastore().manager;
-const  ObjectId = require("mongodb").ObjectId;
+const ObjectId = require("mongodb").ObjectId;
 const Services = require("../services/index");
 const Joi = require("joi");
 const Validations = require("../Validations/AffiliateInviteValidations.js");
@@ -15,7 +15,6 @@ const response = require("../services/Response");
 const Emails = require("../Emails/index");
 
 module.exports = {
-
   addInvite: async (req, res) => {
     try {
       let validation_result = await Validations.addinvite(req, res);
@@ -33,37 +32,40 @@ module.exports = {
         brand_id: data.brand_id,
         isDeleted: false,
       });
-      
+
       if (result.length === 0) {
         let brand_detail = await Users.findOne({
           id: data.brand_id,
           isDeleted: false,
         });
-        let associations = await Promise.all(data.affiliate_id.map((affiliate_id) => {
-          return BrandAffiliateAssociation.create({
-            campaign_id: data.campaign_id,
-            affiliate_id: affiliate_id,
-            brand_id: data.brand_id, 
-            addedBy: req.identity.id,
-            source: "invite"
-          }).fetch();
-        }));
+        let associations = await Promise.all(
+          data.affiliate_id.map((affiliate_id) => {
+            return BrandAffiliateAssociation.create({
+              campaign_id: data.campaign_id,
+              affiliate_id: affiliate_id,
+              brand_id: data.brand_id,
+              addedBy: req.identity.id,
+              source: "invite",
+            }).fetch();
+          })
+        );
 
         let mp = new Map();
 
-        for(let i = 0;i < associations.length; i++) {
-          mp[associations[i].affiliate_id.toString()] = associations[i].id.toString();  
+        for (let i = 0; i < associations.length; i++) {
+          mp[associations[i].affiliate_id.toString()] =
+            associations[i].id.toString();
         }
 
         for await (let affiliate_id of data.affiliate_id) {
           let result1 = await AffiliateInvite.create({
-            affiliate_id: affiliate_id,                                                                                                                                                                                                                                                                                        
+            affiliate_id: affiliate_id,
             message: data.message,
             campaign_id: data.campaign_id,
             brand_id: data.brand_id,
             tags: data.tags,
             addedBy: data.addedBy,
-            association: mp[affiliate_id]
+            association: mp[affiliate_id],
           }).fetch();
 
           // await AffiliateBrandInvite.create({
@@ -73,19 +75,33 @@ module.exports = {
           // });
 
           if (result1) {
-            
-            if (['operator', 'super_user'].includes(req.identity.role)) {
-              let get_account_manager = await Users.findOne({ addedBy: req.identity.id, isDeleted: false })
-              await Services.activityHistoryServices.create_activity_history(req.identity.id, 'affiliate_invite', 'created', result1, result1, get_account_manager.id ? get_account_manager.id : null)
+            if (["operator", "super_user"].includes(req.identity.role)) {
+              let get_account_manager = await Users.findOne({
+                addedBy: req.identity.id,
+                isDeleted: false,
+              });
+              await Services.activityHistoryServices.create_activity_history(
+                req.identity.id,
+                "affiliate_invite",
+                "created",
+                result1,
+                result1,
+                get_account_manager.id ? get_account_manager.id : null
+              );
+            } else if (["brand"].includes(req.identity.role)) {
+              let get_all_admin =
+                await Services.UserServices.get_users_with_role(["admin"]);
+              let get_account_manager = get_all_admin[0].id;
+              await Services.activityHistoryServices.create_activity_history(
+                req.identity.id,
+                "affiliate_invite",
+                "created",
+                result1,
+                result1,
+                get_account_manager ? get_account_manager.id : null
+              );
+            }
 
-          } else if (['brand'].includes(req.identity.role)) {
-
-              let get_all_admin = await Services.UserServices.get_users_with_role(["admin"])
-              let get_account_manager = get_all_admin[0].id
-              await Services.activityHistoryServices.create_activity_history(req.identity.id, 'affiliate_invite', 'created', result1, result1, get_account_manager ? get_account_manager.id : null)
-          }
-
-            
             let affiliateInfo = await Users.findOne({
               id: result1.affiliate_id,
               isDeleted: false,
@@ -95,10 +111,17 @@ module.exports = {
               brand_name: brand_detail.fullName,
               affiliate_name: affiliateInfo.fullName,
             };
-            Emails.OnboardingEmails.send_mail_to_affiliate(emailpayload);
+            let emailSentCheck = await EmailSentSetting.findOne({
+              name: "affiliate invite",
+              isDeleted: false,
+            });
+
+            if (emailSentCheck.emailSent == true) {
+              Emails.OnboardingEmails.send_mail_to_affiliate(emailpayload);
+            }
           }
         }
-        
+
         return response.success(
           null,
           constants.AFFILIATEINVITE.ADDED,
@@ -128,7 +151,7 @@ module.exports = {
         .populate("affiliate_id")
         .populate("addedBy")
         .populate("campaign_id")
-        .populate('brand_id');
+        .populate("brand_id");
       if (result) {
         return response.success(
           result,
@@ -172,12 +195,25 @@ module.exports = {
   deleteInvite: async (req, res) => {
     try {
       let { id } = req.query;
-      let existingInvite = await AffiliateInvite({id: id, isDeleted: false, status: 'pending'}); //assuming only pending invitation can be deleted
-      if(!existingInvite) {
-        return response.failed(null, constants.AFFILIATEINVITE.INVALID_ID, req, res);
+      let existingInvite = await AffiliateInvite({
+        id: id,
+        isDeleted: false,
+        status: "pending",
+      }); //assuming only pending invitation can be deleted
+      if (!existingInvite) {
+        return response.failed(
+          null,
+          constants.AFFILIATEINVITE.INVALID_ID,
+          req,
+          res
+        );
       }
-      let result = await AffiliateInvite.updateOne({ id: id }).set({ isDeleted: true });
-      await BrandAffiliateAssociation.updateOne({id: result.association}).set({isDeleted: true, isActive: false, isDefault: false});
+      let result = await AffiliateInvite.updateOne({ id: id }).set({
+        isDeleted: true,
+      });
+      await BrandAffiliateAssociation.updateOne({ id: result.association }).set(
+        { isDeleted: true, isActive: false, isDefault: false }
+      );
       if (result) {
         return response.success(
           null,
@@ -195,15 +231,14 @@ module.exports = {
 
   getAllInviteDetails: async (req, res) => {
     try {
-      let { search, sortBy, status, addedBy, brand_id, affiliate_id } = req.query;
+      let { search, sortBy, status, addedBy, brand_id, affiliate_id } =
+        req.query;
       let page = req.param("page") || 1;
       let count = req.param("count") || 10;
 
       var query = {};
       if (search) {
-        search = Services.Utils.remove_special_char_exept_underscores(
-          search
-        );
+        search = Services.Utils.remove_special_char_exept_underscores(search);
         query.$or = [
           { "affiliate_details.fullName": { $regex: search, $options: "i" } },
           { "addedBy_details.fullName": { $regex: search, $options: "i" } },
@@ -367,7 +402,11 @@ module.exports = {
 
       let { id } = req.body;
 
-      let data = await AffiliateInvite.findOne({ id: id, isDeleted: false, status: "pending" });
+      let data = await AffiliateInvite.findOne({
+        id: id,
+        isDeleted: false,
+        status: "pending",
+      });
       if (!data) {
         throw constants.AFFILIATEINVITE.INVALID_ID;
       }
@@ -377,14 +416,23 @@ module.exports = {
       }
 
       req.body.updatedBy = req.identity.id;
-      let update_status = await AffiliateInvite.updateOne({ id: req.body.id }).set(req.body);
-      if(req.body.status === 'accepted') {
-        await BrandAffiliateAssociation.update({brand_id: data.brand_id, affiliate_id: data.affiliate_id}).set({isActive: false});
-        await BrandAffiliateAssociation.updateOne({id: update_status.association}).set({status: 'accepted', isActive: true});
+      let update_status = await AffiliateInvite.updateOne({
+        id: req.body.id,
+      }).set(req.body);
+      if (req.body.status === "accepted") {
+        await BrandAffiliateAssociation.update({
+          brand_id: data.brand_id,
+          affiliate_id: data.affiliate_id,
+        }).set({ isActive: false });
+        await BrandAffiliateAssociation.updateOne({
+          id: update_status.association,
+        }).set({ status: "accepted", isActive: true });
       } else {
-        await BrandAffiliateAssociation.updateOne({id: update_status.association}).set({status: 'rejected', isActive: false});
+        await BrandAffiliateAssociation.updateOne({
+          id: update_status.association,
+        }).set({ status: "rejected", isActive: false });
       }
-      
+
       if (update_status.addedBy) {
         let data1 = await Users.findOne({
           id: update_status.addedBy,
@@ -396,9 +444,17 @@ module.exports = {
             reason: update_status.reason,
             email: data1.email,
           };
-          Emails.OnboardingEmails.change_status_affiliateInvite(
-            email_payload
-          );
+          let emailSentCheck = await EmailSentSetting.findOne({
+            name: "affiliate invite",
+            isDeleted: false,
+          });
+
+          if (emailSentCheck.emailSent == true) {
+            Emails.OnboardingEmails.change_status_affiliateInvite(
+              email_payload
+            );
+          }
+
           return response.success(
             null,
             constants.AFFILIATEINVITE.STATUS_UPDATE,

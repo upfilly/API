@@ -1165,15 +1165,22 @@ exports.changeCampaignStatus = async (req, res) => {
             // await PublicCampaigns.create({ affiliate_id: req.identity.id, campaign_id: get_campaign.id, brand_id: get_campaign.addedBy, addedBy: req.identity.id });
             //Email to brand when status of a campaign changes
             let email_payload = {
-                affiliate_id: req.body.affiliate_id,
-                brand_id: get_campaign.brand_id,
-                status: req.body.status,
-                reason: req.body.reason ? req.body.reason : "",
+              affiliate_id: req.body.affiliate_id,
+              brand_id: get_campaign.brand_id,
+              status: req.body.status,
+              reason: req.body.reason ? req.body.reason : "",
             };
-            await Emails.CampaignEmails.changeStatus(email_payload);
+            let emailSentCheck = await EmailSentSetting.findOne({
+              name: "campaigns",
+              isDeleted: false,
+            });
+
+            if (emailSentCheck.emailSent == true) {
+              await Emails.CampaignEmails.changeStatus(email_payload);
+            }
 
             let notification_payload = {};
-            notification_payload.type = "campaign"
+            notification_payload.type = "campaign";
             notification_payload.addedBy = req.identity.id;
             notification_payload.title = `Campaign ${Services.Utils.title_case(get_campaign.status)} | ${Services.Utils.title_case(get_campaign.campaign_id.name)} | ${req.identity.fullName}`;
             notification_payload.message = `Your campaign request is ${Services.Utils.title_case(req.body.status)}`;

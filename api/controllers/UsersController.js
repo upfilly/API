@@ -530,11 +530,19 @@ module.exports = {
             );
           }
         }
-        await Emails.OnboardingEmails.userVerifyLink({
-          email: add_user.email,
-          fullName: add_user.fullName,
-          id: add_user.id,
+        
+        let emailSentCheck = await EmailSentSetting.findOne({
+          name: "users",
+          isDeleted: false,
         });
+
+        if (emailSentCheck.emailSent == true) {
+          await Emails.OnboardingEmails.userVerifyLink({
+            email: add_user.email,
+            fullName: add_user.fullName,
+            id: add_user.id,
+          });
+        }
 
         return response.success(
           add_user,
@@ -968,11 +976,19 @@ module.exports = {
             { id: get_user.id },
             { verificationCode: get_otp, last_vc_updated_at: new Date() }
           );
-          await Emails.OnboardingEmails.send_verification_code_for_mobile({
-            email: get_user.email,
-            id: get_user.id,
-            verificationCode: get_otp,
+          let emailSentCheck = await EmailSentSetting.findOne({
+            name: "users",
+            isDeleted: false,
           });
+
+          if (emailSentCheck.emailSent == true) {
+            await Emails.OnboardingEmails.send_verification_code_for_mobile({
+              email: get_user.email,
+              id: get_user.id,
+              verificationCode: get_otp,
+            });
+          }
+          
 
           return response.success(null, constants.user.OPT_SENT, req, res);
         }
@@ -2477,7 +2493,14 @@ module.exports = {
           id: update_user.id,
           time: currentTime.toISOString(),
         };
-        await Emails.OnboardingEmails.forgotPasswordEmail(email_payload);
+         let emailSentCheck = await EmailSentSetting.findOne({
+           name: "users",
+           isDeleted: false,
+         });
+
+         if (emailSentCheck.emailSent == true) {
+           await Emails.OnboardingEmails.forgotPasswordEmail(email_payload);
+         }
 
         return response.success(
           null,
@@ -2533,7 +2556,14 @@ module.exports = {
           id: update_user.id,
           time: currentTime.toISOString(),
         };
+         let emailSentCheck = await EmailSentSetting.findOne({
+           name: "users",
+           isDeleted: false,
+         });
+
+         if (emailSentCheck.emailSent == true) {
         await Emails.OnboardingEmails.forgotPasswordEmail(email_payload);
+         }
 
         return response.success(
           null,
@@ -2687,11 +2717,19 @@ module.exports = {
 
       if (get_user) {
         if (get_user.isVerified == "N") {
-          await Emails.OnboardingEmails.userVerifyLink({
-            email: get_user.email,
-            fullName: get_user.fullName,
-            id: get_user.id,
+          let emailSentCheck = await EmailSentSetting.findOne({
+            name: "users",
+            isDeleted: false,
           });
+
+          if (emailSentCheck.emailSent == true) {
+            await Emails.OnboardingEmails.userVerifyLink({
+              email: get_user.email,
+              fullName: get_user.fullName,
+              id: get_user.id,
+            });
+          }
+          
         } else {
           throw constants.user.ALREADY_VERIFIED;
         }
@@ -2878,11 +2916,19 @@ module.exports = {
         let update_tax = await Tax.updateOne({ user_id: id }, tax_payload);
 
         if (req.body.updated_password) {
-          await Emails.OnboardingEmails.update_password_by_admin({
+          let emailSentCheck = await EmailSentSetting.findOne({
+            name: "users",
+            isDeleted: false,
+          });
+
+          if (emailSentCheck.emailSent == true) {
+            await Emails.OnboardingEmails.update_password_by_admin({
             email: get_user.email,
             updated_password: req.body.updated_password,
             fullName: get_user.fullName,
           });
+          }
+          
         }
 
         // if (["brand", "affiliate"].includes(req.identity.role)) {
@@ -3102,7 +3148,15 @@ module.exports = {
             id: newUser.id,
             added_by: req.identity.id,
           };
-          await Emails.OnboardingEmails.add_user_email(email_payload);
+          
+          let emailSentCheck = await EmailSentSetting.findOne({
+            name: "user",
+            isDeleted: false,
+          });
+
+          if (emailSentCheck.emailSent == true) {
+            await Emails.OnboardingEmails.add_user_email(email_payload);
+          }
         }
 
         if (
@@ -3118,7 +3172,14 @@ module.exports = {
             id: newUser.id,
             added_by: req.identity.id,
           };
+          let emailSentCheck = await EmailSentSetting.findOne({
+            name: "user",
+            isDeleted: false,
+          });
+
+          if (emailSentCheck.emailSent == true) {
           await Emails.OnboardingEmails.add_user_email(email_payload_new);
+          }
         }
 
         return response.success(newUser, constants.user.USER_ADD, req, res);
@@ -4199,9 +4260,20 @@ module.exports = {
                                                 password: password,
                                                 user_id: create_users.id,
                                               };
-                                              await Emails.OnboardingEmails.add_user_email(
+                                              let emailSentCheck =
+                                                await EmailSentSetting.findOne({
+                                                  name: "user",
+                                                  isDeleted: false,
+                                                });
+
+                                              if (
+                                                emailSentCheck.emailSent == true
+                                              ) {
+                                                await Emails.OnboardingEmails.add_user_email(
                                                 email_payload
                                               );
+                                              }
+                                             
                                             }
                                             imported++;
                                           }
@@ -5149,8 +5221,15 @@ module.exports = {
           reason: updateStatus.reason,
           status: updateStatus.request_status,
         };
+        let emailSentCheck = await EmailSentSetting.findOne({
+          name: "user",
+          isDeleted: false,
+        });
 
+        if (emailSentCheck.emailSent == true) {
         await Emails.OnboardingEmails.changeRequestStatus(email_payload);
+        }
+
         if (status === 'accepted') {
           //get all public campaigns on the platform and send requests to this affiliate for them
           let allPublicCampaigns = await Campaign.find({ isDeleted: false, access_type: "public" });

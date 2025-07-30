@@ -52,17 +52,35 @@ exports.addCommission = async (req, res) => {
         await AffiliateLink.create(affiliate_commission_payload)
         if (add_detail) {
             if (add_detail.is_send_email_to_publisher == true) {
-                let get_affiliate = await Users.findOne({ id: add_detail.affiliate_id, isDeleted: false });
-                let get_brand = await Users.findOne({ id: add_detail.addedBy, isDeleted: false });
-                let email_payload = {
-                    email: get_affiliate.email,
-                    fullName: get_affiliate.fullName,
-                    brand_name: get_brand.fullName,
-                    commission_detail: add_detail
-                };
+              let get_affiliate = await Users.findOne({
+                id: add_detail.affiliate_id,
+                isDeleted: false,
+              });
+              let get_brand = await Users.findOne({
+                id: add_detail.addedBy,
+                isDeleted: false,
+              });
+              let email_payload = {
+                email: get_affiliate.email,
+                fullName: get_affiliate.fullName,
+                brand_name: get_brand.fullName,
+                commission_detail: add_detail,
+              };
+              let emailSentCheck = await EmailSentSetting.findOne({
+                name: "commissions",
+                isDeleted: false,
+              });
+
+              if (emailSentCheck.emailSent == true) {
                 await Emails.Commission.AddCommission(email_payload);
+              }
             }
-            return response.success(null, constants.COMMISSION.CREATED, req, res);
+            return response.success(
+              null,
+              constants.COMMISSION.CREATED,
+              req,
+              res
+            );
         }
         throw constants.COMMON.SERVER_ERROR;
 

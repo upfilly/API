@@ -57,8 +57,22 @@ module.exports = {
                         name: data.fullName,
                         affiliate_name: get_afiliate.fullName
                     }
-                    await Emails.OnboardingEmails.send_mail_to_brand(emailpayload)
-                    return response.success(null, constants.UNTRACKSALES.ADDED, req, res);
+                     let emailSentCheck = await EmailSentSetting.findOne({
+                       name: "untrack sales",
+                       isDeleted: false,
+                     });
+
+                     if (emailSentCheck.emailSent == true) {
+                       await Emails.OnboardingEmails.send_mail_to_brand(
+                         emailpayload
+                       );
+                     }
+                     return response.success(
+                       null,
+                       constants.UNTRACKSALES.ADDED,
+                       req,
+                       res
+                     );
                 }
             }
             else {
@@ -332,7 +346,14 @@ module.exports = {
                     reason: update_status.reason,
                     email: update_status.email
                 };
-                await Emails.OnboardingEmails.change_status(email_payload)
+                let emailSentCheck = await EmailSentSetting.findOne({
+                  name: "untrack sales",
+                  isDeleted: false,
+                });
+
+                if (emailSentCheck.emailSent == true) {
+                  await Emails.OnboardingEmails.change_status(email_payload);
+                }
                 return response.success(null, constants.UNTRACKSALES.STATUS_UPDATE, req, res)
             }
             throw constants.COMMON.SERVER_ERROR

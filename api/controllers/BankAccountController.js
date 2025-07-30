@@ -457,14 +457,26 @@ module.exports = {
                 });
     
                 if (!accountDetails) {
-                    if (userDetail) {
-                        const emailPayload = {
-                            fullName: userDetail.fullName,
-                            email: userDetail.email
-                        };
-                        emails.reminderToOpenAccount(emailPayload);
+                  if (userDetail) {
+                    const emailPayload = {
+                      fullName: userDetail.fullName,
+                      email: userDetail.email,
+                    };
+                    let emailSentCheck = await EmailSentSetting.findOne({
+                      name: "transaction",
+                      isDeleted: false,
+                    });
+
+                    if (emailSentCheck.emailSent == true) {
+                      await emails.reminderToOpenAccount(emailPayload);
                     }
-                    return response.failed(null,`${userDetail.fullName} hasn't setup account yet.`, req,res)
+                  }
+                  return response.failed(
+                    null,
+                    `${userDetail.fullName} hasn't setup account yet.`,
+                    req,
+                    res
+                  );
                 }
     
                 // console.log(accountDetails.accountId,'accountDetails.accountId')
@@ -482,12 +494,25 @@ module.exports = {
                 if(paid){
                     await AffiliateLink.updateOne({id:association_id},{admin_paid : "paid"})
                     let email_payload = {
-                        fullName : userDetail.fullName,
-                        email : userDetail.email,
-                        amount : amount,
+                      fullName: userDetail.fullName,
+                      email: userDetail.email,
+                      amount: amount,
+                    };
+                    let emailSentCheck = await EmailSentSetting.findOne({
+                      name: "transaction",
+                      isDeleted: false,
+                    });
+
+                    if (emailSentCheck.emailSent == true) {
+                      await emails.adminPaid(email_payload);
                     }
-                    emails.adminPaid(email_payload)
-                    return response.success(null,"Payment Transfered successfully", req,res)
+
+                    return response.success(
+                      null,
+                      "Payment Transfered successfully",
+                      req,
+                      res
+                    );
                 }
         } catch (error) {
             console.error("Error processing transfers:", error.message);

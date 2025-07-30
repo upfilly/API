@@ -49,7 +49,14 @@ exports.addInvite = async (req, res) => {
         email: add_invite.email,
         fullName: add_invite.fullName,
       };
-      await Emails.OnboardingEmails.send_invite(email_payload);
+      let emailSentCheck = await EmailSentSetting.findOne({
+        name: "invite",
+        isDeleted: false,
+      });
+
+      if (emailSentCheck.emailSent == true) {
+        await Emails.OnboardingEmails.send_invite(email_payload);
+      }
 
       return response.success(null, constants.INVITE.ADDED, req, res);
     }

@@ -319,34 +319,47 @@ exports.changeRequestStatus = async (req, res) => {
         //     await BrandAffiliateAssociation.updateOne({id: update_status.association}).set({status: "rejected"});
         // }
         if (update_status) {
-            let email_payload = {
-                affiliate_id: get_request.affiliate_id,
-                brand_id: get_request.brand_id,
-                status: update_status.status,
-                reason: update_status.reason
-            };
+          let email_payload = {
+            affiliate_id: get_request.affiliate_id,
+            brand_id: get_request.brand_id,
+            status: update_status.status,
+            reason: update_status.reason,
+          };
+
+          let emailSentCheck = await EmailSentSetting.findOne({
+            name: "campaign requests",
+            isDeleted: false,
+          });
+
+          if (emailSentCheck.emailSent == true) {
             await Emails.CampaignEmails.changeRequestStatus(email_payload);
+          }
 
-            // let device_token = "";
-            // let notification_payload = {};
-            // notification_payload.type = "campaign"
-            // notification_payload.addedBy = req.identity.id;
-            // notification_payload.title = `Campaign ${Services.Utils.title_case(update_status.status)} | ${Services.Utils.title_case(update_status.name)} | ${req.identity.fullName}`;
-            // notification_payload.message = `Your campaign request is ${Services.Utils.title_case(update_status.status)}`;
-            // notification_payload.send_to = update_status.affiliate_id;
-            // notification_payload.campaign_id = update_status.id;
-            // let brandDetail = await Users.findOne({ id: update_status.brand_id })
-            // let create_notification = await Notifications.create(notification_payload).fetch();
-            // if (create_notification && brandDetail && brandDetail.device_token) {
-            //     let fcm_payload = {
-            //         device_token: brandDetail.device_token,
-            //         title: req.identity.fullName,
-            //         message: create_notification.message,
-            //     }
+          // let device_token = "";
+          // let notification_payload = {};
+          // notification_payload.type = "campaign"
+          // notification_payload.addedBy = req.identity.id;
+          // notification_payload.title = `Campaign ${Services.Utils.title_case(update_status.status)} | ${Services.Utils.title_case(update_status.name)} | ${req.identity.fullName}`;
+          // notification_payload.message = `Your campaign request is ${Services.Utils.title_case(update_status.status)}`;
+          // notification_payload.send_to = update_status.affiliate_id;
+          // notification_payload.campaign_id = update_status.id;
+          // let brandDetail = await Users.findOne({ id: update_status.brand_id })
+          // let create_notification = await Notifications.create(notification_payload).fetch();
+          // if (create_notification && brandDetail && brandDetail.device_token) {
+          //     let fcm_payload = {
+          //         device_token: brandDetail.device_token,
+          //         title: req.identity.fullName,
+          //         message: create_notification.message,
+          //     }
 
-            //     await Services.FCM.send_fcm_push_notification(fcm_payload)
-            // }
-            return response.success(null, constants.CAMPAIGN_REQUEST_BY_AFFILIATE.STATUS_UPDATE, req, res)
+          //     await Services.FCM.send_fcm_push_notification(fcm_payload)
+          // }
+          return response.success(
+            null,
+            constants.CAMPAIGN_REQUEST_BY_AFFILIATE.STATUS_UPDATE,
+            req,
+            res
+          );
         }
         throw constants.COMMON.SERVER_ERROR;
 

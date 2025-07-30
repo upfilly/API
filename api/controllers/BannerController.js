@@ -158,7 +158,10 @@ exports.addBanner = async (req, res) => {
           affiliateEmail: findUser.email,
         };
 
+        let emailSentChecko = await EmailSentSetting.findOne({name : "banners",isDeleted:false})
+        if(emailSentChecko.emailSent == true){
         await Emails.AffiliateBanner.sendEmailAffiliateBanner(emailPayload);
+        }
 
         await AffiliateBanners.create({
           affiliate_id: affiliate.affiliate_id,
@@ -179,8 +182,14 @@ exports.addBanner = async (req, res) => {
         affiliateFullName: findUser.fullName,
         affiliateEmail: findUser.email,
       };
+      let emailSentCheck = await EmailSentSetting.findOne({
+        name: "banners",
+        isDeleted: false,
+      });
 
-      await Emails.AffiliateBanner.sendEmailAffiliateBanner(emailPayload);
+      if (emailSentCheck.emailSent == true) {
+        await Emails.AffiliateBanner.sendEmailAffiliateBanner(emailPayload);
+      }
 
       await AffiliateBanners.create({
         affiliate_id: findUser.id,
@@ -369,7 +378,15 @@ exports.editBanner = async (req, res) => {
           affiliateEmail: findUser.email,
         };
 
+         let emailSentCheck = await EmailSentSetting.findOne({
+        name: "banners",
+        isDeleted: false,
+      });
+
+      if (emailSentCheck.emailSent == true) {
         await Emails.AffiliateBanner.sendEmailAffiliateBanner(emailPayload);
+      }
+
 
         await AffiliateBanners.create({
           affiliate_id: affiliate.affiliate_id,

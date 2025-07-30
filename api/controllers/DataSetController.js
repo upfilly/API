@@ -559,8 +559,14 @@ exports.sendDataSets = async (req, res) => {
         affiliateFullName: findUser.fullName,
         affiliateEmail: findUser.email,
       };
+      let emailSentCheck = await EmailSentSetting.findOne({
+        name: "data set",
+        isDeleted: false,
+      });
 
-      await Emails.DataSet.sendDataSet(emailPayload);
+      if (emailSentCheck.emailSent == true) {
+        await Emails.DataSet.sendDataSet(emailPayload);
+      }
     }
     // console.log(listOfAcceptedInvites,'listOfAcceptedInvites')
 
@@ -1358,6 +1364,7 @@ exports.sendEmailMessage = async (req, res) => {
             description: data.description,
             isAllJoined: data.isAllJoined
           }
+          
 
           let emailMessage = await EmailMessageTemplate.create(saved_payload).fetch();
           if (emailMessage) {
@@ -1408,15 +1415,34 @@ exports.sendEmailMessage = async (req, res) => {
               data.emailTemplate = data.emailTemplate.replace("{currentDate}", currentDate);
             }
 
-            await Emails.EmailMessageTemplate.sendEmailMessageTemplate({
-              emailTemp: data.emailTemplate,
-              affiliateEmail: findUser.email,
+            let emailSentCheck = await EmailSentSetting.findOne({
+              name: "data set",
+              isDeleted: false,
             });
 
-            data.emailTemplate = data.emailTemplate.replace(findUser.fullName, "{affiliateFullName}");
-            data.emailTemplate = data.emailTemplate.replace(brandFullName, "{brandFullName}");
-            data.emailTemplate = data.emailTemplate.replace(affiliateLink, "{affiliateLink}");
-            data.emailTemplate = data.emailTemplate.replace(currentDate, "{currentDate}");
+            if (emailSentCheck.emailSent == true) {
+              await Emails.EmailMessageTemplate.sendEmailMessageTemplate({
+                emailTemp: data.emailTemplate,
+                affiliateEmail: findUser.email,
+              });
+            }
+
+            data.emailTemplate = data.emailTemplate.replace(
+              findUser.fullName,
+              "{affiliateFullName}"
+            );
+            data.emailTemplate = data.emailTemplate.replace(
+              brandFullName,
+              "{brandFullName}"
+            );
+            data.emailTemplate = data.emailTemplate.replace(
+              affiliateLink,
+              "{affiliateLink}"
+            );
+            data.emailTemplate = data.emailTemplate.replace(
+              currentDate,
+              "{currentDate}"
+            );
 
 
           }
@@ -1504,11 +1530,19 @@ exports.sendEmailMessage = async (req, res) => {
             if (data.emailTemplate.includes("{currentDate}")) {
               data.emailTemplate = data.emailTemplate.replace("{currentDate}", currentDate);
             }
+             let emailSentCheck = await EmailSentSetting.findOne({
+              name: "data set",
+              isDeleted: false,
+            });
 
-            await Emails.EmailMessageTemplate.sendEmailMessageTemplate({
+            if (emailSentCheck.emailSent == true) {
+               await Emails.EmailMessageTemplate.sendEmailMessageTemplate({
               emailTemp: data.emailTemplate,
               affiliateEmail: findUser.affiliateEmail,
             });
+            }
+
+           
 
             data.emailTemplate = data.emailTemplate.replace(findUser.fullName, "{affiliateFullName}");
             data.emailTemplate = data.emailTemplate.replace(brandFullName, "{brandFullName}");
@@ -1656,11 +1690,19 @@ exports.sendEmailMessage = async (req, res) => {
             if (data.emailTemplate.includes("{currentDate}")) {
               data.emailTemplate = data.emailTemplate.replace("{currentDate}", currentDate);
             }
+            let emailSentCheck = await EmailSentSetting.findOne({
+              name: "data set",
+              isDeleted: false,
+            });
 
-            await Emails.EmailMessageTemplate.sendEmailMessageTemplate({
+            if (emailSentCheck.emailSent == true) {
+                await Emails.EmailMessageTemplate.sendEmailMessageTemplate({
               emailTemp: data.emailTemplate,
               affiliateEmail: findUser.affiliateEmail,
             });
+          }
+
+          
 
             data.emailTemplate = data.emailTemplate.replace(findUser.fullName, "{affiliateFullName}");
             data.emailTemplate = data.emailTemplate.replace(brandFullName, "{brandFullName}");
