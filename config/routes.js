@@ -613,6 +613,21 @@ module.exports.routes = {
   "post /transfer/payment" : "BankAccountController.transferPayment",
 
   // new api which take only link
-  "get /link/:link" : "CookiesController.getLink"
+  "get /link/:link" : "CookiesController.getLink",
+
+
+  /**
+   * @EmailSentSettingController
+   */
+  "post /email/setting/add" : "EmailSentSettingController.addEmailSentSetting",
+  "put /email/setting/update" : "EmailSentSettingController.updateEmailSentSetting",
+  "get /email/setting/list" : "EmailSentSettingController.getAllEmailSentSettingList",
+  "get /email/setting/detail" : "EmailSentSettingController.getById",
+  "delete /email/setting/delete" : "EmailSentSettingController.deleteEmailSent"
+
+
+
+
+  
 
 };   

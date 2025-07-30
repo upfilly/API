@@ -354,6 +354,17 @@ module.exports.constants = {
     FETCHED_ALL: "Discount fetched successfully",
     ALREADY_EXIST: "Same discount already exists",
   },
+   EMAILSETTING: {
+    ADDED: "Module added successfully.",
+    UPDATED: "Email sent setting updated successfully",
+    INVALID_ID: "Invaild Id",
+    FETCHED: "Data fetched successfully",
+    ID_REQUIRED: "Id is required",
+    DELETED: "Email sent setting deleted successfully",
+    FETCHED_ALL: "Discount fetched successfully",
+    ALREADY_EXIST: "This Email sent setting already exists",
+    NAME:"Name alredy exist"
+  },
 
   CONTENT_MANAGEMENT: {
     ADDED: "Content added successfully",
