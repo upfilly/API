@@ -12,7 +12,7 @@ exports.editEmailSentSetting = async (req, res, next) => {
     const schema = Joi.object({
         id: Joi.string().required(),
         name: Joi.string().optional(),
-        emailSent: Joi.boolean().optional(),
+        emailSent: Joi.boolean().required(),
         isDeleted: Joi.boolean().optional()
     });
     return await Validate(schema, req, res);
