@@ -559,14 +559,8 @@ exports.sendDataSets = async (req, res) => {
         affiliateFullName: findUser.fullName,
         affiliateEmail: findUser.email,
       };
-      let emailSentCheck = await EmailSentSetting.findOne({
-        name: "data set",
-        isDeleted: false,
-      });
-
-      if (emailSentCheck.emailSent == true) {
+     
         await Emails.DataSet.sendDataSet(emailPayload);
-      }
     }
     // console.log(listOfAcceptedInvites,'listOfAcceptedInvites')
 
@@ -1303,7 +1297,8 @@ exports.sendEmailMessage = async (req, res) => {
     const brandId = req.identity.id;
     const brandFullName = req.identity.fullName;
 
-    if (data.isAllJoined && !data.acceptedDate) { // All Joined filter
+    if (data.isAllJoined && !data.acceptedDate) {
+      // All Joined filter
 
       query1 = {
         addedBy: req.identity.id,
@@ -1324,7 +1319,7 @@ exports.sendEmailMessage = async (req, res) => {
         brand_id: req.identity.id,
         status: "accepted",
         isDeleted: false,
-        isActive: true
+        isActive: true,
       });
       let listOfAcceptedInvites = BrandAffiliateAssociations;
 
@@ -1354,22 +1349,32 @@ exports.sendEmailMessage = async (req, res) => {
           isDeleted: false,
         });
         if (findUser) {
-
           data.addedBy = req.identity.id;
-          data.affiliate_id = findUser.id
+          data.affiliate_id = findUser.id;
           let saved_payload = {
             addedBy: req.identity.id,
             affiliate_id: findUser.id,
             title: data.title,
             description: data.description,
-            isAllJoined: data.isAllJoined
-          }
-          
+            isAllJoined: data.isAllJoined,
+          };
 
-          let emailMessage = await EmailMessageTemplate.create(saved_payload).fetch();
+          let emailMessage = await EmailMessageTemplate.create(
+            saved_payload
+          ).fetch();
           if (emailMessage) {
-            if (['operator', 'analyzer', 'publisher', 'customer'].includes(req.identity.role)) {
-              await Services.activityHistoryServices.create_activity_history(req.identity.id, 'emailmessagetemplate', 'created', emailMessage, emailMessage)
+            if (
+              ["operator", "analyzer", "publisher", "customer"].includes(
+                req.identity.role
+              )
+            ) {
+              await Services.activityHistoryServices.create_activity_history(
+                req.identity.id,
+                "emailmessagetemplate",
+                "created",
+                emailMessage,
+                emailMessage
+              );
             }
           }
 
@@ -1381,7 +1386,6 @@ exports.sendEmailMessage = async (req, res) => {
           // const dd = String(now.getDate()).padStart(2, '0');
           // const yyyy = String(now.getFullYear());
           // const currentDate = `${mm}/${dd}/${yyyy}`;
-
 
           // const brandId = req.identity.id;
           const affiliateId = findUser.id;
@@ -1398,25 +1402,35 @@ exports.sendEmailMessage = async (req, res) => {
           // };
 
           if (data.emailTemplate) {
-
             if (data.emailTemplate.includes("{affiliateFullName}")) {
-              data.emailTemplate = data.emailTemplate.replace("{affiliateFullName}", findUser.fullName);
+              data.emailTemplate = data.emailTemplate.replace(
+                "{affiliateFullName}",
+                findUser.fullName
+              );
             }
 
             if (data.emailTemplate.includes("{brandFullName}")) {
-              data.emailTemplate = data.emailTemplate.replace("{brandFullName}", brandFullName);
+              data.emailTemplate = data.emailTemplate.replace(
+                "{brandFullName}",
+                brandFullName
+              );
             }
 
             if (data.emailTemplate.includes("{affiliateLink}")) {
-              data.emailTemplate = data.emailTemplate.replace("{affiliateLink}", affiliateLink);
+              data.emailTemplate = data.emailTemplate.replace(
+                "{affiliateLink}",
+                affiliateLink
+              );
             }
 
             if (data.emailTemplate.includes("{currentDate}")) {
-              data.emailTemplate = data.emailTemplate.replace("{currentDate}", currentDate);
+              data.emailTemplate = data.emailTemplate.replace(
+                "{currentDate}",
+                currentDate
+              );
             }
-
             let emailSentCheck = await EmailSentSetting.findOne({
-              name: "data set",
+              name: "newsletter",
               isDeleted: false,
             });
 
@@ -1425,7 +1439,10 @@ exports.sendEmailMessage = async (req, res) => {
                 emailTemp: data.emailTemplate,
                 affiliateEmail: findUser.email,
               });
+            } else {
+              console.log("emailSent is false in newsletter");
             }
+           
 
             data.emailTemplate = data.emailTemplate.replace(
               findUser.fullName,
@@ -1443,8 +1460,6 @@ exports.sendEmailMessage = async (req, res) => {
               currentDate,
               "{currentDate}"
             );
-
-
           }
         }
       }
@@ -1487,8 +1502,10 @@ exports.sendEmailMessage = async (req, res) => {
       listOfAcceptedInvites = removeDuplicates(combinedList, "affiliate_id");
 
       for (let invites of listOfAcceptedInvites) {
-
-        let findUser = await Users.findOne({ id: invites.affiliate_id, isDeleted: false }); ///status: data.affiliateStatus,
+        let findUser = await Users.findOne({
+          id: invites.affiliate_id,
+          isDeleted: false,
+        }); ///status: data.affiliateStatus,
         if (findUser) {
           // const now = new Date();
           // const mm = String(now.getMonth() + 1).padStart(2, '0');
@@ -1496,13 +1513,10 @@ exports.sendEmailMessage = async (req, res) => {
           // const yyyy = String(now.getFullYear());
           // const currentDate = `${mm}/${dd}/${yyyy}`;
 
-
           // const brandId = req.identity.id;
           const affiliateId = findUser.id;
 
           const affiliateLink = `${req.identity.website}?brand_id=${brandId}&affiliate_id=${affiliateId}`;
-
-
 
           // let emailPayload = {
           //   brand_id: req.identity.id,
@@ -1514,40 +1528,63 @@ exports.sendEmailMessage = async (req, res) => {
           // };
 
           if (data.emailTemplate) {
-
             if (data.emailTemplate.includes("{affiliateFullName}")) {
-              data.emailTemplate = data.emailTemplate.replace("{affiliateFullName}", findUser.fullName);
+              data.emailTemplate = data.emailTemplate.replace(
+                "{affiliateFullName}",
+                findUser.fullName
+              );
             }
 
             if (data.emailTemplate.includes("{brandFullName}")) {
-              data.emailTemplate = data.emailTemplate.replace("{brandFullName}", brandFullName);
+              data.emailTemplate = data.emailTemplate.replace(
+                "{brandFullName}",
+                brandFullName
+              );
             }
 
             if (data.emailTemplate.includes("{affiliateLink}")) {
-              data.emailTemplate = data.emailTemplate.replace("{affiliateLink}", affiliateLink);
+              data.emailTemplate = data.emailTemplate.replace(
+                "{affiliateLink}",
+                affiliateLink
+              );
             }
 
             if (data.emailTemplate.includes("{currentDate}")) {
-              data.emailTemplate = data.emailTemplate.replace("{currentDate}", currentDate);
+              data.emailTemplate = data.emailTemplate.replace(
+                "{currentDate}",
+                currentDate
+              );
             }
              let emailSentCheck = await EmailSentSetting.findOne({
-              name: "data set",
+              name: "newsletter",
               isDeleted: false,
             });
 
             if (emailSentCheck.emailSent == true) {
-               await Emails.EmailMessageTemplate.sendEmailMessageTemplate({
+              await Emails.EmailMessageTemplate.sendEmailMessageTemplate({
               emailTemp: data.emailTemplate,
               affiliateEmail: findUser.affiliateEmail,
             });
+            } else {
+              console.log("emailSent is false in newsletter");
             }
 
-           
-
-            data.emailTemplate = data.emailTemplate.replace(findUser.fullName, "{affiliateFullName}");
-            data.emailTemplate = data.emailTemplate.replace(brandFullName, "{brandFullName}");
-            data.emailTemplate = data.emailTemplate.replace(affiliateLink, "{affiliateLink}");
-            data.emailTemplate = data.emailTemplate.replace(currentDate, "{currentDate}");
+            data.emailTemplate = data.emailTemplate.replace(
+              findUser.fullName,
+              "{affiliateFullName}"
+            );
+            data.emailTemplate = data.emailTemplate.replace(
+              brandFullName,
+              "{brandFullName}"
+            );
+            data.emailTemplate = data.emailTemplate.replace(
+              affiliateLink,
+              "{affiliateLink}"
+            );
+            data.emailTemplate = data.emailTemplate.replace(
+              currentDate,
+              "{currentDate}"
+            );
           }
         }
       }
@@ -1690,19 +1727,22 @@ exports.sendEmailMessage = async (req, res) => {
             if (data.emailTemplate.includes("{currentDate}")) {
               data.emailTemplate = data.emailTemplate.replace("{currentDate}", currentDate);
             }
+
             let emailSentCheck = await EmailSentSetting.findOne({
-              name: "data set",
+              name: "newsletter",
               isDeleted: false,
             });
 
             if (emailSentCheck.emailSent == true) {
-                await Emails.EmailMessageTemplate.sendEmailMessageTemplate({
+               await Emails.EmailMessageTemplate.sendEmailMessageTemplate({
               emailTemp: data.emailTemplate,
               affiliateEmail: findUser.affiliateEmail,
             });
-          }
-
-          
+            } else {
+              console.log("emailSent is false in newletter");
+            }
+            
+               
 
             data.emailTemplate = data.emailTemplate.replace(findUser.fullName, "{affiliateFullName}");
             data.emailTemplate = data.emailTemplate.replace(brandFullName, "{brandFullName}");

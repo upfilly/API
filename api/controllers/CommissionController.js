@@ -67,12 +67,14 @@ exports.addCommission = async (req, res) => {
                 commission_detail: add_detail,
               };
               let emailSentCheck = await EmailSentSetting.findOne({
-                name: "commissions",
+                name: "manual commission",
                 isDeleted: false,
               });
 
               if (emailSentCheck.emailSent == true) {
                 await Emails.Commission.AddCommission(email_payload);
+              }else{
+                console.log("emailSent setting is false in manual commission")
               }
             }
             return response.success(

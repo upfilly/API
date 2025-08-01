@@ -1177,6 +1177,8 @@ exports.changeCampaignStatus = async (req, res) => {
 
             if (emailSentCheck.emailSent == true) {
               await Emails.CampaignEmails.changeStatus(email_payload);
+            }else{
+                console.log("emailSent setting is false in campaign")
             }
 
             let notification_payload = {};

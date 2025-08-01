@@ -326,14 +326,7 @@ exports.changeRequestStatus = async (req, res) => {
             reason: update_status.reason,
           };
 
-          let emailSentCheck = await EmailSentSetting.findOne({
-            name: "campaign requests",
-            isDeleted: false,
-          });
-
-          if (emailSentCheck.emailSent == true) {
             await Emails.CampaignEmails.changeRequestStatus(email_payload);
-          }
 
           // let device_token = "";
           // let notification_payload = {};

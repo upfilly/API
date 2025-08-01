@@ -83,12 +83,14 @@ exports.makeOfferToAffiliate = async (req, res) => {
                 brand_id: brand_id
             };
             let emailSentCheck = await EmailSentSetting.findOne({
-              name: "make offer",
+              name: "offers",
               isDeleted: false,
             });
 
             if (emailSentCheck.emailSent == true) {
               await Emails.MakeOfferEmails.offerSent(email_payload);
+            }else{
+                console.log("offers emailSent is false")
             }
 
             //-------------------- Send Notification ------------------//
@@ -118,6 +120,7 @@ exports.makeOfferToAffiliate = async (req, res) => {
         throw constants.COMMON.SERVER_ERROR;
 
     } catch (error) {
+        console.log("err",error)
         return response.failed(null, `${error}`, req, res);
     }
 };
@@ -361,12 +364,14 @@ exports.changeOfferStatus = async (req, res) => {
                 reason: update_status.reason
             };
             let emailSentCheck = await EmailSentSetting.findOne({
-              name: "make offer",
+              name: "offers",
               isDeleted: false,
             });
 
             if (emailSentCheck.emailSent == true) {
             await Emails.MakeOfferEmails.changeStatus(email_payload);
+            }else{
+                console.log("emailSent setting is false")
             }
 
             let device_token = "";

@@ -158,9 +158,11 @@ exports.addBanner = async (req, res) => {
           affiliateEmail: findUser.email,
         };
 
-        let emailSentChecko = await EmailSentSetting.findOne({name : "banners",isDeleted:false})
-        if(emailSentChecko.emailSent == true){
+        let emailSentCheck = await EmailSentSetting.findOne({name : "banner",isDeleted:false})
+        if(emailSentCheck.emailSent == true){
         await Emails.AffiliateBanner.sendEmailAffiliateBanner(emailPayload);
+        }else{
+          console.log("emailSent setting is false in banner")
         }
 
         await AffiliateBanners.create({
@@ -183,12 +185,14 @@ exports.addBanner = async (req, res) => {
         affiliateEmail: findUser.email,
       };
       let emailSentCheck = await EmailSentSetting.findOne({
-        name: "banners",
+        name: "banner",
         isDeleted: false,
       });
 
       if (emailSentCheck.emailSent == true) {
         await Emails.AffiliateBanner.sendEmailAffiliateBanner(emailPayload);
+      }else{
+        console.log("emailSent setting is false in add banner")
       }
 
       await AffiliateBanners.create({
@@ -379,12 +383,14 @@ exports.editBanner = async (req, res) => {
         };
 
          let emailSentCheck = await EmailSentSetting.findOne({
-        name: "banners",
+        name: "banner",
         isDeleted: false,
       });
 
       if (emailSentCheck.emailSent == true) {
         await Emails.AffiliateBanner.sendEmailAffiliateBanner(emailPayload);
+      }else{
+        console.log("emailSent setting is false in edit banner")
       }
 
 

@@ -110,10 +110,8 @@ module.exports = {
 
   registerBrandWithPlan: async (req, res) => {
     try {
-      let validation_result = await Validations.UserValidations.registerBrandWithPlan(
-        req,
-        res
-      );
+      let validation_result =
+        await Validations.UserValidations.registerBrandWithPlan(req, res);
 
       if (validation_result && !validation_result.success) {
         throw validation_result.message;
@@ -128,11 +126,18 @@ module.exports = {
         interval: req.body.interval,
         interval_count: req.body.interval_count,
         isSpecial: req.body.isSpecial,
-        promoId: req.body.promoId
+        promoId: req.body.promoId,
       };
-      ['plan_id', 'special_plan_id', 'network_plan_amount', 'managed_services_plan_amount',
-        'interval', 'interval_count', 'isSpecial', 'promoId'
-      ].forEach(e => delete req.body[e]);
+      [
+        "plan_id",
+        "special_plan_id",
+        "network_plan_amount",
+        "managed_services_plan_amount",
+        "interval",
+        "interval_count",
+        "isSpecial",
+        "promoId",
+      ].forEach((e) => delete req.body[e]);
       if (req.body.firstName) {
         req.body.firstName = firstName.toLowerCase();
       }
@@ -208,7 +213,11 @@ module.exports = {
 
         //Create checkout link for this brand
 
-        var find_plan = await SubscriptionPlans.findOne({ id: data.plan_id, isDeleted: false, status: "active" });
+        var find_plan = await SubscriptionPlans.findOne({
+          id: data.plan_id,
+          isDeleted: false,
+          status: "active",
+        });
         //   if (req.body.promoId) {
         //     let findPromo = await db.promocode.findOne({
         //       coupon_stripe_code: req.body.promoId,isDeleted:false
@@ -221,50 +230,86 @@ module.exports = {
         //     }
         //   }
         if (!find_plan) {
-          return res.status(404).json({ message: "Plan not found!", success: false });
+          return res
+            .status(404)
+            .json({ message: "Plan not found!", success: false });
         }
 
+        if (
+          data.network_plan_amount === 0 &&
+          data.managed_services_plan_amount === 0
+        ) {
+          let get_existing_subscription = await Subscriptions.findOne({
+            user_id: add_user.id,
+            status: "active",
+          });
 
-        if (data.network_plan_amount === 0 && data.managed_services_plan_amount === 0) {
-          let get_existing_subscription = await Subscriptions.findOne({ user_id: add_user.id, status: "active" });
-
-          if (get_existing_subscription && get_existing_subscription.stripe_subscription_id) {
-
-            let get_stripe_existing_subscription = await Services.StripeServices.retrieve_subscrition({
-              stripe_subscription_id: get_existing_subscription.stripe_subscription_id
-            })
+          if (
+            get_existing_subscription &&
+            get_existing_subscription.stripe_subscription_id
+          ) {
+            let get_stripe_existing_subscription =
+              await Services.StripeServices.retrieve_subscrition({
+                stripe_subscription_id:
+                  get_existing_subscription.stripe_subscription_id,
+              });
 
             if (get_stripe_existing_subscription) {
-              let delete_old_subscription = await Services.StripeServices.delete_subscription({
-                stripe_subscription_id: get_existing_subscription.stripe_subscription_id
-              })
+              let delete_old_subscription =
+                await Services.StripeServices.delete_subscription({
+                  stripe_subscription_id:
+                    get_existing_subscription.stripe_subscription_id,
+                });
 
-              if (delete_old_subscription && delete_old_subscription.status == "canceled") {
+              if (
+                delete_old_subscription &&
+                delete_old_subscription.status == "canceled"
+              ) {
                 let updated_payload = {
-                  status: "cancelled"
-                }
+                  status: "cancelled",
+                };
                 if (get_existing_subscription.valid_upto >= new Date()) {
-                  updated_payload.status = "inactive"
+                  updated_payload.status = "inactive";
                 }
 
-                let updateSubscription = await Subscriptions.updateOne({ id: get_existing_subscription.id }, updated_payload);
+                let updateSubscription = await Subscriptions.updateOne(
+                  { id: get_existing_subscription.id },
+                  updated_payload
+                );
 
-                if (updateSubscription && (updateSubscription.status == "cancelled" || updateSubscription.status == "inactive")) {
-                  await Users.updateOne({ id: add_user.id }).set({ plan_id: null, special_plan_id: null, isPayment: false });
+                if (
+                  updateSubscription &&
+                  (updateSubscription.status == "cancelled" ||
+                    updateSubscription.status == "inactive")
+                ) {
+                  await Users.updateOne({ id: add_user.id }).set({
+                    plan_id: null,
+                    special_plan_id: null,
+                    isPayment: false,
+                  });
                 }
               }
             }
           } else if (get_existing_subscription) {
             //cancel existing subscription
-            let updateSubscription = await Subscriptions.updateOne({ id: get_existing_subscription.id, status: "active" }).set({ status: "cancelled" });
-            await Users.updateOne({ id: add_user.id }).set({ plan_id: null, special_plan_id: null, isPayment: false });
+            let updateSubscription = await Subscriptions.updateOne({
+              id: get_existing_subscription.id,
+              status: "active",
+            }).set({ status: "cancelled" });
+            await Users.updateOne({ id: add_user.id }).set({
+              plan_id: null,
+              special_plan_id: null,
+              isPayment: false,
+            });
           }
           let currentDate = new Date();
-          currentDate.setDate(currentDate.getDate() + Number(data.interval_count) * 30);
+          currentDate.setDate(
+            currentDate.getDate() + Number(data.interval_count) * 30
+          );
           //set current subscription as active
           let subscriptionPayload = {
             user_id: add_user.id,
-            stripe_subscription_id: '',
+            stripe_subscription_id: "",
             subscription_plan_id: data.plan_id,
             status: "active",
             amount: 0,
@@ -275,14 +320,16 @@ module.exports = {
             valid_upto: currentDate,
             special_plan_id: null,
             addedBy: add_user.id,
-            updatedBy: add_user.id
-          }
+            updatedBy: add_user.id,
+          };
           // console.log(subscriptionPayload);
-          let subscription = await Subscriptions.create(subscriptionPayload).fetch();
+          let subscription = await Subscriptions.create(
+            subscriptionPayload
+          ).fetch();
           let user = await Users.updateOne({ id: add_user.id }).set({
             plan_id: subscription.subscription_plan_id,
             special_plan_id: subscription.special_plan_id,
-            isPayment: true
+            isPayment: true,
           });
           return res.status(200).json({
             success: true,
@@ -292,7 +339,7 @@ module.exports = {
         }
 
         let product1 = await stripe.products.create({
-          name: find_plan.name
+          name: find_plan.name,
         });
 
         let price1 = await stripe.prices.create({
@@ -302,13 +349,16 @@ module.exports = {
           recurring: {
             interval: "month",
             interval_count: data.interval_count ? data.interval_count : 1,
-          }
+          },
         });
 
         if (req.body.isSpecial == true) {
-          let special_plan = await SubscriptionPlans.findOne({ id: data.special_plan_id, isDeleted: false });
+          let special_plan = await SubscriptionPlans.findOne({
+            id: data.special_plan_id,
+            isDeleted: false,
+          });
           let product2 = await stripe.products.create({
-            name: special_plan?.name
+            name: special_plan?.name,
           });
 
           let price2 = await stripe.prices.create({
@@ -331,7 +381,7 @@ module.exports = {
             {
               price: price2.id ? price2.id : "",
               quantity: 1,
-            }
+            },
           ];
           // console.log(
           //   find_plan.id,
@@ -364,7 +414,7 @@ module.exports = {
                 managed_services_plan_amount: data.managed_services_plan_amount,
                 interval_count: data.interval_count,
                 interval: data.interval,
-                promoId: data.promoId ? data.promoId : ""
+                promoId: data.promoId ? data.promoId : "",
               },
             },
             discounts: data.promoId ? [{ coupon: data.promoId }] : [],
@@ -392,13 +442,14 @@ module.exports = {
             });
           }
         } else {
-
-          let get_admin = await Services.UserServices.get_users_with_role(["admin"]);
+          let get_admin = await Services.UserServices.get_users_with_role([
+            "admin",
+          ]);
           let line_items = [
             {
               price: price1.id ? price1.id : "",
-              quantity: 1
-            }
+              quantity: 1,
+            },
           ];
           let create_session = await Services.StripeServices.one_time_payment({
             line_items: line_items,
@@ -410,7 +461,7 @@ module.exports = {
               network_plan_amount: data.network_plan_amount,
               managed_services_plan_amount: 0,
               interval_count: data.interval_count,
-              promoId: data.promoId ? data.promoId : ""
+              promoId: data.promoId ? data.promoId : "",
             },
             subscription_data: {
               metadata: {
@@ -424,7 +475,7 @@ module.exports = {
                 promoId: data.promoId ? data.promoId : "",
               },
             },
-            discounts: data.promoId ? [{ coupon: data.promoId }] : []
+            discounts: data.promoId ? [{ coupon: data.promoId }] : [],
             // trial_period_days: find_plan.trial_period_days
             //   ? find_plan.trial_period_days
             //   : 0,
@@ -530,19 +581,12 @@ module.exports = {
             );
           }
         }
-        
-        let emailSentCheck = await EmailSentSetting.findOne({
-          name: "users",
-          isDeleted: false,
-        });
 
-        if (emailSentCheck.emailSent == true) {
-          await Emails.OnboardingEmails.userVerifyLink({
-            email: add_user.email,
-            fullName: add_user.fullName,
-            id: add_user.id,
-          });
-        }
+        await Emails.OnboardingEmails.userVerifyLink({
+          email: add_user.email,
+          fullName: add_user.fullName,
+          id: add_user.id,
+        });
 
         return response.success(
           add_user,
@@ -715,7 +759,7 @@ module.exports = {
               "publisher",
               "users",
               "super_user",
-              "staff"
+              "staff",
             ],
           },
         },
@@ -737,7 +781,7 @@ module.exports = {
               "publisher",
               "users",
               "super_user",
-              "staff"
+              "staff",
             ],
           },
         },
@@ -850,19 +894,23 @@ module.exports = {
       delete user.stripe_customer_id;
       delete user.status;
 
-      let permission_query = {}
+      let permission_query = {};
 
-      if (['affiliate', 'brand', 'staff'].includes(user.role)) {
-        permission_query.role = user.role
-      } else if (['operator', 'analyzer', 'publisher', 'super_user'].includes(user.role)) {
+      if (["affiliate", "brand", "staff"].includes(user.role)) {
+        permission_query.role = user.role;
+      } else if (
+        ["operator", "analyzer", "publisher", "super_user"].includes(user.role)
+      ) {
         // console.log(user, "==user");
         if (user.addedBy.id) {
-          let get_account_manager_detail = await Users.findOne({ id: user.addedBy.id, isDeleted: false });
+          let get_account_manager_detail = await Users.findOne({
+            id: user.addedBy.id,
+            isDeleted: false,
+          });
           if (get_account_manager_detail.role) {
-            permission_query.role = user.role
-            permission_query.account_manager = get_account_manager_detail.role
+            permission_query.role = user.role;
+            permission_query.account_manager = get_account_manager_detail.role;
           }
-
         }
       }
 
@@ -976,19 +1024,12 @@ module.exports = {
             { id: get_user.id },
             { verificationCode: get_otp, last_vc_updated_at: new Date() }
           );
-          let emailSentCheck = await EmailSentSetting.findOne({
-            name: "users",
-            isDeleted: false,
-          });
 
-          if (emailSentCheck.emailSent == true) {
-            await Emails.OnboardingEmails.send_verification_code_for_mobile({
-              email: get_user.email,
-              id: get_user.id,
-              verificationCode: get_otp,
-            });
-          }
-          
+          await Emails.OnboardingEmails.send_verification_code_for_mobile({
+            email: get_user.email,
+            id: get_user.id,
+            verificationCode: get_otp,
+          });
 
           return response.success(null, constants.user.OPT_SENT, req, res);
         }
@@ -1065,9 +1106,7 @@ module.exports = {
       let query = { isDeleted: false };
 
       if (search) {
-        search = Services.Utils.remove_special_char_exept_underscores(
-          search
-        );
+        search = Services.Utils.remove_special_char_exept_underscores(search);
         query.$or = [
           { fullName: { $regex: search, $options: "i" } },
           { email: { $regex: search, $options: "i" } },
@@ -1099,7 +1138,6 @@ module.exports = {
         query.status = status;
       }
 
-
       // if(campaign){
       //   query.campaign  = new ObjectId(campaign)
       // }
@@ -1118,21 +1156,15 @@ module.exports = {
       }
 
       if (isDeleted) {
-        query.isDeleted = isDeleted === 'true'
-          ? true
-          : false;
+        query.isDeleted = isDeleted === "true" ? true : false;
       }
 
       if (isTrusted) {
-        query.isTrusted = isTrusted === "true"
-          ? true
-          : false;
+        query.isTrusted = isTrusted === "true" ? true : false;
       }
 
       if (isFeatured) {
-        query.isFeatured = isFeatured === "true"
-          ? true
-          : false;
+        query.isFeatured = isFeatured === "true" ? true : false;
       }
 
       if (createBybrand_id) {
@@ -1148,25 +1180,30 @@ module.exports = {
       //   category_id = await Services.Utils.string_ids_toObjectIds_array(category_id);
       //   query.category_id = { $in: category_id }
       // }
-       if (category_id) {
+      if (category_id) {
         category = await Services.Utils.string_to_array(category_id);
-        query.category_id = { $in: category }
+        query.category_id = { $in: category };
       }
       if (sub_child_category_id) {
         // query.sub_child_category_id = new ObjectId(sub_child_category_id);
 
-        sub_child_category_id = await Services.Utils.string_ids_toObjectIds_array(sub_child_category_id);
-        query.sub_child_category_id = { $in: sub_child_category_id }
+        sub_child_category_id =
+          await Services.Utils.string_ids_toObjectIds_array(
+            sub_child_category_id
+          );
+        query.sub_child_category_id = { $in: sub_child_category_id };
       }
       if (sub_category_id) {
         // query.sub_category_id = new ObjectId(sub_category_id);
-        sub_category_id = await Services.Utils.string_ids_toObjectIds_array(sub_category_id);
-        query.sub_category_id = { $in: sub_category_id }
+        sub_category_id = await Services.Utils.string_ids_toObjectIds_array(
+          sub_category_id
+        );
+        query.sub_category_id = { $in: sub_category_id };
       }
 
       if (cat_type) {
         cat_type = await Services.Utils.string_to_array(cat_type);
-        query.cat_type = { $in: cat_type }
+        query.cat_type = { $in: cat_type };
       }
 
       if (start_date && end_date) {
@@ -1177,7 +1214,7 @@ module.exports = {
 
         query.$and = [
           { createdAt: { $gte: date } },
-          { createdAt: { $lte: endDate } }
+          { createdAt: { $lte: endDate } },
         ];
       }
 
@@ -1229,7 +1266,7 @@ module.exports = {
               affiliate_id: "$_id",
               isDeleted: false,
               addedBy: new ObjectId(req.identity.id),
-              brand_id: new ObjectId(req.identity.id)
+              brand_id: new ObjectId(req.identity.id),
             },
             // let: { user_id: "$req.identity.id", fav_user_id: new ObjectId("64d076e86ecebee01af09d8c") },
             pipeline: [
@@ -1240,7 +1277,7 @@ module.exports = {
                       { $eq: ["$addedBy", "$$addedBy"] },
                       { $eq: ["$isDeleted", "$$isDeleted"] },
                       { $eq: ["$affiliate_id", "$$affiliate_id"] },
-                      { $eq: ["$brand_id", "$$brand_id"] }
+                      { $eq: ["$brand_id", "$$brand_id"] },
                     ],
                   },
                 },
@@ -1254,19 +1291,20 @@ module.exports = {
             path: "$invite_affiliate_details",
             preserveNullAndEmptyArrays: true,
           },
-        }, {
+        },
+        {
           $lookup: {
             from: "campaign",
             localField: "invite_affiliate_details.campaign_id",
             foreignField: "_id",
-            as: "campaign_details"
-          }
+            as: "campaign_details",
+          },
         },
         {
           $unwind: {
             path: "$campaign_details",
-            preserveNullAndEmptyArrays: true
-          }
+            preserveNullAndEmptyArrays: true,
+          },
         },
         {
           $lookup: {
@@ -1286,28 +1324,34 @@ module.exports = {
                       { $eq: ["$isDeleted", "$$isDeleted"] },
                       { $eq: ["$brand_id", "$$brand_id"] },
                       { $eq: ["$status", "$$status"] },
-                    ]
-                  }
-                }
-              }
+                    ],
+                  },
+                },
+              },
             ],
-            as: "associatedAffiliates"
-          }
+            as: "associatedAffiliates",
+          },
         },
-        ...(campaign && invite_status != "not_invited" ? [{
-          $match: {
-            $expr: {
-              $in: ["$_id", {
-                $map: {
-                  input: "$associatedAffiliates",
-                  as: "assoc",
-                  in: "$$assoc.affiliate_id"
-                }
-              }]
-            }
-          }
-        }] : [])
-
+        ...(campaign && invite_status != "not_invited"
+          ? [
+              {
+                $match: {
+                  $expr: {
+                    $in: [
+                      "$_id",
+                      {
+                        $map: {
+                          input: "$associatedAffiliates",
+                          as: "assoc",
+                          in: "$$assoc.affiliate_id",
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            ]
+          : []),
       ];
 
       let projection = {
@@ -1338,7 +1382,10 @@ module.exports = {
               "not_invited",
             ],
           },
-          campaign_details: { _id: "$campaign_details._id", name: "$campaign_details.name" },
+          campaign_details: {
+            _id: "$campaign_details._id",
+            name: "$campaign_details.name",
+          },
           invite_affiliate_details_status: "$invite_affiliate_details.status",
           status: "$status",
           createdAt: "$createdAt",
@@ -1431,9 +1478,7 @@ module.exports = {
       let query = { isDeleted: false };
 
       if (search) {
-        search = Services.Utils.remove_special_char_exept_underscores(
-          search
-        );
+        search = Services.Utils.remove_special_char_exept_underscores(search);
         query.$or = [
           { fullName: { $regex: search, $options: "i" } },
           { email: { $regex: search, $options: "i" } },
@@ -1486,24 +1531,24 @@ module.exports = {
         query.isDeleted = isDeleted
           ? isDeleted === "true"
           : true
-            ? isDeleted
-            : false;
+          ? isDeleted
+          : false;
       }
 
       if (isTrusted) {
         query.isTrusted = isTrusted
           ? isTrusted === "true"
           : true
-            ? isTrusted
-            : false;
+          ? isTrusted
+          : false;
       }
 
       if (isFeatured) {
         query.isFeatured = isFeatured
           ? isFeatured === "true"
           : true
-            ? isFeatured
-            : false;
+          ? isFeatured
+          : false;
       }
 
       if (createBybrand_id) {
@@ -1516,19 +1561,21 @@ module.exports = {
       if (sub_category_id) {
         // query.sub_category_id = new ObjectId(sub_category_id);
         sub_category_id = await Services.Utils.string_to_array(sub_category_id);
-        query.sub_category_id = { $in: sub_category_id }
+        query.sub_category_id = { $in: sub_category_id };
       }
       if (category_id) {
         category = await Services.Utils.string_to_array(category);
-        query.category = { $in: category }
+        query.category = { $in: category };
       }
       if (category_type) {
         category_type = await Services.Utils.string_to_array(category_type);
-        query.category_type = { $in: category_type }
+        query.category_type = { $in: category_type };
       }
       if (sub_child_category_id) {
-        sub_child_category_id = await Services.Utils.string_to_array(sub_child_category_id);
-        query.sub_child_category = { $in: sub_child_category_id }
+        sub_child_category_id = await Services.Utils.string_to_array(
+          sub_child_category_id
+        );
+        query.sub_child_category = { $in: sub_child_category_id };
       }
 
       // if (category_id) {
@@ -1566,7 +1613,7 @@ module.exports = {
       }
 
       if (request_status) {
-        query.request_status = request_status
+        query.request_status = request_status;
       }
       let pipeline = [
         {
@@ -1672,7 +1719,7 @@ module.exports = {
           category_type: "$category_type",
           sub_category_id: "$sub_category_id",
           sub_child_category_id: "$sub_child_category_id",
-          request_status: "$request_status"
+          request_status: "$request_status",
         },
       };
       pipeline.push(projection);
@@ -1695,7 +1742,8 @@ module.exports = {
         });
       }
       console.log(query);
-      let totalResult = await db.collection("users")
+      let totalResult = await db
+        .collection("users")
         .aggregate(pipeline)
         .toArray();
       pipeline.push({
@@ -1705,9 +1753,7 @@ module.exports = {
         $limit: Number(count),
       });
 
-      let result = await db.collection("users")
-        .aggregate(pipeline)
-        .toArray();
+      let result = await db.collection("users").aggregate(pipeline).toArray();
       let resData = {
         total: totalResult ? totalResult.length : 0,
         data: result ? result : [],
@@ -1715,13 +1761,7 @@ module.exports = {
       if (!req.param("page") && !req.param("count")) {
         resData.data = totalResult ? totalResult : [];
       }
-      return response.success(
-        resData,
-        constants.user.FETCHED_ALL,
-        req,
-        res
-      );
-
+      return response.success(resData, constants.user.FETCHED_ALL, req, res);
     } catch (error) {
       // console.log(error, "---err");
       return response.failed(null, `${error}`, req, res);
@@ -1755,9 +1795,7 @@ module.exports = {
       let query = { isDeleted: false };
 
       if (search) {
-        search = Services.Utils.remove_special_char_exept_underscores(
-          search
-        );
+        search = Services.Utils.remove_special_char_exept_underscores(search);
         query.$or = [
           { fullName: { $regex: search, $options: "i" } },
           { email: { $regex: search, $options: "i" } },
@@ -1805,8 +1843,8 @@ module.exports = {
         query.isDeleted = isDeleted
           ? isDeleted === "true"
           : true
-            ? isDeleted
-            : false;
+          ? isDeleted
+          : false;
       }
 
       query.addedBy = new ObjectId(req.identity.id);
@@ -1930,7 +1968,8 @@ module.exports = {
           },
         });
       }
-      let totalResult = await db.collection("users")
+      let totalResult = await db
+        .collection("users")
         .aggregate(pipeline)
         .toArray();
       pipeline.push({
@@ -1940,9 +1979,7 @@ module.exports = {
         $limit: Number(count),
       });
 
-      let result = await db.collection("users")
-        .aggregate(pipeline)
-        .toArray();
+      let result = await db.collection("users").aggregate(pipeline).toArray();
       let resData = {
         total: totalResult ? totalResult.length : 0,
         data: result ? result : [],
@@ -1950,13 +1987,7 @@ module.exports = {
       if (!req.param("page") && !req.param("count")) {
         resData.data = totalResult ? totalResult : [];
       }
-      return response.success(
-        resData,
-        constants.user.FETCHED_ALL,
-        req,
-        res
-      );
-
+      return response.success(resData, constants.user.FETCHED_ALL, req, res);
     } catch (error) {
       // console.log(error, "---err");
       return response.failed(null, `${error}`, req, res);
@@ -2012,9 +2043,11 @@ module.exports = {
   userDetail: async (req, res, next) => {
     try {
       let id = req.param("id");
-      
+
       let listOfOtherUsers = [];
-      let get_user = await Users.findOne({ id: id }).populate("activeUser").populate("plan_id");
+      let get_user = await Users.findOne({ id: id })
+        .populate("activeUser")
+        .populate("plan_id");
       // console.log(get_user,'=====')
       // return
       if (get_user) {
@@ -2096,10 +2129,15 @@ module.exports = {
           get_user.listOfOtherUsers.push(current_user);
         }
 
-        let all_category = []
-        let all_sub_category = []
-        let all_sub_child_category = []
-        if (get_user && get_user.category_id && get_user.category_id != "" && get_user.category_id.length > 0) {
+        let all_category = [];
+        let all_sub_category = [];
+        let all_sub_child_category = [];
+        if (
+          get_user &&
+          get_user.category_id &&
+          get_user.category_id != "" &&
+          get_user.category_id.length > 0
+        ) {
           // console.log(get_user.category_id, "---------get_user.category_id");
           for await (let category of get_user.category_id) {
             let get_category = await CommonCategories.findOne({
@@ -2108,14 +2146,17 @@ module.exports = {
             if (get_category) {
               // console.log(get_category, "------------get_category");
               // get_user.category_name = get_category.name;
-              all_category.push(get_category)
+              all_category.push(get_category);
             }
-
           }
         }
         // sub category data
 
-        if (get_user && get_user.sub_category_id && get_user.sub_child_category_id.length > 0) {
+        if (
+          get_user &&
+          get_user.sub_category_id &&
+          get_user.sub_child_category_id.length > 0
+        ) {
           // console.log(get_user.category_id, "---------get_user.category_id");
           for await (let category of get_user.sub_category_id) {
             let get_category = await CommonCategories.findOne({
@@ -2124,14 +2165,17 @@ module.exports = {
             if (get_category) {
               // console.log(get_category, "------------get_category");
               // get_user.category_name = get_category.name;
-              all_sub_category.push(get_category)
+              all_sub_category.push(get_category);
             }
-
           }
         }
 
-        // sub child categories 
-        if (get_user && get_user.sub_child_category_id && get_user.sub_child_category_id.length > 0) {
+        // sub child categories
+        if (
+          get_user &&
+          get_user.sub_child_category_id &&
+          get_user.sub_child_category_id.length > 0
+        ) {
           // console.log(get_user.category_id, "---------get_user.category_id");
           for await (let category of get_user.sub_child_category_id) {
             let get_category = await SubChildCategory.findOne({
@@ -2140,15 +2184,14 @@ module.exports = {
             if (get_category) {
               // console.log(get_category, "------------get_category");
               // get_user.category_name = get_category.name;
-              all_sub_child_category.push(get_category)
+              all_sub_child_category.push(get_category);
             }
-
           }
         }
 
-        get_user.all_category = all_category
-        get_user.all_sub_category = all_sub_category
-        get_user.all_sub_child_category = all_sub_child_category
+        get_user.all_category = all_category;
+        get_user.all_sub_category = all_sub_category;
+        get_user.all_sub_child_category = all_sub_child_category;
 
         if (
           get_user &&
@@ -2181,18 +2224,25 @@ module.exports = {
           get_user.tax_detail = get_tax;
         }
 
-        let permission_query = {}
+        let permission_query = {};
 
-        if (['affiliate', 'brand', 'staff'].includes(get_user.role)) {
-          permission_query.role = get_user.role
-        } else if (['operator', 'analyzer', 'publisher', 'super_user'].includes(get_user.role)) {
+        if (["affiliate", "brand", "staff"].includes(get_user.role)) {
+          permission_query.role = get_user.role;
+        } else if (
+          ["operator", "analyzer", "publisher", "super_user"].includes(
+            get_user.role
+          )
+        ) {
           if (get_user.addedBy) {
-            let get_account_manager_detail = await Users.findOne({ id: get_user.addedBy, isDeleted: false });
+            let get_account_manager_detail = await Users.findOne({
+              id: get_user.addedBy,
+              isDeleted: false,
+            });
             if (get_account_manager_detail.role) {
-              permission_query.role = get_user.role
-              permission_query.account_manager = get_account_manager_detail.role
+              permission_query.role = get_user.role;
+              permission_query.account_manager =
+                get_account_manager_detail.role;
             }
-
           }
         }
 
@@ -2203,16 +2253,19 @@ module.exports = {
             get_user.permission_detail = get_permission;
           }
         } else {
-          delete get_user.listOfOtherUsers
+          delete get_user.listOfOtherUsers;
         }
         if (get_user.role === "admin") {
-          let balance = await Services.StripeServices.retrieve_balance()
-          get_user.stripe_account_balance = balance.available[0].amount
-          get_user.pending_balance = balance.pending[0].amount
+          let balance = await Services.StripeServices.retrieve_balance();
+          get_user.stripe_account_balance = balance.available[0].amount;
+          get_user.pending_balance = balance.pending[0].amount;
         }
 
         if (get_user.role === "brand") {
-          get_user.total_campaign = await Campaign.count({ brand_id: id, isDeleted: false })
+          get_user.total_campaign = await Campaign.count({
+            brand_id: id,
+            isDeleted: false,
+          });
         }
         // if (get_user.role == "affiliate") {
         //   let get_data = await AffiliateInvite.findOne({ affiliate_id: id, brand_id: brand_id })
@@ -2226,7 +2279,7 @@ module.exports = {
       }
       throw constants.user.INVALID_ID;
     } catch (error) {
-      console.log(error, '====eer')
+      console.log(error, "====eer");
       return response.failed(null, `${error}`, req, res);
     }
   },
@@ -2235,7 +2288,9 @@ module.exports = {
       let id = req.param("id");
       let brand_id = req.param("brand_id");
       let listOfOtherUsers = [];
-      let get_user = await Users.findOne({ id: id }).populate("activeUser").populate("plan_id");
+      let get_user = await Users.findOne({ id: id })
+        .populate("activeUser")
+        .populate("plan_id");
       // console.log(get_user,'=====')
       // return
       if (get_user) {
@@ -2317,10 +2372,15 @@ module.exports = {
           get_user.listOfOtherUsers.push(current_user);
         }
 
-        let all_category = []
-        let all_sub_category = []
-        let all_sub_child_category = []
-        if (get_user && get_user.category_id && get_user.category_id != "" && get_user.category_id.length > 0) {
+        let all_category = [];
+        let all_sub_category = [];
+        let all_sub_child_category = [];
+        if (
+          get_user &&
+          get_user.category_id &&
+          get_user.category_id != "" &&
+          get_user.category_id.length > 0
+        ) {
           // console.log(get_user.category_id, "---------get_user.category_id");
           for await (let category of get_user.category_id) {
             let get_category = await CommonCategories.findOne({
@@ -2329,14 +2389,17 @@ module.exports = {
             if (get_category) {
               // console.log(get_category, "------------get_category");
               // get_user.category_name = get_category.name;
-              all_category.push(get_category)
+              all_category.push(get_category);
             }
-
           }
         }
         // sub category data
 
-        if (get_user && get_user.sub_category_id && get_user.sub_child_category_id.length > 0) {
+        if (
+          get_user &&
+          get_user.sub_category_id &&
+          get_user.sub_child_category_id.length > 0
+        ) {
           // console.log(get_user.category_id, "---------get_user.category_id");
           for await (let category of get_user.sub_category_id) {
             let get_category = await CommonCategories.findOne({
@@ -2345,14 +2408,17 @@ module.exports = {
             if (get_category) {
               // console.log(get_category, "------------get_category");
               // get_user.category_name = get_category.name;
-              all_sub_category.push(get_category)
+              all_sub_category.push(get_category);
             }
-
           }
         }
 
-        // sub child categories 
-        if (get_user && get_user.sub_child_category_id && get_user.sub_child_category_id.length > 0) {
+        // sub child categories
+        if (
+          get_user &&
+          get_user.sub_child_category_id &&
+          get_user.sub_child_category_id.length > 0
+        ) {
           // console.log(get_user.category_id, "---------get_user.category_id");
           for await (let category of get_user.sub_child_category_id) {
             let get_category = await SubChildCategory.findOne({
@@ -2361,15 +2427,14 @@ module.exports = {
             if (get_category) {
               // console.log(get_category, "------------get_category");
               // get_user.category_name = get_category.name;
-              all_sub_child_category.push(get_category)
+              all_sub_child_category.push(get_category);
             }
-
           }
         }
 
-        get_user.all_category = all_category
-        get_user.all_sub_category = all_sub_category
-        get_user.all_sub_child_category = all_sub_child_category
+        get_user.all_category = all_category;
+        get_user.all_sub_category = all_sub_category;
+        get_user.all_sub_child_category = all_sub_child_category;
 
         if (
           get_user &&
@@ -2402,18 +2467,25 @@ module.exports = {
           get_user.tax_detail = get_tax;
         }
 
-        let permission_query = {}
+        let permission_query = {};
 
-        if (['affiliate', 'brand', 'staff'].includes(get_user.role)) {
-          permission_query.role = get_user.role
-        } else if (['operator', 'analyzer', 'publisher', 'super_user'].includes(get_user.role)) {
+        if (["affiliate", "brand", "staff"].includes(get_user.role)) {
+          permission_query.role = get_user.role;
+        } else if (
+          ["operator", "analyzer", "publisher", "super_user"].includes(
+            get_user.role
+          )
+        ) {
           if (get_user.addedBy) {
-            let get_account_manager_detail = await Users.findOne({ id: get_user.addedBy, isDeleted: false });
+            let get_account_manager_detail = await Users.findOne({
+              id: get_user.addedBy,
+              isDeleted: false,
+            });
             if (get_account_manager_detail.role) {
-              permission_query.role = get_user.role
-              permission_query.account_manager = get_account_manager_detail.role
+              permission_query.role = get_user.role;
+              permission_query.account_manager =
+                get_account_manager_detail.role;
             }
-
           }
         }
 
@@ -2424,22 +2496,30 @@ module.exports = {
             get_user.permission_detail = get_permission;
           }
         } else {
-          delete get_user.listOfOtherUsers
+          delete get_user.listOfOtherUsers;
         }
         if (get_user.role === "admin") {
-          let balance = await Services.StripeServices.retrieve_balance()
-          get_user.stripe_account_balance = balance.available[0].amount
-          get_user.pending_balance = balance.pending[0].amount
+          let balance = await Services.StripeServices.retrieve_balance();
+          get_user.stripe_account_balance = balance.available[0].amount;
+          get_user.pending_balance = balance.pending[0].amount;
         }
 
         if (get_user.role === "brand") {
-          get_user.total_campaign = await Campaign.count({ brand_id: id, isDeleted: false })
+          get_user.total_campaign = await Campaign.count({
+            brand_id: id,
+            isDeleted: false,
+          });
         }
         if (get_user.role == "affiliate") {
-          let get_data = await AffiliateInvite.findOne({ affiliate_id: id, brand_id: brand_id })
+          let get_data = await AffiliateInvite.findOne({
+            affiliate_id: id,
+            brand_id: brand_id,
+          });
           if (get_data) {
-            let get_campaign = await Campaign.findOne({ id: get_data.campaign_id })
-            get_user.campaign_details = get_campaign
+            let get_campaign = await Campaign.findOne({
+              id: get_data.campaign_id,
+            });
+            get_user.campaign_details = get_campaign;
           }
         }
 
@@ -2447,7 +2527,7 @@ module.exports = {
       }
       throw constants.user.INVALID_ID;
     } catch (error) {
-      console.log(error, '====eer')
+      console.log(error, "====eer");
       return response.failed(null, `${error}`, req, res);
     }
   },
@@ -2493,14 +2573,8 @@ module.exports = {
           id: update_user.id,
           time: currentTime.toISOString(),
         };
-         let emailSentCheck = await EmailSentSetting.findOne({
-           name: "users",
-           isDeleted: false,
-         });
 
-         if (emailSentCheck.emailSent == true) {
-           await Emails.OnboardingEmails.forgotPasswordEmail(email_payload);
-         }
+        await Emails.OnboardingEmails.forgotPasswordEmail(email_payload);
 
         return response.success(
           null,
@@ -2531,7 +2605,20 @@ module.exports = {
       let get_user = await Users.findOne({
         email: email.toLowerCase(),
         isDeleted: false,
-        role: { in: ['brand', 'admin', 'affiliate', 'team', 'super_user', 'operator', 'analyzer', 'publisher', 'customer', 'users'] },
+        role: {
+          in: [
+            "brand",
+            "admin",
+            "affiliate",
+            "team",
+            "super_user",
+            "operator",
+            "analyzer",
+            "publisher",
+            "customer",
+            "users",
+          ],
+        },
       });
 
       if (!get_user) {
@@ -2556,14 +2643,8 @@ module.exports = {
           id: update_user.id,
           time: currentTime.toISOString(),
         };
-         let emailSentCheck = await EmailSentSetting.findOne({
-           name: "users",
-           isDeleted: false,
-         });
 
-         if (emailSentCheck.emailSent == true) {
         await Emails.OnboardingEmails.forgotPasswordEmail(email_payload);
-         }
 
         return response.success(
           null,
@@ -2633,14 +2714,14 @@ module.exports = {
       if (!get_user) {
         throw constants.user.INVALID_ID;
       }
-      console.log(get_user.role, 'get_user.role')
+      console.log(get_user.role, "get_user.role");
       if (get_user.isVerified == "Y" && get_user.role == "brand") {
-        console.log("dkhfisdjflsjflsdjfksjdfdslfd")
+        console.log("dkhfisdjflsjflsdjfksjdfdslfd");
         return res.redirect(
           `${credentials.FRONT_WEB_URL}/dashboard?id=${get_user.id}`
         );
       } else if (get_user.isVerified == "Y" && get_user.role == "affiliate") {
-        console.log("98888888888888888888888888888888888888888888")
+        console.log("98888888888888888888888888888888888888888888");
         return res.redirect(`${credentials.FRONT_WEB_URL}`);
       } else if (get_user.isVerified == "Y" && get_user.role == "team") {
         return res.redirect(`${credentials.FRONT_WEB_URL}`);
@@ -2696,9 +2777,7 @@ module.exports = {
             `${credentials.FRONT_WEB_URL}/dashboard?id=${get_user.id}`
           );
         } else {
-          return res.redirect(
-            `${credentials.FRONT_WEB_URL}`
-          );
+          return res.redirect(`${credentials.FRONT_WEB_URL}`);
         }
       }
       throw constants.COMMON.SERVER_ERROR;
@@ -2717,19 +2796,11 @@ module.exports = {
 
       if (get_user) {
         if (get_user.isVerified == "N") {
-          let emailSentCheck = await EmailSentSetting.findOne({
-            name: "users",
-            isDeleted: false,
+          await Emails.OnboardingEmails.userVerifyLink({
+            email: get_user.email,
+            fullName: get_user.fullName,
+            id: get_user.id,
           });
-
-          if (emailSentCheck.emailSent == true) {
-            await Emails.OnboardingEmails.userVerifyLink({
-              email: get_user.email,
-              fullName: get_user.fullName,
-              id: get_user.id,
-            });
-          }
-          
         } else {
           throw constants.user.ALREADY_VERIFIED;
         }
@@ -2916,19 +2987,11 @@ module.exports = {
         let update_tax = await Tax.updateOne({ user_id: id }, tax_payload);
 
         if (req.body.updated_password) {
-          let emailSentCheck = await EmailSentSetting.findOne({
-            name: "users",
-            isDeleted: false,
-          });
-
-          if (emailSentCheck.emailSent == true) {
-            await Emails.OnboardingEmails.update_password_by_admin({
+          await Emails.OnboardingEmails.update_password_by_admin({
             email: get_user.email,
             updated_password: req.body.updated_password,
             fullName: get_user.fullName,
           });
-          }
-          
         }
 
         // if (["brand", "affiliate"].includes(req.identity.role)) {
@@ -2942,20 +3005,36 @@ module.exports = {
         // }
 
         //Now we story logs in activity history api.
-        if (['brand', 'affiliate'].includes(req.identity.role)) {
-
+        if (["brand", "affiliate"].includes(req.identity.role)) {
           //----------------get main account manager---------------------
-          let get_all_admin = await Services.UserServices.get_users_with_role(["admin"])
-          let get_account_manager = get_all_admin[0].id
-          await Services.activityHistoryServices.create_activity_history(req.identity.id, 'users', 'updated', update_user, get_user, get_account_manager ? get_account_manager : null)
-
+          let get_all_admin = await Services.UserServices.get_users_with_role([
+            "admin",
+          ]);
+          let get_account_manager = get_all_admin[0].id;
+          await Services.activityHistoryServices.create_activity_history(
+            req.identity.id,
+            "users",
+            "updated",
+            update_user,
+            get_user,
+            get_account_manager ? get_account_manager : null
+          );
         }
 
-        const allCampaign = await Campaign.find({ addedBy: id, isDeleted: false, currencies: { "!=": "" } })
+        const allCampaign = await Campaign.find({
+          addedBy: id,
+          isDeleted: false,
+          currencies: { "!=": "" },
+        });
         if (req.body.currencies && allCampaign.length > 0) {
           for await (const campaign of allCampaign) {
             if (!req.body.currencies.includes(campaign.currencies)) {
-              return response.failed(null, `Can't delete ${campaign.currencies} currency because it is exist in campaign ${campaign.name}`, req, res)
+              return response.failed(
+                null,
+                `Can't delete ${campaign.currencies} currency because it is exist in campaign ${campaign.name}`,
+                req,
+                res
+              );
             }
           }
         }
@@ -3098,7 +3177,7 @@ module.exports = {
       };
 
       if (req.identity.role == "admin") {
-        req.body.request_status = "accepted"
+        req.body.request_status = "accepted";
       }
       var newUser = await Users.create(req.body).fetch();
       if (newUser) {
@@ -3106,16 +3185,21 @@ module.exports = {
           tax_payload.user_id = newUser.id;
           let create_tax = await Tax.create(tax_payload).fetch();
           //Add prev campaign requests
-          let allPublicCampaigns = await Campaign.find({ isDeleted: false, access_type: "public" });
+          let allPublicCampaigns = await Campaign.find({
+            isDeleted: false,
+            access_type: "public",
+          });
           if (allPublicCampaigns && allPublicCampaigns.length > 0) {
-            let createPPCampaignsPromises = allPublicCampaigns.map(campaign => {
-              return BrandAffiliateAssociation.create({
-                affiliate_id: newUser.id,
-                campaign_id: campaign.id,
-                brand_id: campaign.brand_id,
-                addedBy: req.identity.id
-              });
-            });
+            let createPPCampaignsPromises = allPublicCampaigns.map(
+              (campaign) => {
+                return BrandAffiliateAssociation.create({
+                  affiliate_id: newUser.id,
+                  campaign_id: campaign.id,
+                  brand_id: campaign.brand_id,
+                  addedBy: req.identity.id,
+                });
+              }
+            );
             await Promise.all(createPPCampaignsPromises);
           }
         }
@@ -3148,15 +3232,8 @@ module.exports = {
             id: newUser.id,
             added_by: req.identity.id,
           };
-          
-          let emailSentCheck = await EmailSentSetting.findOne({
-            name: "user",
-            isDeleted: false,
-          });
 
-          if (emailSentCheck.emailSent == true) {
-            await Emails.OnboardingEmails.add_user_email(email_payload);
-          }
+          await Emails.OnboardingEmails.add_user_email(email_payload);
         }
 
         if (
@@ -3172,14 +3249,8 @@ module.exports = {
             id: newUser.id,
             added_by: req.identity.id,
           };
-          let emailSentCheck = await EmailSentSetting.findOne({
-            name: "user",
-            isDeleted: false,
-          });
 
-          if (emailSentCheck.emailSent == true) {
           await Emails.OnboardingEmails.add_user_email(email_payload_new);
-          }
         }
 
         return response.success(newUser, constants.user.USER_ADD, req, res);
@@ -3319,16 +3390,22 @@ module.exports = {
 
       let permission_query = {};
 
-      if (['affiliate', 'brand', 'staff'].includes(update_user.role)) {
-        permission_query.role = update_user.role
-      } else if (['operator', 'analyzer', 'publisher', 'super_user'].includes(update_user.role)) {
+      if (["affiliate", "brand", "staff"].includes(update_user.role)) {
+        permission_query.role = update_user.role;
+      } else if (
+        ["operator", "analyzer", "publisher", "super_user"].includes(
+          update_user.role
+        )
+      ) {
         if (update_user.addedBy) {
-          let get_account_manager_detail = await Users.findOne({ id: update_user.addedBy, isDeleted: false });
+          let get_account_manager_detail = await Users.findOne({
+            id: update_user.addedBy,
+            isDeleted: false,
+          });
           if (get_account_manager_detail.role) {
-            permission_query.role = update_user.role
-            permission_query.account_manager = get_account_manager_detail.role
+            permission_query.role = update_user.role;
+            permission_query.account_manager = get_account_manager_detail.role;
           }
-
         }
       }
 
@@ -3337,7 +3414,6 @@ module.exports = {
       if (get_permission) {
         update_user.permission_detail = get_permission;
       }
-
 
       return response.success(
         update_user,
@@ -3617,7 +3693,7 @@ module.exports = {
               fileExt = typeArr[1];
               if (
                 fileExt ==
-                "vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+                  "vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
                 fileExt == "vnd.ms-excel"
               ) {
                 let name = `${file[index].fd.split("/csv")[1]}`;
@@ -4030,8 +4106,7 @@ module.exports = {
                                           imported++;
                                         }
                                       }
-                                    } catch (err) {
-                                    }
+                                    } catch (err) {}
                                   }
                                 } catch (err) {
                                   // return res.status(404).json({
@@ -4128,7 +4203,7 @@ module.exports = {
               // console.log(fileExt, '================fileExt');
               if (
                 fileExt ==
-                "vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+                  "vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
                 fileExt == "vnd.ms-excel"
               ) {
                 let name = `${file[index].fd.split("/csv")[1]}`;
@@ -4260,30 +4335,18 @@ module.exports = {
                                                 password: password,
                                                 user_id: create_users.id,
                                               };
-                                              let emailSentCheck =
-                                                await EmailSentSetting.findOne({
-                                                  name: "user",
-                                                  isDeleted: false,
-                                                });
 
-                                              if (
-                                                emailSentCheck.emailSent == true
-                                              ) {
-                                                await Emails.OnboardingEmails.add_user_email(
+                                              await Emails.OnboardingEmails.add_user_email(
                                                 email_payload
                                               );
-                                              }
-                                             
                                             }
                                             imported++;
                                           }
                                         }
                                       }
-                                    } catch (err) {
-                                    }
+                                    } catch (err) {}
                                   }
-                                } catch (err) {
-                                }
+                                } catch (err) {}
                               }
                             }
                             counter++;
@@ -4814,15 +4877,13 @@ module.exports = {
         category_id,
         sub_child_category_id,
         addedBy,
-        request_status
+        request_status,
       } = req.query;
       let skipNo = (Number(page) - 1) * Number(count);
       let query = { isDeleted: false };
 
       if (search) {
-        search = Services.Utils.remove_special_char_exept_underscores(
-          search
-        );
+        search = Services.Utils.remove_special_char_exept_underscores(search);
         query.$or = [
           { fullName: { $regex: search, $options: "i" } },
           { email: { $regex: search, $options: "i" } },
@@ -4938,29 +4999,28 @@ module.exports = {
         query.request_status = request_status;
       }
 
-
       if (isDeleted) {
         query.isDeleted = isDeleted
           ? isDeleted === "true"
           : true
-            ? isDeleted
-            : false;
+          ? isDeleted
+          : false;
       }
 
       if (isTrusted) {
         query.isTrusted = isTrusted
           ? isTrusted === "true"
           : true
-            ? isTrusted
-            : false;
+          ? isTrusted
+          : false;
       }
 
       if (isFeatured) {
         query.isFeatured = isFeatured
           ? isFeatured === "true"
           : true
-            ? isFeatured
-            : false;
+          ? isFeatured
+          : false;
       }
 
       if (createBybrand_id) {
@@ -5030,55 +5090,55 @@ module.exports = {
 
         role && role === "brand"
           ? {
-            $lookup: {
-              from: "affiliatebrandinvite",
-              let: {
-                affiliate_id: "$_id",
-                isDeleted: false,
-                brand_id: new ObjectId(req.identity.id),
-              },
-              // let: { user_id: "$req.identity.id", fav_user_id: new ObjectId("64d076e86ecebee01af09d8c") },
-              pipeline: [
-                {
-                  $match: {
-                    $expr: {
-                      $and: [
-                        { $eq: ["$brand_id", "$$brand_id"] },
-                        { $eq: ["$isDeleted", "$$isDeleted"] },
-                        { $eq: ["$affiliate_id", "$$affiliate_id"] },
-                      ],
+              $lookup: {
+                from: "affiliatebrandinvite",
+                let: {
+                  affiliate_id: "$_id",
+                  isDeleted: false,
+                  brand_id: new ObjectId(req.identity.id),
+                },
+                // let: { user_id: "$req.identity.id", fav_user_id: new ObjectId("64d076e86ecebee01af09d8c") },
+                pipeline: [
+                  {
+                    $match: {
+                      $expr: {
+                        $and: [
+                          { $eq: ["$brand_id", "$$brand_id"] },
+                          { $eq: ["$isDeleted", "$$isDeleted"] },
+                          { $eq: ["$affiliate_id", "$$affiliate_id"] },
+                        ],
+                      },
                     },
                   },
-                },
-              ],
-              as: "invite_affiliate_details",
-            },
-          }
+                ],
+                as: "invite_affiliate_details",
+              },
+            }
           : {
-            $lookup: {
-              from: "affiliatebrandinvite",
-              let: {
-                affiliate_id: new ObjectId(req.identity.id),
-                isDeleted: false,
-                brand_id: "$_id",
-              },
-              // let: { user_id: "$req.identity.id", fav_user_id: new ObjectId("64d076e86ecebee01af09d8c") },
-              pipeline: [
-                {
-                  $match: {
-                    $expr: {
-                      $and: [
-                        { $eq: ["$brand_id", "$$brand_id"] },
-                        { $eq: ["$isDeleted", "$$isDeleted"] },
-                        { $eq: ["$affiliate_id", "$$affiliate_id"] },
-                      ],
+              $lookup: {
+                from: "affiliatebrandinvite",
+                let: {
+                  affiliate_id: new ObjectId(req.identity.id),
+                  isDeleted: false,
+                  brand_id: "$_id",
+                },
+                // let: { user_id: "$req.identity.id", fav_user_id: new ObjectId("64d076e86ecebee01af09d8c") },
+                pipeline: [
+                  {
+                    $match: {
+                      $expr: {
+                        $and: [
+                          { $eq: ["$brand_id", "$$brand_id"] },
+                          { $eq: ["$isDeleted", "$$isDeleted"] },
+                          { $eq: ["$affiliate_id", "$$affiliate_id"] },
+                        ],
+                      },
                     },
                   },
-                },
-              ],
-              as: "invite_affiliate_details",
+                ],
+                as: "invite_affiliate_details",
+              },
             },
-          },
         {
           $unwind: {
             path: "$invite_affiliate_details",
@@ -5170,7 +5230,8 @@ module.exports = {
           },
         });
       }
-      let totalResult = await db.collection("users")
+      let totalResult = await db
+        .collection("users")
         .aggregate(pipeline)
         .toArray();
       pipeline.push({
@@ -5180,9 +5241,7 @@ module.exports = {
         $limit: Number(count),
       });
 
-      let result = await db.collection("users")
-        .aggregate(pipeline)
-        .toArray();
+      let result = await db.collection("users").aggregate(pipeline).toArray();
       let resData = {
         total: totalResult ? totalResult.length : 0,
         data: result ? result : [],
@@ -5190,13 +5249,7 @@ module.exports = {
       if (!req.param("page") && !req.param("count")) {
         resData.data = totalResult ? totalResult : [];
       }
-      return response.success(
-        resData,
-        constants.user.FETCHED_ALL,
-        req,
-        res
-      );
-
+      return response.success(resData, constants.user.FETCHED_ALL, req, res);
     } catch (error) {
       // console.log(error, "---err");
       return response.failed(null, `${error}`, req, res);
@@ -5214,34 +5267,36 @@ module.exports = {
         throw constants.user.ID_REQUIRED;
       }
 
-      let updateStatus = await Users.updateOne({ id: id }, { request_status: status, reason: reason });
+      let updateStatus = await Users.updateOne(
+        { id: id },
+        { request_status: status, reason: reason }
+      );
       if (updateStatus) {
         let email_payload = {
           id: updateStatus.id,
           reason: updateStatus.reason,
           status: updateStatus.request_status,
         };
-        let emailSentCheck = await EmailSentSetting.findOne({
-          name: "user",
-          isDeleted: false,
-        });
 
-        if (emailSentCheck.emailSent == true) {
         await Emails.OnboardingEmails.changeRequestStatus(email_payload);
-        }
 
-        if (status === 'accepted') {
+        if (status === "accepted") {
           //get all public campaigns on the platform and send requests to this affiliate for them
-          let allPublicCampaigns = await Campaign.find({ isDeleted: false, access_type: "public" });
+          let allPublicCampaigns = await Campaign.find({
+            isDeleted: false,
+            access_type: "public",
+          });
           if (allPublicCampaigns && allPublicCampaigns.length > 0) {
-            let createPPCampaignsPromises = allPublicCampaigns.map(campaign => {
-              return BrandAffiliateAssociation.create({
-                affiliate_id: id,
-                campaign_id: campaign.id,
-                brand_id: campaign.brand_id,
-                addedBy: req.identity.id
-              });
-            });
+            let createPPCampaignsPromises = allPublicCampaigns.map(
+              (campaign) => {
+                return BrandAffiliateAssociation.create({
+                  affiliate_id: id,
+                  campaign_id: campaign.id,
+                  brand_id: campaign.brand_id,
+                  addedBy: req.identity.id,
+                });
+              }
+            );
             await Promise.all(createPPCampaignsPromises);
           }
         }
@@ -5249,16 +5304,15 @@ module.exports = {
         return res.status(200).json({
           success: true,
           message: `Request ${updateStatus.request_status} successfully`,
-          data: updateStatus
+          data: updateStatus,
         });
       }
       throw constants.user.INVALID_ID;
-
     } catch (err) {
       return res.status(400).json({
         success: false,
         error: { message: err },
       });
     }
-  }
+  },
 };

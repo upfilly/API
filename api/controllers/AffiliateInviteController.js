@@ -14,13 +14,13 @@ const Validations = require("../Validations/AffiliateInviteValidations.js");
 const response = require("../services/Response");
 const Emails = require("../Emails/index");
 
-const emailCheck = async () => {
-   let emailSentCheck = await EmailSentSetting.findOne({
-              name: "affiliate invite",
-              isDeleted: false,
-            });
-return emailSentCheck
-}
+// const emailCheck = async () => {
+//    let emailSentCheck = await EmailSentSetting.findOne({
+//               name: "affiliate invite",
+//               isDeleted: false,
+//             });
+// return emailSentCheck
+// }
 module.exports = {
   addInvite: async (req, res) => {
     try {
@@ -118,9 +118,16 @@ module.exports = {
               brand_name: brand_detail.fullName,
               affiliate_name: affiliateInfo.fullName,
             };
-           const exist = emailCheck()
-            if (exist.emailSent) {
+
+            let emailSentCheck = await EmailSentSetting.findOne({
+              name: "affiliate invite",
+              isDeleted: false,
+            });
+
+            if (emailSentCheck.emailSent == true) {
               Emails.OnboardingEmails.send_mail_to_affiliate(emailpayload);
+            } else {
+              console.log("emailSent setting is false affiliate invite");
             }
           }
         }
@@ -447,6 +454,7 @@ module.exports = {
             reason: update_status.reason,
             email: data1.email,
           };
+
           let emailSentCheck = await EmailSentSetting.findOne({
             name: "affiliate invite",
             isDeleted: false,
@@ -456,6 +464,8 @@ module.exports = {
             Emails.OnboardingEmails.change_status_affiliateInvite(
               email_payload
             );
+          } else {
+            console.log("emailSent setting is false affiliate invite");
           }
 
           return response.success(

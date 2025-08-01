@@ -462,14 +462,8 @@ module.exports = {
                       fullName: userDetail.fullName,
                       email: userDetail.email,
                     };
-                    let emailSentCheck = await EmailSentSetting.findOne({
-                      name: "transaction",
-                      isDeleted: false,
-                    });
-
-                    if (emailSentCheck.emailSent == true) {
+                    
                       await emails.reminderToOpenAccount(emailPayload);
-                    }
                   }
                   return response.failed(
                     null,
@@ -498,14 +492,8 @@ module.exports = {
                       email: userDetail.email,
                       amount: amount,
                     };
-                    let emailSentCheck = await EmailSentSetting.findOne({
-                      name: "transaction",
-                      isDeleted: false,
-                    });
-
-                    if (emailSentCheck.emailSent == true) {
+                   
                       await emails.adminPaid(email_payload);
-                    }
 
                     return response.success(
                       null,

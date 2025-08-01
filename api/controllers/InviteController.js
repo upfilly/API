@@ -50,7 +50,7 @@ exports.addInvite = async (req, res) => {
         fullName: add_invite.fullName,
       };
       let emailSentCheck = await EmailSentSetting.findOne({
-        name: "invite",
+        name: "affiliate invite",
         isDeleted: false,
       });
 

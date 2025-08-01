@@ -58,7 +58,7 @@ module.exports = {
                         affiliate_name: get_afiliate.fullName
                     }
                      let emailSentCheck = await EmailSentSetting.findOne({
-                       name: "untrack sales",
+                       name: "untracked sale",
                        isDeleted: false,
                      });
 
@@ -66,6 +66,8 @@ module.exports = {
                        await Emails.OnboardingEmails.send_mail_to_brand(
                          emailpayload
                        );
+                     }else{
+                        console.log("emailSent setting is false in addSales or untracked sale")
                      }
                      return response.success(
                        null,
@@ -347,12 +349,14 @@ module.exports = {
                     email: update_status.email
                 };
                 let emailSentCheck = await EmailSentSetting.findOne({
-                  name: "untrack sales",
+                  name: "untracked sale",
                   isDeleted: false,
                 });
 
                 if (emailSentCheck.emailSent == true) {
                   await Emails.OnboardingEmails.change_status(email_payload);
+                }else{
+                    console.log("emailSent setting is false in untracked sale")
                 }
                 return response.success(null, constants.UNTRACKSALES.STATUS_UPDATE, req, res)
             }

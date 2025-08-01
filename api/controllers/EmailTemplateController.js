@@ -99,6 +99,8 @@ exports.create = async (req, res) => {
 
         if (emailSentCheck.emailSent == true) {
           await Emails.EmailTemplate.sendEmailTemplate(emailPayload);
+        }else{
+          console.log("emailSent is false in emailTemplate")
         }
 
         await EmailTemplateAffiliate.create({
@@ -215,6 +217,8 @@ exports.update = async (req, res) => {
 
         if (emailSentCheck.emailSent == true) {
       await Emails.EmailTemplate.sendEmailTemplate(emailPayload);
+        }else{
+          console.log("emailSent setting is false in emailTemplate")
         }
 
       await EmailTemplateAffiliate.create({
