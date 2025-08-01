@@ -322,7 +322,7 @@ exports.getAllCampaignRequestsForAffiliate = async (req, res) => {
         if (affiliate_id) {
             query.affiliate_id = new ObjectId(affiliate_id);
         }
-        new_query.campaign_commission = { $gt: 0 }
+        // new_query.campaign_commission = { $gt: 0 }
         let sortquery = {};
         
         if (sortBy && typeof sortBy === 'string') {
@@ -357,6 +357,7 @@ exports.getAllCampaignRequestsForAffiliate = async (req, res) => {
         }
         // Pipeline Stages
         // console.log(new_query,'new_query')
+        // console.log(query,'query')
         let pipeline = [
             {
                 $lookup: {
