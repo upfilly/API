@@ -305,3 +305,21 @@ exports.get_users_with_role = async (role) => {
     let get_users = await Users.find({ role: { in: role }, isDeleted: false, status: "active" });
     return get_users;
   }
+
+exports.getAssociatedAffiliatesForBrand = async (brandId) => {
+  const affiliateMappings = await BrandAffiliateAssociation.find({
+    brand_id: brandId
+  });
+
+  const affiliateIds = affiliateMappings.map(m => m.affiliate_id);
+
+  const affiliates = await Users.find({
+    id: affiliateIds,
+    role: "affiliate",
+    isDeleted: false,
+    status: "active"
+  });
+  return affiliates;
+};
+
+

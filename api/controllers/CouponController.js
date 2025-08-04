@@ -17,6 +17,7 @@ const { Parser } = require("json2csv");
 const xml2js = require("xml2js");
 const fs = require("fs");
 const path = require("path");
+const Email = require("../Emails/coupon")
 
 generateName = function () {
   // action are perform to generate random name for every file
@@ -122,11 +123,55 @@ exports.addCoupon = async (req, res) => {
           get_account_manager ? get_account_manager : null
         );
       }
+
+      if (visibility === "Exclusive to specific affiliate") {
+        const affiliate = await Users.findOne({ id: media, isDeleted: false });
+        const brand = await Users.findOne({
+          id: req.identity.id,
+          isDeleted: false,
+        });
+
+        if (affiliate && affiliate.email && brand) {
+          await Email.sendCouponNotificationEmail({
+            brandFullName: brand.fullName,
+            affiliateFullName: affiliate.fullName,
+            affiliateEmail: affiliate.email,
+            couponTitle: title,
+            couponCode,
+            expirationDate,
+            visibility,
+          });
+        }
+      } else if (visibility === "Public") {
+        console.log("public")
+        const brand = await Users.findOne({
+          id: req.identity.id,
+          isDeleted: false,
+        });
+        const affiliates =
+          await Services.UserServices.getAssociatedAffiliatesForBrand(brand.id);
+
+        for (let affiliate of affiliates) {
+          if (affiliate.email && affiliate.fullName) {
+            Email.sendCouponNotificationEmail({
+              brandFullName: brand.fullName,
+              affiliateFullName: affiliate.fullName,
+              affiliateEmail: affiliate.email,
+              couponTitle: title,
+              couponCode,
+              expirationDate,
+              visibility,
+            });
+          }
+        }
+      }
+
       return response.success(coupon, constants.COUPON.CREATED, req, res);
     }
 
     throw constants.COMMON.SERVER_ERROR;
   } catch (error) {
+    console.log("error ",error)
     return response.failed(null, `${error}`, req, res);
   }
 };
