@@ -88,7 +88,7 @@ exports.editCampaign = async (req, res, next) => {
         sub_child_category : Joi.array().optional(),
         region : Joi.array().optional(),
         campaign_type : Joi.string().valid("manual","automatic"),
-        currencies : Joi.string().allow(""),
+        currencies : Joi.string().allow("").optional(),
         
         deDuplicate : Joi.object().optional(),
         publisher : Joi.object().optional(""),

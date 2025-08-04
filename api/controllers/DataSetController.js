@@ -1296,6 +1296,7 @@ exports.sendEmailMessage = async (req, res) => {
 
     const brandId = req.identity.id;
     const brandFullName = req.identity.fullName;
+    const campaignName  = ""
 
     if (data.isAllJoined && !data.acceptedDate) {
       // All Joined filter
@@ -1427,6 +1428,12 @@ exports.sendEmailMessage = async (req, res) => {
               data.emailTemplate = data.emailTemplate.replace(
                 "{currentDate}",
                 currentDate
+              );
+            }
+            if (data.emailTemplate.includes("{campaignName}")) {
+              data.emailTemplate = data.emailTemplate.replace(
+                "{campaignName}",
+                campaignName
               );
             }
             let emailSentCheck = await EmailSentSetting.findOne({
