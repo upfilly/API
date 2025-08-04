@@ -41,7 +41,7 @@ exports.addCampaign = async (req, res, next) => {
         region_continents : Joi.array().optional(),
         lead_amount : Joi.number().optional(),
         campaign_type : Joi.string().required().valid("manual","automatic"),
-        currencies : Joi.string().allow(""),
+        currencies : Joi.string().optional().allow(""),
 
         deDuplicate : Joi.object().optional(),
         publisher : Joi.object().optional(""),
