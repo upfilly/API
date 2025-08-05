@@ -8,5 +8,6 @@ module.exports = {
   DataSet: require("./DataSet"),
   EmailMessageTemplate: require("./EmailMessageTemplate"),
   EmailTemplate: require("./EmailTemplate"),
-  AffiliateBanner: require("./AffiliateBanner")
+  AffiliateBanner: require("./AffiliateBanner"),
+  AddGroup : require("./AddGroup")
 };

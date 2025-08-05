@@ -1947,6 +1947,7 @@ module.exports = {
           isDeleted: "$isDeleted",
           addedBy: "$addedBy",
           location: "$location",
+          userName : "$userName"
         },
       };
       pipeline.push(projection);
@@ -2852,6 +2853,7 @@ module.exports = {
         is_us_citizen,
         signature,
         signature_date,
+        affiliate_group,
       } = req.body;
 
       let get_user = await Users.findOne({ id: id, isDeleted: false });
@@ -2909,6 +2911,21 @@ module.exports = {
 
       if (req.body.dob) {
         req.body.dob = new Date(req.body.dob);
+      }
+
+    //email sned then any affiiate add in group
+      if (get_user.role === "affiliate" && affiliate_group) {
+
+        for (let group_id of affiliate_group) {
+          const group = await AffiliateManagement.findOne({ id: group_id });
+
+          Emails.AddGroup.sendEmailAffiliateGroupAdded({
+            brandFullName: req.identity.fullName,
+            affiliateFullName: get_user.fullName,
+            affiliateEmail: get_user.email,
+            groupName: group.name,
+          });
+        }
       }
 
       delete req.body.role;
@@ -3043,6 +3060,7 @@ module.exports = {
 
       throw constants.COMMON.SERVER_ERROR;
     } catch (error) {
+      console.log("error",error)
       return response.failed(null, `${error}`, req, res);
     }
   },
@@ -4892,6 +4910,8 @@ module.exports = {
           { lastName: { $regex: search, $options: "i" } },
           { mobileNo: { $regex: search, $options: "i" } },
           { work_phone: { $regex: search, $options: "i" } },
+          { userName: { $regex: search, $options: "i" } },
+
         ];
       }
 
@@ -5209,6 +5229,7 @@ module.exports = {
           currencies: "$currencies",
           defaultCurrency: "$defaultCurrency",
           propertyType: "$propertyType",
+          userName: "$userName"
         },
       };
       pipeline.push(projection);
@@ -5313,6 +5334,182 @@ module.exports = {
         success: false,
         error: { message: err },
       });
+    }
+  },
+
+  getAllUserName: async (req, res) => {
+    try {
+      let page = req.param("page") || 1;
+      let count = req.param("count") || 10;
+      let {
+        search,
+        // role,
+        isDeleted,
+        status,
+        sortBy,
+        // lat,
+        // lng,
+        // start_date,
+        // end_date,
+        // addedBy,
+        // request_status,
+      } = req.query;
+      let skipNo = (Number(page) - 1) * Number(count);
+      let query = { isDeleted: false };
+
+      if (search) {
+        search = Services.Utils.remove_special_char_exept_underscores(search);
+        query.$or = [
+        
+          { userName: { $regex: search, $options: "i" } },
+
+        ];
+      }
+
+      let sortquery = {};
+      if (sortBy) {
+        let typeArr = [];
+        typeArr = sortBy.split(" ");
+        let sortType = typeArr[1];
+        let field = typeArr[0];
+        sortquery[field ? field : "createdAt"] = sortType
+          ? sortType == "desc"
+            ? -1
+            : 1
+          : -1;
+      } else {
+        sortquery = { updatedAt: -1 };
+      }
+
+      if (req.identity.role == "admin") {
+        query.role = { $nin: ["admin"] };
+      } else {
+        query.role = { $nin: ["admin", "team", ""] };
+      }
+
+      if (status) {
+        query.status = status;
+      }
+
+      if (isDeleted) {
+        query.isDeleted = isDeleted
+          ? isDeleted === "true"
+          : true
+          ? isDeleted
+          : false;
+      }
+
+      let pipeline = [
+        {
+          $lookup: {
+            from: "affiliatemanagement",
+            localField: "affiliate_group",
+            foreignField: "_id",
+            as: "affiliate_group_details",
+          },
+        },
+        {
+          $unwind: {
+            path: "$affiliate_group_details",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+      ];
+
+      let projection = {
+        $project: {
+          id: "$_id",
+          firstName: "$firstName",
+          lastName: "$lastName",
+          fullName: "$fullName",
+          email: "$email",
+          role: "$role",
+          image: "$image",
+          logo: "$logddress",
+          country: "$country",
+
+          mobileNo: "$mobileNo",
+          work_phone: "o",
+          address: "$a$work_phone",
+          
+          // invite_status: {
+          //   $cond: [
+          //     { $ifNull: ["$invite_affiliate_details.status", false] },
+          //     "$invite_affiliate_details.status",
+          //     "not_invited",
+          //   ],
+          // },
+          // invite_affiliate_details_status: "$invite_affiliate_details.status",
+          status: "$status",
+          createdAt: "$createdAt",
+          updatedAt: "$updatedAt",
+          isDeleted: "$isDeleted",
+          addedBy: "$addedBy",
+          location: "$location",
+          userName: "$userName"
+        },
+      };
+      pipeline.push(projection);
+      pipeline.push({
+        $match: query,
+      });
+      pipeline.push({
+        $sort: sortquery,
+      });
+     
+      let totalResult = await db
+        .collection("users")
+        .aggregate(pipeline)
+        .toArray();
+      pipeline.push({
+        $skip: Number(skipNo),
+      });
+      pipeline.push({
+        $limit: Number(count),
+      });
+
+      let result = await db.collection("users").aggregate(pipeline).toArray();
+      let resData = {
+        total: totalResult ? totalResult.length : 0,
+        data: result ? result : [],
+      };
+      if (!req.param("page") && !req.param("count")) {
+        resData.data = totalResult ? totalResult : [];
+      }
+      return response.success(resData, constants.user.FETCH, req, res);
+    } catch (error) {
+      console.log(error, "---err");
+      return response.failed(null, `${error}`, req, res);
+    }
+  },
+
+   userNameCheck: async (req, res) => {
+    try {
+      let validation_result = await Validations.UserValidations.userName(
+        req,
+        res
+      );
+
+      if (validation_result && !validation_result.success) {
+        throw validation_result.message;
+      }
+
+      if (req.body.userName) {
+        req.body.userName = req.body.userName.toLowerCase();
+      }
+
+      let query = {};
+      query.isDeleted = false;
+      query.userName = req.body.userName;
+
+      let get_user = await Users.findOne(query);
+      if (get_user) {
+        throw constants.user.USERNAME;
+      }else{
+            return response.success(null, constants.user.USERNAMENOTEXIST, req, res);
+      }
+    } catch (error) {
+      return response.failed(null, `${error}`, req, res);
     }
   },
 };

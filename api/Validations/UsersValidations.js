@@ -225,6 +225,14 @@ exports.addUser = async (req, res, next) => {
 
 }
 
+exports.userName = async (req, res, next) => {
+    const schema = Joi.object({
+      userName: Joi.string().required(),
+    });
+    return await Validate(schema, req, res);
+
+}
+
 exports.editProfile = async (req, res, next) => {
 
     const schema = Joi.object({

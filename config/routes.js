@@ -71,6 +71,10 @@ module.exports.routes = {
   "put /user/account-request-status": "UsersController.updateRequestStatus",
   "post /register/brand": "UsersController.registerBrandWithPlan",
   "get/affiliate/detail": "UsersController.affiliateDetail",
+  "get /userName/list": "UsersController.getAllUserName",
+  "post /userName/check": "UsersController.userNameCheck",
+
+
 
   /**
    * @CommonAPIs

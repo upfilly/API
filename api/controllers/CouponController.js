@@ -11,17 +11,17 @@ const ObjectId = require("mongodb").ObjectId;
 const Services = require("../services/index");
 const Validations = require("../Validations/index");
 const credentials = require("../../config/local");
-const excel = require('exceljs');
+const excel = require("exceljs");
 
 const { Parser } = require("json2csv");
 const xml2js = require("xml2js");
 const fs = require("fs");
 const path = require("path");
-const Email = require("../Emails/coupon")
+const Email = require("../Emails/coupon");
 
 generateName = function () {
   // action are perform to generate random name for every file
-  var uuid = require('uuid');
+  var uuid = require("uuid");
   var randomStr = uuid.v4();
   var date = new Date();
   var currentDate = date.valueOf();
@@ -46,7 +46,7 @@ exports.addCoupon = async (req, res) => {
       url,
       couponCommission,
       description,
-      title
+      title,
     } = req.body;
     let validation_result = await Validations.CouponValidations.addCoupon(
       req,
@@ -78,14 +78,13 @@ exports.addCoupon = async (req, res) => {
     }
 
     if (campaign_id && campaign_id.length > 0) {
-    for (let itm of campaign_id) {
-      console.log("campaign",itm)
+      for (let itm of campaign_id) {
         let check = await Campaign.findOne({ id: itm });
         if (!check) {
-         throw constants.COUPON.CAMAPIGN;
-        } 
+          throw constants.COUPON.CAMAPIGN;
+        }
+      }
     }
-  }
     req.body.addedBy = req.identity.id;
 
     const coupon = await Coupon.create(req.body).fetch();
@@ -132,18 +131,27 @@ exports.addCoupon = async (req, res) => {
         });
 
         if (affiliate && affiliate.email && brand) {
-          await Email.sendCouponNotificationEmail({
-            brandFullName: brand.fullName,
-            affiliateFullName: affiliate.fullName,
-            affiliateEmail: affiliate.email,
-            couponTitle: title,
-            couponCode,
-            expirationDate,
-            visibility,
+          //emailSenting check 
+          let emailSentCheck = await EmailSentSetting.findOne({
+            name: "coupon",
+            isDeleted: false,
           });
+          if (emailSentCheck.emailSent == true) {
+            await Email.sendCouponNotificationEmail({
+              brandFullName: brand.fullName,
+              affiliateFullName: affiliate.fullName,
+              affiliateEmail: affiliate.email,
+              couponTitle: title,
+              couponCode,
+              expirationDate,
+              visibility,
+            });
+          } else {
+            console.log("emailSent setting is false in coupon");
+          }
         }
       } else if (visibility === "Public") {
-        console.log("public")
+        console.log("public");
         const brand = await Users.findOne({
           id: req.identity.id,
           isDeleted: false,
@@ -153,7 +161,13 @@ exports.addCoupon = async (req, res) => {
 
         for (let affiliate of affiliates) {
           if (affiliate.email && affiliate.fullName) {
-            Email.sendCouponNotificationEmail({
+
+             let emailSentCheck = await EmailSentSetting.findOne({
+            name: "coupon",
+            isDeleted: false,
+          });
+          if (emailSentCheck.emailSent == true) {
+             Email.sendCouponNotificationEmail({
               brandFullName: brand.fullName,
               affiliateFullName: affiliate.fullName,
               affiliateEmail: affiliate.email,
@@ -162,6 +176,9 @@ exports.addCoupon = async (req, res) => {
               expirationDate,
               visibility,
             });
+          } else {
+            console.log("emailSent setting is false in coupon");
+          }
           }
         }
       }
@@ -171,7 +188,7 @@ exports.addCoupon = async (req, res) => {
 
     throw constants.COMMON.SERVER_ERROR;
   } catch (error) {
-    console.log("error ",error)
+    console.log("error ", error);
     return response.failed(null, `${error}`, req, res);
   }
 };
@@ -190,7 +207,7 @@ exports.editCoupon = async function (req, res) {
       url,
       couponCommission,
       title,
-      description
+      description,
     } = req.body;
     let validation_result = await Validations.CouponValidations.editCoupon(
       req,
@@ -295,159 +312,184 @@ exports.deleteCoupon = async function (req, res) {
   }
 };
 exports.getAllCoupon = async (req, res) => {
-    try {
-        let query = {};
-        let count = req.param('count') || 1000;
-        let page = req.param('page') || 1;
-        let skipNo = (Number(page) - 1) * Number(count);
-        let { search, sortBy, status, isDeleted, plan_type, couponType, addedBy, visibility, media,csv,xml,export_to_xls,campaign, selectedCoupon } = req.query;
-        let sortquery = {};
+  try {
+    let query = {};
+    let count = req.param("count") || 1000;
+    let page = req.param("page") || 1;
+    let skipNo = (Number(page) - 1) * Number(count);
+    let {
+      search,
+      sortBy,
+      status,
+      isDeleted,
+      plan_type,
+      couponType,
+      addedBy,
+      visibility,
+      media,
+      csv,
+      xml,
+      export_to_xls,
+      campaign,
+      selectedCoupon,
+    } = req.query;
+    let sortquery = {};
 
-        if (search) {
-            search = Services.Utils.remove_special_char_exept_underscores(search);
-            query.$or = [
-                { name: { $regex: search, '$options': 'i' } }
-            ]
-        }
+    if (search) {
+      search = Services.Utils.remove_special_char_exept_underscores(search);
+      query.$or = [{ name: { $regex: search, $options: "i" } }];
+    }
 
-        if (isDeleted) {
-            query.isDeleted = isDeleted ? isDeleted === 'true' : true ? isDeleted : false;
-        } else {
-            query.isDeleted = false;
-        }
+    if (isDeleted) {
+      query.isDeleted = isDeleted
+        ? isDeleted === "true"
+        : true
+        ? isDeleted
+        : false;
+    } else {
+      query.isDeleted = false;
+    }
 
-        if (sortBy) {
-            let typeArr = [];
-            typeArr = sortBy.split(" ");
-            let sortType = typeArr[1];
-            let field = typeArr[0];
-            sortquery[field ? field : 'createdAt'] = sortType ? (sortType == 'desc' ? -1 : 1) : -1;
-        } else {
-            sortquery = { createdAt: -1 }
-        }
+    if (sortBy) {
+      let typeArr = [];
+      typeArr = sortBy.split(" ");
+      let sortType = typeArr[1];
+      let field = typeArr[0];
+      sortquery[field ? field : "createdAt"] = sortType
+        ? sortType == "desc"
+          ? -1
+          : 1
+        : -1;
+    } else {
+      sortquery = { createdAt: -1 };
+    }
 
-        if (status) {
-            query.status = status;
-        }
+    if (status) {
+      query.status = status;
+    }
 
-        if (plan_type) {
-            query.plan_type = plan_type;
-        }
-        if (addedBy) {
-            query.addedBy = new ObjectId(addedBy);
-        }
-         if (campaign) {
-            query.campaign = new ObjectId(campaign);
-        }
-        // else {
-        //     query.addedBy = new ObjectId(req.identity.id);
-        // }
-        if(couponType) {
-            query.couponType = couponType;
-        }
+    if (plan_type) {
+      query.plan_type = plan_type;
+    }
+    if (addedBy) {
+      query.addedBy = new ObjectId(addedBy);
+    }
+    if (campaign) {
+      query.campaign = new ObjectId(campaign);
+    }
+    // else {
+    //     query.addedBy = new ObjectId(req.identity.id);
+    // }
+    if (couponType) {
+      query.couponType = couponType;
+    }
 
-        if(selectedCoupon){
-          selectedCoupon = selectedCoupon.split(",")
-          selectedCoupon = selectedCoupon.map((itm) => new ObjectId(itm))
-          query.id = {$in:selectedCoupon}
-        }
-        if (visibility || media) {
-            query.$or = [
-                { visibility: "Public" },
-                ...(media ? [{ media: new ObjectId(media) }] : [])
-            ];
-        }
-        // console.log(sortquery, "-----------------sortquery");
-        let pipeline = [
-            {
-                $lookup :{
-                from  :"users",
-                localField : "addedBy",
-                foreignField : "_id",
-                as : "addedByDetails"
-             }
-            },
-            {
-                $unwind : {
-                path : "$addedByDetails",
-                preserveNullAndEmptyArrays : true
-                }
-            },
-             {
-                $lookup :{
-                from  :"campaign",
-                localField : "campaign_id",
-                foreignField : "_id",
-                as : "campaignData"
-             }
-            },
-            {
-                $unwind : {
-                path : "$campaignData",
-                preserveNullAndEmptyArrays : true
-                }
-            },
-        ];
-        let projection = {
+    if (selectedCoupon) {
+      selectedCoupon = selectedCoupon.split(",");
+      selectedCoupon = selectedCoupon.map((itm) => new ObjectId(itm));
+      query.id = { $in: selectedCoupon };
+    }
+    if (visibility || media) {
+      query.$or = [
+        { visibility: "Public" },
+        ...(media ? [{ media: new ObjectId(media) }] : []),
+      ];
+    }
+    // console.log(sortquery, "-----------------sortquery");
+    let pipeline = [
+      {
+        $lookup: {
+          from: "users",
+          localField: "addedBy",
+          foreignField: "_id",
+          as: "addedByDetails",
+        },
+      },
+      {
+        $unwind: {
+          path: "$addedByDetails",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: "campaign",
+          localField: "campaign_id",
+          foreignField: "_id",
+          as: "campaignData",
+        },
+      },
+      {
+        $unwind: {
+          path: "$campaignData",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+    ];
+    let projection = {
+      $project: {
+        id: "$_id",
+        media: "$media",
+        title: "$title",
+        description: "$description",
+        couponCode: "$couponCode",
+        couponType: "$couponType",
+        startDate: "$startDate",
+        expirationDate: "$expirationDate",
+        commissionType: "$commissionType",
+        applicable: "$applicable",
+        visibility: "$visibility",
+        url: "$url",
+        addedByDetails: {
+          fullName: "$addedByDetails.fullName",
+          email: "$addedByDetails.email",
+        },
+        brand_name: "$addedByDetails.fullName",
+        couponCommission: "$couponCommission",
+        isDeleted: "$isDeleted",
+        deletedAt: "$deletedAt",
+        status: "$status",
+        addedBy: "$addedBy",
+        updatedBy: "$updatedBy",
+        updatedAt: "$updatedAt",
+        createdAt: "$createdAt",
+        i: "$addedBy",
+        fullName: "$addedByDetails.fullName",
+        couponAmount: "$couponAmount",
+        campaign_id: "$campaign_id",
+        campaignDetails: "$campaignData",
+      },
+    };
+    pipeline.push(projection);
+    pipeline.push({
+      $match: query,
+    });
+    // pipeline.push({
+    //     $sort: sortquery
+    // });
 
-            $project: {
-                id: '$_id',
-                media: '$media',
-                title: '$title',
-                description: '$description',
-                couponCode: "$couponCode",
-                couponType: "$couponType",
-                startDate: "$startDate",
-                expirationDate: "$expirationDate",
-                commissionType: "$commissionType",
-                applicable: "$applicable",
-                visibility: "$visibility",
-                url: "$url",
-                addedByDetails : {fullName : "$addedByDetails.fullName",email : "$addedByDetails.email"},
-                brand_name : "$addedByDetails.fullName",
-                couponCommission: "$couponCommission",
-                isDeleted: "$isDeleted",
-                deletedAt: "$deletedAt",
-                status: "$status",
-                addedBy: "$addedBy",
-                updatedBy: "$updatedBy",
-                updatedAt: "$updatedAt",
-                createdAt: "$createdAt",
-                i : "$addedBy",
-                fullName: "$addedByDetails.fullName",
-                couponAmount:"$couponAmount",
-                campaign_id:"$campaign_id",
-                campaignDetails : "$campaignData"
+    pipeline.push({
+      $sort: sortquery,
+    });
 
-            }
-        };
-        pipeline.push(projection);
-        pipeline.push({
-            $match: query
-        });
-        // pipeline.push({
-        //     $sort: sortquery
-        // });
+    // let unset_stage = {
+    //     $unset: ['_id']
+    // }
+    // pipeline.push(unset_stage)
 
-        pipeline.push({
-            $sort: sortquery
-        });
+    let totalresult = await db
+      .collection("coupon")
+      .aggregate(pipeline)
+      .toArray();
+    pipeline.push({
+      $skip: Number(skipNo),
+    });
+    pipeline.push({
+      $limit: Number(count),
+    });
+    let result = await db.collection("coupon").aggregate(pipeline).toArray();
 
-        // let unset_stage = {
-        //     $unset: ['_id']
-        // }
-        // pipeline.push(unset_stage)
-
-        let totalresult = await db.collection('coupon').aggregate(pipeline).toArray();
-        pipeline.push({
-            $skip: Number(skipNo)
-        });
-        pipeline.push({
-            $limit: Number(count)
-        });
-        let result = await db.collection('coupon').aggregate(pipeline).toArray();
-
-         if (export_to_xls == "yes") {
+    if (export_to_xls == "yes") {
       if (result && result.length > 0) {
         let workbook = new excel.Workbook();
         let worksheet = workbook.addWorksheet("Coupons");
@@ -456,10 +498,30 @@ exports.getAllCoupon = async (req, res) => {
           { header: "Coupon Type", key: "couponType", width: 20 },
           { header: "Brand Name", key: "brand_name", width: 20 },
           { header: "Visibility", key: "visibility", width: 35 },
-          { header: "Start Date ", key: "startDate", width: 20 ,style: { alignment: { horizontal: "center" } }},
-          { header: "Expiration Date", key: "expirationDate", width: 20 ,style: { alignment: { horizontal: "center" } }},
-          { header: "Status", key: "status", width: 15 ,style: { alignment: { horizontal: "center" } }},
-          { header: "Created Date", key: "createdAt", width: 20 ,style: { alignment: { horizontal: "center" } }},
+          {
+            header: "Start Date ",
+            key: "startDate",
+            width: 20,
+            style: { alignment: { horizontal: "center" } },
+          },
+          {
+            header: "Expiration Date",
+            key: "expirationDate",
+            width: 20,
+            style: { alignment: { horizontal: "center" } },
+          },
+          {
+            header: "Status",
+            key: "status",
+            width: 15,
+            style: { alignment: { horizontal: "center" } },
+          },
+          {
+            header: "Created Date",
+            key: "createdAt",
+            width: 20,
+            style: { alignment: { horizontal: "center" } },
+          },
         ];
         let counter = 0;
         for await (let values of result) {
@@ -490,89 +552,99 @@ exports.getAllCoupon = async (req, res) => {
           return workbook.xlsx.write(res).then(function () {
             res.status(200).end();
           });
-
         } catch (err) {
           return response.failed(null, `${err}`, req, res);
         }
-
       } else {
-        return response.failed(null, `No data found to export`, req, res)
+        return response.failed(null, `No data found to export`, req, res);
       }
-    } 
-
-        if (csv || xml) {
-            const dirPath = path.join(__dirname, "../documents");
-            if (!fs.existsSync(dirPath)) {
-              fs.mkdirSync(dirPath, { recursive: true });
-            }
-          }
-          // Check if CSV is requested
-          if (csv) {
-              let fields = ["fullName", "couponCode", "couponType", "startDate", "expirationDate","URL"];
-              result.forEach(item => {
-                item.URL = `${credentials.BACK_WEB_URL}/?affiliate_id=${media}&brand_id=${item.addedBy ? item.addedBy : "No data"}&url=${item.url}`;
-              });
-              const json2csvParser = new Parser({ fields });
-              const csvData = json2csvParser.parse(result);
-              let rootpath = process.cwd()
-              let csvPath = rootpath + "/assets/documents/" +generateName()+ ".csv"
-              
-              // const filePath = path.join(csvPath);
-              fs.writeFileSync(csvPath, csvData);
-        
-              res.setHeader("Content-Disposition", "attachment; filename=coupons.csv");
-              res.setHeader("Content-Type", "text/csv");
-              return res.download(csvPath, "coupons.csv");
-            }
-        
-            // ✅ Generate XML
-            if (xml) {
-              const xmlFormattedResult = result.map(item => ({
-                  fullName: item.fullName,
-                  couponCode: item.couponCode,
-                  couponType: item.couponType,
-                  startDate: item.startDate,
-                  expirationDate: item.expirationDate,
-                  URL: `${credentials.BACK_WEB_URL}/?affiliate_id=${media}&brand_id=${item.addedBy}&url=${item.url}`
-                }));
-              
-                const builder = new xml2js.Builder();
-                const xmlData = builder.buildObject({ coupons: { coupon: xmlFormattedResult } });
-              
-                // ✅ Define Root Path for XML File
-                let rootPath = process.cwd(); // Get the current working directory
-                let xmlPath = path.join(rootPath, "assets", "documents");
-              
-                // ✅ Ensure Directory Exists
-                if (!fs.existsSync(xmlPath)) {
-                  fs.mkdirSync(xmlPath, { recursive: true }); // Create directory if not exists
-                }
-              
-                // ✅ Generate Unique File Name
-                let fileName = `coupons_${Date.now()}.xml`;
-                let filePath = path.join(xmlPath, fileName);
-              
-                // ✅ Write XML Data to File
-                fs.writeFileSync(filePath, xmlData, "utf8");
-              
-                // ✅ Send File for Download
-                return res.download(filePath, fileName);
-              }
-      
-        let resData = {
-            total_count: totalresult ? totalresult.length : 0,
-            data: result ? result : [],
-        }
-        if (!req.param('page') && !req.param('count')) {
-            resData.data = totalresult ? totalresult : [];
-        }
-        return response.success(resData, constants.COUPON.FETCHED, req, res);
-
-    } catch (error) {
-      console.log(error,',===')
-        return response.failed(null, `${error}`, req, res);
     }
-}
+
+    if (csv || xml) {
+      const dirPath = path.join(__dirname, "../documents");
+      if (!fs.existsSync(dirPath)) {
+        fs.mkdirSync(dirPath, { recursive: true });
+      }
+    }
+    // Check if CSV is requested
+    if (csv) {
+      let fields = [
+        "fullName",
+        "couponCode",
+        "couponType",
+        "startDate",
+        "expirationDate",
+        "URL",
+      ];
+      result.forEach((item) => {
+        item.URL = `${
+          credentials.BACK_WEB_URL
+        }/?affiliate_id=${media}&brand_id=${
+          item.addedBy ? item.addedBy : "No data"
+        }&url=${item.url}`;
+      });
+      const json2csvParser = new Parser({ fields });
+      const csvData = json2csvParser.parse(result);
+      let rootpath = process.cwd();
+      let csvPath = rootpath + "/assets/documents/" + generateName() + ".csv";
+
+      // const filePath = path.join(csvPath);
+      fs.writeFileSync(csvPath, csvData);
+
+      res.setHeader("Content-Disposition", "attachment; filename=coupons.csv");
+      res.setHeader("Content-Type", "text/csv");
+      return res.download(csvPath, "coupons.csv");
+    }
+
+    // ✅ Generate XML
+    if (xml) {
+      const xmlFormattedResult = result.map((item) => ({
+        fullName: item.fullName,
+        couponCode: item.couponCode,
+        couponType: item.couponType,
+        startDate: item.startDate,
+        expirationDate: item.expirationDate,
+        URL: `${credentials.BACK_WEB_URL}/?affiliate_id=${media}&brand_id=${item.addedBy}&url=${item.url}`,
+      }));
+
+      const builder = new xml2js.Builder();
+      const xmlData = builder.buildObject({
+        coupons: { coupon: xmlFormattedResult },
+      });
+
+      // ✅ Define Root Path for XML File
+      let rootPath = process.cwd(); // Get the current working directory
+      let xmlPath = path.join(rootPath, "assets", "documents");
+
+      // ✅ Ensure Directory Exists
+      if (!fs.existsSync(xmlPath)) {
+        fs.mkdirSync(xmlPath, { recursive: true }); // Create directory if not exists
+      }
+
+      // ✅ Generate Unique File Name
+      let fileName = `coupons_${Date.now()}.xml`;
+      let filePath = path.join(xmlPath, fileName);
+
+      // ✅ Write XML Data to File
+      fs.writeFileSync(filePath, xmlData, "utf8");
+
+      // ✅ Send File for Download
+      return res.download(filePath, fileName);
+    }
+
+    let resData = {
+      total_count: totalresult ? totalresult.length : 0,
+      data: result ? result : [],
+    };
+    if (!req.param("page") && !req.param("count")) {
+      resData.data = totalresult ? totalresult : [];
+    }
+    return response.success(resData, constants.COUPON.FETCHED, req, res);
+  } catch (error) {
+    console.log(error, ",===");
+    return response.failed(null, `${error}`, req, res);
+  }
+};
 exports.getByIdCoupon = async (req, res) => {
   try {
     const id = req.param("id");

@@ -196,7 +196,8 @@ module.exports = {
     timezone: { type: "string" },
     currencies : {type:"json",defaultsTo:[]},
     defaultCurrency : {type:"string",defaultsTo:""},
-    propertyType : {type:"json",defaultsTo:[]}
+    propertyType : {type:"json",defaultsTo:[]},
+    userName : {type : "string"}
     
 
   },

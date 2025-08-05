@@ -7,6 +7,7 @@ module.exports.constants = {
     PHONE_REQUIRED: "Phone number is required",
     EMAIL_REQUIRED: "Email is required",
     EMAIL_EXIST: "Email-Id already exists.",
+    USERNAME : "User name already exist",
     WRONG_EMAIL: "Email-Id does not exists",
     PASSWORD_REQUIRED: "Password is required",
     UNVERIFIED: "You have not verified your account. Please verify.",
@@ -59,6 +60,8 @@ module.exports.constants = {
     INVITED_USER_UPDATED: "Invited user updated",
     INVITED_USER_DETAILS: "Invited user details fetched",
     CURRENCY_EXIST: "Can't delete currency",
+    FETCH : "Data fetch successfully",
+    USERNAMENOTEXIST : "Successfully."
   },
   COMMON: {
     COUNTRY_CODE_REQUIRED: "Country  code is required",
