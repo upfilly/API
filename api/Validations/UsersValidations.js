@@ -34,7 +34,8 @@ exports.register = async (req, res, next) => {
         device_token: Joi.string().optional().allow(""),
         referral_code: Joi.string().optional().allow(""),
         propertyType: Joi.array().optional().allow(null),
-        defaultCurrency : Joi.string().optional().allow("")
+        defaultCurrency : Joi.string().optional().allow(""),
+        userName: Joi.string().optional(),
 
     });
     return await Validate(schema, req, res);
