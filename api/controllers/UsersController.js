@@ -23,7 +23,6 @@ const { google } = require("googleapis");
 const OAuth2Client = google.auth.OAuth2;
 const stripe = require("stripe")(credentials.PAYMENT_INFO.SECREATKEY);
 
-
 function generateUserNameFromJSON(data) {
   if (!data || typeof data !== 'object') return '';
 
@@ -34,10 +33,11 @@ function generateUserNameFromJSON(data) {
 
   const baseName = fullName
     .toLowerCase()
-    .replace(/[^a-z0-9]/g, ''); 
+    .replace(/[^a-z0-9]/g, '');
 
   return `${baseName}${number}`;
 }
+
 
 
 function string_ids_toObjectIds_array(string) {
@@ -5497,56 +5497,66 @@ module.exports = {
 
    userNameCheck: async (req, res) => {
     try {
-      // let validation_result = await Validations.UserValidations.userName(
-      //   req,
-      //   res
-      // );
+      let validation_result = await Validations.UserValidations.userName(
+        req,
+        res
+      );
 
-      // if (validation_result && !validation_result.success) {
-      //   throw validation_result.message;
-      // }
+      if (validation_result && !validation_result.success) {
+        throw validation_result.message;
+      }
 
-      // if (req.body.userName) {
-      //   req.body.userName = req.body.userName.toLowerCase();
-      // }
+        const userName = req.body.userName?.toLowerCase();
 
-      // let query = {};
-      // query.isDeleted = false;
-      // query.userName = req.body.userName;
-
-      // let get_user = await Users.findOne(query);
-      // if (get_user) {
-      //   throw constants.user.USERNAME;
-      // }else{
-      //       return response.success(null, constants.user.USERNAMENOTEXIST, req, res);
-      // }
-
-
-
-     try{
-  const allUsers = await Users.find({ isDeleted: false }).sort('createdAt ASC');
-
-    let counter = 1;
-
-    for (const user of allUsers) {
-     console.log("alpha 1",user)
-      const newUsername = generateUserNameFromJSON({fullName:user.firtName||user.lastName,number:counter});
-
-      await Users.updateOne({ id: user.id }).set({
-        userName: newUsername,
-      });
-
-      counter++;
+    if (!userName) {
+      return response.failed(null, "Username is required", req, res);
     }
-     }catch(err){
-      console.log("err",err)
-     }
-  
-    return response.success(null, constants.user.USERNAMENOTEXIST, req, res);
 
+    const user = await Users.findOne({
+      userName: userName,
+      isDeleted: false
+    });
+
+    if (user) {
+      return response.failed(null, constants.user.USERNAME, req, res);
+    }
+
+    return response.success(null, constants.user.USERNAMENOTEXIST, req, res);
     } catch (error) {
       return response.failed(null, `${error}`, req, res);
     }
   },
+  
+
+
+
+  //   userNameCheck: async (req, res) => {
+//   try {
+//     const allUsers = await Users.find({ isDeleted: false }).sort('createdAt ASC');
+
+//     let counter = 1;
+
+//     for (const user of allUsers) {
+//       const fullName = `${user.firstName || ''}${user.lastName || ''}`.trim();
+
+//       const newUsername = generateUserNameFromJSON({
+//         fullName,
+//         number: counter
+//       });
+
+//       await Users.updateOne({ id: user.id }).set({
+//         userName: newUsername,
+//       });
+
+//       counter++;
+//     }
+
+//     return response.success(null, constants.user.USERNAMENOTEXIST, req, res);
+//   } catch (error) {
+//     console.log("err", error);
+//     return response.failed(null, `${error}`, req, res);
+//   }
+// }
+
 
 };
