@@ -42,6 +42,7 @@ module.exports.policies = {
     userDetail: true,
     googleLoginAuthentication: true,
     googleLogin: true,
+    userNameCheck:true,
   },
   BankAccountController: {
     webhook: true
