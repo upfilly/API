@@ -82,6 +82,7 @@ exports.registerBrandWithPlan = async (req, res, next) => {
         isSpecial: Joi.boolean().required(),
         promoId: Joi.string().optional().allow(""),
         timezone: Joi.string().optional().allow(""),
+        userName: Joi.string().optional(),
     }).options({ allowUnknown: true });
     return await Validate(schema, req, res);
 
@@ -219,6 +220,8 @@ exports.addUser = async (req, res, next) => {
         signature_date: Joi.date().optional().allow(""),
         propertyType: Joi.array().optional().allow(null),
         defaultCurrency : Joi.string().optional().allow(""),
+        userName: Joi.string().optional(),
+
 
     });
     return await Validate(schema, req, res);
@@ -376,7 +379,8 @@ exports.editProfile = async (req, res, next) => {
         currencies: Joi.array().optional().allow(null),
         propertyType: Joi.array().optional().allow(null),
         defaultCurrency : Joi.string().optional().allow(""),
-        
+        userName: Joi.string().optional(),
+
     });
     return await Validate(schema, req, res);
 

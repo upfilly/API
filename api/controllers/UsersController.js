@@ -23,7 +23,13 @@ const { google } = require("googleapis");
 const OAuth2Client = google.auth.OAuth2;
 const stripe = require("stripe")(credentials.PAYMENT_INFO.SECREATKEY);
 
-function generateUserName(fullName, number = '') {
+
+function generateUserNameFromJSON(data) {
+  if (!data || typeof data !== 'object') return '';
+
+  const fullName = data.fullName || '';
+  const number = data.number || '';
+
   if (!fullName) return '';
 
   const baseName = fullName
@@ -32,6 +38,7 @@ function generateUserName(fullName, number = '') {
 
   return `${baseName}${number}`;
 }
+
 
 function string_ids_toObjectIds_array(string) {
   // console.log(string, "string");
@@ -5522,7 +5529,8 @@ module.exports = {
     let counter = 1;
 
     for (const user of allUsers) {
-      const newUsername = generateUserName(user.fullName, counter);
+     console.log("alpha 1",user)
+      const newUsername = generateUserNameFromJSON({fullName:user.firtName||user.lastName,number:counter});
 
       await Users.updateOne({ id: user.id }).set({
         userName: newUsername,
