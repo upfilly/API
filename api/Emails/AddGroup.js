@@ -18,13 +18,13 @@ exports.sendEmailAffiliateGroupAdded = async (options) => {
             display: flex; justify-content: center; align-items: center;">
             <div>
               <img src="${credentials.BACK_WEB_URL}/images/upfilly.png" style="width:115px; height: 40px; object-fit: contain;">
-              <h1 style="margin-bottom: 0px; margin-top: 10px; font-size: 18px;">
-                <span style="font-weight: 400;color:#373737;">Hi </span>${affiliateFullName},
+              <h1 style="margin-bottom: 0px; margin-top: 10px; font-size: 18px;text-transform: capitalize;">
+                <span style="font-weight: 400;color:#373737"">Hi </span>${affiliateFullName},
               </h1>
-              <p style="margin-top: 0px; font-size: 14px; color:#373737; margin-bottom: 0;">
-                You've been added to a new affiliate group: <strong>${groupName}</strong>
+              <p style="margin-top: 0px; font-size: 14px; color:#373737; margin-bottom: 0;"">
+                You've been added to a new affiliate group: <strong style="text-transform: capitalize;">${groupName}</strong>
               </p>
-              <p>Added by: <strong>${brandFullName}</strong></p>
+              <p style="text-transform: capitalize;">Added by: <strong>${brandFullName}</strong></p>
             </div>
           </div>
         </div>

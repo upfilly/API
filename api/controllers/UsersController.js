@@ -23,6 +23,16 @@ const { google } = require("googleapis");
 const OAuth2Client = google.auth.OAuth2;
 const stripe = require("stripe")(credentials.PAYMENT_INFO.SECREATKEY);
 
+function generateUserName(fullName, number = '') {
+  if (!fullName) return '';
+
+  const baseName = fullName
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, ''); 
+
+  return `${baseName}${number}`;
+}
+
 function string_ids_toObjectIds_array(string) {
   // console.log(string, "string");
   if (string) {
@@ -2914,18 +2924,15 @@ module.exports = {
       }
 
     //email sned then any affiiate add in group
-      if (get_user.role === "affiliate" && affiliate_group) {
+      if (affiliate_group) {
 
-        for (let group_id of affiliate_group) {
-          const group = await AffiliateManagement.findOne({ id: group_id });
-
+          const group = await AffiliateManagement.findOne({ id: affiliate_group });
           Emails.AddGroup.sendEmailAffiliateGroupAdded({
             brandFullName: req.identity.fullName,
             affiliateFullName: get_user.fullName,
             affiliateEmail: get_user.email,
-            groupName: group.name,
+            groupName: group.group_name,
           });
-        }
       }
 
       delete req.body.role;
@@ -5381,11 +5388,9 @@ module.exports = {
         sortquery = { updatedAt: -1 };
       }
 
-      if (req.identity.role == "admin") {
-        query.role = { $nin: ["admin"] };
-      } else {
+     
         query.role = { $nin: ["admin", "team", ""] };
-      }
+      
 
       if (status) {
         query.status = status;
@@ -5485,31 +5490,55 @@ module.exports = {
 
    userNameCheck: async (req, res) => {
     try {
-      let validation_result = await Validations.UserValidations.userName(
-        req,
-        res
-      );
+      // let validation_result = await Validations.UserValidations.userName(
+      //   req,
+      //   res
+      // );
 
-      if (validation_result && !validation_result.success) {
-        throw validation_result.message;
-      }
+      // if (validation_result && !validation_result.success) {
+      //   throw validation_result.message;
+      // }
 
-      if (req.body.userName) {
-        req.body.userName = req.body.userName.toLowerCase();
-      }
+      // if (req.body.userName) {
+      //   req.body.userName = req.body.userName.toLowerCase();
+      // }
 
-      let query = {};
-      query.isDeleted = false;
-      query.userName = req.body.userName;
+      // let query = {};
+      // query.isDeleted = false;
+      // query.userName = req.body.userName;
 
-      let get_user = await Users.findOne(query);
-      if (get_user) {
-        throw constants.user.USERNAME;
-      }else{
-            return response.success(null, constants.user.USERNAMENOTEXIST, req, res);
-      }
+      // let get_user = await Users.findOne(query);
+      // if (get_user) {
+      //   throw constants.user.USERNAME;
+      // }else{
+      //       return response.success(null, constants.user.USERNAMENOTEXIST, req, res);
+      // }
+
+
+
+     try{
+  const allUsers = await Users.find({ isDeleted: false }).sort('createdAt ASC');
+
+    let counter = 1;
+
+    for (const user of allUsers) {
+      const newUsername = generateUserName(user.fullName, counter);
+
+      await Users.updateOne({ id: user.id }).set({
+        userName: newUsername,
+      });
+
+      counter++;
+    }
+     }catch(err){
+      console.log("err",err)
+     }
+  
+    return response.success(null, constants.user.USERNAMENOTEXIST, req, res);
+
     } catch (error) {
       return response.failed(null, `${error}`, req, res);
     }
   },
+
 };
