@@ -1192,15 +1192,17 @@ module.exports = {
         query.addedBy = new ObjectId(addedBy);
       }
 
-      // if (category_id) {
-      //   // query.category_id = new ObjectId(category_id);
-      //   category_id = await Services.Utils.string_ids_toObjectIds_array(category_id);
-      //   query.category_id = { $in: category_id }
-      // }
       if (category_id) {
-        category = await Services.Utils.string_to_array(category_id);
-        query.category_id = { $in: category };
+        // query.category_id = new ObjectId(category_id);
+        category_id = await Services.Utils.string_ids_toObjectIds_array(
+          category_id
+        );
+        query.category_id = { $in: category_id };
       }
+      // if (category_id) {
+      //   category = await Services.Utils.string_to_array(category_id);
+      //   query.category_id = { $in: category };
+      // }
       if (sub_child_category_id) {
         // query.sub_child_category_id = new ObjectId(sub_child_category_id);
 
@@ -1265,17 +1267,136 @@ module.exports = {
         {
           $lookup: {
             from: "commoncategories",
-            localField: "category_id",
-            foreignField: "_id",
-            as: "categories_details",
+            let: {
+              category_ids: {
+                $cond: {
+                  if: { $isArray: "$category_id" },
+                  then: {
+                    $map: {
+                      input: "$category_id",
+                      as: "id",
+                      in: { $toObjectId: "$$id" },
+                    },
+                  },
+                  else: [],
+                },
+              },
+            },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $in: ["$_id", "$$category_ids"] },
+                      { $eq: ["$isDeleted", false] },
+                    ],
+                  },
+                },
+              },
+              {
+                $project: {
+                  _id: 1,
+                  name: 1,
+                  cat_type: 1,
+                },
+              },
+            ],
+            as: "categoryDetails",
           },
         },
         {
-          $unwind: {
-            path: "$categories_details",
-            preserveNullAndEmptyArrays: true,
+          $lookup: {
+            from: "commoncategories",
+            let: {
+              sub_category_ids: {
+                $cond: {
+                  if: { $isArray: "$sub_category_id" },
+                  then: {
+                    $map: {
+                      input: "$sub_category_id",
+                      as: "id",
+                      in: { $toObjectId: "$$id" },
+                    },
+                  },
+                  else: [],
+                },
+              },
+            },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $in: ["$_id", "$$sub_category_ids"] },
+                      { $eq: ["$isDeleted", false] },
+                    ],
+                  },
+                },
+              },
+              {
+                $project: {
+                  _id: 1,
+                  name: 1,
+                },
+              },
+            ],
+            as: "subCategoryDetails",
           },
         },
+        {
+          $lookup: {
+            from: "commoncategories",
+            let: {
+              sub_child_category_ids: {
+                $cond: {
+                  if: { $isArray: "$sub_child_category_id" },
+                  then: {
+                    $map: {
+                      input: "$sub_child_category_id",
+                      as: "id",
+                      in: { $toObjectId: "$$id" },
+                    },
+                  },
+                  else: [],
+                },
+              },
+            },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $in: ["$_id", "$$sub_child_category_ids"] },
+                      { $eq: ["$isDeleted", false] },
+                    ],
+                  },
+                },
+              },
+              {
+                $project: {
+                  _id: 1,
+                  name: 1,
+                },
+              },
+            ],
+            as: "subChildCategoryDetails",
+          },
+        },
+
+        // {
+        //   $lookup: {
+        //     from: "commoncategories",
+        //     localField: "category_id",
+        //     foreignField: "_id",
+        //     as: "categories_details",
+        //   },
+        // },
+        // {
+        //   $unwind: {
+        //     path: "$categories_details",
+        //     preserveNullAndEmptyArrays: true,
+        //   },
+        // },
         {
           $lookup: {
             from: "affiliateinvite",
@@ -1413,12 +1534,17 @@ module.exports = {
           isFeatured: "$isFeatured",
           isTrusted: "$isTrusted",
           category_id: "$category_id",
-          cat_type: "$categories_details.cat_type",
+          categoryDetails: "$categoryDetails",
+          subCategoryDetails: "$subCategoryDetails",
+          subChildCategoryDetails: "$subChildCategoryDetails",
           sub_category_id: "$sub_category_id",
           sub_child_category_id: "$sub_child_category_id",
           associatedAffiliates: "$associatedAffiliates",
+          propertyType: "$propertyType",
+          timezone: "$timezone",
         },
       };
+      console.log("aplha");
       pipeline.push(projection);
       pipeline.push({
         $match: query,
