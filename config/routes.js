@@ -627,11 +627,15 @@ module.exports.routes = {
   "put /email/setting/update" : "EmailSentSettingController.updateEmailSentSetting",
   "get /email/setting/list" : "EmailSentSettingController.getAllEmailSentSettingList",
   "get /email/setting/detail" : "EmailSentSettingController.getById",
-  "delete /email/setting/delete" : "EmailSentSettingController.deleteEmailSent"
+  "delete /email/setting/delete" : "EmailSentSettingController.deleteEmailSent",
 
-
-
-
-  
+  /**
+   * @LinkGenerateController
+   */
+  "post /link/generate/add" : "LinkGenerateController.addLinkGenerate",
+  "put /link/generate/update" : "LinkGenerateController.updateLinkGenerate",
+  "get /link/generate/detail" : "LinkGenerateController.getByIdLinkGenerate",
+  "get /link/generate/listing" : "LinkGenerateController.getAllLinkGenerate",
+  "delete /link/generate/delete" : "LinkGenerateController.deleteLinkGenerate"
 
 };   

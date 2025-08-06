@@ -535,6 +535,18 @@ module.exports.constants = {
     ID_REQUIRED: "Id is required",
   },
 
+  LINKGENERATE: {
+    ALREADY_EXIST: "Link name already exist",
+    ADDED: "Link generated successfully",
+    FETCHED: "Data fetch successfully",
+    ID_REQUIRED: "Id is required",
+    DELETE : "Link deleted successfully",
+    UPDATED : "Link updated successfully",
+    NOT : "Link id not exit."
+
+  },
+  
+
   TRACK_CUSTOMER: {
     ID_REQUIRED: "Id Required",
     SAVED: "Tracking data saved successfully",

@@ -555,7 +555,8 @@ exports.affiliateCount = async (req, res) => {
   //         }
   //       }
   //     ])
-  //     .toArray();
+  //     .toArray(); 
+   console.log(brandId, 'brandId`')
   //     totalActive = totalActive.length
   //   // const affiliates_active_count = activeAffiliates.length
 
@@ -646,7 +647,6 @@ exports.affiliateCount = async (req, res) => {
       //     }
       //   ])
       //   .toArray();
-      console.log(brandId, 'brandId`')
       // const affiliateIds = await Cookies.find({ brandId: new ObjectId(brandId) });
       // const affiliates_active_count = affiliateIds.length;
 

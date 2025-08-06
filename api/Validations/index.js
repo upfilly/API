@@ -51,5 +51,7 @@ module.exports = {
   EmailTemplateValidation: require("./EmailTemplateValidation"),
   FirstPromoterValidations: require("./FirstPromoterValidations"),
   CampaignRequestValidations: require("./CampaignRequestValidations"),
-  EmailSentSetting : require("./EmailSentSettingValidations")
+  EmailSentSetting : require("./EmailSentSettingValidations"),
+  LinkGenerate : require("./LinkGenerateValidations")
+
 };
