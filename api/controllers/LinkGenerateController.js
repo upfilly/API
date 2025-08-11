@@ -61,7 +61,9 @@ exports.getByIdLinkGenerate = async (req, res) => {
     if (!get_link) {
       throw constants.LINKGENERATE.NOT;
     }
-    return response.success(get_link, constants.LINKGENERATE.FETCHED, req, res);
+    let categoryDetail = await CommonCategories.find({where:{id:{in:get_link.category}}})
+    let uniqueValue = {...get_link,category:categoryDetail || []}
+    return response.success(uniqueValue, constants.LINKGENERATE.FETCHED, req, res);
   } catch (error) {
     console.log("error", error);
     return response.failed(null, `${error}`, req, res);
