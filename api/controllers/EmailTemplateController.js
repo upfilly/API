@@ -493,6 +493,7 @@ exports.getUserEmailTemplate = async (req, res) => {
   }
 }
 exports.affiliateCount = async (req, res) => {
+  // console.log("alpha")
   // try {
   //   const brandId = req.identity.id;
 
@@ -556,7 +557,7 @@ exports.affiliateCount = async (req, res) => {
   //       }
   //     ])
   //     .toArray(); 
-   console.log(brandId, 'brandId`')
+  //  console.log(brandId, 'brandId`')
   //     totalActive = totalActive.length
   //   // const affiliates_active_count = activeAffiliates.length
 
@@ -670,6 +671,7 @@ exports.affiliateCount = async (req, res) => {
     });
 
   } catch (error) {
+    console.log("erro",error)
     return response.failed(null, `${error}`, req, res);
   }
 
