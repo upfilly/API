@@ -298,8 +298,35 @@ exports.getAllLinkGenerate = async (req, res) => {
         updatedAt: "$updatedAt",
         addedBy: "$addedBy",
         status: "$status",
+        isExpired: "$isExpired",
       },
     };
+       pipeline.push({ $addFields: {
+        isExpired: {
+          $cond: [
+            {
+              $and: [
+                { $ne: ["$endDate", null] },
+                { $lt: ["$endDate", new Date()] },
+              ],
+            },
+            true,
+            false,
+          ],
+        },
+        status: {
+          $cond: [
+            {
+              $and: [
+                { $ne: ["$endDate", null] },
+                { $lt: ["$endDate", new Date()] },
+              ],
+            },
+            "deactive", 
+            "$status",
+          ],
+        },
+      },})
     pipeline.push(projection);
     pipeline.push({
       $match: query,
