@@ -420,6 +420,7 @@ exports.getAllBanner = async (req, res) => {
     let query = {};
     let count = req.param("count") || 10;
     let page = req.param("page") || 1;
+    let skipNo = (Number(page) - 1) * Number(count);
 
     let {
       search,
@@ -435,7 +436,6 @@ exports.getAllBanner = async (req, res) => {
       subCategory,
       affiliate_id,
     } = req.query;
-    let skipNo = (Number(page) - 1) * Number(count);
 
     if (search) {
       search = Services.Utils.remove_special_char_exept_underscores(search);
@@ -445,86 +445,34 @@ exports.getAllBanner = async (req, res) => {
       ];
     }
 
-    if (isDeleted) {
-      if (isDeleted === "true") {
-        isDeleted = true;
-      } else {
-        isDeleted = false;
-      }
-      query.isDeleted = isDeleted;
-    } else {
-      query.isDeleted = false;
-    }
-    if (is_animation) {
-      if (is_animation === "true") {
-        is_animation = true;
-      } else {
-        is_animation = false;
-      }
-      query.is_animation = is_animation;
-    }
-    if (is_deep_linking) {
-      if (is_deep_linking === "true") {
-        is_deep_linking = true;
-      } else {
-        is_deep_linking = false;
-      }
-      query.is_deep_linking = is_deep_linking;
-    }
-    if (mobile_creative) {
-      if (mobile_creative === "true") {
-        mobile_creative = true;
-      } else {
-        mobile_creative = false;
-      }
-      query.mobile_creative = mobile_creative;
-    }
-    if (status) {
-      query.status = status;
-    }
-
-    if (addedBy) {
-      query.addedBy = new ObjectId(addedBy);
-    }
-    //  else {
-    //   query.addedBy = new ObjectId(req.identity.id);
-    // }
+    query.isDeleted = isDeleted === "true";
+    if (is_animation !== undefined) query.is_animation = is_animation === "true";
+    if (is_deep_linking !== undefined) query.is_deep_linking = is_deep_linking === "true";
+    if (mobile_creative !== undefined) query.mobile_creative = mobile_creative === "true";
+    if (addedBy) query.addedBy = new ObjectId(addedBy);
+    if (affiliate_id) query.affiliate_id = affiliate_id;
 
     let sortquery = {};
     if (sortBy) {
-      let typeArr = [];
-      typeArr = sortBy.split(" ");
-      let sortType = typeArr[1];
-      let field = typeArr[0];
-      sortquery[field ? field : "createdAt"] = sortType
-        ? sortType == "desc"
-          ? -1
-          : 1
-        : -1;
+      let [field, order] = sortBy.split(" ");
+      sortquery[field || "createdAt"] = order === "desc" ? -1 : 1;
     } else {
       sortquery = { updatedAt: -1 };
     }
+
     if (category_id) {
-      // query.category_id = new ObjectId(category_id);
       category_id = await Services.Utils.string_ids_toObjectIds_array(category_id);
-      query.category_id = { $in: category_id }
+      query.category_id = { $in: category_id };
     }
     if (subChildCategory) {
-      // query.sub_child_category_id = new ObjectId(sub_child_category_id);
-
       subChildCategory = await Services.Utils.string_ids_toObjectIds_array(subChildCategory);
-      query.subChildCategory = { $in: subChildCategory }
+      query.subChildCategory = { $in: subChildCategory };
     }
     if (subCategory) {
-      // query.sub_category_id = new ObjectId(sub_category_id);
       subCategory = await Services.Utils.string_ids_toObjectIds_array(subCategory);
-      query.subCategory = { $in: subCategory }
+      query.subCategory = { $in: subCategory };
     }
-    if (affiliate_id) {
-      // affiliate_id = await Services.Utils.string_ids_toObjectIds_array(affiliate_id);
-      query.affiliate_id = affiliate_id
-    }
-    // Pipeline Stages
+
     let pipeline = [
       {
         $lookup: {
@@ -584,102 +532,370 @@ exports.getAllBanner = async (req, res) => {
           preserveNullAndEmptyArrays: true,
         },
       },
+      {
+        $addFields: {
+          isExpired: {
+            $cond: [
+              {
+                $and: [
+                  { $ne: ["$expiration_date", null] },
+                  { $lt: ["$expiration_date", new Date()] },
+                ],
+              },
+              true,
+              false,
+            ],
+          },
+          status: {
+            $cond: [
+              {
+                $and: [
+                  { $ne: ["$expiration_date", null] },
+                  { $lt: ["$expiration_date", new Date()] },
+                ],
+              },
+              "deactive",
+              "$status",
+            ],
+          },
+        },
+      },
+      {
+        $project: {
+          id: "$_id",
+          title: "$title",
+          destination_url: "$destination_url",
+          description: "$description",
+          activation_date: "$activation_date",
+          availability_date: "$availability_date",
+          expiration_date: "$expiration_date",
+          image: "$image",
+          is_animation: "$is_animation",
+          is_deep_linking: "$is_deep_linking",
+          mobile_creative: "$mobile_creative",
+          seo_attributes: "$seo_attributes",
+          category_id: "$category_id",
+          subChildCategory: "$subChildCategory",
+          subCategory: "$subCategory",
+          categories_details: "$categories_details",
+          status: "$status",
+          isExpired: "$isExpired",
+          addedBy: "$addedBy",
+          addedBy_name: "$addedBy_details.fullName",
+          addedBy_details: "$addedBy_details",
+          updatedBy: "$updatedBy",
+          updatedAt: "$updatedAt",
+          isDeleted: "$isDeleted",
+          createdAt: "$createdAt",
+          affiliate_id: "$affiliate_id",
+          affiliate_details: {
+            id: "$affiliate_details._id",
+            name: "$affiliate_details.fullName",
+            email: "$affiliate_details.email",
+            isDeleted: "$affiliate_details.isDeleted",
+          },
+        },
+      },
+      {
+        $match: query,
+      },
     ];
 
-    let projection = {
-      $project: {
-        id: "$_id",
-        title: "$title",
-        destination_url: "$destination_url",
-        description: "$description",
-        activation_date: "$activation_date",
-        availability_date: "$availability_date",
-        expiration_date: "$expiration_date",
-        image: "$image",
-        is_animation: "$is_animation",
-        is_deep_linking: "$is_deep_linking",
-        is_deep_linking: "$is_deep_linking",
-        mobile_creative: "$mobile_creative",
-        seo_attributes: "$seo_attributes",
-        category_id: "$category_id",
-        subChildCategory: "$subChildCategory",
-        subCategory: "$subCategory",
-        categories_details: "$categories_details",
-        status: "$status",
-        addedBy: "$addedBy",
-        addedBy_name: "$addedBy_details.fullName",
-        addedBy_details: "$addedBy_details",
-        updatedBy: "$updatedBy",
-        updatedAt: "$updatedAt",
-        isDeleted: "$isDeleted",
-        createdAt: "$createdAt",
-        updatedAt: "$updatedAt",
-        affiliate_id: "$affiliate_id",
-        affiliate_details: {
-          id: "$affiliate_details._id",
-          name: "$affiliate_details.fullName",
-          email: "$affiliate_details.email",
-          isDeleted: "$affiliate_details.isDeleted",
-        },
-       isExpired: "$isExpired",  
-      },
-    };
-    pipeline.push({ $addFields: {
-        isExpired: {
-          $cond: [
-            {
-              $and: [
-                { $ne: ["$expiration_date", null] },
-                { $lt: ["$expiration_date", new Date()] },
-              ],
-            },
-            true,
-            false,
-          ],
-        },
-        status: {
-          $cond: [
-            {
-              $and: [
-                { $ne: ["$expiration_date", null] },
-                { $lt: ["$expiration_date", new Date()] },
-              ],
-            },
-            "deactive", 
-            "$status",
-          ],
-        },
-      },})
-    pipeline.push(projection);
-    pipeline.push({
-      $match: query,
-    });
-    pipeline.push({
-      $sort: sortquery,
-    });
-    // Pipeline Stages
-    let totalresult = await db.collection("banner").aggregate(pipeline).toArray();
-    pipeline.push({
-      $skip: Number(skipNo),
-    });
-    pipeline.push({
-      $limit: Number(count),
-    });
+    if (status) {
+      pipeline.push({
+        $match: { status: status },
+      });
+    }
+
+    pipeline.push({ $sort: sortquery });
+
+    let totalresult = await db.collection("banner").aggregate([...pipeline]).toArray();
+
+    pipeline.push({ $skip: Number(skipNo) });
+    pipeline.push({ $limit: Number(count) });
 
     let result = await db.collection("banner").aggregate(pipeline).toArray();
 
     let resData = {
-      total_count: totalresult ? totalresult.length : 0,
-      data: result ? result : [],
+      total_count: totalresult.length,
+      data: result,
     };
+
     if (!req.param("page") && !req.param("count")) {
-      resData.data = totalresult ? totalresult : [];
+      resData.data = totalresult;
     }
+
     return response.success(resData, constants.BANNER.FETCHED_ALL, req, res);
   } catch (err) {
     return response.failed(null, `${err}`, req, res);
   }
 };
+
+// exports.getAllBanner = async (req, res) => {
+//   try {
+//     let query = {};
+//     let count = req.param("count") || 10;
+//     let page = req.param("page") || 1;
+
+//     let {
+//       search,
+//       isDeleted,
+//       status,
+//       sortBy,
+//       is_animation,
+//       is_deep_linking,
+//       mobile_creative,
+//       addedBy,
+//       category_id,
+//       subChildCategory,
+//       subCategory,
+//       affiliate_id,
+//     } = req.query;
+//     let skipNo = (Number(page) - 1) * Number(count);
+
+//     if (search) {
+//       search = Services.Utils.remove_special_char_exept_underscores(search);
+//       query.$or = [
+//         { title: { $regex: search, $options: "i" } },
+//         { destination_url: { $regex: search, $options: "i" } },
+//       ];
+//     }
+
+//     if (isDeleted) {
+//       if (isDeleted === "true") {
+//         isDeleted = true;
+//       } else {
+//         isDeleted = false;
+//       }
+//       query.isDeleted = isDeleted;
+//     } else {
+//       query.isDeleted = false;
+//     }
+//     if (is_animation) {
+//       if (is_animation === "true") {
+//         is_animation = true;
+//       } else {
+//         is_animation = false;
+//       }
+//       query.is_animation = is_animation;
+//     }
+//     if (is_deep_linking) {
+//       if (is_deep_linking === "true") {
+//         is_deep_linking = true;
+//       } else {
+//         is_deep_linking = false;
+//       }
+//       query.is_deep_linking = is_deep_linking;
+//     }
+//     if (mobile_creative) {
+//       if (mobile_creative === "true") {
+//         mobile_creative = true;
+//       } else {
+//         mobile_creative = false;
+//       }
+//       query.mobile_creative = mobile_creative;
+//     }
+//     if (status) {
+//       query.status = status;
+//     }
+
+//     if (addedBy) {
+//       query.addedBy = new ObjectId(addedBy);
+//     }
+//     //  else {
+//     //   query.addedBy = new ObjectId(req.identity.id);
+//     // }
+
+//     let sortquery = {};
+//     if (sortBy) {
+//       let typeArr = [];
+//       typeArr = sortBy.split(" ");
+//       let sortType = typeArr[1];
+//       let field = typeArr[0];
+//       sortquery[field ? field : "createdAt"] = sortType
+//         ? sortType == "desc"
+//           ? -1
+//           : 1
+//         : -1;
+//     } else {
+//       sortquery = { updatedAt: -1 };
+//     }
+//     if (category_id) {
+//       // query.category_id = new ObjectId(category_id);
+//       category_id = await Services.Utils.string_ids_toObjectIds_array(category_id);
+//       query.category_id = { $in: category_id }
+//     }
+//     if (subChildCategory) {
+//       // query.sub_child_category_id = new ObjectId(sub_child_category_id);
+
+//       subChildCategory = await Services.Utils.string_ids_toObjectIds_array(subChildCategory);
+//       query.subChildCategory = { $in: subChildCategory }
+//     }
+//     if (subCategory) {
+//       // query.sub_category_id = new ObjectId(sub_category_id);
+//       subCategory = await Services.Utils.string_ids_toObjectIds_array(subCategory);
+//       query.subCategory = { $in: subCategory }
+//     }
+//     if (affiliate_id) {
+//       // affiliate_id = await Services.Utils.string_ids_toObjectIds_array(affiliate_id);
+//       query.affiliate_id = affiliate_id
+//     }
+//     // Pipeline Stages
+//     let pipeline = [
+//       {
+//         $lookup: {
+//           from: "users",
+//           localField: "addedBy",
+//           foreignField: "_id",
+//           as: "addedBy_details",
+//         },
+//       },
+//       {
+//         $unwind: {
+//           path: "$addedBy_details",
+//           preserveNullAndEmptyArrays: true,
+//         },
+//       },
+//       {
+//         $lookup: {
+//           from: "commoncategories",
+//           localField: "category_id",
+//           foreignField: "_id",
+//           as: "categories_details",
+//         },
+//       },
+//       {
+//         $unwind: {
+//           path: "$categories_details",
+//           preserveNullAndEmptyArrays: true,
+//         },
+//       },
+//       {
+//         $addFields: {
+//           affiliateObjectId: {
+//             $cond: [
+//               {
+//                 $and: [
+//                   { $ne: ["$affiliate_id", null] },
+//                   { $ne: ["$affiliate_id", ""] },
+//                 ],
+//               },
+//               { $toObjectId: "$affiliate_id" },
+//               null,
+//             ],
+//           },
+//         },
+//       },
+//       {
+//         $lookup: {
+//           from: "users",
+//           localField: "affiliateObjectId",
+//           foreignField: "_id",
+//           as: "affiliate_details",
+//         },
+//       },
+//       {
+//         $unwind: {
+//           path: "$affiliate_details",
+//           preserveNullAndEmptyArrays: true,
+//         },
+//       },
+//     ];
+
+//     let projection = {
+//       $project: {
+//         id: "$_id",
+//         title: "$title",
+//         destination_url: "$destination_url",
+//         description: "$description",
+//         activation_date: "$activation_date",
+//         availability_date: "$availability_date",
+//         expiration_date: "$expiration_date",
+//         image: "$image",
+//         is_animation: "$is_animation",
+//         is_deep_linking: "$is_deep_linking",
+//         is_deep_linking: "$is_deep_linking",
+//         mobile_creative: "$mobile_creative",
+//         seo_attributes: "$seo_attributes",
+//         category_id: "$category_id",
+//         subChildCategory: "$subChildCategory",
+//         subCategory: "$subCategory",
+//         categories_details: "$categories_details",
+//         status: "$status",
+//         addedBy: "$addedBy",
+//         addedBy_name: "$addedBy_details.fullName",
+//         addedBy_details: "$addedBy_details",
+//         updatedBy: "$updatedBy",
+//         updatedAt: "$updatedAt",
+//         isDeleted: "$isDeleted",
+//         createdAt: "$createdAt",
+//         updatedAt: "$updatedAt",
+//         affiliate_id: "$affiliate_id",
+//         affiliate_details: {
+//           id: "$affiliate_details._id",
+//           name: "$affiliate_details.fullName",
+//           email: "$affiliate_details.email",
+//           isDeleted: "$affiliate_details.isDeleted",
+//         },
+//        isExpired: "$isExpired",  
+//       },
+//     };
+//     pipeline.push({ $addFields: {
+//         isExpired: {
+//           $cond: [
+//             {
+//               $and: [
+//                 { $ne: ["$expiration_date", null] },
+//                 { $lt: ["$expiration_date", new Date()] },
+//               ],
+//             },
+//             true,
+//             false,
+//           ],
+//         },
+//         status: {
+//           $cond: [
+//             {
+//               $and: [
+//                 { $ne: ["$expiration_date", null] },
+//                 { $lt: ["$expiration_date", new Date()] },
+//               ],
+//             },
+//             "deactive", 
+//             "$status",
+//           ],
+//         },
+//       },})
+//     pipeline.push(projection);
+//     pipeline.push({
+//       $match: query,
+//     });
+//     pipeline.push({
+//       $sort: sortquery,
+//     });
+//     // Pipeline Stages
+//     let totalresult = await db.collection("banner").aggregate(pipeline).toArray();
+//     pipeline.push({
+//       $skip: Number(skipNo),
+//     });
+//     pipeline.push({
+//       $limit: Number(count),
+//     });
+
+//     let result = await db.collection("banner").aggregate(pipeline).toArray();
+
+//     let resData = {
+//       total_count: totalresult ? totalresult.length : 0,
+//       data: result ? result : [],
+//     };
+//     if (!req.param("page") && !req.param("count")) {
+//       resData.data = totalresult ? totalresult : [];
+//     }
+//     return response.success(resData, constants.BANNER.FETCHED_ALL, req, res);
+//   } catch (err) {
+//     return response.failed(null, `${err}`, req, res);
+//   }
+// };
 
 exports.getById = async (req, res) => {
   try {

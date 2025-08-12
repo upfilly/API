@@ -206,10 +206,30 @@ exports.getAllInvite = async (req, res) => {
 exports.getAllAffiliateListing = async (req, res) => {
   try {
     let brand_id = req.param('brand_id');
-    let affiliates = await BrandAffiliateAssociation.find({isActive: true, brand_id: brand_id, isDeleted: false}).populate('affiliate_id');
-    let ListOfAffiliates = affiliates;
-    ListOfAffiliates = ListOfAffiliates.filter((c)=> c.affiliate_id && !c.affiliate_id.isDeleted).map((c) => c.affiliate_id);
-    return response.success(ListOfAffiliates, "List of all affiliates fetched successfully", req, res);
+    // let affiliates = await BrandAffiliateAssociation.find({isActive: true, brand_id: brand_id, isDeleted: false}).populate('affiliate_id');
+
+    // let ListOfAffiliates = affiliates;
+    // ListOfAffiliates = ListOfAffiliates.filter((c)=> c.affiliate_id && !c.affiliate_id.isDeleted).map((c) => c.affiliate_id);
+       const cookies = await Cookies.find({ brand_id: brand_id });
+    const affiliateLinks = await AffiliateLink.find(
+      { brand_id: brand_id }
+    );
+
+    const affiliateIds = [
+      ...new Set(
+        [
+          ...cookies.map((c) => c.affiliate_id),
+          ...affiliateLinks.map((a) => a.affiliate_id),
+        ].filter((id) => id != null)
+      ),
+    ];
+
+    affiliates_active_count = await Users.find({
+      id: affiliateIds,
+      status: "active",
+    });
+
+    return response.success(affiliates_active_count, "List of all affiliates fetched successfully", req, res);
   } catch (error) {
     return response.failed(null, `${error}`, req, res);
   }
