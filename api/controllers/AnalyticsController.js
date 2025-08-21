@@ -648,6 +648,182 @@ exports.reportAnalytics = async (req, res) => {
     }
 }
 
+//new for testing 
+// exports.reportAnalytics = async (req, res) => {
+//     try {
+//         let query = {};
+//         let count = req.param('count') || 10;
+//         let page = req.param('page') || 1;
+//         let skipNo = (Number(page) - 1) * Number(count);
+//         let { search, sortBy, status, isDeleted, brand_id, affiliate_id, startDate2, endDate2, startDate, endDate, campaign } = req.query;
+//         let sortquery = {};
+//         let new_query = {}
+
+//         if (search) {
+//             search = Services.Utils.remove_special_char_exept_underscores(search);
+//             query.$or = [
+//                 { event: { $regex: search, '$options': 'i' } },
+//                 { 'urlParams.page': { $regex: search, '$options': 'i' } },
+//                 { 'data.page': { $regex: search, '$options': 'i' } }
+//             ];
+//         }
+
+//         if (isDeleted) {
+//             query.isDeleted = isDeleted === 'true';
+//         } else {
+//             query.isDeleted = false;
+//         }
+
+//         if (status) {
+//             query.status = status;
+//         }
+
+//         if (startDate && endDate) {
+//             startDate = new Date(startDate);
+//             endDate = new Date(endDate);
+//             query.createdAt = { $gte: startDate, $lte: endDate };
+//         }
+
+//         if (affiliate_id) {
+//             affiliate_id = await Services.Utils.string_to_array(affiliate_id);
+//             query.affiliate_id = { $in: affiliate_id };
+//         }
+
+//         if (brand_id) {
+//             brand_id = await Services.Utils.string_to_array(brand_id);
+//             query.brand_id = { $in: brand_id };
+//         }
+
+//         if (campaign) {
+//             campaign = await Services.Utils.string_to_array(campaign);
+//             query.campaignId = { $in: campaign };
+//         }
+
+//         new_query = { ...query };
+
+//         if (startDate2 && endDate2) {
+//             startDate2 = new Date(startDate2);
+//             endDate2 = new Date(endDate2);
+//             new_query.createdAt = { $gte: startDate2, $lte: endDate2 };
+//         }
+
+//         const sharedStages = [
+//             {
+//                 $project: {
+//                     id: "$_id",
+//                     affiliate_id: "$affiliate_id",
+//                     brand_id: "$brand_id",
+//                     order_id: { $cond: { if: "$order_id", then: "$order_id", else: null } },
+//                     currency: "$currency",
+//                     price: "$price",
+//                     campaignId: "$campaignId",
+//                     discount: "$discount",
+//                     event: '$event',
+//                     isDeleted: '$isDeleted',
+//                     status: '$status',
+//                     addedBy: '$addedBy',
+//                     updatedBy: '$updatedBy',
+//                     updatedAt: '$updatedAt',
+//                     createdAt: '$createdAt',
+//                     day: { $dayOfMonth: "$createdAt" },
+//                     month: { $month: "$createdAt" },
+//                     year: { $year: "$createdAt" },
+//                 }
+//             }
+//         ];
+
+//         const buildPipeline = (matchQuery) => [
+//             ...sharedStages,
+//             { $match: matchQuery },
+//             {
+//                 $facet: {
+//                     total_docs: [{ $count: "total_docs" }],
+//                     revenue: [
+//                         {
+//                             $group: {
+//                                 _id: {
+//                                     day: "$day",
+//                                     month: "$month",
+//                                     year: "$year",
+//                                 },
+//                                 price: { $sum: "$price" },
+//                                 createdAt: { $first: "$createdAt" }
+//                             }
+//                         }
+//                     ],
+//                     actions: [
+//                         {
+//                             $group: {
+//                                 _id: {
+//                                     day: "$day",
+//                                     month: "$month",
+//                                     year: "$year",
+//                                 },
+//                                 createdAt: { $first: "$createdAt" },
+//                                 action: {
+//                                     $sum: {
+//                                         $cond: [{ $ne: ["$order_id", ""] }, 1, 0]
+//                                     }
+//                                 },
+//                                 total: { $sum: 1 }
+//                             }
+//                         },
+//                         {
+//                             $addFields: {
+//                                 conversionRate: {
+//                                     $cond: [
+//                                         { $gt: ["$total", 0] },
+//                                         { $multiply: [{ $divide: ["$action", "$total"] }, 100] },
+//                                         0
+//                                     ]
+//                                 }
+//                             }
+//                         },
+//                         { $skip: Number(skipNo) },
+//                         { $limit: Number(count) }
+//                     ]
+//                 }
+//             },
+//             {
+//                 $addFields: {
+//                     total_docs: { $arrayElemAt: ["$total_docs", 0] }
+//                 }
+//             },
+//             {
+//                 $project: {
+//                     _id: 0,
+//                     revenue: 1,
+//                     actions: 1
+//                 }
+//             }
+//         ];
+
+//         const pipeline = buildPipeline(query);
+//         const pipeline2 = buildPipeline(new_query);
+
+//         const totalResult = await db.collection('affiliatelink').aggregate(pipeline, { allowDiskUse: true }).toArray();
+//         const totalResult2 = await db.collection('affiliatelink').aggregate(pipeline2, { allowDiskUse: true }).toArray();
+
+//         let resData = {
+//             total: totalResult ? totalResult.length : 0,
+//             data: totalResult || [],
+//             total2: totalResult2 ? totalResult2.length : 0,
+//             data2: totalResult2 || []
+//         };
+
+//         if (!req.param('page') && !req.param('count')) {
+//             resData.data = totalResult || [];
+//         }
+
+//         return Response.success(resData, constants.COMMON.SUCCESS, req, res);
+
+//     } catch (error) {
+//         console.error(error, "=================err");
+//         return Response.failed(null, `${error}`, req, res);
+//     }
+// };
+
+
 exports.clickAnalytics = async (req, res) => {
     try {
         let query = {};
