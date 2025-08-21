@@ -13,7 +13,7 @@ const Validations = require("../Validations");
 const response = require("../services/Response");
 const Emails = require("../Emails/index");
 // const EmailTemplateAffiliate = require("../models/EmailTemplateAffiliate");
-
+//check emailtemplate
 exports.create = async (req, res) => {
   try {
     let validation_result = await Validations.EmailTemplateValidation.addEmailTemplate(
@@ -33,6 +33,7 @@ exports.create = async (req, res) => {
       throw constants.EMAILTEMPLATE.ALREADY_EXISTS;
     }
 
+    
     query1 = {
       addedBy: req.identity.id,
       status: "accepted",
@@ -80,18 +81,39 @@ exports.create = async (req, res) => {
     let newTemplate = await EmailTemplate.create(req.body).fetch();
 
     for (let affiliate of listOfAcceptedInvites) {
-      // console.log(affiliate);
       let findUser = await Users.findOne({
         id: affiliate.affiliate_id,
         isDeleted: false,
       });
 
       if (findUser) {
-        let emailPayload = {
+        const brandId = req.identity.id;
+        const affiliateId = findUser.id;
+
+        // const personalizedText = data.textContent
+        //   .replace(/{affiliateLink}/g, "")
+        //   .replace(/{affiliateName}/g, findUser.fullName)
+        //   .replace(/{brandName}/g, req.identity.fullName);
+        // Detect if affiliateLink placeholder was in the content
+        const hasAffiliateLink = data.textContent.includes("{affiliateLink}");
+
+        const personalizedText = data.textContent
+          .replace(/{affiliateLink}/g, "") 
+          .replace(/{affiliateName}/g, findUser.fullName)
+          .replace(/{brandName}/g, req.identity.fullName)
+          .replace(/\s{2,}/g, " ")
+          .trim();
+
+        const emailPayload = {
           brandFullName: req.identity.fullName,
           affiliateFullName: findUser.fullName,
           affiliateEmail: findUser.email,
+          affiliateLink: hasAffiliateLink
+            ? `${req.identity.website}?brand_id=${req.identity.id}&affiliate_id=${affiliateId}`
+            : "",
+          customMessage: personalizedText,
         };
+
         let emailSentCheck = await EmailSentSetting.findOne({
           name: "email template",
           isDeleted: false,
@@ -99,8 +121,8 @@ exports.create = async (req, res) => {
 
         if (emailSentCheck.emailSent == true) {
           await Emails.EmailTemplate.sendEmailTemplate(emailPayload);
-        }else{
-          console.log("emailSent is false in emailTemplate")
+        } else {
+          console.log("emailSent is false in emailTemplate");
         }
 
         await EmailTemplateAffiliate.create({

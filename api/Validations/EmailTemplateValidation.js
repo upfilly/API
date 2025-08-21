@@ -25,6 +25,7 @@ exports.addEmailTemplate = async (req, res, next) => {
       )
       .optional(),
     personalizationTags: Joi.array().items(Joi.string()).optional(),
+    
   });
   return await Validate(schema, req, res);
 };

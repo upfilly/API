@@ -1271,7 +1271,6 @@ exports.listOfDataSet = async (req, res) => {
     });
   }
 };
-
 exports.sendEmailMessage = async (req, res) => {
   try {
     // let validation_result = await Validations.SendEmailMessage.sendEmailMessage(
