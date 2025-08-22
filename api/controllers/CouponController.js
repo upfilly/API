@@ -166,29 +166,66 @@ exports.addCoupon = async (req, res) => {
           id: req.identity.id,
           isDeleted: false,
         });
-        const affiliates =
-          await Services.UserServices.getAssociatedAffiliatesForBrand(brand.id);
+
+        let affiliates = [];
+
+        if (campaign_id && campaign_id.length > 0) {
+          console.log("1")
+          let affiliateIdsSet = new Set();
+
+          for (let campaignId of campaign_id) {
+            const mappings = await BrandAffiliateAssociation.find({
+              brand_id: brand.id,
+              campaign_id: campaignId,
+              source: "campaign",
+              status: "accepted",
+              isActive: true,
+              isDeleted: false,
+            });
+
+            mappings.forEach((map) => {
+              if (map.affiliate_id) affiliateIdsSet.add(map.affiliate_id);
+            });
+            console.log("mappings",mappings)
+          }
+
+          const affiliateIds = Array.from(affiliateIdsSet);
+        console.log("affiliateIds",affiliateIds)
+
+          affiliates = await Users.find({
+            id: affiliateIds,
+            role: "affiliate",
+            isDeleted: false,
+            status: "active",
+          });
+          console.log("affiliates",affiliates)
+        } else {
+          console.log("2")
+          affiliates =
+            await Services.UserServices.getAssociatedAffiliatesForBrand(
+              brand.id
+            );
+        }
 
         for (let affiliate of affiliates) {
           if (affiliate.email && affiliate.fullName) {
-
-             let emailSentCheck = await EmailSentSetting.findOne({
-            name: "coupon",
-            isDeleted: false,
-          });
-          if (emailSentCheck.emailSent == true) {
-             Email.sendCouponNotificationEmail({
-              brandFullName: brand.fullName,
-              affiliateFullName: affiliate.fullName,
-              affiliateEmail: affiliate.email,
-              couponTitle: title,
-              couponCode,
-              expirationDate:expirationDate,
-              visibility,
+            let emailSentCheck = await EmailSentSetting.findOne({
+              name: "coupon",
+              isDeleted: false,
             });
-          } else {
-            console.log("emailSent setting is false in coupon");
-          }
+            if (emailSentCheck.emailSent == true) {
+             await Email.sendCouponNotificationEmail({
+                brandFullName: brand.fullName,
+                affiliateFullName: affiliate.fullName,
+                affiliateEmail: affiliate.email,
+                couponTitle: title,
+                couponCode,
+                expirationDate: expirationDate,
+                visibility,
+              });
+            } else {
+              console.log("emailSent setting is false in coupon");
+            }
           }
         }
       }
