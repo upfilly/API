@@ -243,6 +243,7 @@ exports.editCoupon = async function (req, res) {
         throw constants.user.USER_NOT_FOUND;
       }
     }
+    //check
     if (couponExists.expireCheck == "true") {
       if (new Date(startDate) > new Date(expirationDate)) {
         throw constants.COUPON.START_DATE_OVERLAPED;
