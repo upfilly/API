@@ -243,10 +243,14 @@ exports.editCoupon = async function (req, res) {
         throw constants.user.USER_NOT_FOUND;
       }
     }
-
-    if (new Date(startDate) > new Date(expirationDate)) {
-      throw constants.COUPON.START_DATE_OVERLAPED;
+    if (couponExists.expireCheck == "true") {
+      if (new Date(startDate) > new Date(expirationDate)) {
+        throw constants.COUPON.START_DATE_OVERLAPED;
+      }
+    }else{
+      delete req.body.expirationDate;
     }
+    
 
     const coupon = await Coupon.updateOne({ id: req.body.id }, req.body);
 
