@@ -67,7 +67,7 @@ exports.editCoupon = async (req, res, next) => {
 
     startDate: Joi.date().required(),
 
-    expirationDate: Joi.date().required(),
+    expirationDate: Joi.date().optional(),
 
     commissionType: Joi.string()
       .valid("Percentage Commission", "Fixed amount")
