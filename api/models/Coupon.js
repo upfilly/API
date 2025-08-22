@@ -31,7 +31,7 @@ module.exports = {
     expirationDate: {
       type: "ref",
       columnType: "datetime",
-      required: true,
+      // required: true,
     },
 
     // Commission Type: Percentage Commission, Fixed amount
@@ -97,6 +97,8 @@ module.exports = {
       type: "json",
       columnType: "array",
     },
+    expireCheck: { type: "Boolean", defaultsTo: false },
+
 
   },
 };

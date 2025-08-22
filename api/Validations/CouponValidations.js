@@ -16,7 +16,7 @@ exports.addCoupon = async (req, res, next) => {
 
     startDate: Joi.date().required(),
 
-    expirationDate: Joi.date().required(),
+    expirationDate: Joi.date().optional(),
 
     commissionType: Joi.string()
       .valid("Percentage Commission", "Fixed amount")
@@ -44,6 +44,7 @@ exports.addCoupon = async (req, res, next) => {
     couponAmount: Joi.number(),
     title: Joi.string().optional().allow(""),
     description: Joi.string().optional().allow(""),
+    expireCheck: Joi.boolean().required(),
     
   });
   return await Validate(schema, req, res);

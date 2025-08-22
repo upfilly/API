@@ -47,6 +47,7 @@ exports.addCoupon = async (req, res) => {
       couponCommission,
       description,
       title,
+      expireCheck,
     } = req.body;
     let validation_result = await Validations.CouponValidations.addCoupon(
       req,
@@ -56,6 +57,12 @@ exports.addCoupon = async (req, res) => {
     if (validation_result && !validation_result.success) {
       throw validation_result.message;
     }
+
+    if (expireCheck === false || expireCheck === "false") {
+      delete req.body.expirationDate;
+    }
+
+
 
     let couponExists = await Coupon.findOne({
       couponCode: req.body.couponCode,
@@ -73,9 +80,12 @@ exports.addCoupon = async (req, res) => {
       }
     }
 
-    if (new Date(startDate) > new Date(expirationDate)) {
-      throw constants.COUPON.START_DATE_OVERLAPED;
+    if (expireCheck === true || expireCheck === "true") {
+      if (new Date(startDate) > new Date(expirationDate)) {
+        throw constants.COUPON.START_DATE_OVERLAPED;
+      }
     }
+
 
     if (campaign_id && campaign_id.length > 0) {
       for (let itm of campaign_id) {
@@ -143,7 +153,7 @@ exports.addCoupon = async (req, res) => {
               affiliateEmail: affiliate.email,
               couponTitle: title,
               couponCode,
-              expirationDate,
+              expirationDate:expirationDate,
               visibility,
             });
           } else {
@@ -173,7 +183,7 @@ exports.addCoupon = async (req, res) => {
               affiliateEmail: affiliate.email,
               couponTitle: title,
               couponCode,
-              expirationDate,
+              expirationDate:expirationDate,
               visibility,
             });
           } else {
@@ -332,6 +342,7 @@ exports.getAllCoupon = async (req, res) => {
       export_to_xls,
       campaign,
       selectedCoupon,
+      expireCheck,
     } = req.query;
     let sortquery = {};
 
@@ -349,6 +360,13 @@ exports.getAllCoupon = async (req, res) => {
     } else {
       query.isDeleted = false;
     }
+    if (expireCheck) {
+      query.expireCheck = expireCheck
+        ? expireCheck === "true"
+        : true
+        ? expireCheck
+        : false;
+    } 
 
     if (sortBy) {
       let typeArr = [];
@@ -458,6 +476,7 @@ exports.getAllCoupon = async (req, res) => {
         couponAmount: "$couponAmount",
         campaign_id: "$campaign_id",
         campaignDetails: "$campaignData",
+        expireCheck:"$expireCheck",
       },
     };
     pipeline.push(projection);
