@@ -631,7 +631,8 @@ module.exports.constants = {
     FETCHED_ALL: "All Coupon Fetched successfully",
     ALREADY_EXISTS: "Coupon code already exists",
     NOT_EXISTS: "Coupon not exists",
-    CAMAPIGN : "Campaign id not exist."
+    CAMAPIGN : "Campaign id not exist.",
+    START_DATE_OVERLAPED : "Start Date over load."
   },
   CSVDATA: {
     IMPORTED_SUCCESSFULLY: "Data imported successfully",
