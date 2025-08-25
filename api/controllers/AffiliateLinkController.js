@@ -109,13 +109,24 @@ exports.generateLinkOfAffiliate = async (req, res) => {
 
 exports.create = async function (req, res) {
   try {
-    const { event, timestamp, urlParams, data } = req.body;
+    const { event, timestamp, urlParams, data,couponId } = req.body;
 
     if (!event || !timestamp) {
       return response.failed(null, constants.AFFILIATELINK.MISSING_FIELDS, req, res);
     }
     req.body.addedBy = (req.identity?.id) ? req.identity.id : null;
     req.body.updatedBy = (req.identity?.id) ? req.identity.id : null;
+    if (couponId) {
+      const couponCheck = await Coupon.findOne({ _id: couponId });
+      if (!couponCheck) {
+        return response.failed(
+          null,
+          constants.AFFILIATELINK.COUPONINVALID,
+          req,
+          res
+        );
+      }
+    }
 
     const newAffiliateLink = await AffiliateLink.create(req.body).fetch();
 
@@ -135,7 +146,7 @@ exports.find = async function (req, res) {
 
     let skipNo = (page - 1) * count;
 
-    let { search, sortBy, status, isDeleted, format, addedBy, affiliate_id, brand_id, campaignId, commission_status, commission_paid, admin_paid, export_to_xls, startDate, endDate } = req.query;
+    let { search, sortBy, status, isDeleted, format, addedBy, affiliate_id, brand_id, campaignId, commission_status, commission_paid, admin_paid, export_to_xls, startDate, endDate,couponId } = req.query;
     let sortquery = {};
 
     // Handle search
@@ -168,6 +179,10 @@ exports.find = async function (req, res) {
     // Handle status
     if (status) {
       query.status = status;
+    }
+   
+     if (couponId) {
+      query.couponId = new ObjectId(couponId);
     }
 
     // Handle addedBy
@@ -284,6 +299,20 @@ exports.find = async function (req, res) {
           preserveNullAndEmptyArrays: true,
         },
       },
+      {
+        $lookup: {
+          from: "coupon",
+          localField: "couponId",
+          foreignField: "_id",
+          as: "coupondetalis",
+        },
+      },
+      {
+        $unwind: {
+          path: "$coupondetalis",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
     ];
 
     let projection = {
@@ -318,6 +347,8 @@ exports.find = async function (req, res) {
         lead_id: "$lead_id",
         amount_of_commission: "$amount_of_commission",
         commission_type: "$commission_type",
+        couponId:"$couponId",
+        couponDetails:"$coupondetalis"
       },
     };
 
@@ -525,7 +556,7 @@ exports.findOne = async function (req, res) {
     const affiliateLink = await AffiliateLink.findOne({
       id: req.query.id,
       isDeleted: false,
-    });
+    }).populate('couponId');
     if (!affiliateLink) {
       return response.failed(null, constants.AFFILIATELINK.INVALID_ID, req, res);
     }
@@ -537,12 +568,24 @@ exports.findOne = async function (req, res) {
 
 exports.update = async function (req, res) {
   try {
-    const { event, timestamp, urlParams, data } = req.body;
+    const { event, timestamp, urlParams, data ,couponId} = req.body;
 
     if (!event || !timestamp || !urlParams || !data) {
       return res
         .status(400)
         .json({ error: constants.AFFILIATELINK.MISSING_FIELDS });
+    }
+    
+     if (couponId) {
+      const couponCheck = await Coupon.findOne({ _id: couponId });
+      if (!couponCheck) {
+        return response.failed(
+          null,
+          constants.AFFILIATELINK.COUPONINVALID,
+          req,
+          res
+        );
+      }
     }
 
     const updatedAffiliateLink = await AffiliateLink.updateOne({
@@ -663,6 +706,7 @@ exports.report = async function (req, res) {
         updatedAt: '$updatedAt',
         createdAt: '$createdAt',
         month: { $month: "$createdAt" },
+        couponId:"$couponId",
       }
     },
     {

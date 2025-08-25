@@ -665,6 +665,7 @@ module.exports.constants = {
     FETCHED: "Affiliate link fetched successfully",
     NOT_FOUND: "Affiliate link not found",
     MISSING_FIELDS: "Missing required fields",
+    COUPONINVALID: "Invalid coupon id."
   },
   FIRST_PROMOTER:{
     ID_REQUIRED:"Id required",

@@ -47,6 +47,7 @@ module.exports = {
     amount_of_commission: { type: 'number', defaultsTo: 0 },
     commission_type: { type: "string", isIn: ["sales", "lead","bonus"] },
     order_reference: {type:"string"},
+    couponId: { model: "coupon" },
   }
 };
 
