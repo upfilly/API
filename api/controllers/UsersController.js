@@ -1137,16 +1137,11 @@ module.exports = {
 
       let sortquery = {};
 
-      if (sortBy) {
-        let typeArr = [];
-        typeArr = sortBy.split(" ");
-        let sortType = typeArr[1];
-        let field = typeArr[0];
-        sortquery[field ? field : "createdAt"] = sortType
-          ? sortType == "desc"
-            ? -1
-            : 1
-          : -1;
+      if (sortBy && typeof sortBy === "string") {
+        const [rawField, rawOrder] = sortBy.trim().split(/\s+/);
+        const field = rawField || "createdAt";
+        const sortType = rawOrder?.toLowerCase() === "asc" ? 1 : -1;
+        sortquery[field] = sortType;
       } else {
         sortquery = { updatedAt: -1 };
       }
@@ -1192,31 +1187,19 @@ module.exports = {
         query.addedBy = new ObjectId(addedBy);
       }
 
+     
       if (category_id) {
-        // query.category_id = new ObjectId(category_id);
-        category_id = await Services.Utils.string_ids_toObjectIds_array(
-          category_id
-        );
+        category_id = await Services.Utils.parseJsonArrayFilter(category_id)
         query.category_id = { $in: category_id };
       }
-      // if (category_id) {
-      //   category = await Services.Utils.string_to_array(category_id);
-      //   query.category_id = { $in: category };
-      // }
-      if (sub_child_category_id) {
-        // query.sub_child_category_id = new ObjectId(sub_child_category_id);
 
-        sub_child_category_id =
-          await Services.Utils.string_ids_toObjectIds_array(
-            sub_child_category_id
-          );
+      if (sub_child_category_id) {
+        sub_child_category_id = await Services.Utils.parseJsonArrayFilter(sub_child_category_id)
         query.sub_child_category_id = { $in: sub_child_category_id };
       }
+
       if (sub_category_id) {
-        // query.sub_category_id = new ObjectId(sub_category_id);
-        sub_category_id = await Services.Utils.string_ids_toObjectIds_array(
-          sub_category_id
-        );
+        sub_category_id = await Services.Utils.parseJsonArrayFilter(sub_category_id)
         query.sub_category_id = { $in: sub_category_id };
       }
 
@@ -1497,7 +1480,7 @@ module.exports = {
           id: "$_id",
           firstName: "$firstName",
           lastName: "$lastName",
-          fullName: "$fullName",
+          fullName: { $toLower: "$fullName" },
           email: "$email",
           role: "$role",
           image: "$image",
@@ -1583,9 +1566,9 @@ module.exports = {
       if (!req.param("page") && !req.param("count")) {
         resData.data = totalResult ? totalResult : [];
       }
-      return response.success(resData, constants.user.FETCHED_ALL, req, res);
+      return response.success(resData, constants.user.FETCH, req, res);
     } catch (error) {
-      // console.log(error, "---err");
+      console.log(error, "---err");
       return response.failed(null, `${error}`, req, res);
     }
   },

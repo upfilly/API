@@ -177,7 +177,7 @@ exports.string_to_array = async (string) => {
 }
 
 exports.string_ids_toObjectIds_array = async (string) => {
-    // console.log(string, "string");
+    console.log(string, "string");
     if (string) {
         let string_arr = string.split(',');
         let string_arr2 = [];
@@ -188,6 +188,19 @@ exports.string_ids_toObjectIds_array = async (string) => {
     }
     return []
 },
+
+exports.parseJsonArrayFilter = (input) => {
+  if (!input) return [];
+
+  if (Array.isArray(input)) {
+    return input.map((id) => id.trim()).filter(Boolean);
+  }
+
+  return input
+    .split(",")
+    .map((id) => id.trim())
+    .filter(Boolean);
+};
 
 exports.get_first_letter_from_each_word = async (string) => {
     let new_string = "";
