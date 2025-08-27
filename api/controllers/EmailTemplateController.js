@@ -12,6 +12,7 @@ const Joi = require("joi");
 const Validations = require("../Validations");
 const response = require("../services/Response");
 const Emails = require("../Emails/index");
+
 // const EmailTemplateAffiliate = require("../models/EmailTemplateAffiliate");
 //check emailtemplate
 exports.create = async (req, res) => {
@@ -285,194 +286,17 @@ exports.delete = async (req, res) => {
   }
 };
 
-// exports.getAll = async (req, res) => {
-//   try {
-//     let query = {};
-//     let count = req.param('count') || 10;
-//     let page = req.param('page') || 1;
-//     let skipNo = (Number(page) - 1) * Number(count);
-//     let { search, sortBy, status, isDeleted, format, addedBy, startDate, endDate } = req.query;
-//     let sortquery = {};
-
-//     if (startDate && endDate) {
-
-//       const start = new Date(startDate);
-//       start.setUTCHours(0, 0, 0, 0);
-
-//       const end = new Date(endDate);
-//       end.setUTCHours(23, 59, 59, 999);
-
-//       query.createdAt = { $gte: start, $lte: end };
-//     }
-
-//     if (search) {
-//       search = await Services.Utils.remove_special_char_exept_underscores(search);
-//       query.$or = [
-//         { templateName: { $regex: search, '$options': 'i' } },
-//         { emailName: { $regex: search, '$options': 'i' } }
-//       ];
-//     }
-
-//     if (isDeleted) {
-//       query.isDeleted = isDeleted === 'true';
-//     } else {
-//       query.isDeleted = false;
-//     }
-
-//     if (sortBy) {
-//       let typeArr = sortBy.split(" ");
-//       let sortType = typeArr[1];
-//       let field = typeArr[0];
-//       sortquery[field ? field : 'createdAt'] = sortType === 'desc' ? -1 : 1;
-//     } else {
-//       sortquery = { createdAt: -1 };
-//     }
-
-//     if (status) {
-//       query.status = status;
-//     }
-//     if (addedBy) {
-//       query.addedBy = new ObjectId(addedBy);
-//     }
-
-//     if (format) {
-//       query.format = format;
-//     }
-
-//     let pipeline = [];
-
-//     let projection = {
-//       $project: {
-//         templateName: "$templateName",
-//         emailName: "$emailName",
-//         purpose: "$purpose",
-//         audience: "$audience",
-//         country: "$country",
-//         language: "$language",
-//         format: "$format",
-//         subject: "$subject",
-//         from: "$from",
-//         htmlContent: "$htmlContent",
-//         textContent: "$textContent",
-//         imagesAndLinks: "$imagesAndLinks",
-//         personalizationTags: "$personalizationTags",
-//         isDeleted: "$isDeleted",
-//         status: "$status",
-//         addedBy: "$addedBy",
-//         updatedBy: "$updatedBy",
-//         updatedAt: "$updatedAt",
-//         createdAt: "$createdAt",
-//         campaign_id: {
-//           $cond: {
-//             if: { $gt: [{ $size: "$associatedCampaign" }, 0] },
-//             then: "$campaign_id",
-//             else: null,
-//           },
-//         },
-//         campaign_details: {
-//           $cond: {
-//             if: { $gt: [{ $size: "$associatedCampaign" }, 0] },
-//             then: "$campaign_details",
-//             else: null,
-//           },
-//         },
-//       },
-//     };
-//     pipeline.push({
-//       $lookup: {
-//         from: "campaign",
-//         localField: "campaign_id",
-//         foreignField: "_id",
-//         as: "campaign_details",
-//       },
-//     });
-//     pipeline.push({
-//       $unwind: {
-//         path: "$campaign_details",
-//         preserveNullAndEmptyArrays: true,
-//       },
-//     });
-
-//     pipeline.push({
-//       $lookup: {
-//         from: "brandaffiliateassociation",
-//         let: {
-//           campaignId: "$campaign_id",
-//           brandId: new ObjectId(req.identity.id),
-//           isDeleted: false,
-//           status: "accepted",
-//         },
-//         pipeline: [
-//           {
-//             $match: {
-//               $expr: {
-//                 $and: [
-//                   { $eq: ["$campaign_id", "$$campaignId"] },
-//                   { $eq: ["$brand_id", "$$brandId"] },
-//                   { $eq: ["$isDeleted", "$$isDeleted"] },
-//                   { $eq: ["$status", "$$status"] },
-//                 ],
-//               },
-//             },
-//           },
-//         ],
-//         as: "associatedCampaign",
-//       },
-//     });
-
-//     pipeline.push(projection);
-//     pipeline.push({
-//       $match: query,
-//     });
-//     pipeline.push({
-//       $sort: sortquery,
-//     });
-
-//     let totalresult = await db
-//       .collection("emailtemplate")
-//       .aggregate(pipeline)
-//       .toArray();
-
-//     pipeline.push({
-//       $skip: Number(skipNo),
-//     });
-//     pipeline.push({
-//       $limit: Number(count),
-//     });
-
-//     let result = await db
-//       .collection("emailtemplate")
-//       .aggregate(pipeline)
-//       .toArray();
-
-
-//     let resData = {
-//       total_count: totalresult ? totalresult.length : 0,
-//       data: result ? result : []
-//     };
-
-//     if (!req.param('page') && !req.param('count')) {
-//       resData.data = totalresult ? totalresult : [];
-//     }
-
-//     return response.success(resData, constants.EMAILTEMPLATE.FETCHED, req, res);
-
-//   } catch (error) {
-//     console.log(error,"error in emailTemplate controller")
-//     return response.failed(null, `${error}`, req, res);
-//   }
-// }
-
 exports.getAll = async (req, res) => {
   try {
     let query = {};
     let count = req.param('count') || 10;
     let page = req.param('page') || 1;
     let skipNo = (Number(page) - 1) * Number(count);
-    let { search, sortBy, status, isDeleted, format, addedBy, startDate, endDate, campaign_id } = req.query;
+    let { search, sortBy, status, isDeleted, format, addedBy, startDate, endDate } = req.query;
     let sortquery = {};
 
     if (startDate && endDate) {
+
       const start = new Date(startDate);
       start.setUTCHours(0, 0, 0, 0);
 
@@ -511,64 +335,12 @@ exports.getAll = async (req, res) => {
     if (addedBy) {
       query.addedBy = new ObjectId(addedBy);
     }
-    if (campaign_id) {
-      query.campaign_id = new ObjectId(campaign_id);
-    }
 
     if (format) {
       query.format = format;
     }
 
     let pipeline = [];
-
-    pipeline.push({
-      $lookup: {
-        from: "campaign",
-        localField: "campaign_id",
-        foreignField: "_id",
-        as: "campaign_details",
-      },
-    });
-
-    pipeline.push({
-      $unwind: {
-        path: "$campaign_details",
-        preserveNullAndEmptyArrays: true,
-      },
-    });
-
-    pipeline.push({
-      $lookup: {
-        from: "brandaffiliateassociation",
-        let: {
-          campaignId: "$campaign_id",
-          affiliate_id: new ObjectId(req.identity.id),
-          isDeleted: false,
-          status: "accepted",
-        },
-        pipeline: [
-          {
-            $match: {
-              $expr: {
-                $and: [
-                  { $eq: ["$campaign_id", "$$campaignId"] },
-                  { $eq: ["$affiliate_id", "$$affiliate_id"] },
-                  { $eq: ["$isDeleted", "$$isDeleted"] },
-                  { $eq: ["$status", "$$status"] },
-                ],
-              },
-            },
-          },
-        ],
-        as: "associatedCampaign",
-      },
-    });
-
-    pipeline.push({
-      $match: {
-        associatedCampaign: { $ne: [] }
-      }
-    });
 
     let projection = {
       $project: {
@@ -591,27 +363,89 @@ exports.getAll = async (req, res) => {
         updatedBy: "$updatedBy",
         updatedAt: "$updatedAt",
         createdAt: "$createdAt",
-        campaign_id: "$campaign_id",
-        campaign_details: "$campaign_details",
+        campaign_id: {
+          $cond: {
+            if: { $gt: [{ $size: "$associatedCampaign" }, 0] },
+            then: "$campaign_id",
+            else: null,
+          },
+        },
+        campaign_details: {
+          $cond: {
+            if: { $gt: [{ $size: "$associatedCampaign" }, 0] },
+            then: "$campaign_details",
+            else: null,
+          },
+        },
       },
     };
+    pipeline.push({
+      $lookup: {
+        from: "campaign",
+        localField: "campaign_id",
+        foreignField: "_id",
+        as: "campaign_details",
+      },
+    });
+    pipeline.push({
+      $unwind: {
+        path: "$campaign_details",
+        preserveNullAndEmptyArrays: true,
+      },
+    });
+
+    pipeline.push({
+      $lookup: {
+        from: "brandaffiliateassociation",
+        let: {
+          campaignId: "$campaign_id",
+          brandId: new ObjectId(req.identity.id),
+          isDeleted: false,
+          status: "accepted",
+        },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  { $eq: ["$campaign_id", "$$campaignId"] },
+                  { $eq: ["$brand_id", "$$brandId"] },
+                  { $eq: ["$isDeleted", "$$isDeleted"] },
+                  { $eq: ["$status", "$$status"] },
+                ],
+              },
+            },
+          },
+        ],
+        as: "associatedCampaign",
+      },
+    });
 
     pipeline.push(projection);
-
     pipeline.push({
       $match: query,
     });
-
     pipeline.push({
       $sort: sortquery,
     });
 
-    let totalresult = await db.collection("emailtemplate").aggregate(pipeline).toArray();
+    let totalresult = await db
+      .collection("emailtemplate")
+      .aggregate(pipeline)
+      .toArray();
 
-    pipeline.push({ $skip: Number(skipNo) });
-    pipeline.push({ $limit: Number(count) });
+    pipeline.push({
+      $skip: Number(skipNo),
+    });
+    pipeline.push({
+      $limit: Number(count),
+    });
 
-    let result = await db.collection("emailtemplate").aggregate(pipeline).toArray();
+    let result = await db
+      .collection("emailtemplate")
+      .aggregate(pipeline)
+      .toArray();
+
 
     let resData = {
       total_count: totalresult ? totalresult.length : 0,
@@ -625,10 +459,212 @@ exports.getAll = async (req, res) => {
     return response.success(resData, constants.EMAILTEMPLATE.FETCHED, req, res);
 
   } catch (error) {
-    console.log(error, "error in emailTemplate controller");
+    console.log(error,"error in emailTemplate controller")
     return response.failed(null, `${error}`, req, res);
   }
-};
+}
+
+
+
+//alpha
+
+// exports.getAll = async (req, res) => {
+//   try {
+//     let query = {};
+//     let count = req.param('count') || 10;
+//     let page = req.param('page') || 1;
+//     let skipNo = (Number(page) - 1) * Number(count);
+//     let { search, sortBy, status, isDeleted, format, addedBy, startDate, endDate, campaign_id } = req.query;
+//     let sortquery = {};
+
+//     if (startDate && endDate) {
+//       const start = new Date(startDate);
+//       start.setUTCHours(0, 0, 0, 0);
+
+//       const end = new Date(endDate);
+//       end.setUTCHours(23, 59, 59, 999);
+
+//       query.createdAt = { $gte: start, $lte: end };
+//     }
+
+//     if (search) {
+//       search = await Services.Utils.remove_special_char_exept_underscores(search);
+//       query.$or = [
+//         { templateName: { $regex: search, '$options': 'i' } },
+//         { emailName: { $regex: search, '$options': 'i' } }
+//       ];
+//     }
+
+//     if (isDeleted) {
+//       query.isDeleted = isDeleted === 'true';
+//     } else {
+//       query.isDeleted = false;
+//     }
+
+//     if (sortBy) {
+//       let typeArr = sortBy.split(" ");
+//       let sortType = typeArr[1];
+//       let field = typeArr[0];
+//       sortquery[field ? field : 'createdAt'] = sortType === 'desc' ? -1 : 1;
+//     } else {
+//       sortquery = { createdAt: -1 };
+//     }
+
+//     if (status) {
+//       query.status = status;
+//     }
+//     if (addedBy) {
+//       query.addedBy = new ObjectId(addedBy);
+//     }
+//     if (campaign_id) {
+//       query.campaign_id = new ObjectId(campaign_id);
+//     }
+
+//     if (format) {
+//       query.format = format;
+//     }
+
+//       let affiliateId = new ObjectId(req.identity.id);
+
+//     let pipeline = [];
+
+//     pipeline.push({
+//       $lookup: {
+//         from: "campaign",
+//         localField: "campaign_id",
+//         foreignField: "_id",
+//         as: "campaign_details",
+//       },
+//     });
+
+//     pipeline.push({
+//       $unwind: {
+//         path: "$campaign_details",
+//         preserveNullAndEmptyArrays: true,
+//       },
+//     });
+
+//     // pipeline.push({
+//     //   $lookup: {
+//     //     from: "brandaffiliateassociation",
+//     //     let: {
+//     //       campaignId: "$campaign_id",
+//     //       affiliate_id: new ObjectId(req.identity.id),
+//     //       isDeleted: false,
+//     //       status: "accepted",
+//     //     },
+//     //     pipeline: [
+//     //       {
+//     //         $match: {
+//     //           $expr: {
+//     //             $and: [
+//     //               { $eq: ["$campaign_id", "$$campaignId"] },
+//     //               { $eq: ["$affiliate_id", "$$affiliate_id"] },
+//     //               { $eq: ["$isDeleted", "$$isDeleted"] },
+//     //               { $eq: ["$status", "$$status"] },
+//     //             ],
+//     //           },
+//     //         },
+//     //       },
+//     //     ],
+//     //     as: "associatedCampaign",
+//     //   },
+//     // });
+//      pipeline.push({
+//       $lookup: {
+//         from: "brandaffiliateassociation",
+//         let: {
+//           campaignId: "$campaign_id",
+//           affiliateId: affiliateId,
+//           isDeleted: false,
+//           status: "accepted"
+//         },
+//         pipeline: [
+//           {
+//             $match: {
+//               $expr: {
+//                 $and: [
+//                   { $eq: ["$campaign_id", "$$campaignId"] },
+//                   { $eq: ["$affiliate_id", "$$affiliateId"] },
+//                   { $eq: ["$isDeleted", "$$isDeleted"] },
+//                   { $eq: ["$status", "$$status"] }
+//                 ]
+//               }
+//             }
+//           }
+//         ],
+//         as: "associatedCampaign"
+//       }
+//     });
+
+
+//     pipeline.push({
+//       $match: {
+//         associatedCampaign: { $ne: [] }
+//       }
+//     });
+
+//     let projection = {
+//       $project: {
+//         templateName: "$templateName",
+//         emailName: "$emailName",
+//         purpose: "$purpose",
+//         audience: "$audience",
+//         country: "$country",
+//         language: "$language",
+//         format: "$format",
+//         subject: "$subject",
+//         from: "$from",
+//         htmlContent: "$htmlContent",
+//         textContent: "$textContent",
+//         imagesAndLinks: "$imagesAndLinks",
+//         personalizationTags: "$personalizationTags",
+//         isDeleted: "$isDeleted",
+//         status: "$status",
+//         addedBy: "$addedBy",
+//         updatedBy: "$updatedBy",
+//         updatedAt: "$updatedAt",
+//         createdAt: "$createdAt",
+//         campaign_id: "$campaign_id",
+//         campaign_details: "$campaign_details",
+//       },
+//     };
+
+//     pipeline.push(projection);
+
+//     pipeline.push({
+//       $match: query,
+//     });
+
+//     pipeline.push({
+//       $sort: sortquery,
+//     });
+
+//     let totalresult = await db.collection("emailtemplate").aggregate(pipeline).toArray();
+
+//     pipeline.push({ $skip: Number(skipNo) });
+//     pipeline.push({ $limit: Number(count) });
+
+//     let result = await db.collection("emailtemplate").aggregate(pipeline).toArray();
+
+//     let resData = {
+//       total_count: totalresult ? totalresult.length : 0,
+//       data: result ? result : []
+//     };
+
+//     if (!req.param('page') && !req.param('count')) {
+//       resData.data = totalresult ? totalresult : [];
+//     }
+
+//     return response.success(resData, constants.EMAILTEMPLATE.FETCHED, req, res);
+
+//   } catch (error) {
+//     console.log(error, "error in emailTemplate controller");
+//     return response.failed(null, `${error}`, req, res);
+//   }
+// };
+
+
 
 exports.getUserEmailTemplate = async (req, res) => {
   try {
