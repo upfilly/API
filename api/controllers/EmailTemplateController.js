@@ -542,7 +542,7 @@ exports.getAll = async (req, res) => {
         from: "brandaffiliateassociation",
         let: {
           campaignId: "$campaign_id",
-          brandId: new ObjectId(req.identity.id),
+          affiliate_id: new ObjectId(req.identity.id),
           isDeleted: false,
           status: "accepted",
         },
@@ -552,7 +552,7 @@ exports.getAll = async (req, res) => {
               $expr: {
                 $and: [
                   { $eq: ["$campaign_id", "$$campaignId"] },
-                  { $eq: ["$brand_id", "$$brandId"] },
+                  { $eq: ["$affiliate_id", "$$affiliate_id"] },
                   { $eq: ["$isDeleted", "$$isDeleted"] },
                   { $eq: ["$status", "$$status"] },
                 ],
