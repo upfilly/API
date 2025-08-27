@@ -25,6 +25,7 @@ exports.addEmailTemplate = async (req, res, next) => {
       )
       .optional(),
     personalizationTags: Joi.array().items(Joi.string()).optional(),
+    campaign_id : Joi.string().optional().allow(null),
     
   });
   return await Validate(schema, req, res);
@@ -55,6 +56,8 @@ exports.editEmailTemplate = async (req, res, next) => {
       )
       .optional(),
     personalizationTags: Joi.array().items(Joi.string()).optional(),
+    campaign_id : Joi.string().optional().allow(null),
+
   });
   return await Validate(schema, req, res);
 };

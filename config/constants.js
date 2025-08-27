@@ -657,6 +657,7 @@ module.exports.constants = {
     ALREADY_EXISTS: "Already Exists",
     TEMPLATE_NOT_FOUND: "Template not found",
     DELETED: "Email Template deleted successfully",
+    INVALID_CAMPAIGN_ID:"Invalid campaign Id."
   },
   AFFILIATELINK: {
     CREATED: "Affiliate link created successfully",

@@ -63,5 +63,10 @@ module.exports = {
     isDeleted: { type: "Boolean", defaultsTo: false },
     createdAt: { type: "ref", autoCreatedAt: true },
     updatedAt: { type: "ref", autoUpdatedAt: true },
+    //new key 
+    campaign_id:{
+      model: 'campaign'
+    },
+
   },
 };

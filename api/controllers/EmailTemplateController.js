@@ -33,6 +33,13 @@ exports.create = async (req, res) => {
       throw constants.EMAILTEMPLATE.ALREADY_EXISTS;
     }
 
+    if (data.campaign_id) {
+      let get_campaign = await Campaign.findOne({ id: data.campaign_id, isDeleted: false });
+      if (!get_campaign) {
+        throw constants.EMAILTEMPLATE.INVALID_CAMPAIGN_ID;
+      }
+    }
+
     
     query1 = {
       addedBy: req.identity.id,
@@ -145,7 +152,7 @@ exports.read = async (req, res) => {
     if (!req.query.id) {
       throw constants.COMMON.ID_REQUIRED;
     }
-    let templates = await EmailTemplate.findOne({ id: req.query.id, isDeleted: false });
+    let templates = await EmailTemplate.findOne({ id: req.query.id, isDeleted: false }).populate("campaign_id");
     if (!templates) {
       throw constants.EMAILTEMPLATE.TEMPLATE_NOT_FOUND;
     }
@@ -219,6 +226,12 @@ exports.update = async (req, res) => {
 
     req.body.addedBy = req.identity.id;
     req.body.updatedBy = req.identity.id;
+    if (req.body.campaign_id) {
+      let get_campaign = await Campaign.findOne({ id: req.body.campaign_id, isDeleted: false });
+      if (!get_campaign) {
+        throw constants.EMAILTEMPLATE.INVALID_CAMPAIGN_ID;
+      }
+    }
 
     let newTemplate = await EmailTemplate.create(req.body).fetch();
     for (let affiliate of listOfAcceptedInvites) {
@@ -272,17 +285,194 @@ exports.delete = async (req, res) => {
   }
 };
 
+// exports.getAll = async (req, res) => {
+//   try {
+//     let query = {};
+//     let count = req.param('count') || 10;
+//     let page = req.param('page') || 1;
+//     let skipNo = (Number(page) - 1) * Number(count);
+//     let { search, sortBy, status, isDeleted, format, addedBy, startDate, endDate } = req.query;
+//     let sortquery = {};
+
+//     if (startDate && endDate) {
+
+//       const start = new Date(startDate);
+//       start.setUTCHours(0, 0, 0, 0);
+
+//       const end = new Date(endDate);
+//       end.setUTCHours(23, 59, 59, 999);
+
+//       query.createdAt = { $gte: start, $lte: end };
+//     }
+
+//     if (search) {
+//       search = await Services.Utils.remove_special_char_exept_underscores(search);
+//       query.$or = [
+//         { templateName: { $regex: search, '$options': 'i' } },
+//         { emailName: { $regex: search, '$options': 'i' } }
+//       ];
+//     }
+
+//     if (isDeleted) {
+//       query.isDeleted = isDeleted === 'true';
+//     } else {
+//       query.isDeleted = false;
+//     }
+
+//     if (sortBy) {
+//       let typeArr = sortBy.split(" ");
+//       let sortType = typeArr[1];
+//       let field = typeArr[0];
+//       sortquery[field ? field : 'createdAt'] = sortType === 'desc' ? -1 : 1;
+//     } else {
+//       sortquery = { createdAt: -1 };
+//     }
+
+//     if (status) {
+//       query.status = status;
+//     }
+//     if (addedBy) {
+//       query.addedBy = new ObjectId(addedBy);
+//     }
+
+//     if (format) {
+//       query.format = format;
+//     }
+
+//     let pipeline = [];
+
+//     let projection = {
+//       $project: {
+//         templateName: "$templateName",
+//         emailName: "$emailName",
+//         purpose: "$purpose",
+//         audience: "$audience",
+//         country: "$country",
+//         language: "$language",
+//         format: "$format",
+//         subject: "$subject",
+//         from: "$from",
+//         htmlContent: "$htmlContent",
+//         textContent: "$textContent",
+//         imagesAndLinks: "$imagesAndLinks",
+//         personalizationTags: "$personalizationTags",
+//         isDeleted: "$isDeleted",
+//         status: "$status",
+//         addedBy: "$addedBy",
+//         updatedBy: "$updatedBy",
+//         updatedAt: "$updatedAt",
+//         createdAt: "$createdAt",
+//         campaign_id: {
+//           $cond: {
+//             if: { $gt: [{ $size: "$associatedCampaign" }, 0] },
+//             then: "$campaign_id",
+//             else: null,
+//           },
+//         },
+//         campaign_details: {
+//           $cond: {
+//             if: { $gt: [{ $size: "$associatedCampaign" }, 0] },
+//             then: "$campaign_details",
+//             else: null,
+//           },
+//         },
+//       },
+//     };
+//     pipeline.push({
+//       $lookup: {
+//         from: "campaign",
+//         localField: "campaign_id",
+//         foreignField: "_id",
+//         as: "campaign_details",
+//       },
+//     });
+//     pipeline.push({
+//       $unwind: {
+//         path: "$campaign_details",
+//         preserveNullAndEmptyArrays: true,
+//       },
+//     });
+
+//     pipeline.push({
+//       $lookup: {
+//         from: "brandaffiliateassociation",
+//         let: {
+//           campaignId: "$campaign_id",
+//           brandId: new ObjectId(req.identity.id),
+//           isDeleted: false,
+//           status: "accepted",
+//         },
+//         pipeline: [
+//           {
+//             $match: {
+//               $expr: {
+//                 $and: [
+//                   { $eq: ["$campaign_id", "$$campaignId"] },
+//                   { $eq: ["$brand_id", "$$brandId"] },
+//                   { $eq: ["$isDeleted", "$$isDeleted"] },
+//                   { $eq: ["$status", "$$status"] },
+//                 ],
+//               },
+//             },
+//           },
+//         ],
+//         as: "associatedCampaign",
+//       },
+//     });
+
+//     pipeline.push(projection);
+//     pipeline.push({
+//       $match: query,
+//     });
+//     pipeline.push({
+//       $sort: sortquery,
+//     });
+
+//     let totalresult = await db
+//       .collection("emailtemplate")
+//       .aggregate(pipeline)
+//       .toArray();
+
+//     pipeline.push({
+//       $skip: Number(skipNo),
+//     });
+//     pipeline.push({
+//       $limit: Number(count),
+//     });
+
+//     let result = await db
+//       .collection("emailtemplate")
+//       .aggregate(pipeline)
+//       .toArray();
+
+
+//     let resData = {
+//       total_count: totalresult ? totalresult.length : 0,
+//       data: result ? result : []
+//     };
+
+//     if (!req.param('page') && !req.param('count')) {
+//       resData.data = totalresult ? totalresult : [];
+//     }
+
+//     return response.success(resData, constants.EMAILTEMPLATE.FETCHED, req, res);
+
+//   } catch (error) {
+//     console.log(error,"error in emailTemplate controller")
+//     return response.failed(null, `${error}`, req, res);
+//   }
+// }
+
 exports.getAll = async (req, res) => {
   try {
     let query = {};
     let count = req.param('count') || 10;
     let page = req.param('page') || 1;
     let skipNo = (Number(page) - 1) * Number(count);
-    let { search, sortBy, status, isDeleted, format, addedBy, startDate, endDate } = req.query;
+    let { search, sortBy, status, isDeleted, format, addedBy, startDate, endDate, campaign_id } = req.query;
     let sortquery = {};
 
     if (startDate && endDate) {
-
       const start = new Date(startDate);
       start.setUTCHours(0, 0, 0, 0);
 
@@ -321,6 +511,9 @@ exports.getAll = async (req, res) => {
     if (addedBy) {
       query.addedBy = new ObjectId(addedBy);
     }
+    if (campaign_id) {
+      query.campaign_id = new ObjectId(campaign_id);
+    }
 
     if (format) {
       query.format = format;
@@ -328,50 +521,97 @@ exports.getAll = async (req, res) => {
 
     let pipeline = [];
 
+    pipeline.push({
+      $lookup: {
+        from: "campaign",
+        localField: "campaign_id",
+        foreignField: "_id",
+        as: "campaign_details",
+      },
+    });
+
+    pipeline.push({
+      $unwind: {
+        path: "$campaign_details",
+        preserveNullAndEmptyArrays: true,
+      },
+    });
+
+    pipeline.push({
+      $lookup: {
+        from: "brandaffiliateassociation",
+        let: {
+          campaignId: "$campaign_id",
+          brandId: new ObjectId(req.identity.id),
+          isDeleted: false,
+          status: "accepted",
+        },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  { $eq: ["$campaign_id", "$$campaignId"] },
+                  { $eq: ["$brand_id", "$$brandId"] },
+                  { $eq: ["$isDeleted", "$$isDeleted"] },
+                  { $eq: ["$status", "$$status"] },
+                ],
+              },
+            },
+          },
+        ],
+        as: "associatedCampaign",
+      },
+    });
+
+    pipeline.push({
+      $match: {
+        associatedCampaign: { $ne: [] }
+      }
+    });
+
     let projection = {
       $project: {
-        templateName: '$templateName',
-        emailName: '$emailName',
-        purpose: '$purpose',
-        audience: '$audience',
-        country: '$country',
-        language: '$language',
-        format: '$format',
-        subject: '$subject',
-        from: '$from',
-        htmlContent: '$htmlContent',
-        textContent: '$textContent',
-        imagesAndLinks: '$imagesAndLinks',
-        personalizationTags: '$personalizationTags',
-        isDeleted: '$isDeleted',
-        status: '$status',
-        addedBy: '$addedBy',
-        updatedBy: '$updatedBy',
-        updatedAt: '$updatedAt',
-        createdAt: '$createdAt'
-      }
+        templateName: "$templateName",
+        emailName: "$emailName",
+        purpose: "$purpose",
+        audience: "$audience",
+        country: "$country",
+        language: "$language",
+        format: "$format",
+        subject: "$subject",
+        from: "$from",
+        htmlContent: "$htmlContent",
+        textContent: "$textContent",
+        imagesAndLinks: "$imagesAndLinks",
+        personalizationTags: "$personalizationTags",
+        isDeleted: "$isDeleted",
+        status: "$status",
+        addedBy: "$addedBy",
+        updatedBy: "$updatedBy",
+        updatedAt: "$updatedAt",
+        createdAt: "$createdAt",
+        campaign_id: "$campaign_id",
+        campaign_details: "$campaign_details",
+      },
     };
 
     pipeline.push(projection);
-    pipeline.push({
-      $match: query
-    });
-    pipeline.push({
-      $sort: sortquery
-    });
-
-    let totalresult = await db.collection('emailtemplate').aggregate(pipeline).toArray();
-
 
     pipeline.push({
-      $skip: Number(skipNo)
+      $match: query,
     });
+
     pipeline.push({
-      $limit: Number(count)
+      $sort: sortquery,
     });
 
-    let result = await db.collection('emailtemplate').aggregate(pipeline).toArray();
+    let totalresult = await db.collection("emailtemplate").aggregate(pipeline).toArray();
 
+    pipeline.push({ $skip: Number(skipNo) });
+    pipeline.push({ $limit: Number(count) });
+
+    let result = await db.collection("emailtemplate").aggregate(pipeline).toArray();
 
     let resData = {
       total_count: totalresult ? totalresult.length : 0,
@@ -385,9 +625,10 @@ exports.getAll = async (req, res) => {
     return response.success(resData, constants.EMAILTEMPLATE.FETCHED, req, res);
 
   } catch (error) {
+    console.log(error, "error in emailTemplate controller");
     return response.failed(null, `${error}`, req, res);
   }
-}
+};
 
 exports.getUserEmailTemplate = async (req, res) => {
   try {
