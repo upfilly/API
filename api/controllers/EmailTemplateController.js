@@ -466,26 +466,15 @@ exports.getAll = async (req, res) => {
 
 
 
-//alpha
 
-// exports.getAll = async (req, res) => {
+// exports.getUserEmailTemplate = async (req, res) => {
 //   try {
 //     let query = {};
 //     let count = req.param('count') || 10;
 //     let page = req.param('page') || 1;
 //     let skipNo = (Number(page) - 1) * Number(count);
-//     let { search, sortBy, status, isDeleted, format, addedBy, startDate, endDate, campaign_id } = req.query;
+//     let { search, sortBy, status, isDeleted, affiliate_id, addedBy } = req.query;
 //     let sortquery = {};
-
-//     if (startDate && endDate) {
-//       const start = new Date(startDate);
-//       start.setUTCHours(0, 0, 0, 0);
-
-//       const end = new Date(endDate);
-//       end.setUTCHours(23, 59, 59, 999);
-
-//       query.createdAt = { $gte: start, $lte: end };
-//     }
 
 //     if (search) {
 //       search = await Services.Utils.remove_special_char_exept_underscores(search);
@@ -516,136 +505,77 @@ exports.getAll = async (req, res) => {
 //     if (addedBy) {
 //       query.addedBy = new ObjectId(addedBy);
 //     }
-//     if (campaign_id) {
-//       query.campaign_id = new ObjectId(campaign_id);
+
+//     if (affiliate_id) {
+//       query.affiliate_id = new ObjectId(affiliate_id);
 //     }
 
-//     if (format) {
-//       query.format = format;
-//     }
-
-//       let affiliateId = new ObjectId(req.identity.id);
-
-//     let pipeline = [];
-
-//     pipeline.push({
-//       $lookup: {
-//         from: "campaign",
-//         localField: "campaign_id",
-//         foreignField: "_id",
-//         as: "campaign_details",
+//     let pipeline = [
+//       {
+//         $lookup: {
+//           from: "emailtemplate",
+//           localField: "email_template_id",
+//           foreignField: "_id",
+//           as: "emailtemplate_details"
+//         }
 //       },
-//     });
-
-//     pipeline.push({
-//       $unwind: {
-//         path: "$campaign_details",
-//         preserveNullAndEmptyArrays: true,
+//       {
+//         $unwind: {
+//           path: '$emailtemplate_details',
+//           preserveNullAndEmptyArrays: true
+//         }
 //       },
-//     });
-
-//     // pipeline.push({
-//     //   $lookup: {
-//     //     from: "brandaffiliateassociation",
-//     //     let: {
-//     //       campaignId: "$campaign_id",
-//     //       affiliate_id: new ObjectId(req.identity.id),
-//     //       isDeleted: false,
-//     //       status: "accepted",
-//     //     },
-//     //     pipeline: [
-//     //       {
-//     //         $match: {
-//     //           $expr: {
-//     //             $and: [
-//     //               { $eq: ["$campaign_id", "$$campaignId"] },
-//     //               { $eq: ["$affiliate_id", "$$affiliate_id"] },
-//     //               { $eq: ["$isDeleted", "$$isDeleted"] },
-//     //               { $eq: ["$status", "$$status"] },
-//     //             ],
-//     //           },
-//     //         },
-//     //       },
-//     //     ],
-//     //     as: "associatedCampaign",
-//     //   },
-//     // });
-//      pipeline.push({
-//       $lookup: {
-//         from: "brandaffiliateassociation",
-//         let: {
-//           campaignId: "$campaign_id",
-//           affiliateId: affiliateId,
-//           isDeleted: false,
-//           status: "accepted"
-//         },
-//         pipeline: [
-//           {
-//             $match: {
-//               $expr: {
-//                 $and: [
-//                   { $eq: ["$campaign_id", "$$campaignId"] },
-//                   { $eq: ["$affiliate_id", "$$affiliateId"] },
-//                   { $eq: ["$isDeleted", "$$isDeleted"] },
-//                   { $eq: ["$status", "$$status"] }
-//                 ]
-//               }
-//             }
-//           }
-//         ],
-//         as: "associatedCampaign"
-//       }
-//     });
-
-
-//     pipeline.push({
-//       $match: {
-//         associatedCampaign: { $ne: [] }
-//       }
-//     });
+//       {
+//         $lookup: {
+//           from: "users",
+//           localField: "addedBy",
+//           foreignField: "_id",
+//           as: "brand_details"
+//         }
+//       },
+//       {
+//         $unwind: {
+//           path: '$brand_details',
+//           preserveNullAndEmptyArrays: true
+//         }
+//       },
+//     ];
 
 //     let projection = {
 //       $project: {
-//         templateName: "$templateName",
-//         emailName: "$emailName",
-//         purpose: "$purpose",
-//         audience: "$audience",
-//         country: "$country",
-//         language: "$language",
-//         format: "$format",
-//         subject: "$subject",
-//         from: "$from",
-//         htmlContent: "$htmlContent",
-//         textContent: "$textContent",
-//         imagesAndLinks: "$imagesAndLinks",
-//         personalizationTags: "$personalizationTags",
-//         isDeleted: "$isDeleted",
-//         status: "$status",
-//         addedBy: "$addedBy",
-//         updatedBy: "$updatedBy",
-//         updatedAt: "$updatedAt",
-//         createdAt: "$createdAt",
-//         campaign_id: "$campaign_id",
-//         campaign_details: "$campaign_details",
-//       },
+//         emailtemplate_details: "$emailtemplate_details",
+//         brand_details: "$brand_details",
+//         affiliate_id: "$affiliate_id",
+//         isDeleted: '$isDeleted',
+//         textJSONContent: "$textJSONContent",
+//         status: '$status',
+//         addedBy: '$addedBy',
+//         updatedBy: '$updatedBy',
+//         updatedAt: '$updatedAt',
+//         createdAt: '$createdAt'
+//       }
 //     };
 
 //     pipeline.push(projection);
-
 //     pipeline.push({
-//       $match: query,
+//       $match: query
+//     });
+//     pipeline.push({
+//       $sort: sortquery
 //     });
 
+//     let totalresult = await db.collection('emailtemplateaffiliate').aggregate(pipeline).toArray();
+
+
 //     pipeline.push({
-//       $sort: sortquery,
+//       $skip: Number(skipNo)
+//     });
+//     pipeline.push({
+//       $limit: Number(count)
 //     });
 
-//     let totalresult = await db.collection("emailtemplate").aggregate(pipeline).toArray();
+//     let result = await db.collection('emailtemplateaffiliate').aggregate(pipeline).toArray();
 
-//     pipeline.push({ $skip: Number(skipNo) });
-//     pipeline.push({ $limit: Number(count) });
-
-//     let result = await db.collection("emailtemplate").aggregate(pipeline).toArray();
 
 //     let resData = {
 //       total_count: totalresult ? totalresult.length : 0,
@@ -659,57 +589,47 @@ exports.getAll = async (req, res) => {
 //     return response.success(resData, constants.EMAILTEMPLATE.FETCHED, req, res);
 
 //   } catch (error) {
-//     console.log(error, "error in emailTemplate controller");
 //     return response.failed(null, `${error}`, req, res);
 //   }
-// };
+// }
 
 
+// alpha
 
 exports.getUserEmailTemplate = async (req, res) => {
+
+
   try {
     let query = {};
-    let count = req.param('count') || 10;
-    let page = req.param('page') || 1;
-    let skipNo = (Number(page) - 1) * Number(count);
-    let { search, sortBy, status, isDeleted, affiliate_id, addedBy } = req.query;
+    let count = parseInt(req.param('count')) || 10;
+    let page = parseInt(req.param('page')) || 1;
+    let skipNo = (page - 1) * count;
+
+    const { search, sortBy, status, isDeleted, affiliate_id, addedBy } = req.query;
     let sortquery = {};
 
     if (search) {
-      search = await Services.Utils.remove_special_char_exept_underscores(search);
+      const cleanSearch = await Services.Utils.remove_special_char_exept_underscores(search);
       query.$or = [
-        { templateName: { $regex: search, '$options': 'i' } },
-        { emailName: { $regex: search, '$options': 'i' } }
+        { templateName: { $regex: cleanSearch, $options: 'i' } },
+        { emailName: { $regex: cleanSearch, $options: 'i' } }
       ];
     }
 
-    if (isDeleted) {
-      query.isDeleted = isDeleted === 'true';
-    } else {
-      query.isDeleted = false;
-    }
+    query.isDeleted = isDeleted === 'true';
+
+    if (status) query.status = status;
+    if (addedBy) query.addedBy = new ObjectId(addedBy);
+    if (affiliate_id) query.affiliate_id = new ObjectId(affiliate_id);
 
     if (sortBy) {
-      let typeArr = sortBy.split(" ");
-      let sortType = typeArr[1];
-      let field = typeArr[0];
-      sortquery[field ? field : 'createdAt'] = sortType === 'desc' ? -1 : 1;
+      const [field, direction] = sortBy.split(" ");
+      sortquery[field || 'createdAt'] = direction === 'desc' ? -1 : 1;
     } else {
       sortquery = { createdAt: -1 };
     }
 
-    if (status) {
-      query.status = status;
-    }
-    if (addedBy) {
-      query.addedBy = new ObjectId(addedBy);
-    }
-
-    if (affiliate_id) {
-      query.affiliate_id = new ObjectId(affiliate_id);
-    }
-
-    let pipeline = [
+    const pipeline = [
       {
         $lookup: {
           from: "emailtemplate",
@@ -718,12 +638,8 @@ exports.getUserEmailTemplate = async (req, res) => {
           as: "emailtemplate_details"
         }
       },
-      {
-        $unwind: {
-          path: '$emailtemplate_details',
-          preserveNullAndEmptyArrays: true
-        }
-      },
+      { $unwind: { path: "$emailtemplate_details", preserveNullAndEmptyArrays: true } },
+
       {
         $lookup: {
           from: "users",
@@ -732,65 +648,237 @@ exports.getUserEmailTemplate = async (req, res) => {
           as: "brand_details"
         }
       },
+      { $unwind: { path: "$brand_details", preserveNullAndEmptyArrays: true } },
+
       {
-        $unwind: {
-          path: '$brand_details',
-          preserveNullAndEmptyArrays: true
+        $lookup: {
+          from: "brandaffiliateassociate",
+          let: { affiliateId: "$affiliate_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$affiliate_id", "$$affiliateId"] },
+                    { $eq: ["$isDeleted", false] },
+                    { $eq: ["$status", "accepted"] }
+                  ]
+                }
+              }
+            }
+          ],
+          as: "affiliate_campaign_links"
         }
       },
+
+      {
+        $lookup: {
+          from: "campaigns",
+          let: { campaignId: { $arrayElemAt: ["$affiliate_campaign_links.campaign_id", 0] } },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $eq: ["$_id", "$$campaignId"]
+                }
+              }
+            }
+          ],
+          as: "campaign_details"
+        }
+      },
+
+      {
+        $project: {
+          emailtemplate_details: 1,
+          brand_details: 1,
+          affiliate_id: 1,
+          isDeleted: 1,
+          status: 1,
+          addedBy: 1,
+          updatedBy: 1,
+          updatedAt: 1,
+          createdAt: 1,
+          campaign_id: {
+            $cond: {
+              if: { $gt: [{ $size: "$affiliate_campaign_links" }, 0] },
+              then: { $arrayElemAt: ["$affiliate_campaign_links.campaign_id", 0] },
+              else: null
+            }
+          },
+          campaign_details: {
+            $cond: {
+              if: { $gt: [{ $size: "$campaign_details" }, 0] },
+              then: { $arrayElemAt: ["$campaign_details", 0] },
+              else: null
+            }
+          },
+          campaign_status_shown: {
+            $cond: {
+              if: { $gt: [{ $size: "$affiliate_campaign_links" }, 0] },
+              then: true,
+              else: false
+            }
+          }
+        }
+      },
+
+      { $match: query },
+      { $sort: sortquery }
     ];
 
-    let projection = {
-      $project: {
-        emailtemplate_details: "$emailtemplate_details",
-        brand_details: "$brand_details",
-        affiliate_id: "$affiliate_id",
-        isDeleted: '$isDeleted',
-        textJSONContent: "$textJSONContent",
-        status: '$status',
-        addedBy: '$addedBy',
-        updatedBy: '$updatedBy',
-        updatedAt: '$updatedAt',
-        createdAt: '$createdAt'
-      }
-    };
+    const totalResult = await db.collection('emailtemplateaffiliate').aggregate([...pipeline]).toArray();
 
-    pipeline.push(projection);
-    pipeline.push({
-      $match: query
-    });
-    pipeline.push({
-      $sort: sortquery
-    });
+    pipeline.push({ $skip: skipNo });
+    pipeline.push({ $limit: count });
 
-    let totalresult = await db.collection('emailtemplateaffiliate').aggregate(pipeline).toArray();
+    const result = await db.collection('emailtemplateaffiliate').aggregate(pipeline).toArray();
 
-
-    pipeline.push({
-      $skip: Number(skipNo)
-    });
-    pipeline.push({
-      $limit: Number(count)
-    });
-
-    let result = await db.collection('emailtemplateaffiliate').aggregate(pipeline).toArray();
-
-
-    let resData = {
-      total_count: totalresult ? totalresult.length : 0,
-      data: result ? result : []
+    const resData = {
+      total_count: totalResult.length || 0,
+      data: result || []
     };
 
     if (!req.param('page') && !req.param('count')) {
-      resData.data = totalresult ? totalresult : [];
+      resData.data = totalResult || [];
     }
 
     return response.success(resData, constants.EMAILTEMPLATE.FETCHED, req, res);
 
   } catch (error) {
+    console.log("Error in getUserEmailTemplate:", error);
     return response.failed(null, `${error}`, req, res);
   }
-}
+};
+
+
+
+
+
+
+
+// exports.getUserEmailTemplate = async (req, res) => {
+//   console.log("alpha")
+//   try {
+//     let query = {};
+//     let count = parseInt(req.param('count')) || 10;
+//     let page = parseInt(req.param('page')) || 1;
+//     let skipNo = (page - 1) * count;
+//     let { search, sortBy, status, isDeleted, affiliate_id, addedBy } = req.query;
+//     let sortquery = {};
+
+//     if (search) {
+//       search = await Services.Utils.remove_special_char_exept_underscores(search);
+//       query.$or = [
+//         { templateName: { $regex: search, $options: 'i' } },
+//         { emailName: { $regex: search, $options: 'i' } }
+//       ];
+//     }
+
+//     query.isDeleted = isDeleted === 'true' ? true : false;
+
+//     if (sortBy) {
+//       let typeArr = sortBy.split(" ");
+//       let sortType = typeArr[1];
+//       let field = typeArr[0];
+//       sortquery[field || 'createdAt'] = sortType === 'desc' ? -1 : 1;
+//     } else {
+//       sortquery = { createdAt: -1 };
+//     }
+
+//     if (status) query.status = status;
+//     if (addedBy) query.addedBy = new ObjectId(addedBy);
+//     if (affiliate_id) query.affiliate_id = new ObjectId(affiliate_id);
+
+//     let pipeline = [
+//       {
+//         $lookup: {
+//           from: "emailtemplate",
+//           localField: "email_template_id",
+//           foreignField: "_id",
+//           as: "emailtemplate_details"
+//         }
+//       },
+//       {
+//         $unwind: {
+//           path: "$emailtemplate_details",
+//           preserveNullAndEmptyArrays: true
+//         }
+//       },
+//       {
+//         $lookup: {
+//           from: "users",
+//           localField: "addedBy",
+//           foreignField: "_id",
+//           as: "brand_details"
+//         }
+//       },
+//       {
+//         $unwind: {
+//           path: "$brand_details",
+//           preserveNullAndEmptyArrays: true
+//         }
+//       },
+//       {
+//         $lookup: {
+//           from: "campaigns",
+//           localField: "affiliate_id",
+//           foreignField: "affiliate_id", 
+//           as: "campaign_details"
+//         }
+//       },
+//       {
+//         $unwind: {
+//           path: "$campaign_details",
+//           preserveNullAndEmptyArrays: true
+//         }
+//       },
+//       {
+//         $project: {
+//           emailtemplate_details: "$emailtemplate_details",
+//           brand_details: "$brand_details",
+//           campaign_details: "$campaign_details", 
+//           affiliate_id: "$affiliate_id",
+//           isDeleted: "$isDeleted",
+//           textJSONContent: "$textJSONContent",
+//           status: "$status",
+//           addedBy: "$addedBy",
+//           updatedBy: "$updatedBy",
+//           updatedAt: "$updatedAt",
+//           createdAt: "$createdAt"
+//         }
+//       },
+//       {
+//         $match: query
+//       },
+//       {
+//         $sort: sortquery
+//       }
+//     ];
+
+//     let totalresult = await db.collection('emailtemplateaffiliate').aggregate([...pipeline]).toArray();
+
+//     pipeline.push({ $skip: skipNo });
+//     pipeline.push({ $limit: count });
+
+//     let result = await db.collection('emailtemplateaffiliate').aggregate(pipeline).toArray();
+
+//     let resData = {
+//       total_count: totalresult ? totalresult.length : 0,
+//       data: result || []
+//     };
+
+//     if (!req.param('page') && !req.param('count')) {
+//       resData.data = totalresult || [];
+//     }
+
+//     return response.success(resData, constants.EMAILTEMPLATE.FETCHED, req, res);
+
+//   } catch (error) {
+//     return response.failed(null, `${error}`, req, res);
+//   }
+// };
+
 exports.affiliateCount = async (req, res) => {
   // console.log("alpha")
   // try {
