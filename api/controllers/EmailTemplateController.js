@@ -63,8 +63,10 @@ exports.create = async (req, res) => {
       brand_id: req.identity.id,
       status: "accepted",
       isDeleted: false,
-      isActive: true
+      isActive: true,
+      campaign_id: data.campaign_id
     });
+    // console.log("brandaffiliateassocation",BrandAffiliateAssociations)
     let listOfAcceptedInvites = BrandAffiliateAssociations;
 
     function removeDuplicates(array, key) {
@@ -153,7 +155,7 @@ exports.read = async (req, res) => {
     if (!req.query.id) {
       throw constants.COMMON.ID_REQUIRED;
     }
-    let templates = await EmailTemplate.findOne({ id: req.query.id, isDeleted: false }).populate("campaign_id");
+    let templates = await EmailTemplate.findOne({ id: req.query.id, isDeleted: false }).populate("campaign_id").populate("addedBy");
     if (!templates) {
       throw constants.EMAILTEMPLATE.TEMPLATE_NOT_FOUND;
     }
@@ -597,34 +599,51 @@ exports.getAll = async (req, res) => {
 // alpha
 
 exports.getUserEmailTemplate = async (req, res) => {
-
-
   try {
     let query = {};
-    let count = parseInt(req.param('count')) || 10;
-    let page = parseInt(req.param('page')) || 1;
+    let count = parseInt(req.param("count")) || 10;
+    let page = parseInt(req.param("page")) || 1;
     let skipNo = (page - 1) * count;
 
-    const { search, sortBy, status, isDeleted, affiliate_id, addedBy } = req.query;
+    const {
+      search,
+      sortBy,
+      status,
+      isDeleted,
+      affiliate_id,
+      addedBy,
+      startDate,
+      endDate,
+    } = req.query;
+
     let sortquery = {};
 
     if (search) {
       const cleanSearch = await Services.Utils.remove_special_char_exept_underscores(search);
       query.$or = [
-        { templateName: { $regex: cleanSearch, $options: 'i' } },
-        { emailName: { $regex: cleanSearch, $options: 'i' } }
+        { templateName: { $regex: cleanSearch, $options: "i" } },
+        { emailName: { $regex: cleanSearch, $options: "i" } },
       ];
     }
 
-    query.isDeleted = isDeleted === 'true';
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      start.setUTCHours(0, 0, 0, 0);
+
+      const end = new Date(endDate);
+      end.setUTCHours(23, 59, 59, 999);
+
+      query.createdAt = { $gte: start, $lte: end };
+    }
 
     if (status) query.status = status;
     if (addedBy) query.addedBy = new ObjectId(addedBy);
     if (affiliate_id) query.affiliate_id = new ObjectId(affiliate_id);
+    query.isDeleted = isDeleted === "true";
 
     if (sortBy) {
       const [field, direction] = sortBy.split(" ");
-      sortquery[field || 'createdAt'] = direction === 'desc' ? -1 : 1;
+      sortquery[field || "createdAt"] = direction === "desc" ? -1 : 1;
     } else {
       sortquery = { createdAt: -1 };
     }
@@ -635,8 +654,8 @@ exports.getUserEmailTemplate = async (req, res) => {
           from: "emailtemplate",
           localField: "email_template_id",
           foreignField: "_id",
-          as: "emailtemplate_details"
-        }
+          as: "emailtemplate_details",
+        },
       },
       { $unwind: { path: "$emailtemplate_details", preserveNullAndEmptyArrays: true } },
 
@@ -645,14 +664,14 @@ exports.getUserEmailTemplate = async (req, res) => {
           from: "users",
           localField: "addedBy",
           foreignField: "_id",
-          as: "brand_details"
-        }
+          as: "brand_details",
+        },
       },
       { $unwind: { path: "$brand_details", preserveNullAndEmptyArrays: true } },
 
       {
         $lookup: {
-          from: "brandaffiliateassociate",
+          from: "brandaffiliateassociation",
           let: { affiliateId: "$affiliate_id" },
           pipeline: [
             {
@@ -661,31 +680,50 @@ exports.getUserEmailTemplate = async (req, res) => {
                   $and: [
                     { $eq: ["$affiliate_id", "$$affiliateId"] },
                     { $eq: ["$isDeleted", false] },
-                    { $eq: ["$status", "accepted"] }
-                  ]
-                }
-              }
-            }
+                    { $eq: ["$status", "accepted"] },
+                    { $ne: ["$campaign_id", null] }
+                  ],
+                },
+              },
+            },
           ],
-          as: "affiliate_campaign_links"
-        }
+          as: "affiliate_campaign_links",
+        },
       },
 
       {
         $lookup: {
-          from: "campaigns",
-          let: { campaignId: { $arrayElemAt: ["$affiliate_campaign_links.campaign_id", 0] } },
+          from: "campaign",
+          let: {
+            campaignId: {
+              $cond: {
+                if: {
+                  $and: [
+                    { $gt: [{ $size: "$affiliate_campaign_links" }, 0] },
+                    {
+                      $eq: [
+                        { $type: { $arrayElemAt: ["$affiliate_campaign_links.campaign_id", 0] } },
+                        "string",
+                      ],
+                    },
+                  ],
+                },
+                then: {
+                  $toObjectId: { $arrayElemAt: ["$affiliate_campaign_links.campaign_id", 0] },
+                },
+                else: "$$REMOVE",
+              },
+            },
+          },
           pipeline: [
             {
               $match: {
-                $expr: {
-                  $eq: ["$_id", "$$campaignId"]
-                }
-              }
-            }
+                $expr: { $eq: ["$_id", "$$campaignId"] },
+              },
+            },
           ],
-          as: "campaign_details"
-        }
+          as: "campaign_details",
+        },
       },
 
       {
@@ -703,53 +741,60 @@ exports.getUserEmailTemplate = async (req, res) => {
             $cond: {
               if: { $gt: [{ $size: "$affiliate_campaign_links" }, 0] },
               then: { $arrayElemAt: ["$affiliate_campaign_links.campaign_id", 0] },
-              else: null
-            }
+              else: null,
+            },
           },
           campaign_details: {
             $cond: {
               if: { $gt: [{ $size: "$campaign_details" }, 0] },
               then: { $arrayElemAt: ["$campaign_details", 0] },
-              else: null
-            }
+              else: null,
+            },
           },
           campaign_status_shown: {
             $cond: {
               if: { $gt: [{ $size: "$affiliate_campaign_links" }, 0] },
               then: true,
-              else: false
-            }
-          }
-        }
+              else: false,
+            },
+          },
+        },
       },
 
       { $match: query },
-      { $sort: sortquery }
+      { $sort: sortquery },
     ];
 
-    const totalResult = await db.collection('emailtemplateaffiliate').aggregate([...pipeline]).toArray();
+    const totalResult = await db
+      .collection("emailtemplateaffiliate")
+      .aggregate([...pipeline])
+      .toArray();
 
     pipeline.push({ $skip: skipNo });
     pipeline.push({ $limit: count });
 
-    const result = await db.collection('emailtemplateaffiliate').aggregate(pipeline).toArray();
+    const result = await db
+      .collection("emailtemplateaffiliate")
+      .aggregate(pipeline)
+      .toArray();
 
     const resData = {
       total_count: totalResult.length || 0,
-      data: result || []
+      data: result || [],
     };
 
-    if (!req.param('page') && !req.param('count')) {
+    if (!req.param("page") && !req.param("count")) {
       resData.data = totalResult || [];
     }
 
     return response.success(resData, constants.EMAILTEMPLATE.FETCHED, req, res);
-
   } catch (error) {
     console.log("Error in getUserEmailTemplate:", error);
     return response.failed(null, `${error}`, req, res);
   }
 };
+
+
 
 
 

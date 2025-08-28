@@ -73,5 +73,5 @@ exports.sendEmailTemplate = async (options) => {
     </body>
   `;
 
-  await SmtpController.sendEmail(affiliateEmail, 'Received Email Template Message', message);
+  SmtpController.sendEmail(affiliateEmail, 'Received Email Template Message', message);
 };
