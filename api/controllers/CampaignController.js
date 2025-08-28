@@ -1099,6 +1099,7 @@ exports.getCampaignById = async (req, res) => {
 
 exports.changeCampaignStatus = async (req, res) => {
     try {
+        // console.log("alpha test3 ")
         //To approve or reject campaign requests        
         // added new code   
         let user_id = req.identity.id;
@@ -1135,6 +1136,7 @@ exports.changeCampaignStatus = async (req, res) => {
         let { id } = req.body;
 
         let get_campaign = await BrandAffiliateAssociation.findOne({ id: id, isDeleted: false, status: { in: ["pending", "requested"] } }).populate('campaign_id');
+        // console.log("get_campaign",get_campaign)
 
         if (!get_campaign) {
             throw constants.CAMPAIGN.INVALID_ID;
@@ -1169,6 +1171,7 @@ exports.changeCampaignStatus = async (req, res) => {
               affiliate_id: req.body.affiliate_id,
               brand_id: get_campaign.brand_id,
               status: req.body.status,
+              campaign_id:get_campaign.campaign_id,
               reason: req.body.reason ? req.body.reason : "",
             };
             let emailSentCheck = await EmailSentSetting.findOne({

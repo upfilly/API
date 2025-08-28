@@ -195,13 +195,13 @@ exports.changeStatus = async (options) => {
   var status = options.status;
   var reason = options.reason;
 
-  var get_affiliate = await Users.findOne({ id: options.affiliate_id });
-  var get_brand = await Users.findOne({ id: options.brand_id });
-  var campaign = await Campaign.findOne({ id: options.campaign_id }); 
+  let get_affiliate = await Users.findOne({ id: options.affiliate_id });
+  let get_brand = await Users.findOne({ id: options.brand_id });
+  let campaign = await Campaign.findOne({ id: options.campaign_id }); 
 
   var email = get_brand.email;
 
-  var campaignName = campaign ? campaign.title : 'the campaign';
+  var campaignName = campaign ? campaign?.name : 'the campaign';
 
   let matter;
   if (status == 'rejected') {

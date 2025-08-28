@@ -301,7 +301,7 @@ exports.changeRequestStatus = async (req, res) => {
 
         // update brand associate affiliate
         let association_data = await BrandAffiliateAssociation.findOne({ id: get_request.association, isDeleted: false, status: {in: ["pending","requested"]} }).populate('campaign_id');
-        
+        console.log(association_data,"dddd")
         if(req.body.status === 'accepted') {
             await BrandAffiliateAssociation.update({affiliate_id: affiliate_id, brand_id: association_data.brand_id}).set({isActive: false});
             await BrandAffiliateAssociation.updateOne({id: association_data.id}).set({status: req.body.status, isActive: true});
