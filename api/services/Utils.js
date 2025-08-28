@@ -52,13 +52,13 @@ exports.get_admin = async () => {
 }
 
 exports.title_case = (string) => {
-    string = string.toLowerCase()
-    string = string.split(' ');
+    string = string?.toLowerCase()
+    string = string?.split(' ');
     for (let i in string) {
         string[i] = string[i].charAt(0).toUpperCase() + string[i].slice(1);
     }
 
-    return string.join(' ');
+    return string?.join(' ');
 }
 
 

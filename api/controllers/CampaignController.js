@@ -1188,7 +1188,7 @@ exports.changeCampaignStatus = async (req, res) => {
             let notification_payload = {};
             notification_payload.type = "campaign";
             notification_payload.addedBy = req.identity.id;
-            notification_payload.title = `Campaign ${Services.Utils.title_case(get_campaign.status)} | ${Services.Utils.title_case(get_campaign.campaign_id.name)} | ${req.identity.fullName}`;
+            notification_payload.title = `Campaign ${Services.Utils.title_case(get_campaign.status)} | ${Services.Utils.title_case(get_campaign.campaign_id?.name)} | ${req.identity.fullName}`;
             notification_payload.message = `Your campaign request is ${Services.Utils.title_case(req.body.status)}`;
             notification_payload.send_to = get_campaign.brand_id;
             notification_payload.campaign_id = get_campaign.id;
@@ -1208,6 +1208,7 @@ exports.changeCampaignStatus = async (req, res) => {
             return response.failed(null, constants.CAMPAIGN.NOT_FOUND);
         }
     } catch (error) {
+        console.log("error",error)
         return response.failed(null, `${error}`, req, res)
     }
 }
