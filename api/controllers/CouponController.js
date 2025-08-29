@@ -731,10 +731,21 @@ exports.getByIdCoupon = async (req, res) => {
       throw constants.COUPON.ID_REQUIRED;
     }
     const get_Coupon = await Coupon.findOne({ id: id }).populate("addedBy");
-    if (get_Coupon) {
-      return response.success(get_Coupon, constants.COUPON.FETCHED, req, res);
+    if (!get_Coupon) {
+      return response.success(get_Coupon, constants.COUPON.NOT_EXISTS, req, res);
     }
-    throw constants.COUPON.INVALID_ID;
+    let mediaUsers = [];
+    if (get_Coupon.media?.length) {
+      mediaUsers = await Users.find({
+        where: {
+          id: { in: get_Coupon.media },
+          isDeleted: false,
+        },
+      });
+    }
+
+     get_Coupon.mediaDetails = mediaUsers;
+      return response.success(get_Coupon, constants.COUPON.FETCHED, req, res);
   } catch (error) {
     return response.failed(null, `${error}`, req, res);
   }
