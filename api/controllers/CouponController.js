@@ -74,7 +74,7 @@ exports.addCoupon = async (req, res) => {
     }
     let user;
     if (req.body.visibility != "Public") {
-      user = await Users.findOne({ id: req.body.media, isDeleted: false }); //here media refers to affiliate
+      user = await Users.find({ id: req.body.media, isDeleted: false }); //here media refers to affiliate
       if (!user) {
         throw constants.user.USER_NOT_FOUND;
       }
@@ -143,32 +143,67 @@ exports.addCoupon = async (req, res) => {
       }
 
       if (visibility === "Exclusive to specific affiliate") {
-        const affiliate = await Users.findOne({ id: media, isDeleted: false });
-        const brand = await Users.findOne({
-          id: req.identity.id,
+        let mediaIds = [];
+
+        if (Array.isArray(media)) {
+          mediaIds = media;
+        } else if (media) {
+          mediaIds = [media];
+        }
+
+        const affiliate = await Users.find({
+          id: { $in: mediaIds },
           isDeleted: false,
         });
-
-        if (affiliate && affiliate.email && brand) {
-          //emailSenting check 
-          let emailSentCheck = await EmailSentSetting.findOne({
+        if (affiliate.length && affiliate[0].email && brand) {
+          const emailSentCheck = await EmailSentSetting.findOne({
             name: "coupon",
             isDeleted: false,
           });
-          if (emailSentCheck.emailSent == true) {
-            await Email.sendCouponNotificationEmail({
-              brandFullName: brand.fullName,
-              affiliateFullName: affiliate.fullName,
-              affiliateEmail: affiliate.email,
-              couponTitle: title,
-              couponCode,
-              expirationDate:expirationDate,
-              visibility,
-            });
+
+          if (emailSentCheck?.emailSent === true) {
+            for (let aff of affiliate) {
+              await Email.sendCouponNotificationEmail({
+                brandFullName: brand.fullName,
+                affiliateFullName: aff.fullName,
+                affiliateEmail: aff.email,
+                couponTitle: title,
+                couponCode,
+                expirationDate,
+                visibility,
+              });
+            }
           } else {
             console.log("emailSent setting is false in coupon");
           }
         }
+
+        // const affiliate = await Users.find({ id: media, isDeleted: false });
+        // const brand = await Users.findOne({
+        //   id: req.identity.id,
+        //   isDeleted: false,
+        // });
+
+        // if (affiliate && affiliate.email && brand) {
+        //   //emailSenting check
+        //   let emailSentCheck = await EmailSentSetting.findOne({
+        //     name: "coupon",
+        //     isDeleted: false,
+        //   });
+        //   if (emailSentCheck.emailSent == true) {
+        //     await Email.sendCouponNotificationEmail({
+        //       brandFullName: brand.fullName,
+        //       affiliateFullName: affiliate.fullName,
+        //       affiliateEmail: affiliate.email,
+        //       couponTitle: title,
+        //       couponCode,
+        //       expirationDate:expirationDate,
+        //       visibility,
+        //     });
+        // } else {
+        //   console.log("emailSent setting is false in coupon");
+        // }
+        // }
       } else if (visibility === "Public") {
         console.log("public");
         const brand = await Users.findOne({
@@ -179,7 +214,6 @@ exports.addCoupon = async (req, res) => {
         let affiliates = [];
 
         if (campaign_id && campaign_id.length > 0) {
-          console.log("1")
           let affiliateIdsSet = new Set();
 
           for (let campaignId of campaign_id) {
@@ -195,11 +229,11 @@ exports.addCoupon = async (req, res) => {
             mappings.forEach((map) => {
               if (map.affiliate_id) affiliateIdsSet.add(map.affiliate_id);
             });
-            console.log("mappings",mappings)
+            console.log("mappings", mappings);
           }
 
           const affiliateIds = Array.from(affiliateIdsSet);
-        console.log("affiliateIds",affiliateIds)
+          console.log("affiliateIds", affiliateIds);
 
           affiliates = await Users.find({
             id: affiliateIds,
@@ -207,9 +241,9 @@ exports.addCoupon = async (req, res) => {
             isDeleted: false,
             status: "active",
           });
-          console.log("affiliates",affiliates)
+          console.log("affiliates", affiliates);
         } else {
-          console.log("2")
+          console.log("2");
           affiliates =
             await Services.UserServices.getAssociatedAffiliatesForBrand(
               brand.id
@@ -223,7 +257,7 @@ exports.addCoupon = async (req, res) => {
               isDeleted: false,
             });
             if (emailSentCheck.emailSent == true) {
-             await Email.sendCouponNotificationEmail({
+              await Email.sendCouponNotificationEmail({
                 brandFullName: brand.fullName,
                 affiliateFullName: affiliate.fullName,
                 affiliateEmail: affiliate.email,
@@ -282,11 +316,19 @@ exports.editCoupon = async function (req, res) {
       throw constants.COUPON.NOT_EXISTS;
     }
 
-    if (media) {
-      let user = await Users.findOne({ id: req.body.media, isDeleted: false }); //here media refers to affiliate
+    // if (media) {
+    //   let user = await Users.find({ id: req.body.media, isDeleted: false }); //here media refers to affiliate
 
-      if (!user) {
-        throw constants.user.USER_NOT_FOUND;
+    //   if (!user) {
+    //     throw constants.user.USER_NOT_FOUND;
+    //   }
+    // }
+     if (media && media.length > 0) {
+      for (let itm of media) {
+        let check = await Users.findOne({ id: itm ,isDeleted: false});
+        if (!check) {
+          throw constants.COUPON.MEDIA_ID;
+        }
       }
     }
     //check
@@ -417,7 +459,7 @@ exports.getAllCoupon = async (req, res) => {
         : true
         ? expireCheck
         : false;
-    } 
+    }
 
     if (sortBy) {
       let typeArr = [];
@@ -464,14 +506,39 @@ exports.getAllCoupon = async (req, res) => {
     //     ...(media ? [{ media: new ObjectId(media) }] : []),
     //   ];
     // }
-    if (visibility || media) {
-      const mediaArray =
-        typeof media === "string"
-          ? media.split(",").map((id) => new ObjectId(id.trim()))
-          : [new ObjectId(media)];
+    // if (visibility || media) {
+    //   const mediaArray =
+    //     typeof media === "string"
+    //       ? media.split(",").map((id) => new ObjectId(id.trim()))
+    //       : [new ObjectId(media)];
 
-      query.$or = [{ visibility: "Public" }, { media: { $in: mediaArray } }];
+    //   query.$or = [{ visibility: "Public" }, { media: { $in: mediaArray } }];
+    // }
+
+  if (visibility || media) {
+    let mediaArray = [];
+
+    if (typeof media === "string") {
+      mediaArray = media
+        .split(",")
+        .map((id) => id.trim())
+        .filter((id) => ObjectId.isValid(id))
+        .map((id) => new ObjectId(id));
+    } else if (Array.isArray(media)) {
+      mediaArray = media
+        .filter((id) => ObjectId.isValid(id))
+        .map((id) => new ObjectId(id));
     }
+
+    if (mediaArray.length > 0) {
+      query.$or = [
+        { visibility: "Public" },
+        { media: { $in: mediaArray.map((id) => id.toString()) } }, // since media is saved as string IDs
+      ];
+    } else {
+      query.visibility = "Public"; // default if media is invalid
+    }
+  }
 
     // console.log(sortquery, "-----------------sortquery");
     let pipeline = [
@@ -501,6 +568,19 @@ exports.getAllCoupon = async (req, res) => {
         $unwind: {
           path: "$campaignData",
           preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "mediaObjectIds",
+          foreignField: "_id",
+          as: "mediaDetails",
+        },
+      },
+      {
+        $project: {
+          mediaObjectIds: 0,
         },
       },
     ];
@@ -536,7 +616,8 @@ exports.getAllCoupon = async (req, res) => {
         couponAmount: "$couponAmount",
         campaign_id: "$campaign_id",
         campaignDetails: "$campaignData",
-        expireCheck:"$expireCheck",
+        expireCheck: "$expireCheck",
+        media_details: "$mediaDetails",
       },
     };
     pipeline.push(projection);
@@ -675,7 +756,6 @@ exports.getAllCoupon = async (req, res) => {
       return res.download(csvPath, "coupons.csv");
     }
 
-    // ✅ Generate XML
     if (xml) {
       const xmlFormattedResult = result.map((item) => ({
         fullName: item.fullName,
@@ -691,23 +771,22 @@ exports.getAllCoupon = async (req, res) => {
         coupons: { coupon: xmlFormattedResult },
       });
 
-      // ✅ Define Root Path for XML File
       let rootPath = process.cwd(); // Get the current working directory
       let xmlPath = path.join(rootPath, "assets", "documents");
 
-      // ✅ Ensure Directory Exists
+      // Ensure Directory Exists
       if (!fs.existsSync(xmlPath)) {
         fs.mkdirSync(xmlPath, { recursive: true }); // Create directory if not exists
       }
 
-      // ✅ Generate Unique File Name
+      // Generate Unique File Name
       let fileName = `coupons_${Date.now()}.xml`;
       let filePath = path.join(xmlPath, fileName);
 
-      // ✅ Write XML Data to File
+      // Write XML Data to File
       fs.writeFileSync(filePath, xmlData, "utf8");
 
-      // ✅ Send File for Download
+      // Send File for Download
       return res.download(filePath, fileName);
     }
 
