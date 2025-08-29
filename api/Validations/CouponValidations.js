@@ -3,12 +3,19 @@ const Validate = require("./Validate").validate;
 
 exports.addCoupon = async (req, res, next) => {
   const schema = Joi.object({
-    media: Joi.string()
-      .when('visibility', {
-        is: "Exclusive to specific affiliate",
-        then: Joi.required(),
-        otherwise: Joi.optional()
-      }),
+    // media: Joi.string()
+    //   .when('visibility', {
+    //     is: "Exclusive to specific affiliate",
+    //     then: Joi.required(),
+    //     otherwise: Joi.optional()
+    //   }),
+    // media: Joi.array().optional().items(Joi.string()), 
+    media: Joi.alternatives().conditional('visibility', {
+    is: 'Exclusive to specific affiliate',
+    then: Joi.array().items(Joi.string().required()).min(1).required(),
+    otherwise: Joi.array().items(Joi.string()).optional()
+  }),
+    
 
     couponCode: Joi.string().alphanum().required(),
 
@@ -52,12 +59,19 @@ exports.addCoupon = async (req, res, next) => {
 exports.editCoupon = async (req, res, next) => {
   const schema = Joi.object({
     id:Joi.string().required(),
-    media: Joi.string()
-      .when('visibility', {
-        is: "Exclusive to specific affiliate",
-        then: Joi.required(),
-        otherwise: Joi.optional()
-      }),
+    // media: Joi.string()
+    //   .when('visibility', {
+    //     is: "Exclusive to specific affiliate",
+    //     then: Joi.required(),
+    //     otherwise: Joi.optional()
+    //   }),
+    // media: Joi.array().optional().items(Joi.string()), 
+    media: Joi.alternatives().conditional('visibility', {
+    is: 'Exclusive to specific affiliate',
+    then: Joi.array().items(Joi.string().required()).min(1).required(),
+    otherwise: Joi.array().items(Joi.string()).optional()
+  }),
+
 
     couponCode: Joi.string().alphanum().required(),
 

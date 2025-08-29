@@ -3,10 +3,13 @@
 module.exports = {
   attributes: {
     // Media to assign to user
-    media: { // here media refers to affiliate 
-      model: "users",
+    // media: { // here media refers to affiliate
+    //   model: "users",
+    // },
+    media: {
+      type: "json",
+      columnType: "array",
     },
-
     // Unique Coupon Code
     couponCode: {
       type: "string",
@@ -41,13 +44,13 @@ module.exports = {
       // required: true,
     },
 
-    couponAmount : {
-      type  : "number",
-      defaultsTo:0
+    couponAmount: {
+      type: "number",
+      defaultsTo: 0,
     },
 
     title: { type: "string" },
-    
+
     description: { type: "string" },
 
     // Applicable Products or Categories
@@ -72,7 +75,7 @@ module.exports = {
     // Status: Enabled/Disabled
     status: {
       type: "string",
-      isIn: ["Enabled", "Disabled", "Expired","Pending"],
+      isIn: ["Enabled", "Disabled", "Expired", "Pending"],
       required: true,
     },
 
@@ -93,12 +96,10 @@ module.exports = {
     createdAt: { type: "ref", autoCreatedAt: true },
     updatedAt: { type: "ref", autoUpdatedAt: true },
     isDeleted: { type: "Boolean", defaultsTo: false },
-    campaign_id:{
+    campaign_id: {
       type: "json",
       columnType: "array",
     },
     expireCheck: { type: "Boolean", defaultsTo: false },
-
-
   },
 };

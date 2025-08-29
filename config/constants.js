@@ -632,7 +632,8 @@ module.exports.constants = {
     ALREADY_EXISTS: "Coupon code already exists",
     NOT_EXISTS: "Coupon not exists",
     CAMAPIGN : "Campaign id not exist.",
-    START_DATE_OVERLAPED : "Start Date over load."
+    START_DATE_OVERLAPED : "Start Date over load.",
+    MEDIA_ID: "Medai id not exist"
   },
   CSVDATA: {
     IMPORTED_SUCCESSFULLY: "Data imported successfully",

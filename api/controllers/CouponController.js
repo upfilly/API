@@ -86,6 +86,15 @@ exports.addCoupon = async (req, res) => {
       }
     }
 
+    if (media && media.length > 0) {
+      for (let itm of media) {
+        let check = await Users.findOne({ id: itm });
+        if (!check) {
+          throw constants.COUPON.MEDIA_ID;
+        }
+      }
+    }
+
 
     if (campaign_id && campaign_id.length > 0) {
       for (let itm of campaign_id) {
@@ -449,12 +458,21 @@ exports.getAllCoupon = async (req, res) => {
       selectedCoupon = selectedCoupon.map((itm) => new ObjectId(itm));
       query.id = { $in: selectedCoupon };
     }
+    // if (visibility || media) {
+    //   query.$or = [
+    //     { visibility: "Public" },
+    //     ...(media ? [{ media: new ObjectId(media) }] : []),
+    //   ];
+    // }
     if (visibility || media) {
-      query.$or = [
-        { visibility: "Public" },
-        ...(media ? [{ media: new ObjectId(media) }] : []),
-      ];
+      const mediaArray =
+        typeof media === "string"
+          ? media.split(",").map((id) => new ObjectId(id.trim()))
+          : [new ObjectId(media)];
+
+      query.$or = [{ visibility: "Public" }, { media: { $in: mediaArray } }];
     }
+
     // console.log(sortquery, "-----------------sortquery");
     let pipeline = [
       {
@@ -712,7 +730,7 @@ exports.getByIdCoupon = async (req, res) => {
     if (!id) {
       throw constants.COUPON.ID_REQUIRED;
     }
-    const get_Coupon = await Coupon.findOne({ id: id });
+    const get_Coupon = await Coupon.findOne({ id: id }).populate("addedBy");
     if (get_Coupon) {
       return response.success(get_Coupon, constants.COUPON.FETCHED, req, res);
     }
