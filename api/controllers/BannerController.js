@@ -337,7 +337,7 @@ exports.editBanner = async (req, res) => {
      if (expiration_date) {
       req.body.expiration_date = new Date(expiration_date);
     }
-    }else if (expireCheck  == true) {
+    }else if (req.body?.expireCheck  == true) {
       req.body.expiration_date = new Date(expiration_date);
      }else{
       delete req.body.expiration_date
