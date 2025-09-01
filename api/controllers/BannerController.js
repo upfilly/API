@@ -36,9 +36,15 @@ exports.addBanner = async (req, res) => {
       subChildCategory,
       access_type,
       affiliate_id,
+      expireCheck
     } = req.body;
 
     let query = {};
+    
+    if (expireCheck === false || expireCheck === "false") {
+      delete req.body.expiration_date;
+    }
+
     query.title = title.toLowerCase();
     query.isDeleted = false;
 
@@ -138,10 +144,17 @@ exports.addBanner = async (req, res) => {
     if (availability_date) {
       req.body.availability_date = new Date(availability_date);
     }
+    //new changes 
 
-    if (expiration_date) {
+       if (expireCheck === true || expireCheck === "true") {
+      if (expiration_date) {
       req.body.expiration_date = new Date(expiration_date);
     }
+    }
+    //old 
+    // if (expiration_date) {
+    //   req.body.expiration_date = new Date(expiration_date);
+    // }
 
     let add_detail = await Banner.create(req.body).fetch();
 
@@ -224,6 +237,7 @@ exports.addBanner = async (req, res) => {
     }
     throw constants.COMMON.SERVER_ERROR;
   } catch (err) {
+    console.log("error",err)
     return response.failed(null, `${err}`, req, res);
   }
 };
@@ -261,9 +275,11 @@ exports.editBanner = async (req, res) => {
       req.body.availability_date = new Date(availability_date);
     }
 
-    if (expiration_date) {
-      req.body.expiration_date = new Date(expiration_date);
-    }
+   
+//old check
+    // if (expiration_date) {
+    //   req.body.expiration_date = new Date(expiration_date);
+    // }
 
     if (affiliate_id) {
       let get_affiliateId = await Users.findOne({ id: affiliate_id });
@@ -316,6 +332,13 @@ exports.editBanner = async (req, res) => {
     let get_banner = await Banner.findOne({ id: id, isDeleted: false });
     if (!get_banner) {
       throw constants.BANNER.INVALID_ID;
+    }
+      if (get_banner.expireCheck == true) {
+     if (expiration_date) {
+      req.body.expiration_date = new Date(expiration_date);
+    }
+    }else{
+      delete req.body.expiration_date;
     }
 
     await AffiliateBanners.update({ banner_id: id }, { isDeleted: true });
@@ -411,6 +434,7 @@ exports.editBanner = async (req, res) => {
     }
     throw constants.BANNER.INVALID_ID;
   } catch (err) {
+    console.log("err",err)
     return response.failed(null, `${err}`, req, res);
   }
 };
@@ -594,6 +618,7 @@ exports.getAllBanner = async (req, res) => {
             email: "$affiliate_details.email",
             isDeleted: "$affiliate_details.isDeleted",
           },
+          expiration_date:"$expiration_date"
         },
       },
       {

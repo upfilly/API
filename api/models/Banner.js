@@ -38,6 +38,8 @@ module.exports = {
     addedBy: { model: "users" },
     createdAt: { type: "ref", autoCreatedAt: true },
     updatedAt: { type: "ref", autoUpdatedAt: true },
+    expireCheck: { type: "Boolean", defaultsTo: false },
+
   },
 
   // afterCreate: async function (newlyInsertedRecord, proceed) {
