@@ -48,7 +48,7 @@ exports.addCoupon = async (req, res, next) => {
     url: Joi.string().uri().required(),
 
     couponCommission: Joi.string().optional().allow(""),
-    couponAmount: Joi.number(),
+    couponAmount: Joi.number().optional(),
     title: Joi.string().optional().allow(""),
     description: Joi.string().optional().allow(""),
     expireCheck: Joi.boolean().required(),

@@ -152,9 +152,15 @@ exports.addCoupon = async (req, res) => {
         }
 
         const affiliate = await Users.find({
-          id: { $in: mediaIds },
+          id: { in: mediaIds },
           isDeleted: false,
         });
+
+        const brand = await Users.findOne({
+          id: req.identity.id,
+          isDeleted: false,
+        });
+
         if (affiliate.length && affiliate[0].email && brand) {
           const emailSentCheck = await EmailSentSetting.findOne({
             name: "coupon",
