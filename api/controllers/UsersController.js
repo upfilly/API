@@ -1684,13 +1684,11 @@ module.exports = {
   //new lsiting
   getAllAffiliateForBrand: async (req, res) => {
     try {
-      let page = Number(req.param("page")) || 1;
-      let count = Number(req.param("count")) || 100;
-      let skipNo = (page - 1) * count;
-
-      let { search, status, sortBy, start_date, end_date, invite_status } =
+      let { search, status, sortBy, start_date, end_date, invite_status, page, count } =
         req.query;
-
+      page = Number(page) || 1;
+      count = Number(count) || 100;
+      let skipNo = (page - 1) * count;
       let query = {
         brand_id: new ObjectId(req.identity.id),
         isDeleted: false,
@@ -1939,24 +1937,24 @@ module.exports = {
         query.isDeleted = isDeleted
           ? isDeleted === "true"
           : true
-          ? isDeleted
-          : false;
+            ? isDeleted
+            : false;
       }
 
       if (isTrusted) {
         query.isTrusted = isTrusted
           ? isTrusted === "true"
           : true
-          ? isTrusted
-          : false;
+            ? isTrusted
+            : false;
       }
 
       if (isFeatured) {
         query.isFeatured = isFeatured
           ? isFeatured === "true"
           : true
-          ? isFeatured
-          : false;
+            ? isFeatured
+            : false;
       }
 
       if (createBybrand_id) {
@@ -2251,8 +2249,8 @@ module.exports = {
         query.isDeleted = isDeleted
           ? isDeleted === "true"
           : true
-          ? isDeleted
-          : false;
+            ? isDeleted
+            : false;
       }
 
       query.addedBy = new ObjectId(req.identity.id);
@@ -4117,7 +4115,7 @@ module.exports = {
               fileExt = typeArr[1];
               if (
                 fileExt ==
-                  "vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+                "vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
                 fileExt == "vnd.ms-excel"
               ) {
                 let name = `${file[index].fd.split("/csv")[1]}`;
@@ -4530,7 +4528,7 @@ module.exports = {
                                           imported++;
                                         }
                                       }
-                                    } catch (err) {}
+                                    } catch (err) { }
                                   }
                                 } catch (err) {
                                   // return res.status(404).json({
@@ -4627,7 +4625,7 @@ module.exports = {
               // console.log(fileExt, '================fileExt');
               if (
                 fileExt ==
-                  "vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+                "vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
                 fileExt == "vnd.ms-excel"
               ) {
                 let name = `${file[index].fd.split("/csv")[1]}`;
@@ -4768,9 +4766,9 @@ module.exports = {
                                           }
                                         }
                                       }
-                                    } catch (err) {}
+                                    } catch (err) { }
                                   }
-                                } catch (err) {}
+                                } catch (err) { }
                               }
                             }
                             counter++;
@@ -5428,24 +5426,24 @@ module.exports = {
         query.isDeleted = isDeleted
           ? isDeleted === "true"
           : true
-          ? isDeleted
-          : false;
+            ? isDeleted
+            : false;
       }
 
       if (isTrusted) {
         query.isTrusted = isTrusted
           ? isTrusted === "true"
           : true
-          ? isTrusted
-          : false;
+            ? isTrusted
+            : false;
       }
 
       if (isFeatured) {
         query.isFeatured = isFeatured
           ? isFeatured === "true"
           : true
-          ? isFeatured
-          : false;
+            ? isFeatured
+            : false;
       }
 
       if (createBybrand_id) {
@@ -5515,55 +5513,55 @@ module.exports = {
 
         role && role === "brand"
           ? {
-              $lookup: {
-                from: "affiliatebrandinvite",
-                let: {
-                  affiliate_id: "$_id",
-                  isDeleted: false,
-                  brand_id: new ObjectId(req.identity.id),
-                },
-                // let: { user_id: "$req.identity.id", fav_user_id: new ObjectId("64d076e86ecebee01af09d8c") },
-                pipeline: [
-                  {
-                    $match: {
-                      $expr: {
-                        $and: [
-                          { $eq: ["$brand_id", "$$brand_id"] },
-                          { $eq: ["$isDeleted", "$$isDeleted"] },
-                          { $eq: ["$affiliate_id", "$$affiliate_id"] },
-                        ],
-                      },
+            $lookup: {
+              from: "affiliatebrandinvite",
+              let: {
+                affiliate_id: "$_id",
+                isDeleted: false,
+                brand_id: new ObjectId(req.identity.id),
+              },
+              // let: { user_id: "$req.identity.id", fav_user_id: new ObjectId("64d076e86ecebee01af09d8c") },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: {
+                      $and: [
+                        { $eq: ["$brand_id", "$$brand_id"] },
+                        { $eq: ["$isDeleted", "$$isDeleted"] },
+                        { $eq: ["$affiliate_id", "$$affiliate_id"] },
+                      ],
                     },
                   },
-                ],
-                as: "invite_affiliate_details",
-              },
-            }
-          : {
-              $lookup: {
-                from: "affiliatebrandinvite",
-                let: {
-                  affiliate_id: new ObjectId(req.identity.id),
-                  isDeleted: false,
-                  brand_id: "$_id",
                 },
-                // let: { user_id: "$req.identity.id", fav_user_id: new ObjectId("64d076e86ecebee01af09d8c") },
-                pipeline: [
-                  {
-                    $match: {
-                      $expr: {
-                        $and: [
-                          { $eq: ["$brand_id", "$$brand_id"] },
-                          { $eq: ["$isDeleted", "$$isDeleted"] },
-                          { $eq: ["$affiliate_id", "$$affiliate_id"] },
-                        ],
-                      },
-                    },
-                  },
-                ],
-                as: "invite_affiliate_details",
-              },
+              ],
+              as: "invite_affiliate_details",
             },
+          }
+          : {
+            $lookup: {
+              from: "affiliatebrandinvite",
+              let: {
+                affiliate_id: new ObjectId(req.identity.id),
+                isDeleted: false,
+                brand_id: "$_id",
+              },
+              // let: { user_id: "$req.identity.id", fav_user_id: new ObjectId("64d076e86ecebee01af09d8c") },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: {
+                      $and: [
+                        { $eq: ["$brand_id", "$$brand_id"] },
+                        { $eq: ["$isDeleted", "$$isDeleted"] },
+                        { $eq: ["$affiliate_id", "$$affiliate_id"] },
+                      ],
+                    },
+                  },
+                },
+              ],
+              as: "invite_affiliate_details",
+            },
+          },
         {
           $unwind: {
             path: "$invite_affiliate_details",
@@ -5792,8 +5790,8 @@ module.exports = {
         query.isDeleted = isDeleted
           ? isDeleted === "true"
           : true
-          ? isDeleted
-          : false;
+            ? isDeleted
+            : false;
       }
 
       let pipeline = [
