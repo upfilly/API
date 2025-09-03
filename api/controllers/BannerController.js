@@ -454,14 +454,15 @@ exports.getAllBanner = async (req, res) => {
       isDeleted,
       status,
       sortBimation,
-      is_dey,
-      is_anep_linking,
+      is_deep_linking,
       mobile_creative,
       addedBy,
       category_id,
       subChildCategory,
       subCategory,
       affiliate_id,
+      is_animation,
+      sortBy
     } = req.query;
 
     if (search) {
@@ -657,6 +658,7 @@ exports.getAllBanner = async (req, res) => {
 
     return response.success(resData, constants.BANNER.FETCHED_ALL, req, res);
   } catch (err) {
+    console.log("err",err)
     return response.failed(null, `${err}`, req, res);
   }
 };
