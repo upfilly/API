@@ -1465,14 +1465,74 @@ module.exports = {
         {
           $addFields: {
             association_status: {
-              $cond: [
-                { $gt: [{ $size: "$associatedAffiliates" }, 0] },
-                { $arrayElemAt: ["$associatedAffiliates.status", 0] },
-                ""
-              ]
+              $switch: {
+                branches: [
+                  // If any accepted exists
+                  {
+                    case: {
+                      $gt: [
+                        {
+                          $size: {
+                            $filter: {
+                              input: "$associatedAffiliates",
+                              as: "assoc",
+                              cond: { $eq: ["$$assoc.status", "accepted"] }
+                            }
+                          }
+                        },
+                        0
+                      ]
+                    },
+                    then: "accepted"
+                  },
+                  // Else if any rejected exists
+                  {
+                    case: {
+                      $gt: [
+                        {
+                          $size: {
+                            $filter: {
+                              input: "$associatedAffiliates",
+                              as: "assoc",
+                              cond: { $eq: ["$$assoc.status", "rejected"] }
+                            }
+                          }
+                        },
+                        0
+                      ]
+                    },
+                    then: "rejected"
+                  },
+                  // Else if all are pending
+                  {
+                    case: {
+                      $and: [
+                        { $gt: [{ $size: "$associatedAffiliates" }, 0] }, // at least 1
+                        {
+                          $eq: [
+                            {
+                              $size: {
+                                $filter: {
+                                  input: "$associatedAffiliates",
+                                  as: "assoc",
+                                  cond: { $eq: ["$$assoc.status", "pending"] }
+                                }
+                              }
+                            },
+                            { $size: "$associatedAffiliates" } // all are pending
+                          ]
+                        }
+                      ]
+                    },
+                    then: "pending"
+                  }
+                ],
+                default: "" // if no data
+              }
             }
           }
         }
+
 
         // {
         //   $addFields: {
@@ -1558,7 +1618,7 @@ module.exports = {
           sub_child_category_id: "$sub_child_category_id",
           propertyType: "$propertyType",
           timezone: "$timezone",
-          association_status  : "$association_status"
+          association_status: "$association_status"
           // finalStatus:"$finalStatus"
         },
       };
@@ -1847,6 +1907,7 @@ module.exports = {
       if (request_status) {
         query.request_status = request_status;
       }
+      console.log(req.identity.id, '=====dfd')
       let pipeline = [
         {
           $lookup: {
