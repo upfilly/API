@@ -1374,53 +1374,40 @@ module.exports = {
             as: "subChildCategoryDetails",
           },
         },
-        {
-          $lookup: {
-            from: "affiliateinvite",
-            let: {
-              affiliate_id: "$_id",
-              isDeleted: false,
-              addedBy: new ObjectId(req.identity.id),
-              brand_id: new ObjectId(req.identity.id),
-            },
-            // let: { user_id: "$req.identity.id", fav_user_id: new ObjectId("64d076e86ecebee01af09d8c") },
-            pipeline: [
-              {
-                $match: {
-                  $expr: {
-                    $and: [
-                      { $eq: ["$addedBy", "$$addedBy"] },
-                      { $eq: ["$isDeleted", "$$isDeleted"] },
-                      { $eq: ["$affiliate_id", "$$affiliate_id"] },
-                      { $eq: ["$brand_id", "$$brand_id"] },
-                    ],
-                  },
-                },
-              },
-            ],
-            as: "invite_affiliate_details",
-          },
-        },
-        {
-          $unwind: {
-            path: "$invite_affiliate_details",
-            preserveNullAndEmptyArrays: true,
-          },
-        },
-        {
-          $lookup: {
-            from: "campaign",
-            localField: "invite_affiliate_details.campaign_id",
-            foreignField: "_id",
-            as: "campaign_details",
-          },
-        },
-        {
-          $unwind: {
-            path: "$campaign_details",
-            preserveNullAndEmptyArrays: true,
-          },
-        },
+        // {
+        //   $lookup: {
+        //     from: "affiliateinvite",
+        //     let: {
+        //       affiliate_id: "$_id",
+        //       isDeleted: false,
+        //       addedBy: new ObjectId(req.identity.id),
+        //       brand_id: new ObjectId(req.identity.id),
+        //     },
+        //     // let: { user_id: "$req.identity.id", fav_user_id: new ObjectId("64d076e86ecebee01af09d8c") },
+        //     pipeline: [
+        //       {
+        //         $match: {
+        //           $expr: {
+        //             $and: [
+        //               { $eq: ["$addedBy", "$$addedBy"] },
+        //               { $eq: ["$isDeleted", "$$isDeleted"] },
+        //               { $eq: ["$affiliate_id", "$$affiliate_id"] },
+        //               { $eq: ["$brand_id", "$$brand_id"] },
+        //             ],
+        //           },
+        //         },
+        //       },
+        //     ],
+        //     as: "invite_affiliate_details",
+        //   },
+        // },
+        // {
+        //   $unwind: {
+        //     path: "$invite_affiliate_details",
+        //     preserveNullAndEmptyArrays: true,
+        //   },
+        // },
+       
         {
           $lookup: {
             from: "brandaffiliateassociation",
@@ -1441,7 +1428,7 @@ module.exports = {
                 },
               },
               {
-                $project: { _id: 0, status: 1 }
+                $project: { _id: 0, status: 1,campaign_id:1 }
               }
             ],
             as: "associatedAffiliates",
@@ -1516,9 +1503,23 @@ module.exports = {
               }
             }
           }
-        }
+        },
+         {
+          $lookup: {
+            from: "campaign",
+            localField: "associatedAffiliates.campaign_id",
+            foreignField: "_id",
+            as: "campaign_details",
+          },
+        },
+        {
+          $unwind: {
+            path: "$campaign_details",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
       ];
-      console.log(query, 'query')
+      
       let projection = {
         $project: {
           id: "$_id",
