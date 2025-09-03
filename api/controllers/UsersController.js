@@ -1374,21 +1374,6 @@ module.exports = {
             as: "subChildCategoryDetails",
           },
         },
-
-        // {
-        //   $lookup: {
-        //     from: "commoncategories",
-        //     localField: "category_id",
-        //     foreignField: "_id",
-        //     as: "categories_details",
-        //   },
-        // },
-        // {
-        //   $unwind: {
-        //     path: "$categories_details",
-        //     preserveNullAndEmptyArrays: true,
-        //   },
-        // },
         {
           $lookup: {
             from: "affiliateinvite",
@@ -1532,41 +1517,6 @@ module.exports = {
             }
           }
         }
-
-
-        // {
-        //   $addFields: {
-        //     associatedAffiliatesStatus: {
-        //       $cond: [
-        //         { $gt: [{ $size: "$associatedAffiliates" }, 0] },
-        //         { $arrayElemAt: ["$associatedAffiliates.status", 0] },
-        //         "$$REMOVE"   // <-- removes the field entirely if no match
-        //       ],
-        //     },
-        //   },
-        // }
-
-
-        //   ...(campaign && invite_status != "not_invited"
-        //     ? [
-        //       {
-        //         $match: {
-        //           $expr: {
-        //             $in: [
-        //               "$_id",
-        //               {
-        //                 $map: {
-        //                   input: "$associatedAffiliates",
-        //                   as: "assoc",
-        //                   in: "$$assoc.affiliate_id",
-        //                 },
-        //               },
-        //             ],
-        //           },
-        //         },
-        //       },
-        //     ]
-        //     : []),
       ];
       console.log(query, 'query')
       let projection = {
@@ -1618,8 +1568,8 @@ module.exports = {
           sub_child_category_id: "$sub_child_category_id",
           propertyType: "$propertyType",
           timezone: "$timezone",
-          association_status: "$association_status"
-          // finalStatus:"$finalStatus"
+          association_status: "$association_status",
+          affiliates_active_count: 1,
         },
       };
       pipeline.push(projection);
