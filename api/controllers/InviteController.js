@@ -205,35 +205,68 @@ exports.getAllInvite = async (req, res) => {
 
 exports.getAllAffiliateListing = async (req, res) => {
   try {
-    let brand_id = req.param('brand_id');
-    // let affiliates = await BrandAffiliateAssociation.find({isActive: true, brand_id: brand_id, isDeleted: false}).populate('affiliate_id');
+    const brandIdStr = req.param("brand_id");
+    const brandIdObj = new ObjectId(brandIdStr);
 
-    // let ListOfAffiliates = affiliates;
-    // ListOfAffiliates = ListOfAffiliates.filter((c)=> c.affiliate_id && !c.affiliate_id.isDeleted).map((c) => c.affiliate_id);
-       const cookies = await Cookies.find({ brand_id: brand_id });
-    const affiliateLinks = await AffiliateLink.find(
-      { brand_id: brand_id }
-    );
-
-    const affiliateIds = [
-      ...new Set(
-        [
-          ...cookies.map((c) => c.affiliate_id),
-          ...affiliateLinks.map((a) => a.affiliate_id),
-        ].filter((id) => id != null)
-      ),
+    const pipeline = [
+      {
+        $match: {
+          role: "affiliate",
+          isDeleted: false,
+        },
+      },
+      {
+        $lookup: {
+          from: "brandaffiliateassociation",
+          let: { affiliate_id: "$_id", brand_id: brandIdObj },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$affiliate_id", "$$affiliate_id"] },
+                    { $eq: ["$brand_id", "$$brand_id"] },
+                    { $eq: ["$isDeleted", false] },
+                    { $eq: ["$status", "accepted"] }, // ✅ only accepted
+                  ],
+                },
+              },
+            },
+            { $project: { _id: 0, status: 1 } },
+          ],
+          as: "associatedAffiliates",
+        },
+      },
+      {
+        $match: {
+          "associatedAffiliates.0": { $exists: true }, // ✅ only keep affiliates that matched
+        },
+      },
+      {
+        $group: {
+          _id: "$_id", // ✅ unique affiliates
+          firstName: { $first: "$firstName" },
+          lastName: { $first: "$lastName" },
+          email: { $first: "$email" },
+          status: { $first: "$status" },
+        },
+      },
     ];
 
-    affiliates_active_count = await Users.find({
-      id: affiliateIds,
-      status: "active",
-    });
+    const affiliates = await db.collection("users").aggregate(pipeline).toArray();
 
-    return response.success(affiliates_active_count, "List of all affiliates fetched successfully", req, res);
+    return response.success(
+      affiliates,
+      "Accepted affiliates fetched successfully",
+      req,
+      res
+    );
   } catch (error) {
+    console.log(error);
     return response.failed(null, `${error}`, req, res);
   }
 };
+
 
 exports.getAllAssociatedBrandListing = async (req, res) => {
   try {
@@ -281,7 +314,7 @@ exports.getAllAssociatedBrandListing = async (req, res) => {
 
     return response.success(ListOfbrands, "List of all brands fetched successfully", req, res);
   } catch (error) {
-    console.log(error,'===error')
+    console.log(error, '===error')
     return response.failed(null, `${error}`, req, res);
   }
 };

@@ -925,231 +925,24 @@ exports.getUserEmailTemplate = async (req, res) => {
 // };
 
 exports.affiliateCount = async (req, res) => {
-  // console.log("alpha")
-  // try {
-  //   const brandId = req.identity.id;
-
-  //   // Count accepted associations
-  //   const totalJoined = await BrandAffiliateAssociation.count({
-  //     brand_id: brandId,
-  //     status: "accepted",
-  //   });
-
-  //   // Get only needed associations with affiliate populated
-  //   // const acceptedAffiliates = await BrandAffiliateAssociation.find({
-  //   //   brand_id: brandId,
-  //   //   status: "accepted",
-  //   //   isActive: true,
-  //   //   isDeleted: false,
-  //   // }).populate("affiliate_id");
-
-  //   // // Count active affiliates
-  //   // const totalActive = acceptedAffiliates.filter(
-  //   //   item => item.affiliate_id && item.affiliate_id.status === "active"
-  //   // ).length;
-
-  //   /**
-  //         * @active affiliates
-  //         */
-  //   let totalActive = await db
-  //     .collection("brandaffiliateassociation")
-  //     .aggregate([
-  //       {
-  //         $match: {
-  //           status: "accepted",
-  //           isDeleted: false,
-  //           brand_id: new ObjectId(req.param("brand_id")),
-  //           source: "campaign"
-  //         }
-  //       },
-  //       {
-  //         $group: {
-  //           _id: "$affiliate_id", // group by affiliate_id
-  //           doc: { $first: "$$ROOT" }
-  //         }
-  //       },
-  //       {
-  //         $replaceRoot: { newRoot: "$doc" }
-  //       },
-  //       {
-  //         $lookup: {
-  //           from: "users", // make sure this is the correct collection name
-  //           localField: "affiliate_id",
-  //           foreignField: "_id",
-  //           as: "affiliateDetails"
-  //         }
-  //       },
-  //       {
-  //         $unwind: "$affiliateDetails"
-  //       },
-  //       {
-  //         $match: {
-  //           "affiliateDetails.status": "active"
-  //         }
-  //       }
-  //     ])
-  //     .toArray(); 
-  //  console.log(brandId, 'brandId`')
-  //     totalActive = totalActive.length
-  //   // const affiliates_active_count = activeAffiliates.length
-
-  //   return response.success({
-  //     totalJoined,
-  //     totalActive,
-  //   }, "Affiliate count fetched successfully", req, res);
-
-  // }
-  //  catch (error) {
-  //   console.error(error,'====')
-  //   return response.failed(null, `${error}`, req, res);
-
-
-
-
-
-
-
-
-
-
-
-
-  //old code not show 
-  // try {
-  //   const brandId = req.identity.id;
-  //   const { before, after } = req.query;
-
-  //   // Build the date filter if any
-  //   // const dateFilter = {};
-  //   // if (before) dateFilter["$lte"] = new Date(before);
-  //   // if (after) dateFilter["$gte"] = new Date(after);
-
-  //   // // Helper function to conditionally attach date filter
-  //   // const withDate = (baseQuery, dateField = "createdAt") => {
-  //   //   if (Object.keys(dateFilter).length > 0) {
-  //   //     baseQuery[dateField] = dateFilter;
-  //   //   }
-  //   //   return baseQuery;
-  //   // };
-
-  //   const dateFilter = {};
-  //   if (before) dateFilter["<="] = new Date(before);
-  //   if (after) dateFilter[">="] = new Date(after);
-
-  //   const withDate = (baseQuery, dateField = "createdAt") => {
-  //     if (Object.keys(dateFilter).length > 0) {
-  //       baseQuery[dateField] = dateFilter;
-  //     }
-  //     return baseQuery;
-  //   };
-
-  //   // Apply date filter to Campaign count
-  //   const get_total_campaigns = await Campaign.count(
-  //     withDate({ isDeleted: false })
-  //   );
-
-  //   let get_my_total_campaigns = 0;
-  //   let associated_affiliates_count = 0;
-  //   let affiliates_active_count = 0;
-
-  //   if (brandId) {
-  //     // My total campaigns (with date filter)
-  //     get_my_total_campaigns = await Campaign.count(
-  //       withDate({ isDeleted: false, brand_id: brandId, isArchive: false })
-  //     );
-
-  //     // Associated affiliates (invited)
-  //     associated_affiliates_count = await BrandAffiliateAssociation.count(
-  //       withDate({
-  //         status: "accepted",
-  //         isDeleted: false,
-  //         brand_id: brandId,
-  //         // source: "invite"
-  //       })
-  //     );
-
-  //     // Active affiliates (via campaign)
-  //     // const activeAffiliates = await db
-  //     //   .collection("brandaffiliateassociation")
-  //     //   .aggregate([
-  //     //     {
-  //     //       $match: withDate({
-  //     //         status: "accepted",
-  //     //         isDeleted: false,
-  //     //         brand_id: new ObjectId(brandId),
-  //     //         source: "campaign"
-  //     //       })
-  //     //     },
-  //     //     {
-  //     //       $group: {
-  //     //         _id: "$affiliate_id",
-  //     //         doc: { $first: "$$ROOT" }
-  //     //       }
-  //     //     },
-  //     //     { $replaceRoot: { newRoot: "$doc" } },
-  //     //     {
-  //     //       $lookup: {
-  //     //         from: "users",
-  //     //         localField: "affiliate_id",
-  //     //         foreignField: "_id",
-  //     //         as: "affiliateDetails"
-  //     //       }
-  //     //     },
-  //     //     { $unwind: "$affiliateDetails" },
-  //     //     {
-  //     //       $match: {
-  //     //         "affiliateDetails.status": "active"
-  //     //       }
-  //     //     }
-  //     //   ])
-  //     //   .toArray();
-  //     // const affiliateIds = await Cookies.find({ brandId: new ObjectId(brandId) });
-  //     // const affiliates_active_count = affiliateIds.length;
-
-  //     affiliates_active_count = await Cookies.find({ brand_id: brandId });
-  //     let affiliatLinkCount = await AffiliateLink.find({ brand_id: brandId });
-  //     if (affiliatLinkCount.length > 0) {
-  //       affiliates_active_count = [
-  //         ...affiliates_active_count,
-  //         ...affiliatLinkCount,
-  //       ];
-  //     }
-  //     affiliates_active_count = [
-  //       ...new Set(
-  //         affiliates_active_count
-  //           .map((cookie) => cookie.affiliate_id)
-  //           .filter((id) => id != null)
-  //       ),
-  //     ];
-  //   }
-
-  //   return res.status(200).json({
-  //     sucess: true,
-  //     totalCampaigns: get_total_campaigns || 0,
-  //     myTotalCampaigns: get_my_total_campaigns || 0,
-  //     totalJoined: associated_affiliates_count || 0,
-  //     totalActive: affiliates_active_count.length || 0,
-  //   });
-  // } catch (error) {
-  //   console.log("erro",error)
-  //   return response.failed(null, `${error}`, req, res);
-  // }
   try {
     const brandId = req.identity.id;
     const { before, after } = req.query;
 
-    const withDateFilter = (baseQuery, dateField = 'createdAt') => {
+    // Helper for date filters
+    const withDateFilter = (baseQuery, dateField = "createdAt") => {
       const query = { ...baseQuery };
       if (before && after) {
-        query[dateField] = { '>=': new Date(after), '<=': new Date(before) };
+        query[dateField] = { ">=": new Date(after), "<=": new Date(before) };
       } else if (before) {
-        query[dateField] = { '<=': new Date(before) };
+        query[dateField] = { "<=": new Date(before) };
       } else if (after) {
-        query[dateField] = { '>=': new Date(after) };
+        query[dateField] = { ">=": new Date(after) };
       }
       return query;
     };
 
+    // Total campaigns (all brands)
     const get_total_campaigns = await Campaign.count(
       withDateFilter({ isDeleted: false })
     );
@@ -1159,10 +952,12 @@ exports.affiliateCount = async (req, res) => {
     let affiliates_active_count = 0;
 
     if (brandId) {
+      // Campaigns of this brand
       get_my_total_campaigns = await Campaign.count(
         withDateFilter({ isDeleted: false, brand_id: brandId, isArchive: false })
       );
 
+      // Accepted affiliates for this brand
       const records = await BrandAffiliateAssociation.find(
         withDateFilter({
           status: "accepted",
@@ -1171,9 +966,9 @@ exports.affiliateCount = async (req, res) => {
         })
       );
 
-      const uniqueAffiliates = _.uniq(records.map(r => r.affiliate_id));
-      associated_affiliates_count = uniqueAffiliates.length;
+      const uniqueAffiliates = _.uniq(records.map((r) => r.affiliate_id));
 
+      // Find affiliates who interacted (cookies + links)
       const cookies = await Cookies.find(withDateFilter({ brand_id: brandId }));
       const affiliateLinks = await AffiliateLink.find(
         withDateFilter({ brand_id: brandId })
@@ -1188,12 +983,24 @@ exports.affiliateCount = async (req, res) => {
         ),
       ];
 
-      affiliates_active_count = await Users.count({
+      // Get active affiliates from Users
+      const activeAffiliates = await Users.find({
         id: affiliateIds,
         status: "active",
-      });
+      }).select(["id"]);
+
+      const activeAffiliateIds = activeAffiliates.map((a) => a.id);
+
+      // ✅ Joined affiliates = accepted affiliates excluding actives
+      const joinedAffiliates = uniqueAffiliates.filter(
+        (id) => !activeAffiliateIds.includes(id)
+      );
+
+      associated_affiliates_count = joinedAffiliates.length;
+      affiliates_active_count = activeAffiliateIds.length;
     }
 
+    // Final response
     return res.status(200).json({
       success: true,
       totalCampaigns: get_total_campaigns || 0,
@@ -1205,5 +1012,5 @@ exports.affiliateCount = async (req, res) => {
     console.log("error", error);
     return response.failed(null, `${error}`, req, res);
   }
-
 };
+
