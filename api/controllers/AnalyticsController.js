@@ -130,7 +130,6 @@ exports.salesAnalytics = async (req, res) => {
         let page = req.param('page') || 1;
         let skipNo = (Number(page) - 1) * Number(count);
         let { search, sortBy, status, isDeleted, format, brand_id, affiliate_id, campaignId, startDate, endDate } = req.query;
-        let sortquery = {};
 
         // Handle search
         if (search) {
@@ -150,13 +149,22 @@ exports.salesAnalytics = async (req, res) => {
         }
 
         // Handle sorting
-        if (sortBy) {
-            let typeArr = sortBy.split(" ");
-            let sortType = typeArr[1];
-            let field = typeArr[0];
-            sortquery[field ? field : 'createdAt'] = sortType === 'desc' ? -1 : 1;
+        // if (sortBy) {
+        //     let typeArr = sortBy.split(" ");
+        //     let sortType = typeArr[1];
+        //     let field = typeArr[0];
+        //     sortquery[field ? field : 'createdAt'] = sortType === 'desc' ? -1 : 1;
+        // } else {
+        //     sortquery = { createdAt: -1 };
+        // }
+         let sortquery = {};
+        if (sortBy && typeof sortBy === 'string') {
+            const [rawField, rawOrder] = sortBy.trim().split(/\s+/);
+            const field = rawField || 'createdAt';
+            const sortType = rawOrder?.toLowerCase() === 'asc' ? 1 : -1;
+            sortquery[field] = sortType;
         } else {
-            sortquery = { createdAt: -1 };
+            sortquery = { updatedAt: -1 };
         }
 
         // Handle status
