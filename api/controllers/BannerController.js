@@ -480,12 +480,14 @@ exports.getAllBanner = async (req, res) => {
     if (affiliate_id) query.affiliate_id = affiliate_id;
 
     let sortquery = {};
-    if (sortBy) {
-      let [field, order] = sortBy.split(" ");
-      sortquery[field || "createdAt"] = order === "desc" ? -1 : 1;
-    } else {
-      sortquery = { updatedAt: -1 };
-    }
+        if (sortBy && typeof sortBy === 'string') {
+            const [rawField, rawOrder] = sortBy.trim().split(/\s+/);
+            const field = rawField || 'createdAt';
+            const sortType = rawOrder?.toLowerCase() === 'asc' ? 1 : -1;
+            sortquery[field] = sortType;
+        } else {
+            sortquery = { updatedAt: -1 };
+        }
 
     if (category_id) {
       category_id = await Services.Utils.string_ids_toObjectIds_array(category_id);
