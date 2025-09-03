@@ -1407,7 +1407,7 @@ module.exports = {
         //     preserveNullAndEmptyArrays: true,
         //   },
         // },
-       
+
         {
           $lookup: {
             from: "brandaffiliateassociation",
@@ -1504,20 +1504,20 @@ module.exports = {
             }
           }
         },
-         {
-          $lookup: {
-            from: "campaign",
-            localField: "associatedAffiliates.campaign_id",
-            foreignField: "_id",
-            as: "campaign_details",
-          },
-        },
-        {
-          $unwind: {
-            path: "$campaign_details",
-            preserveNullAndEmptyArrays: true,
-          },
-        },
+        //   {
+        //   $lookup: {
+        //     from: "campaign",
+        //     localField: "associatedAffiliates.campaign_id",
+        //     foreignField: "_id",
+        //     as: "campaign_details",
+        //   },
+        // },
+        // {
+        //   $unwind: {
+        //     path: "$campaign_details",
+        //     preserveNullAndEmptyArrays: true,
+        //   },
+        // },
       ];
       
       let projection = {
