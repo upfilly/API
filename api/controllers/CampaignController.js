@@ -83,10 +83,11 @@ exports.addCampaign = async (req, res) => {
         if (!get_brand) {
             return response.failed(null, constants.CAMPAIGN.INVALID_BRAND_ID, req, res);
         }
-        req.body.isDefault = req.body.isDefault === 'true' ? true : false;
+        
         if (req.body.isDefault) {
             //make all other campaigns non-default
             await Campaign.update({ brand_id: brand_id, isDefault: true }).set({ isDefault: false });
+            
         } else {
             let defaultCampaign = await Campaign.findOne({ brand_id: brand_id, isDefault: true, isDeleted: false });
             if (!defaultCampaign) {
