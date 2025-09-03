@@ -205,7 +205,7 @@ exports.getAllInvite = async (req, res) => {
 
 exports.getAllAffiliateListing = async (req, res) => {
   try {
-    const brandIdStr = req.param("brand_id");
+    const brandIdStr = req.param("brand_id") || req.identity.id;
     const brandIdObj = new ObjectId(brandIdStr);
 
     const pipeline = [
