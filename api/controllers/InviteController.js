@@ -62,7 +62,7 @@ exports.addInvite = async (req, res) => {
     }
     throw constants.COMMON.SERVER_ERROR;
   } catch (error) {
-    // console.log(error, "==error");
+    
     return response.failed(null, `${error}`, req, res);
   }
 };
@@ -249,6 +249,7 @@ exports.getAllAffiliateListing = async (req, res) => {
           lastName: { $first: "$lastName" },
           email: { $first: "$email" },
           status: { $first: "$status" },
+          userName: { $first: "$userName" },
         },
       },
     ];
