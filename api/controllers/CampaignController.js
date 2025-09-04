@@ -801,12 +801,19 @@ exports.getAllCampaignsForBrand = async (req, res) => {
             typeArr = sortBy.split(" ");
             let sortType = typeArr[1];
             let field = typeArr[0];
-            if (field === 'event_type') {
-                sortquery['event_type_length'] = sortType ? (sortType == 'desc' ? -1 : 1) : -1;
+            // if (field === 'event_type') {
+            //     sortquery['event_type_length'] = sortType ? (sortType == 'desc' ? -1 : 1) : -1;
+            // } else {
+            //     sortquery[field ? field : 'createdAt'] = sortType ? (sortType == 'desc' ? -1 : 1) : -1;
+            // }
+            // sortquery[field ? field : 'createdAt'] = sortType ? (sortType == 'desc' ? -1 : 1) : -1;
+
+            if (field === "event_type") {
+              sortquery["event_type_length"] = sortType === "desc" ? -1 : 1;
             } else {
-                sortquery[field ? field : 'createdAt'] = sortType ? (sortType == 'desc' ? -1 : 1) : -1;
+              sortquery[field || "createdAt"] = sortType === "desc" ? -1 : 1;
             }
-            sortquery[field ? field : 'createdAt'] = sortType ? (sortType == 'desc' ? -1 : 1) : -1;
+
         } else {
             sortquery = { updatedAt: -1 }
         }

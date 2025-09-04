@@ -113,9 +113,11 @@ exports.addBanner = async (req, res) => {
       isDeleted: false,
     };
 
-    let listOfAcceptedInvites = await AffiliateInvite.find(query1);
+    // let listOfAcceptedInvites = await AffiliateInvite.find(query1);
 
-    let listOfBrandInvite = await AffiliateBrandInvite.find(query2);
+    // let listOfBrandInvite = await AffiliateBrandInvite.find(query2);
+    let listOfBrandInvite = await BrandAffiliateAssociation.find(query2);
+
 
     function removeDuplicates(array, key) {
       const seen = new Set();
@@ -129,7 +131,8 @@ exports.addBanner = async (req, res) => {
       });
     }
 
-    let combinedList = [...listOfBrandInvite, ...listOfAcceptedInvites];
+    // let combinedList = [...listOfBrandInvite, ...listOfAcceptedInvites];
+    let combinedList = [...listOfBrandInvite];
 
     listOfAcceptedInvites = removeDuplicates(combinedList, "affiliate_id");
 
@@ -443,6 +446,7 @@ exports.editBanner = async (req, res) => {
 };
 
 exports.getAllBanner = async (req, res) => {
+  console.log("alpha")
   try {
     let query = {};
     let count = req.param("count") || 10;
@@ -462,7 +466,8 @@ exports.getAllBanner = async (req, res) => {
       subCategory,
       affiliate_id,
       is_animation,
-      sortBy
+      sortBy,
+      affiliate_banner_id
     } = req.query;
 
     if (search) {
@@ -478,6 +483,17 @@ exports.getAllBanner = async (req, res) => {
     if (is_deep_linking !== undefined) query.is_deep_linking = is_deep_linking === "true";
     if (mobile_creative !== undefined) query.mobile_creative = mobile_creative === "true";
     if (addedBy) query.addedBy = new ObjectId(addedBy);
+
+   if (affiliate_banner_id) {
+     if (typeof affiliate_banner_id === "string") {
+     }
+     affiliate_banner_id = await Services.Utils.string_ids_toObjectIds_array(
+       affiliate_banner_id
+     );
+     query.affiliate_banner_id = { $in: affiliate_banner_id };
+   }
+
+
     if (affiliate_id) query.affiliate_id = affiliate_id;
 
     let sortquery = {};
@@ -590,6 +606,20 @@ exports.getAllBanner = async (req, res) => {
           },
         },
       },
+       {
+        $lookup: {
+          from: "affiliatebanners",
+          localField: "_id",
+          foreignField: "banner_id",
+          as: "AffiliateBanners_details",
+        },
+      },
+      // {
+      //   $unwind: {
+      //     path: "$AffiliateBanners_details",
+      //     preserveNullAndEmptyArrays: true,
+      //   },
+      // },
       {
         $project: {
           id: "$_id",
@@ -624,7 +654,10 @@ exports.getAllBanner = async (req, res) => {
             email: "$affiliate_details.email",
             isDeleted: "$affiliate_details.isDeleted",
           },
-          expiration_date:"$expiration_date"
+          expiration_date:"$expiration_date",
+          expireCheck:"$expireCheck",
+          affiliate_banner_details:"$AffiliateBanners_details",
+          affiliate_banner_id : "$AffiliateBanners_details.affiliate_id"
         },
       },
       {

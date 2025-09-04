@@ -110,6 +110,7 @@ exports.sendCampaignRequestToBrand = async (req, res) => {
 };
 
 exports.getAllRequestsForBrand = async (req, res) => {
+    console.log("alpha")
     try {
         let query = {};
         let count = req.param('count') || 10;
@@ -150,17 +151,6 @@ exports.getAllRequestsForBrand = async (req, res) => {
             query.campaign_id = new ObjectId(product_id);
         }
 
-        // let sortquery = {};
-        // if (sortBy) {
-        //     let typeArr = [];
-        //     typeArr = sortBy.split(" ");
-        //     let sortType = typeArr[1];
-        //     let field = typeArr[0];
-        //     sortquery[field ? field : 'createdAt'] = sortType ? (sortType == 'desc' ? -1 : 1) : -1;
-        // } else {
-        //     sortquery = { updatedAt: -1 }
-        // }
-
          let sortquery = {};
         if (sortBy && typeof sortBy === 'string') {
             const [rawField, rawOrder] = sortBy.trim().split(/\s+/);
@@ -170,7 +160,6 @@ exports.getAllRequestsForBrand = async (req, res) => {
         } else {
             sortquery = { updatedAt: -1 };
         }
-
 
         // Pipeline Stages
         let pipeline = [
@@ -229,7 +218,7 @@ exports.getAllRequestsForBrand = async (req, res) => {
                 affiliate_name: "$affiliate_details.fullName",
                 campaign_details: "$campaign_details",
                 brand_id: "$brand_id",
-                campaign_name: "$campaign_details.name",
+                campaign_name: {$toLower:"$campaign_details.name"},
                 association:"$association",
                 reason : "$reason",
                 status: "$status",
