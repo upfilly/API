@@ -443,7 +443,6 @@ exports.getAllCoupon = async (req, res) => {
       selectedCoupon,
       expireCheck,
     } = req.query;
-    let sortquery = {};
 
     if (search) {
       search = Services.Utils.remove_special_char_exept_underscores(search);
@@ -467,18 +466,15 @@ exports.getAllCoupon = async (req, res) => {
         : false;
     }
 
-    if (sortBy) {
-      let typeArr = [];
-      typeArr = sortBy.split(" ");
-      let sortType = typeArr[1];
-      let field = typeArr[0];
-      sortquery[field ? field : "createdAt"] = sortType
-        ? sortType == "desc"
-          ? -1
-          : 1
-        : -1;
+  
+    let sortquery = {};
+    if (sortBy && typeof sortBy === "string") {
+      const [rawField, rawOrder] = sortBy.trim().split(/\s+/);
+      const field = rawField || "createdAt";
+      const sortType = rawOrder?.toLowerCase() === "asc" ? 1 : -1;
+      sortquery[field] = sortType;
     } else {
-      sortquery = { createdAt: -1 };
+      sortquery = { updatedAt: -1 };
     }
 
     if (status) {
@@ -521,30 +517,30 @@ exports.getAllCoupon = async (req, res) => {
     //   query.$or = [{ visibility: "Public" }, { media: { $in: mediaArray } }];
     // }
 
-  if (visibility || media) {
-    let mediaArray = [];
+    if (visibility || media) {
+      let mediaArray = [];
 
-    if (typeof media === "string") {
-      mediaArray = media
-        .split(",")
-        .map((id) => id.trim())
-        .filter((id) => ObjectId.isValid(id))
-        .map((id) => new ObjectId(id));
-    } else if (Array.isArray(media)) {
-      mediaArray = media
-        .filter((id) => ObjectId.isValid(id))
-        .map((id) => new ObjectId(id));
-    }
+      if (typeof media === "string") {
+        mediaArray = media
+          .split(",")
+          .map((id) => id.trim())
+          .filter((id) => ObjectId.isValid(id))
+          .map((id) => new ObjectId(id));
+      } else if (Array.isArray(media)) {
+        mediaArray = media
+          .filter((id) => ObjectId.isValid(id))
+          .map((id) => new ObjectId(id));
+      }
 
-    if (mediaArray.length > 0) {
-      query.$or = [
-        { visibility: "Public" },
-        { media: { $in: mediaArray.map((id) => id.toString()) } }, // since media is saved as string IDs
-      ];
-    } else {
-      query.visibility = "Public"; // default if media is invalid
+      if (mediaArray.length > 0) {
+        query.$or = [
+          { visibility: "Public" },
+          { media: { $in: mediaArray.map((id) => id.toString()) } }, // since media is saved as string IDs
+        ];
+      } else {
+        query.visibility = "Public"; // default if media is invalid
+      }
     }
-  }
 
     // console.log(sortquery, "-----------------sortquery");
     let pipeline = [

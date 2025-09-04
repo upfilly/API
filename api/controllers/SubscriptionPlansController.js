@@ -152,7 +152,6 @@ exports.getAllSubscriptionPlans = async (req, res) => {
         let page = req.param('page') || 1;
         let skipNo = (Number(page) - 1) * Number(count);
         let { search, sortBy, status, isDeleted, plan_type, userId, category } = req.query;
-        let sortquery = {};
 
         if (search) {
             search = Services.Utils.remove_special_char_exept_underscores(search);
@@ -171,15 +170,24 @@ exports.getAllSubscriptionPlans = async (req, res) => {
             query.isDeleted = false;
         }
 
-        if (sortBy) {
-            let typeArr = [];
-            typeArr = sortBy.split(" ");
-            let sortType = typeArr[1];
-            let field = typeArr[0];
-            sortquery[field ? field : 'createdAt'] = sortType ? (sortType == 'desc' ? -1 : 1) : -1;
-        } else {
-            sortquery = { createdAt: -1 }
-        }
+        // if (sortBy) {
+        //     let typeArr = [];
+        //     typeArr = sortBy.split(" ");
+        //     let sortType = typeArr[1];
+        //     let field = typeArr[0];
+        //     sortquery[field ? field : 'createdAt'] = sortType ? (sortType == 'desc' ? -1 : 1) : -1;
+        // } else {
+        //     sortquery = { createdAt: -1 }
+        // }
+         let sortquery = {};
+          if (sortBy && typeof sortBy === "string") {
+            const [rawField, rawOrder] = sortBy.trim().split(/\s+/);
+            const field = rawField || "createdAt";
+            const sortType = rawOrder?.toLowerCase() === "asc" ? 1 : -1;
+            sortquery[field] = sortType;
+          } else {
+            sortquery = { updatedAt: -1 };
+          }
 
         if (status) {
             query.status = status;

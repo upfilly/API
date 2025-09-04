@@ -258,19 +258,19 @@ module.exports = {
       }
       query.isDeleted = false;
 
-      var sortquery = {};
-      if (sortBy) {
-        var order = sortBy.split(" ");
-        var field = order[0];
-        var sortType = order[1];
-      }
-
+       
+    let sortquery = {};
+  if (sortBy && typeof sortBy === "string") {
+    const [rawField, rawOrder] = sortBy.trim().split(/\s+/);
+    const field = rawField || "createdAt";
+    const sortType = rawOrder?.toLowerCase() === "asc" ? 1 : -1;
+    sortquery[field] = sortType;
+  } else {
+    sortquery = { updatedAt: -1 };
+  }
       let skip = (Number(page) - 1) * Number(count);
-      sortquery[field ? field : "createdAt"] = sortType
-        ? sortType == "desc"
-          ? -1
-          : 1
-        : -1;
+
+
       if (status) {
         query.status = status;
       }

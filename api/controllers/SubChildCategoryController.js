@@ -119,16 +119,15 @@ exports.getAllSubChildCommonCategory = async (req, res) => {
         }
 
         let sortquery = {};
-        if (sortBy) {
-            let typeArr = [];
-            typeArr = sortBy.split(" ");
-            let sortType = typeArr[1];
-            let field = typeArr[0];
-            sortquery[field ? field : 'createdAt'] = sortType ? (sortType == 'desc' ? -1 : 1) : -1;
-        } else {
-            sortquery = { updatedAt: -1 }
-        }
-
+          if (sortBy && typeof sortBy === "string") {
+            const [rawField, rawOrder] = sortBy.trim().split(/\s+/);
+            const field = rawField || "createdAt";
+            const sortType = rawOrder?.toLowerCase() === "asc" ? 1 : -1;
+            sortquery[field] = sortType;
+          } else {
+            sortquery = { updatedAt: -1 };
+          }
+          
         if (category_id) { query.category_id = new ObjectId(category_id); }
         if (sub_category_id) { query.sub_category_id = new ObjectId(sub_category_id); }
 

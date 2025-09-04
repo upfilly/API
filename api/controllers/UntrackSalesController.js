@@ -185,131 +185,144 @@ module.exports = {
 
     getallSalesDetails: async (req, res) => {
         try {
+          let { search, sortBy, status, addedBy, brand_id } = req.query;
+          let page = req.param("page") || 1;
+          let count = req.param("count") || 10;
 
-            let { search, sortBy, status, addedBy, brand_id } = req.query;
-            let page = req.param('page') || 1;
-            let count = req.param('count') || 10;
+          var query = {};
+          if (search) {
+            search =
+              Services.Utils.remove_special_char_exept_underscores(search);
+            query.$or = [{ brand_fullName: { $regex: search, $options: "i" } }];
+          }
+          query.isDeleted = false;
 
-            var query = {}
-            if (search) {
-                search = Services.Utils.remove_special_char_exept_underscores(search);
-                query.$or = [{ brand_fullName: { $regex: search, '$options': 'i' } }];
-            }
-            query.isDeleted = false;
+          // var sortquery = {};
+          // if (sortBy) {
+          //     var order = sortBy.split(' ');
+          //     var field = order[0];
+          //     var sortType = order[1];
+          // }
 
-            var sortquery = {};
-            if (sortBy) {
-                var order = sortBy.split(' ');
-                var field = order[0];
-                var sortType = order[1];
-            }
+          // sortquery[field ? field : 'createdAt'] = sortType
+          //     ? sortType == 'desc'
+          //         ? -1
+          //         : 1
+          //     : -1;
+          let sortquery = {};
+          if (sortBy && typeof sortBy === "string") {
+            const [rawField, rawOrder] = sortBy.trim().split(/\s+/);
+            const field = rawField || "createdAt";
+            const sortType = rawOrder?.toLowerCase() === "asc" ? 1 : -1;
+            sortquery[field] = sortType;
+          } else {
+            sortquery = { updatedAt: -1 };
+          }
+          let skip = (Number(page) - 1) * Number(count);
 
-            let skip = (Number(page) - 1) * Number(count);
-            sortquery[field ? field : 'createdAt'] = sortType
-                ? sortType == 'desc'
-                    ? -1
-                    : 1
-                : -1;
-            if (status) {
-                query.status = status;
-            }
+          if (status) {
+            query.status = status;
+          }
 
-            if (addedBy) {
-                query.addedBy = new ObjectId(addedBy);
-            }
+          if (addedBy) {
+            query.addedBy = new ObjectId(addedBy);
+          }
 
-            if (brand_id) {
-                query.brand_id = new ObjectId(brand_id);
-            }
+          if (brand_id) {
+            query.brand_id = new ObjectId(brand_id);
+          }
 
+          const pipeline = [
+            {
+              $lookup: {
+                from: "users",
+                localField: "addedBy",
+                foreignField: "_id",
+                as: "addedBy_details",
+              },
+            },
+            {
+              $unwind: {
+                path: "$addedBy_details",
+                preserveNullAndEmptyArrays: true,
+              },
+            },
+            {
+              $lookup: {
+                from: "users",
+                localField: "brand_id",
+                foreignField: "_id",
+                as: "brand_details",
+              },
+            },
+            {
+              $unwind: {
+                path: "$brand_details",
+                preserveNullAndEmptyArrays: true,
+              },
+            },
+            {
+              $project: {
+                image: "$image",
+                description: "$description",
+                title: "$title",
+                brand_id: "$brand_id",
+                addedBy: "$addedBy",
+                affiliate_fullName: "$addedBy_details.fullName",
+                affiliate_email: "$addedBy_details.email",
+                brand_fullName: "$brand_details.fullName",
+                updatedBy: "$updatedBy",
+                isDeleted: "$isDeleted",
+                status: "$status",
+                createdAt: "$createdAt",
+                updatedAt: "$updatedAt",
+                type: "$type",
+                click_ref: "$click_ref",
+                order_date: "$order_date",
+                amount: "$amount",
+                commission: "$commission",
+                order_reference: "$order_reference",
+                customer_reference: "$customer_reference",
+                currency: "$currency",
+                timeZone: "$timeZone",
+              },
+            },
+            {
+              $match: query,
+            },
+            {
+              $sort: sortquery,
+            },
+          ];
 
-            const pipeline = [
-                {
-                    $lookup: {
-                        from: "users",
-                        localField: "addedBy",
-                        foreignField: "_id",
-                        as: "addedBy_details"
-                    }
-                },
-                {
-                    $unwind: {
-                        path: '$addedBy_details',
-                        preserveNullAndEmptyArrays: true
-                    }
-                },
-                {
-                    $lookup: {
-                        from: "users",
-                        localField: "brand_id",
-                        foreignField: "_id",
-                        as: "brand_details"
-                    }
-                },
-                {
-                    $unwind: {
-                        path: '$brand_details',
-                        preserveNullAndEmptyArrays: true
-                    }
-                },
-                {
-                    $project: {
-                        image: "$image",
-                        description: "$description",
-                        title: "$title",
-                        brand_id: "$brand_id",
-                        addedBy: "$addedBy",
-                        affiliate_fullName: "$addedBy_details.fullName",
-                        affiliate_email: "$addedBy_details.email",
-                        brand_fullName: "$brand_details.fullName",
-                        updatedBy: "$updatedBy",
-                        isDeleted: '$isDeleted',
-                        status: '$status',
-                        createdAt: '$createdAt',
-                        updatedAt: '$updatedAt',
-                        type: "$type",
-                        click_ref: "$click_ref",
-                        order_date: "$order_date",
-                        amount: "$amount",
-                        commission: "$commission",
-                        order_reference: "$order_reference",
-                        customer_reference: "$customer_reference",
-                        currency: "$currency",
-                        timeZone: "$timeZone"
-                    }
+          let totalResult = await db
+            .collection("untracksales")
+            .aggregate(pipeline)
+            .toArray();
+          pipeline.push({
+            $skip: Number(skip),
+          });
 
-                },
-                {
-                    $match: query,
-                },
-                {
-                    $sort: sortquery,
-                },
-            ];
+          pipeline.push({
+            $limit: Number(count),
+          });
 
-            let totalResult = await db.collection('untracksales').aggregate(pipeline).toArray()
-            pipeline.push({
-                $skip: Number(skip)
-            });
-
-            pipeline.push({
-                $limit: Number(count)
-            });
-
-            let result = await db.collection('untracksales').aggregate(pipeline).toArray()
-            let resData = {
-                total: totalResult ? totalResult.length : 0,
-                data: result ? result : []
-            }
-            if (!req.param('page') && !req.param('count')) {
-                resData.data = totalResult ? totalResult : []
-            }
-            return res.status(200).json({
-                success: true,
-                total: totalResult.length,
-                data: result,
-            });
-
+          let result = await db
+            .collection("untracksales")
+            .aggregate(pipeline)
+            .toArray();
+          let resData = {
+            total: totalResult ? totalResult.length : 0,
+            data: result ? result : [],
+          };
+          if (!req.param("page") && !req.param("count")) {
+            resData.data = totalResult ? totalResult : [];
+          }
+          return res.status(200).json({
+            success: true,
+            total: totalResult.length,
+            data: result,
+          });
         }
         catch (error) {
             return response.failed(null, `${error}`, req, res)

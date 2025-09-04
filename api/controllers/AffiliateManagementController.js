@@ -198,6 +198,7 @@ exports.getAllAffiliateGroup = async (req, res) => {
             query.addedBy = new ObjectId(addedBy)
         }
 
+        
          let sortquery = {};
         if (sortBy && typeof sortBy === 'string') {
             const [rawField, rawOrder] = sortBy.trim().split(/\s+/);

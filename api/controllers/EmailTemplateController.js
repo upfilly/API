@@ -295,7 +295,6 @@ exports.getAll = async (req, res) => {
     let page = req.param('page') || 1;
     let skipNo = (Number(page) - 1) * Number(count);
     let { search, sortBy, status, isDeleted, format, addedBy, startDate, endDate } = req.query;
-    let sortquery = {};
 
     if (startDate && endDate) {
 
@@ -322,13 +321,15 @@ exports.getAll = async (req, res) => {
       query.isDeleted = false;
     }
 
-    if (sortBy) {
-      let typeArr = sortBy.split(" ");
-      let sortType = typeArr[1];
-      let field = typeArr[0];
-      sortquery[field ? field : 'createdAt'] = sortType === 'desc' ? -1 : 1;
+   
+    let sortquery = {};
+    if (sortBy && typeof sortBy === "string") {
+      const [rawField, rawOrder] = sortBy.trim().split(/\s+/);
+      const field = rawField || "createdAt";
+      const sortType = rawOrder?.toLowerCase() === "asc" ? 1 : -1;
+      sortquery[field] = sortType;
     } else {
-      sortquery = { createdAt: -1 };
+      sortquery = { updatedAt: -1 };
     }
 
     if (status) {
@@ -346,7 +347,7 @@ exports.getAll = async (req, res) => {
 
     let projection = {
       $project: {
-        templateName: "$templateName",
+        templateName: {$toLower: "$templateName"},
         emailName: "$emailName",
         purpose: "$purpose",
         audience: "$audience",
@@ -616,7 +617,6 @@ exports.getUserEmailTemplate = async (req, res) => {
       endDate,
     } = req.query;
 
-    let sortquery = {};
 
     if (search) {
       const cleanSearch = await Services.Utils.remove_special_char_exept_underscores(search);
@@ -641,12 +641,17 @@ exports.getUserEmailTemplate = async (req, res) => {
     if (affiliate_id) query.affiliate_id = new ObjectId(affiliate_id);
     query.isDeleted = isDeleted === "true";
 
-    if (sortBy) {
-      const [field, direction] = sortBy.split(" ");
-      sortquery[field || "createdAt"] = direction === "desc" ? -1 : 1;
+
+    let sortquery = {};
+    if (sortBy && typeof sortBy === "string") {
+      const [rawField, rawOrder] = sortBy.trim().split(/\s+/);
+      const field = rawField || "createdAt";
+      const sortType = rawOrder?.toLowerCase() === "asc" ? 1 : -1;
+      sortquery[field] = sortType;
     } else {
-      sortquery = { createdAt: -1 };
+      sortquery = { updatedAt: -1 };
     }
+    
 
     const pipeline = [
       {

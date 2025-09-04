@@ -246,14 +246,24 @@ module.exports = {
         try {
             const { page, count, sortBy, search } = req.body
 
-            const sortquery = {}
+            // const sortquery = {}
 
-            if (sortBy) {
-                const [field, sortType] = sortBy.split(" ");
-                sortquery[field || "createdAt"] = sortType === "desc" ? -1 : 1;
-            } else {
-                sortquery.createdAt = -1;
-            }
+            // if (sortBy) {
+            //     const [field, sortType] = sortBy.split(" ");
+            //     sortquery[field || "createdAt"] = sortType === "desc" ? -1 : 1;
+            // } else {
+            //     sortquery.createdAt = -1;
+            // }
+             let sortquery = {};
+        if (sortBy && typeof sortBy === "string") {
+          const [rawField, rawOrder] = sortBy.trim().split(/\s+/);
+          const field = rawField || "createdAt";
+          const sortType = rawOrder?.toLowerCase() === "asc" ? 1 : -1;
+          sortquery[field] = sortType;
+        } else {
+          sortquery = { updatedAt: -1 };
+        }
+
             const query = {}
 
             if (search) {
