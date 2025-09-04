@@ -1139,17 +1139,13 @@ exports.listOfDataSet = async (req, res) => {
         { doc_name: { $regex: search, $options: "i" } }
       ];
     }
+
     let sortquery = {};
-    if (sortBy) {
-      let typeArr = [];
-      typeArr = sortBy.split(" ");
-      let sortType = typeArr[1];
-      let field = typeArr[0];
-      sortquery[field ? field : "updatedAt"] = sortType
-        ? sortType == "desc"
-          ? -1
-          : 1
-        : -1;
+    if (sortBy && typeof sortBy === "string") {
+      const [rawField, rawOrder] = sortBy.trim().split(/\s+/);
+      const field = rawField || "createdAt";
+      const sortType = rawOrder?.toLowerCase() === "asc" ? 1 : -1;
+      sortquery[field] = sortType;
     } else {
       sortquery = { updatedAt: -1 };
     }
@@ -1793,17 +1789,26 @@ exports.listOfEmailMessage = async (req, res) => {
     if (search) {
       query.$or = [{ event: { $regex: search, $options: "i" } }];
     }
-    let sortquery = {};
-    if (sortBy) {
-      let typeArr = [];
-      typeArr = sortBy.split(" ");
-      let sortType = typeArr[1];
-      let field = typeArr[0];
-      sortquery[field ? field : "updatedAt"] = sortType
-        ? sortType == "desc"
-          ? -1
-          : 1
-        : -1;
+    // let sortquery = {};
+    // if (sortBy) {
+    //   let typeArr = [];
+    //   typeArr = sortBy.split(" ");
+    //   let sortType = typeArr[1];
+    //   let field = typeArr[0];
+    //   sortquery[field ? field : "updatedAt"] = sortType
+    //     ? sortType == "desc"
+    //       ? -1
+    //       : 1
+    //     : -1;
+    // } else {
+    //   sortquery = { updatedAt: -1 };
+    // }
+     let sortquery = {};
+    if (sortBy && typeof sortBy === "string") {
+      const [rawField, rawOrder] = sortBy.trim().split(/\s+/);
+      const field = rawField || "createdAt";
+      const sortType = rawOrder?.toLowerCase() === "asc" ? 1 : -1;
+      sortquery[field] = sortType;
     } else {
       sortquery = { updatedAt: -1 };
     }

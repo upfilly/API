@@ -147,7 +147,6 @@ exports.find = async function (req, res) {
     let skipNo = (page - 1) * count;
 
     let { search, sortBy, status, isDeleted, format, addedBy, affiliate_id, brand_id, campaignId, commission_status, commission_paid, admin_paid, export_to_xls, startDate, endDate,couponId } = req.query;
-    let sortquery = {};
 
     // Handle search
     if (search) {
@@ -166,15 +165,17 @@ exports.find = async function (req, res) {
       query.isDeleted = false;
     }
 
-    // Handle sorting
-    if (sortBy) {
-      let typeArr = sortBy.split(" ");
-      let sortType = typeArr[1];
-      let field = typeArr[0];
-      sortquery[field ? field : 'createdAt'] = sortType === 'desc' ? -1 : 1;
-    } else {
-      sortquery = { createdAt: -1 };
-    }
+    
+    let sortquery = {};
+  if (sortBy && typeof sortBy === "string") {
+    const [rawField, rawOrder] = sortBy.trim().split(/\s+/);
+    const field = rawField || "createdAt";
+    const sortType = rawOrder?.toLowerCase() === "asc" ? 1 : -1;
+    sortquery[field] = sortType;
+  } else {
+    sortquery = { updatedAt: -1 };
+  }
+
 
     // Handle status
     if (status) {
@@ -626,7 +627,6 @@ exports.report = async function (req, res) {
   let page = req.param('page') || 1;
   let skipNo = (Number(page) - 1) * Number(count);
   let { search, sortBy, status, isDeleted, format, campaignId, affiliate_id, brand_id, startDate, endDate } = req.query;
-  let sortquery = {};
 
   // Handle search
   if (search) {
@@ -645,14 +645,15 @@ exports.report = async function (req, res) {
     query.isDeleted = false;
   }
 
-  // Handle sorting
-  if (sortBy) {
-    let typeArr = sortBy.split(" ");
-    let sortType = typeArr[1];
-    let field = typeArr[0];
-    sortquery[field ? field : 'createdAt'] = sortType === 'desc' ? -1 : 1;
+ 
+  let sortquery = {};
+  if (sortBy && typeof sortBy === "string") {
+    const [rawField, rawOrder] = sortBy.trim().split(/\s+/);
+    const field = rawField || "createdAt";
+    const sortType = rawOrder?.toLowerCase() === "asc" ? 1 : -1;
+    sortquery[field] = sortType;
   } else {
-    sortquery = { createdAt: -1 };
+    sortquery = { updatedAt: -1 };
   }
 
   // Handle status

@@ -148,15 +148,7 @@ exports.salesAnalytics = async (req, res) => {
             query.isDeleted = false;
         }
 
-        // Handle sorting
-        // if (sortBy) {
-        //     let typeArr = sortBy.split(" ");
-        //     let sortType = typeArr[1];
-        //     let field = typeArr[0];
-        //     sortquery[field ? field : 'createdAt'] = sortType === 'desc' ? -1 : 1;
-        // } else {
-        //     sortquery = { createdAt: -1 };
-        // }
+       
          let sortquery = {};
         if (sortBy && typeof sortBy === 'string') {
             const [rawField, rawOrder] = sortBy.trim().split(/\s+/);

@@ -167,15 +167,15 @@ exports.getAllOffers = async (req, res) => {
         }
 
         let sortquery = {};
-        if (sortBy) {
-            let typeArr = [];
-            typeArr = sortBy.split(" ");
-            let sortType = typeArr[1];
-            let field = typeArr[0];
-            sortquery[field ? field : 'createdAt'] = sortType ? (sortType == 'desc' ? -1 : 1) : -1;
+        if (sortBy && typeof sortBy === "string") {
+          const [rawField, rawOrder] = sortBy.trim().split(/\s+/);
+          const field = rawField || "createdAt";
+          const sortType = rawOrder?.toLowerCase() === "asc" ? 1 : -1;
+          sortquery[field] = sortType;
         } else {
-            sortquery = { updatedAt: -1 }
+          sortquery = { updatedAt: -1 };
         }
+
 
         // Pipeline Stages
         let pipeline = [
@@ -246,9 +246,9 @@ exports.getAllOffers = async (req, res) => {
                 affiliate_id: "$affiliate_id",
                 brand_id: "$brand_id",
                 brand_name: "$brand_id_details.fullName",
-                affiliate_name: "$affiliate_details.fullName",
+                affiliate_name: {$toLower : "$affiliate_details.fullName"},
 
-                name: "$name",
+                name: {$toLower : "$name"},
                 sent_from: "$sent_from",
                 sent_to: "$sent_to",
                 comments: "$comments",

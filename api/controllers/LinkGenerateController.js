@@ -184,13 +184,16 @@ exports.getAllLinkGenerate = async (req, res) => {
       query.isDeleted = false;
     }
 
-    let sortquery = {};
-    if (sortBy) {
-      let [field, order] = sortBy.split(" ");
-      sortquery[field || "createdAt"] = order === "desc" ? -1 : 1;
-    } else {
-      sortquery = { updatedAt: -1 };
-    }
+
+     let sortquery = {};
+     if (sortBy && typeof sortBy === "string") {
+       const [rawField, rawOrder] = sortBy.trim().split(/\s+/);
+       const field = rawField || "createdAt";
+       const sortType = rawOrder?.toLowerCase() === "asc" ? 1 : -1;
+       sortquery[field] = sortType;
+     } else {
+       sortquery = { updatedAt: -1 };
+     }
 
     if (addedBy) query.addedBy = new ObjectId(addedBy);
     if (seo) query.seo = seo === "true";

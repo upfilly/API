@@ -126,98 +126,110 @@ module.exports = {
 
     getAllFeatures: async (req, res) => {
         try {
-            let query = {};
-            let count = req.param('count') || 10;
-            let page = req.param('page') || 1;
-            let skipNo = (Number(page) - 1) * Number(count);
-            let { search, sortBy, status, isDeleted } = req.query;
-            let sortquery = {};
+          let query = {};
+          let count = req.param("count") || 10;
+          let page = req.param("page") || 1;
+          let skipNo = (Number(page) - 1) * Number(count);
+          let { search, sortBy, status, isDeleted } = req.query;
 
-            if (search) {
-                search = Services.Utils.remove_special_char_exept_underscores(search);
-                query.$or = [
-                    { name: { $regex: search, '$options': 'i' } }
-                ]
-            }
+          if (search) {
+            search =
+              Services.Utils.remove_special_char_exept_underscores(search);
+            query.$or = [{ name: { $regex: search, $options: "i" } }];
+          }
 
-            if (isDeleted) {
-                query.isDeleted = isDeleted ? isDeleted === 'true' : true ? isDeleted : false;
-            } else {
-                query.isDeleted = false;
-            }
+          if (isDeleted) {
+            query.isDeleted = isDeleted
+              ? isDeleted === "true"
+              : true
+              ? isDeleted
+              : false;
+          } else {
+            query.isDeleted = false;
+          }
 
-            if (sortBy) {
-                let typeArr = [];
-                typeArr = sortBy.split(" ");
-                let sortType = typeArr[1];
-                let field = typeArr[0];
-                sortquery[field ? field : 'createdAt'] = sortType ? (sortType == 'desc' ? -1 : 1) : -1;
-            } else {
-                sortquery = { createdAt: -1 }
-            }
+           let sortquery = {};
+           if (sortBy && typeof sortBy === "string") {
+             const [rawField, rawOrder] = sortBy.trim().split(/\s+/);
+             const field = rawField || "createdAt";
+             const sortType = rawOrder?.toLowerCase() === "asc" ? 1 : -1;
+             sortquery[field] = sortType;
+           } else {
+             sortquery = { updatedAt: -1 };
+           }
+           
+          if (status) {
+            query.status = status;
+          }
 
-            if (status) {
-                query.status = status;
-            }
+          let pipeline = [
+            {
+              $lookup: {
+                from: "users",
+                localField: "addedBy",
+                foreignField: "_id",
+                as: "addedBy_details",
+              },
+            },
+            {
+              $unwind: {
+                path: "$addedBy_details",
+                preserveNullAndEmptyArrays: true,
+              },
+            },
+          ];
+          let projection = {
+            $project: {
+              id: "$_id",
+              name: { $toLower: "$name" },
+              status: "$status",
+              // role_type: "$role_type",
+              createdBy: "$createdBy",
+              isDeleted: "$isDeleted",
+              deletedAt: "$deletedAt",
+              deletedBy: "$deletedBy",
+              addedBy: "$addedBy",
+              addeBy_name: "$addedBy_details.fullName",
+              updatedBy: "$updatedBy",
+              updatedAt: "$updatedAt",
+              createdAt: "$createdAt",
+            },
+          };
+          pipeline.push(projection);
+          pipeline.push({
+            $match: query,
+          });
+          pipeline.push({
+            $sort: sortquery,
+          });
 
-            let pipeline = [
-                {
-                    $lookup: {
-                        from: "users",
-                        localField: "addedBy",
-                        foreignField: "_id",
-                        as: "addedBy_details"
-                    }
-                },
-                {
-                    $unwind: {
-                        path: '$addedBy_details',
-                        preserveNullAndEmptyArrays: true
-                    }
-                },
-            ];
-            let projection = {
-                $project: {
-                    id: "$_id",
-                    name: { $toLower: "$name" },
-                    status: "$status",
-                    // role_type: "$role_type",
-                    createdBy: "$createdBy",
-                    isDeleted: "$isDeleted",
-                    deletedAt: "$deletedAt",
-                    deletedBy: "$deletedBy",
-                    addedBy: "$addedBy",
-                    addeBy_name: "$addedBy_details.fullName",
-                    updatedBy: "$updatedBy",
-                    updatedAt: "$updatedAt",
-                    createdAt: "$createdAt",
-                }
-            };
-            pipeline.push(projection);
-            pipeline.push({
-                $match: query
-            });
-            pipeline.push({
-                $sort: sortquery
-            });
-
-            let totalresult = await db.collection('features').aggregate(pipeline).toArray();
-                pipeline.push({
-                    $skip: Number(skipNo)
-                });
-                pipeline.push({
-                    $limit: Number(count)
-                });
-                let result = await db.collection('features').aggregate(pipeline).toArray();
-                    let resData = {
-                        total_count: totalresult ? totalresult.length : 0,
-                        data: result ? result : [],
-                    }
-                    if (!req.param('page') && !req.param('count')) {
-                        resData.data = totalresult ? totalresult : [];
-                    }
-                    return response.success(resData, constants.features.ALL_FEATURES, req, res);
-             
+          let totalresult = await db
+            .collection("features")
+            .aggregate(pipeline)
+            .toArray();
+          pipeline.push({
+            $skip: Number(skipNo),
+          });
+          pipeline.push({
+            $limit: Number(count),
+          });
+          let result = await db
+            .collection("features")
+            .aggregate(pipeline)
+            .toArray();
+          let resData = {
+            total_count: totalresult ? totalresult.length : 0,
+            data: result ? result : [],
+          };
+          if (!req.param("page") && !req.param("count")) {
+            resData.data = totalresult ? totalresult : [];
+          }
+          return response.success(
+            resData,
+            constants.features.ALL_FEATURES,
+            req,
+            res
+          );
         } catch (error) {
             return response.failed(null, `${error}`, req, res);
         }
