@@ -795,27 +795,36 @@ exports.getAllCampaignsForBrand = async (req, res) => {
         if (brand_id) {
             query.brand_id = new ObjectId(brand_id);
         }
+        // let sortquery = {};
+        // if (sortBy) {
+        //     let typeArr = [];
+        //     typeArr = sortBy.split(" ");
+        //     let sortType = typeArr[1];
+        //     let field = typeArr[0];
+        //     // if (field === 'event_type') {
+        //     //     sortquery['event_type_length'] = sortType ? (sortType == 'desc' ? -1 : 1) : -1;
+        //     // } else {
+        //     //     sortquery[field ? field : 'createdAt'] = sortType ? (sortType == 'desc' ? -1 : 1) : -1;
+        //     // }
+        //     // sortquery[field ? field : 'createdAt'] = sortType ? (sortType == 'desc' ? -1 : 1) : -1;
+
+        //     if (field === "event_type") {
+        //       sortquery["event_type_length"] = sortType === "desc" ? -1 : 1;
+        //     } else {
+        //       sortquery[field || "createdAt"] = sortType === "desc" ? -1 : 1;
+        //     }
+
+        // } else {
+        //     sortquery = { updatedAt: -1 }
+        // }
         let sortquery = {};
-        if (sortBy) {
-            let typeArr = [];
-            typeArr = sortBy.split(" ");
-            let sortType = typeArr[1];
-            let field = typeArr[0];
-            // if (field === 'event_type') {
-            //     sortquery['event_type_length'] = sortType ? (sortType == 'desc' ? -1 : 1) : -1;
-            // } else {
-            //     sortquery[field ? field : 'createdAt'] = sortType ? (sortType == 'desc' ? -1 : 1) : -1;
-            // }
-            // sortquery[field ? field : 'createdAt'] = sortType ? (sortType == 'desc' ? -1 : 1) : -1;
-
-            if (field === "event_type") {
-              sortquery["event_type_length"] = sortType === "desc" ? -1 : 1;
-            } else {
-              sortquery[field || "createdAt"] = sortType === "desc" ? -1 : 1;
-            }
-
+        if (sortBy && typeof sortBy === 'string') {
+            const [rawField, rawOrder] = sortBy.trim().split(/\s+/);
+            const field = rawField || 'createdAt';
+            const sortType = rawOrder?.toLowerCase() === 'asc' ? 1 : -1;
+            sortquery[field] = sortType;
         } else {
-            sortquery = { updatedAt: -1 }
+            sortquery = { updatedAt: -1 };
         }
         if (sub_category) {
             // query.sub_category_id = new ObjectId(sub_category_id);
@@ -951,7 +960,7 @@ exports.getAllCampaignsForBrand = async (req, res) => {
                     brand_id: 1,
                     parent_id: 1,
                     parent_role: 1,
-                    name: 1,
+                    name: { $toLower: "$name" },
                     description: 1,
                     images: 1,
                     documents: 1,
