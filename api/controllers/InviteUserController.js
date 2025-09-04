@@ -95,6 +95,15 @@ module.exports = {
           addedBy: req.identity.id,
           updatedBy: req.identity.id,
         }).fetch();
+        const emailpayload = {
+          email: email,
+          full_name: firstName + " " + lastName,
+          password: "",
+          logged_in_user: user,
+          user_id: existingUser.id
+        };
+
+        await Emails.InviteUser.invite_user_email(emailpayload);
       } else {
         let password = await generatePassword();
         // Create new user
