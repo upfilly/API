@@ -733,302 +733,389 @@ exports.getAllCampaignRequestsForAffiliate = async (req, res) => {
 
 exports.getAllCampaignsForBrand = async (req, res) => {
     try {
-        let user_id = req.identity.id;
-        let { category, sub_category, category_type, sub_child_category, region, status, isArchive,access_type } = req.query
-        let loggedInUser = await Users.findOne({ id: user_id, isDeleted: false });
-        if (loggedInUser.addedBy) {
-
-            let get_account_manager_detail = await Users.findOne({ id: loggedInUser.addedBy, isDeleted: false });
-            if (get_account_manager_detail && get_account_manager_detail.role) {
-                if (loggedInUser.role === 'brand' || loggedInUser.role === 'affiliate') {
-                    var isPermissionExists = await Permissions.findOne({
-                        role: loggedInUser.role,
-                        //account_manager: get_account_manager_detail.role
-                    });
-                }
-                else {
-                    var isPermissionExists = await Permissions.findOne({
-                        role: loggedInUser.role,
-                        account_manager: get_account_manager_detail.role
-                    });
-                }
-                if (!isPermissionExists) {
-                    throw "Permission not exists";
-                }
-            }
+      let user_id = req.identity.id;
+      let {
+        category,
+        sub_category,
+        category_type,
+        sub_child_category,
+        region,
+        status,
+        isArchive,
+        access_type,
+      } = req.query;
+      let loggedInUser = await Users.findOne({ id: user_id, isDeleted: false });
+      if (loggedInUser.addedBy) {
+        let get_account_manager_detail = await Users.findOne({
+          id: loggedInUser.addedBy,
+          isDeleted: false,
+        });
+        if (get_account_manager_detail && get_account_manager_detail.role) {
+          if (
+            loggedInUser.role === "brand" ||
+            loggedInUser.role === "affiliate"
+          ) {
+            var isPermissionExists = await Permissions.findOne({
+              role: loggedInUser.role,
+              //account_manager: get_account_manager_detail.role
+            });
+          } else {
+            var isPermissionExists = await Permissions.findOne({
+              role: loggedInUser.role,
+              account_manager: get_account_manager_detail.role,
+            });
+          }
+          if (!isPermissionExists) {
+            throw "Permission not exists";
+          }
         }
+      }
 
-        let query = {};
-        let new_query = {}
-        let count = req.param('count') || 10;
-        let page = req.param('page') || 1;
-        let { search, sortBy, brand_id } = req.query;
+      let query = {};
+      let new_query = {};
+      let count = req.param("count") || 10;
+      let page = req.param("page") || 1;
+      let { search, sortBy, brand_id } = req.query;
 
-        let skipNo = (Number(page) - 1) * Number(count);
+      let skipNo = (Number(page) - 1) * Number(count);
 
-        // if (search) {
-        //     search = Services.Utils.remove_special_char_exept_underscores(search);
-        //     query.$or = [
-        //         { name: { $regex: search, '$options': 'i' } },
-        //     ]
-        //     new_query.$or = [
-        //         { commissionToString: { $regex: search, "$options": "i" } }
-        //     ]
-        // }
+      // if (search) {
+      //     search = Services.Utils.remove_special_char_exept_underscores(search);
+      //     query.$or = [
+      //         { name: { $regex: search, '$options': 'i' } },
+      //     ]
+      //     new_query.$or = [
+      //         { commissionToString: { $regex: search, "$options": "i" } }
+      //     ]
+      // }
 
-        if (search && search.trim()) {
-            search = Services.Utils.remove_special_char_exept_underscores(search.trim());
+      if (search && search.trim()) {
+        search = Services.Utils.remove_special_char_exept_underscores(
+          search.trim()
+        );
 
-            new_query.$or = [
-                { name: { $regex: search, '$options': 'i' } },
-                { commissionToString: { $regex: search, "$options": "i" } }
-            ];
-        }
-
-        query.isDeleted = false;
-        if (status) {
-            query.status = status
-        }
-        if (access_type) {
-            query.access_type = access_type
-        }
-        if (brand_id) {
-            query.brand_id = new ObjectId(brand_id);
-        }
-        // let sortquery = {};
-        // if (sortBy) {
-        //     let typeArr = [];
-        //     typeArr = sortBy.split(" ");
-        //     let sortType = typeArr[1];
-        //     let field = typeArr[0];
-        //     // if (field === 'event_type') {
-        //     //     sortquery['event_type_length'] = sortType ? (sortType == 'desc' ? -1 : 1) : -1;
-        //     // } else {
-        //     //     sortquery[field ? field : 'createdAt'] = sortType ? (sortType == 'desc' ? -1 : 1) : -1;
-        //     // }
-        //     // sortquery[field ? field : 'createdAt'] = sortType ? (sortType == 'desc' ? -1 : 1) : -1;
-
-        //     if (field === "event_type") {
-        //       sortquery["event_type_length"] = sortType === "desc" ? -1 : 1;
-        //     } else {
-        //       sortquery[field || "createdAt"] = sortType === "desc" ? -1 : 1;
-        //     }
-
-        // } else {
-        //     sortquery = { updatedAt: -1 }
-        // }
-        let sortquery = {};
-        if (sortBy && typeof sortBy === 'string') {
-            const [rawField, rawOrder] = sortBy.trim().split(/\s+/);
-            const field = rawField || 'createdAt';
-            const sortType = rawOrder?.toLowerCase() === 'asc' ? 1 : -1;
-            sortquery[field] = sortType;
-        } else {
-            sortquery = { updatedAt: -1 };
-        }
-        if (sub_category) {
-            // query.sub_category_id = new ObjectId(sub_category_id);
-            sub_category = await Services.Utils.string_ids_toObjectIds_array(sub_category);
-            query.sub_category = { $in: sub_category }
-        }
-        if (category) {
-            query.category = await Services.Utils.string_ids_toObjectIds_array(category);
-            query.category = { $in: category }
-        }
-        if (category_type) {
-            category_type = await Services.Utils.string_to_array(category_type);
-            query.category_type = { $in: category_type }
-        }
-        if (category_type) {
-            sub_child_category = await Services.Utils.string_to_array(sub_child_category);
-            query.sub_child_category = { $in: sub_child_category }
-        }
-        if (region) {
-            query.region = { $in: [region] }
-        }
-        query.isArchive = isArchive == "true" ? true : false
-        // Pipeline Stages
-        let pipeline = [
-            // lookups for categories
-            //  {
-            //     $lookup: {
-            //         from: "commoncategories",
-            //         localField: "category",
-            //         foreignField: "_id",
-            //         as: "category_detail"
-            //     }
-            // },
-            // {
-            //     $unwind: {
-            //         path: '$category_detail',
-            //         preserveNullAndEmptyArrays: true
-            //     }
-            // },
-            {
-                $lookup: {
-                    from: "commoncategories",
-                    let: { categoryIds: "$category" },
-                    pipeline: [
-                        { $match: { $expr: { $in: ["$_id", { $map: { input: "$$categoryIds", as: "id", in: { $toObjectId: "$$id" } } }] } } }
-                    ],
-                    as: "category_detail"
-                }
-            },
-
-            // {
-            //     $lookup: {
-            //         from: "commoncategories",
-            //         localField: "sub_category",
-            //         foreignField: "_id",
-            //         as: "sub_category_detail"
-            //     }
-            // },
-            // {
-            //     $unwind: {
-            //         path: '$sub_category_detail',
-            //         preserveNullAndEmptyArrays: true
-            //     }
-            // },
-            {
-                $lookup: {
-                    from: "commoncategories",
-                    let: { categoryIds: "$sub_category" },
-                    pipeline: [
-                        { $match: { $expr: { $in: ["$_id", { $map: { input: "$$categoryIds", as: "id", in: { $toObjectId: "$$id" } } }] } } }
-                    ],
-                    as: "sub_category_detail"
-                }
-            },
-
-            // {
-            //     $lookup: {
-            //         from: "subchildcategory",
-            //         localField: "sub_child_category",
-            //         foreignField: "_id",
-            //         as: "sub_child_category_detail"
-            //     }
-            // },
-            // {
-            //     $unwind: {
-            //         path: '$sub_child_category_detail',
-            //         preserveNullAndEmptyArrays: true
-            //     }
-            // },
-
-            {
-                $lookup: {
-                    from: "subchildcategory",
-                    let: { categoryIds: "$sub_child_category" },
-                    pipeline: [
-                        { $match: { $expr: { $in: ["$_id", { $map: { input: "$$categoryIds", as: "id", in: { $toObjectId: "$$id" } } }] } } }
-                    ],
-                    as: "sub_child_category_detail"
-                }
-            },
-
-            {
-                $lookup: {
-                    from: "brandaffiliateassociation",
-                    let: { brand_id: new ObjectId(req.identity.id), campaign: "$_id", status: "accepted" },
-                    pipeline: [{
-                        $match: {
-                            $expr: {
-                                $and: [
-                                    { $eq: ["$brand_id", "$$brand_id"] },
-                                    { $eq: ["$campaign_id", "$$campaign"] },
-                                    { $eq: ["$status", "$$status"] },
-                                ]
-                            }
-                        }
-                    }],
-                    as: "affiliateCount"
-                }
-            },
-            {
-                $addFields: {
-                    event_type_length: { $size: { $ifNull: ["$event_type", []] } }
-                }
-            },
-
-
-            {
-                $match: query
-            },
-            {
-                $project: {
-                    _id: 1,
-                    brand_id: 1,
-                    parent_id: 1,
-                    parent_role: 1,
-                    name: { $toLower: "$name" },
-                    description: 1,
-                    images: 1,
-                    documents: 1,
-                    videos: 1,
-                    access_type: 1,
-                    amount: 1,
-                    event_type: 1,
-                    campaign_unique_id: 1,
-                    addedBy: 1,
-                    updatedBy: 1,
-                    createdAt: 1,
-                    updatedAt: 1,
-                    isDefault: 1,
-                    isDeleted: 1,
-                    commission: 1,
-                    commissionToString: { $toString: "$commission" },
-                    commission_event_type: 1,
-                    commission_type: 1,
-                    category: 1,
-                    sub_category: 1,
-                    category_type: 1,
-                    sub_child_category: 1,
-                    region: 1,
-                    region_continents: 1,
-                    category_detail: "$category_detail",
-                    sub_category_detail: "$sub_category_detail",
-                    sub_child_category_detail: "$sub_child_category_detail",
-                    lead_amount: 1,
-                    campaign_type: 1,
-                    currencies: 1,
-                    deDuplicate: 1,
-                    publisher: 1,
-                    ppc: 1,
-                    transaction: 1,
-                    legalTerm: 1,
-                    islegal: 1,
-                    status: 1,
-                    isArchive: 1,
-                    affiliateCount: { $size: "$affiliateCount" },
-                    event_type_length: 1,
-                    access_type: 1,
-                }
-            },
-            {
-                $match: new_query
-            },
-            {
-                $sort: sortquery
-            }
+        new_query.$or = [
+          { name: { $regex: search, $options: "i" } },
+          { commissionToString: { $regex: search, $options: "i" } },
         ];
-        let totalresult = await db.collection('campaign').aggregate(pipeline).toArray();
-        pipeline.push({
-            $skip: Number(skipNo)
-        });
-        pipeline.push({
-            $limit: Number(count)
-        });
-        let result = await db.collection("campaign").aggregate(pipeline).toArray();
-        let resData = {
-            total_count: totalresult ? totalresult.length : 0,
-            data: result ? result : [],
-        }
-        if (!req.param('page') && !req.param('count')) {
-            resData.data = totalresult ? totalresult : [];
-        }
-        return response.success(resData, constants.CAMPAIGN.FETCHED_ALL, req, res);
+      }
 
+      query.isDeleted = false;
+      if (status) {
+        query.status = status;
+      }
+      if (access_type) {
+        query.access_type = access_type;
+      }
+      if (brand_id) {
+        query.brand_id = new ObjectId(brand_id);
+      }
+      // let sortquery = {};
+      // if (sortBy) {
+      //     let typeArr = [];
+      //     typeArr = sortBy.split(" ");
+      //     let sortType = typeArr[1];
+      //     let field = typeArr[0];
+      //     // if (field === 'event_type') {
+      //     //     sortquery['event_type_length'] = sortType ? (sortType == 'desc' ? -1 : 1) : -1;
+      //     // } else {
+      //     //     sortquery[field ? field : 'createdAt'] = sortType ? (sortType == 'desc' ? -1 : 1) : -1;
+      //     // }
+      //     // sortquery[field ? field : 'createdAt'] = sortType ? (sortType == 'desc' ? -1 : 1) : -1;
 
+      //     if (field === "event_type") {
+      //       sortquery["event_type_length"] = sortType === "desc" ? -1 : 1;
+      //     } else {
+      //       sortquery[field || "createdAt"] = sortType === "desc" ? -1 : 1;
+      //     }
+
+      // } else {
+      //     sortquery = { updatedAt: -1 }
+      // }
+     
+      let sortquery = {};
+      if (sortBy && typeof sortBy === "string") {
+        const [rawField, rawOrder] = sortBy.trim().split(/\s+/);
+        const field = rawField || "createdAt";
+        const sortType = rawOrder?.toLowerCase() === "asc" ? 1 : -1;
+
+        if (field === "event_type") {
+          sortquery["event_type_length"] = sortType;
+        } else {
+          sortquery[field] = sortType;
+        }
+      } else {
+        sortquery = { updatedAt: -1 };
+      }
+
+      if (sub_category) {
+        // query.sub_category_id = new ObjectId(sub_category_id);
+        sub_category = await Services.Utils.string_ids_toObjectIds_array(
+          sub_category
+        );
+        query.sub_category = { $in: sub_category };
+      }
+      if (category) {
+        query.category = await Services.Utils.string_ids_toObjectIds_array(
+          category
+        );
+        query.category = { $in: category };
+      }
+      if (category_type) {
+        category_type = await Services.Utils.string_to_array(category_type);
+        query.category_type = { $in: category_type };
+      }
+      if (category_type) {
+        sub_child_category = await Services.Utils.string_to_array(
+          sub_child_category
+        );
+        query.sub_child_category = { $in: sub_child_category };
+      }
+      if (region) {
+        query.region = { $in: [region] };
+      }
+      query.isArchive = isArchive == "true" ? true : false;
+      // Pipeline Stages
+      let pipeline = [
+        // lookups for categories
+        //  {
+        //     $lookup: {
+        //         from: "commoncategories",
+        //         localField: "category",
+        //         foreignField: "_id",
+        //         as: "category_detail"
+        //     }
+        // },
+        // {
+        //     $unwind: {
+        //         path: '$category_detail',
+        //         preserveNullAndEmptyArrays: true
+        //     }
+        // },
+        {
+          $lookup: {
+            from: "commoncategories",
+            let: { categoryIds: "$category" },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $in: [
+                      "$_id",
+                      {
+                        $map: {
+                          input: "$$categoryIds",
+                          as: "id",
+                          in: { $toObjectId: "$$id" },
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            ],
+            as: "category_detail",
+          },
+        },
+
+        // {
+        //     $lookup: {
+        //         from: "commoncategories",
+        //         localField: "sub_category",
+        //         foreignField: "_id",
+        //         as: "sub_category_detail"
+        //     }
+        // },
+        // {
+        //     $unwind: {
+        //         path: '$sub_category_detail',
+        //         preserveNullAndEmptyArrays: true
+        //     }
+        // },
+        {
+          $lookup: {
+            from: "commoncategories",
+            let: { categoryIds: "$sub_category" },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $in: [
+                      "$_id",
+                      {
+                        $map: {
+                          input: "$$categoryIds",
+                          as: "id",
+                          in: { $toObjectId: "$$id" },
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            ],
+            as: "sub_category_detail",
+          },
+        },
+
+        // {
+        //     $lookup: {
+        //         from: "subchildcategory",
+        //         localField: "sub_child_category",
+        //         foreignField: "_id",
+        //         as: "sub_child_category_detail"
+        //     }
+        // },
+        // {
+        //     $unwind: {
+        //         path: '$sub_child_category_detail',
+        //         preserveNullAndEmptyArrays: true
+        //     }
+        // },
+
+        {
+          $lookup: {
+            from: "subchildcategory",
+            let: { categoryIds: "$sub_child_category" },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $in: [
+                      "$_id",
+                      {
+                        $map: {
+                          input: "$$categoryIds",
+                          as: "id",
+                          in: { $toObjectId: "$$id" },
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            ],
+            as: "sub_child_category_detail",
+          },
+        },
+
+        {
+          $lookup: {
+            from: "brandaffiliateassociation",
+            let: {
+              brand_id: new ObjectId(req.identity.id),
+              campaign: "$_id",
+              status: "accepted",
+            },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $eq: ["$brand_id", "$$brand_id"] },
+                      { $eq: ["$campaign_id", "$$campaign"] },
+                      { $eq: ["$status", "$$status"] },
+                    ],
+                  },
+                },
+              },
+            ],
+            as: "affiliateCount",
+          },
+        },
+        {
+          $addFields: {
+            event_type_length: { $size: { $ifNull: ["$event_type", []] } },
+          },
+        },
+
+        {
+          $match: query,
+        },
+        {
+          $project: {
+            _id: 1,
+            brand_id: 1,
+            parent_id: 1,
+            parent_role: 1,
+            name: { $toLower: "$name" },
+            description: 1,
+            images: 1,
+            documents: 1,
+            videos: 1,
+            access_type: 1,
+            amount: 1,
+            event_type: 1,
+            campaign_unique_id: 1,
+            addedBy: 1,
+            updatedBy: 1,
+            createdAt: 1,
+            updatedAt: 1,
+            isDefault: 1,
+            isDeleted: 1,
+            commission: 1,
+            commissionToString: { $toString: "$commission" },
+            commission_event_type: 1,
+            commission_type: 1,
+            category: 1,
+            sub_category: 1,
+            category_type: 1,
+            sub_child_category: 1,
+            region: 1,
+            region_continents: 1,
+            category_detail: "$category_detail",
+            sub_category_detail: "$sub_category_detail",
+            sub_child_category_detail: "$sub_child_category_detail",
+            lead_amount: 1,
+            campaign_type: 1,
+            currencies: 1,
+            deDuplicate: 1,
+            publisher: 1,
+            ppc: 1,
+            transaction: 1,
+            legalTerm: 1,
+            islegal: 1,
+            status: 1,
+            isArchive: 1,
+            affiliateCount: { $size: "$affiliateCount" },
+            event_type_length: 1,
+            access_type: 1,
+          },
+        },
+        {
+          $match: new_query,
+        },
+        {
+          $sort: sortquery,
+        },
+      ];
+      let totalresult = await db
+        .collection("campaign")
+        .aggregate(pipeline)
+        .toArray();
+      pipeline.push({
+        $skip: Number(skipNo),
+      });
+      pipeline.push({
+        $limit: Number(count),
+      });
+      let result = await db
+        .collection("campaign")
+        .aggregate(pipeline)
+        .toArray();
+      let resData = {
+        total_count: totalresult ? totalresult.length : 0,
+        data: result ? result : [],
+      };
+      if (!req.param("page") && !req.param("count")) {
+        resData.data = totalresult ? totalresult : [];
+      }
+      return response.success(
+        resData,
+        constants.CAMPAIGN.FETCHED_ALL,
+        req,
+        res
+      );
     } catch (err) {
         return response.failed(null, `${err}`, req, res);
     }
