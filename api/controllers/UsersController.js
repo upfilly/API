@@ -1428,7 +1428,7 @@ module.exports = {
                 },
               },
               {
-                $project: { _id: 0, status: 1,campaign_id:1 }
+                $project: { _id: 0, status: 1, campaign_id: 1 }
               }
             ],
             as: "associatedAffiliates",
@@ -1518,8 +1518,57 @@ module.exports = {
         //     preserveNullAndEmptyArrays: true,
         //   },
         // },
+        {
+          $addFields: {
+            acceptedCampaignIds: {
+              $map: {
+                input: {
+                  $filter: {
+                    input: "$associatedAffiliates",
+                    as: "assoc",
+                    cond: { $eq: ["$$assoc.status", "accepted"] }
+                  }
+                },
+                as: "acceptedAssoc",
+                in: "$$acceptedAssoc.campaign_id"
+              }
+            }
+          }
+        },
+        {
+          $addFields: {
+            acceptedAssoc: {
+              $first: {
+                $filter: {
+                  input: "$associatedAffiliates",
+                  as: "assoc",
+                  cond: { $eq: ["$$assoc.status", "accepted"] }
+                }
+              }
+            }
+          }
+        },
+        {
+          $lookup: {
+            from: "campaign",
+            let: { campaignId: "$acceptedAssoc.campaign_id" },
+            pipeline: [
+              { $match: { $expr: { $eq: ["$_id", "$$campaignId"] } } },
+              { $project: { _id: 1, name: 1 } }
+            ],
+            as: "campaign_details"
+          }
+        },
+        {
+          $unwind: {
+            path: "$campaign_details",
+            preserveNullAndEmptyArrays: true
+          }
+        }
+
+
       ];
-      
+
       let projection = {
         $project: {
           id: "$_id",
