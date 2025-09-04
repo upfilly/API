@@ -446,7 +446,6 @@ exports.editBanner = async (req, res) => {
 };
 
 exports.getAllBanner = async (req, res) => {
-  console.log("alpha")
   try {
     let query = {};
     let count = req.param("count") || 10;
