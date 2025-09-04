@@ -82,6 +82,7 @@ module.exports = {
       // Check if user already exists
       const existingUser = await Users.findOne({ email, isDeleted: false });
       if (existingUser) {
+        let password = await generatePassword();
         // throw constants.user.EMAIL_EXIST;
         user = await InviteUsers.create({
           firstName: firstName.toLowerCase(),
@@ -98,7 +99,7 @@ module.exports = {
         const emailpayload = {
           email: email,
           full_name: firstName + " " + lastName,
-          password: "",
+          password: password,
           logged_in_user: user,
           user_id: existingUser.id
         };
