@@ -479,7 +479,7 @@ exports.find = async function (req, res) {
 
 exports.findGraph = async (req, res) => {
   try {
-    const { startDate, endDate, filter } = req.query;
+    const { startDate, endDate, filter,brand_id, affiliate_id } = req.query;
 
     const moment = require('moment');
     let start, end;
@@ -519,6 +519,13 @@ exports.findGraph = async (req, res) => {
           end = moment().endOf("month").toDate();
       }
     }
+    let matchConditions = {}
+    if(brand_id){
+      matchConditions.brand_id = new ObjectId(brand_id)
+    }
+    if(affiliate_id){
+      matchConditions.affiliate_id = new ObjectId(affiliate_id)
+    }
 
 
     const result = await db.collection('affiliatelink').aggregate([
@@ -527,6 +534,9 @@ exports.findGraph = async (req, res) => {
           createdAt: { $gte: start, $lte: end }
         },
       },
+      {
+          $match: matchConditions
+        },
       {
         $group: {
           _id: "$source", // You can change this to "campaign" or any field that makes sense
@@ -545,6 +555,7 @@ exports.findGraph = async (req, res) => {
 
     return res.status(200).json({ success: true, data: result });
   } catch (error) {
+    console.log(err)
     return response.failed(null, `${error}`, req, res);
   }
 };
