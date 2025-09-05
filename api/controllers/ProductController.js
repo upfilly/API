@@ -122,11 +122,23 @@ module.exports = {
                     let get_addedBy_detail = await Users.findOne({ id: get_product.addedBy, isDeleted: false });
                     get_product.addedBy_name = get_addedBy_detail.fullName
                 }
-                let makeOfferDetails = await MakeOffer.find({product_id: get_product.id.toString(), brand_id: req.identity.id, isDeleted: false});
+                // let makeOfferDetails = await MakeOffer.find({product_id: get_product.id.toString(), brand_id: req.identity.id, isDeleted: false});
+                // get_product.makeOfferDetails = makeOfferDetails;
+                // if(makeOfferDetails) {
+                //     get_product.isSubmitted = true;
+                // } else get_product.isSubmitted = false;
+
+                let makeOfferDetails = await MakeOffer.find({
+                  product_id: get_product.id.toString(),
+                  brand_id: req.identity.id,
+                });
+
                 get_product.makeOfferDetails = makeOfferDetails;
-                if(makeOfferDetails) {
-                    get_product.isSubmitted = true;
-                } else get_product.isSubmitted = false;
+
+                get_product.isSubmitted =
+                  Array.isArray(makeOfferDetails) &&
+                  makeOfferDetails.some((offer) => offer.isDeleted === false);
+
                 get_product.all_categories = all_categories
                 get_product.all_sub_categories = all_sub_categories
                 get_product.all_sub_child_categories = all_sub_child_categories
@@ -151,7 +163,7 @@ module.exports = {
                 req.body.name = req.body.name.toLowerCase();
             }
 
-            let get_product = await Product.findOne({ id: id });
+            let get_product = await Product.findOne({ id: id,isDeleted:false});
             if (!get_product) {
                 throw constants.PRODUCT.INVALID_ID;
             }
