@@ -41,7 +41,7 @@ exports.addBanner = async (req, res) => {
 
     let query = {};
     
-    if (expireCheck === false || expireCheck === "false") {
+    if (expireCheck === true || expireCheck === "true") {
       delete req.body.expiration_date;
     }
 
@@ -149,7 +149,7 @@ exports.addBanner = async (req, res) => {
     }
     //new changes 
 
-       if (expireCheck === true || expireCheck === "true") {
+       if (expireCheck === false || expireCheck === "false") {
       if (expiration_date) {
       req.body.expiration_date = new Date(expiration_date);
     }
@@ -336,11 +336,11 @@ exports.editBanner = async (req, res) => {
     if (!get_banner) {
       throw constants.BANNER.INVALID_ID;
     }
-      if (get_banner.expireCheck == true) {
+      if (get_banner.expireCheck == false) {
      if (expiration_date) {
       req.body.expiration_date = new Date(expiration_date);
     }
-    }else if (req.body?.expireCheck  == true) {
+    }else if (req.body?.expireCheck  == false) {
       req.body.expiration_date = new Date(expiration_date);
      }else{
       delete req.body.expiration_date
