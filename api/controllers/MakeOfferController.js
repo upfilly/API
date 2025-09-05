@@ -328,7 +328,7 @@ exports.changeOfferStatus = async (req, res) => {
         let get_make_offer = await MakeOffer.findOne({ id: id, isDeleted: false });
 
         if (!get_make_offer) {
-            throw constants.MAKE_OFFER.INVALID_ID;
+             throw constants.MAKE_OFFER.INVALID_ID;
         }
 
         if (req.body.status == "accepted" && ['accepted'].includes(get_make_offer.status)) {
