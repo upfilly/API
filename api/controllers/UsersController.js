@@ -1428,6 +1428,11 @@ module.exports = {
                 },
               },
               {
+                $sort:{
+                  "createdAt":-1
+                }
+              },
+              {
                 $project: { _id: 0, status: 1, campaign_id: 1 }
               }
             ],
