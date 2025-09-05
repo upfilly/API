@@ -1499,7 +1499,7 @@ module.exports = {
                     then: "pending"
                   }
                 ],
-                default: "" // if no data
+                default: "not_invite" // if no data
               }
             }
           }
