@@ -1120,7 +1120,7 @@ module.exports = {
         category_id,
         sub_child_category_id,
         addedBy,
-        campaign,
+        campaign_id,
       } = req.query;
       let skipNo = (Number(page) - 1) * Number(count);
       let query = { isDeleted: false };
@@ -1156,9 +1156,9 @@ module.exports = {
         query.association_status = association_status;
       }
 
-      // if(campaign){
-      //   query.campaign  = new ObjectId(campaign)
-      // }
+      if(campaign_id){
+        query.campaign_id  = new ObjectId(campaign_id)
+      }
       if (role) {
         // console.log(role);
         query.role = role;
@@ -1620,6 +1620,7 @@ module.exports = {
           timezone: "$timezone",
           association_status: "$association_status",
           affiliates_active_count: 1,
+          campaign_id:"$campaign_details._id"
         },
       };
       pipeline.push(projection);
