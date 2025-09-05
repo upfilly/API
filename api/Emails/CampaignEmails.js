@@ -197,7 +197,9 @@ exports.changeStatus = async (options) => {
 
   let get_affiliate = await Users.findOne({ id: options.affiliate_id });
   let get_brand = await Users.findOne({ id: options.brand_id });
+  console.log("options.campaign_id ",options.campaign_id )
   let campaign = await Campaign.findOne({ id: options.campaign_id }); 
+
 
   var email = get_brand.email;
 

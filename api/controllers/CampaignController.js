@@ -1506,7 +1506,7 @@ exports.changeCampaignStatus = async (req, res) => {
               affiliate_id: req.body.affiliate_id,
               brand_id: get_campaign.brand_id,
               status: req.body.status,
-              campaign_id:get_campaign.campaign_id,
+              campaign_id:get_campaign.campaign_id.id,
               reason: req.body.reason ? req.body.reason : "",
             };
             let emailSentCheck = await EmailSentSetting.findOne({
