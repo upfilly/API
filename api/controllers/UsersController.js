@@ -5220,20 +5220,29 @@ module.exports = {
         ];
       }
 
-      let sortquery = {};
-      if (sortBy) {
-        let typeArr = [];
-        typeArr = sortBy.split(" ");
-        let sortType = typeArr[1];
-        let field = typeArr[0];
-        sortquery[field ? field : "createdAt"] = sortType
-          ? sortType == "desc"
-            ? -1
-            : 1
-          : -1;
-      } else {
-        sortquery = { updatedAt: -1 };
-      }
+      // let sortquery = {};
+      // if (sortBy) {
+      //   let typeArr = [];
+      //   typeArr = sortBy.split(" ");
+      //   let sortType = typeArr[1];
+      //   let field = typeArr[0];
+      //   sortquery[field ? field : "createdAt"] = sortType
+      //     ? sortType == "desc"
+      //       ? -1
+      //       : 1
+      //     : -1;
+      // } else {
+      //   sortquery = { updatedAt: -1 };
+      // }
+       let sortquery = {};
+       if (sortBy && typeof sortBy === "string") {
+         const [rawField, rawOrder] = sortBy.trim().split(/\s+/);
+         const field = rawField || "createdAt";
+         const sortType = rawOrder?.toLowerCase() === "asc" ? 1 : -1;
+         sortquery[field] = sortType;
+       } else {
+         sortquery = { updatedAt: -1 };
+       }
 
       if (req.identity.role == "admin") {
         query.role = { $nin: ["admin"] };
@@ -5492,7 +5501,7 @@ module.exports = {
           id: "$_id",
           firstName: "$firstName",
           lastName: "$lastName",
-          fullName: "$fullName",
+          fullName: {$toLower : "$fullName"},
           email: "$email",
           role: "$role",
           image: "$image",
