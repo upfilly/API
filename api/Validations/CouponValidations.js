@@ -51,7 +51,7 @@ exports.addCoupon = async (req, res, next) => {
     couponAmount: Joi.number().optional(),
     title: Joi.string().optional().allow(""),
     description: Joi.string().optional().allow(""),
-    expireCheck: Joi.boolean().required(),
+    expireCheck: Joi.boolean().optional().allow(""),
     
   });
   return await Validate(schema, req, res);
@@ -107,6 +107,8 @@ exports.editCoupon = async (req, res, next) => {
     couponAmount: Joi.number(),
     title: Joi.string().optional().allow(""),
     description: Joi.string().optional().allow(""),
+    expireCheck: Joi.boolean().optional().allow(""),
+
   });
   return await Validate(schema, req, res);
 };

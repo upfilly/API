@@ -100,6 +100,6 @@ module.exports = {
       type: "json",
       columnType: "array",
     },
-    expireCheck: { type: "Boolean", defaultsTo: false },
+    expireCheck: { type: "Boolean", defaultsTo: true },
   },
 };

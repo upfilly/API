@@ -58,7 +58,10 @@ exports.addCoupon = async (req, res) => {
       throw validation_result.message;
     }
 
-    if (expireCheck === false || expireCheck === "false") {
+    // if (expireCheck === false || expireCheck === "false") {
+    //   delete req.body.expirationDate;
+    // }
+    if (expireCheck === true || expireCheck === "true") {
       delete req.body.expirationDate;
     }
 
@@ -80,12 +83,17 @@ exports.addCoupon = async (req, res) => {
       }
     }
 
-    if (expireCheck === true || expireCheck === "true") {
+    // if (expireCheck === true || expireCheck === "true") {
+    //   if (new Date(startDate) > new Date(expirationDate)) {
+    //     throw constants.COUPON.START_DATE_OVERLAPED;
+    //   }
+    // }
+
+     if (expireCheck === false || expireCheck === "false") {
       if (new Date(startDate) > new Date(expirationDate)) {
         throw constants.COUPON.START_DATE_OVERLAPED;
       }
     }
-
     if (media && media.length > 0) {
       for (let itm of media) {
         let check = await Users.findOne({ id: itm });
@@ -338,13 +346,22 @@ exports.editCoupon = async function (req, res) {
       }
     }
     //check
-    if (couponExists.expireCheck == "true") {
-      if (new Date(startDate) > new Date(expirationDate)) {
-        throw constants.COUPON.START_DATE_OVERLAPED;
-      }
-    }else{
-      delete req.body.expirationDate;
+    // if (couponExists.expireCheck == "true") {
+    //   if (new Date(startDate) > new Date(expirationDate)) {
+    //     throw constants.COUPON.START_DATE_OVERLAPED;
+    //   }
+    // }else{
+    //   delete req.body.expirationDate;
+    // }
+     if (couponExists.expireCheck == false) {
+     if (expirationDate) {
+      req.body.expirationDate = new Date(expirationDate);
     }
+    }else if (req.body?.expireCheck  == false) {
+      req.body.expirationDate = new Date(expirationDate);
+     }else{
+      delete req.body.expirationDate
+     }
     
 
     const coupon = await Coupon.updateOne({ id: req.body.id }, req.body);
