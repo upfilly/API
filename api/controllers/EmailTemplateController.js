@@ -763,6 +763,7 @@ exports.getUserEmailTemplate = async (req, res) => {
               else: false,
             },
           },
+          templateName: {$toLower : "$emailtemplate_details.templateName"},
         },
       },
 
