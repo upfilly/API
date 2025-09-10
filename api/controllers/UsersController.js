@@ -1093,654 +1093,701 @@ module.exports = {
    */
   // old lsiting not delete
 
-  getAllAffiliateForBrand: async (req, res) => {
-    console.log("brand")
-    try {
-      let page = req.param("page") || 1;
-      let count = req.param("count") || 10;
-      let {
-        search,
-        role,
-        isDeleted,
-        status,
-        sortBy,
-        lat,
-        lng,
-        isTrusted,
-        isFeatured,
-        createBybrand_id,
-        start_date,
-        end_date,
-        affiliate_group_id,
-        association_status,
-        cat_type,
-        affiliate_type,
-        invite_status,
-        sub_category_id,
-        category_id,
-        sub_child_category_id,
-        addedBy,
-        campaign_id,
-      } = req.query;
-      let skipNo = (Number(page) - 1) * Number(count);
-      let query = { isDeleted: false };
+    getAllAffiliateForBrand: async (req, res) => {
+      console.log("brand")
+      try {
+        let page = req.param("page") || 1;
+        let count = req.param("count") || 10;
+        let {
+          search,
+          role,
+          isDeleted,
+          status,
+          sortBy,
+          lat,
+          lng,
+          isTrusted,
+          isFeatured,
+          createBybrand_id,
+          start_date,
+          end_date,
+          affiliate_group_id,
+          association_status,
+          cat_type,
+          affiliate_type,
+          invite_status,
+          sub_category_id,
+          category_id,
+          sub_child_category_id,
+          addedBy,
+          campaign_id,
+        } = req.query;
+        let skipNo = (Number(page) - 1) * Number(count);
+        let query = { isDeleted: false };
+        let newQuery = {}
 
-      if (search) {
-        search = Services.Utils.remove_special_char_exept_underscores(search);
-        query.$or = [
-          { fullName: { $regex: search, $options: "i" } },
-          { email: { $regex: search, $options: "i" } },
-          { affiliate_code: { $regex: search, $options: "i" } },
-          { firstName: { $regex: search, $options: "i" } },
-          { lastName: { $regex: search, $options: "i" } },
-          { mobileNo: { $regex: search, $options: "i" } },
-          { work_phone: { $regex: search, $options: "i" } },
-        ];
-      }
 
-      let sortquery = {};
-
-      if (sortBy && typeof sortBy === "string") {
-        const [rawField, rawOrder] = sortBy.trim().split(/\s+/);
-        const field = rawField || "createdAt";
-        const sortType = rawOrder?.toLowerCase() === "asc" ? 1 : -1;
-        sortquery[field] = sortType;
-      } else {
-        sortquery = { updatedAt: -1 };
-      }
-
-      if (status) {
-        query.status = status;
-      }
-      if (association_status) {
-        query.association_status = association_status;
-      }
-
-      if(campaign_id){
-        query.campaign_id  = new ObjectId(campaign_id)
-      }
-      if (role) {
-        // console.log(role);
-        query.role = role;
-      } else {
-        if (req.identity.role == "admin") {
-          query.role = { $nin: ["admin"] };
-        } else {
-          query.role = { $nin: ["admin", "team", ""] };
+        if (search) {
+          search = Services.Utils.remove_special_char_exept_underscores(search);
+          query.$or = [
+            { fullName: { $regex: search, $options: "i" } },
+            { email: { $regex: search, $options: "i" } },
+            { affiliate_code: { $regex: search, $options: "i" } },
+            { firstName: { $regex: search, $options: "i" } },
+            { lastName: { $regex: search, $options: "i" } },
+            { mobileNo: { $regex: search, $options: "i" } },
+            { work_phone: { $regex: search, $options: "i" } },
+          ];
         }
-      }
-      if (affiliate_type) {
-        query.affiliate_type = affiliate_type;
-      }
 
-      if (isDeleted) {
-        query.isDeleted = isDeleted === "true" ? true : false;
-      }
+        let sortquery = {};
 
-      if (isTrusted) {
-        query.isTrusted = isTrusted === "true" ? true : false;
-      }
+        if (sortBy && typeof sortBy === "string") {
+          const [rawField, rawOrder] = sortBy.trim().split(/\s+/);
+          const field = rawField || "createdAt";
+          const sortType = rawOrder?.toLowerCase() === "asc" ? 1 : -1;
+          sortquery[field] = sortType;
+        } else {
+          sortquery = { updatedAt: -1 };
+        }
 
-      if (isFeatured) {
-        query.isFeatured = isFeatured === "true" ? true : false;
-      }
+        if (status) {
+          query.status = status;
+        }
+        if (association_status) {
+          query.association_status = association_status;
+        }
 
-      if (createBybrand_id) {
-        query.createdByBrand = new ObjectId(createBybrand_id);
-      }
-
-      if (addedBy) {
-        query.addedBy = new ObjectId(addedBy);
-      }
-
-      if (category_id) {
-        category_id = await Services.Utils.parseJsonArrayFilter(category_id);
-        query.category_id = { $in: category_id };
-      }
-
-      if (sub_child_category_id) {
-        sub_child_category_id = await Services.Utils.parseJsonArrayFilter(
-          sub_child_category_id
-        );
-        query.sub_child_category_id = { $in: sub_child_category_id };
-      }
-
-      if (sub_category_id) {
-        sub_category_id = await Services.Utils.parseJsonArrayFilter(
-          sub_category_id
-        );
-        query.sub_category_id = { $in: sub_category_id };
-      }
-
-      if (cat_type) {
-        cat_type = await Services.Utils.string_to_array(cat_type);
-        query.cat_type = { $in: cat_type };
-      }
-
-      if (start_date && end_date) {
-        const date = new Date(start_date);
-        const endDate = new Date(end_date);
-        // Set endDate to the end of the day for better inclusiveness
-        endDate.setHours(23, 59, 59, 999);
-
-        query.$and = [
-          { createdAt: { $gte: date } },
-          { createdAt: { $lte: endDate } },
-        ];
-      }
-
-      if (affiliate_group_id) {
-        query.affiliate_group = {
-          $in: string_ids_toObjectIds_array(affiliate_group_id),
-        };
-      }
-      if (invite_status) {
-        query.invite_status = invite_status;
-      }
-      // if (role != "users") {
-      //   query.addedBy = { $eq: null };
-      // }
-      console.log(req.identity.id)
-      let pipeline = [
-        {
-          $lookup: {
-            from: "affiliatemanagement",
-            localField: "affiliate_group",
-            foreignField: "_id",
-            as: "affiliate_group_details",
-          },
-        },
-        {
-          $unwind: {
-            path: "$affiliate_group_details",
-            preserveNullAndEmptyArrays: true,
-          },
-        },
-        {
-          $lookup: {
-            from: "commoncategories",
-            let: {
-              category_ids: {
-                $cond: {
-                  if: { $isArray: "$category_id" },
-                  then: {
-                    $map: {
-                      input: "$category_id",
-                      as: "id",
-                      in: { $toObjectId: "$$id" },
-                    },
-                  },
-                  else: [],
-                },
-              },
-            },
-            pipeline: [
-              {
-                $match: {
-                  $expr: {
-                    $and: [
-                      { $in: ["$_id", "$$category_ids"] },
-                      { $eq: ["$isDeleted", false] },
-                    ],
-                  },
-                },
-              },
-              {
-                $project: {
-                  _id: 1,
-                  name: 1,
-                  cat_type: 1,
-                },
-              },
-            ],
-            as: "categoryDetails",
-          },
-        },
-        {
-          $lookup: {
-            from: "commoncategories",
-            let: {
-              sub_category_ids: {
-                $cond: {
-                  if: { $isArray: "$sub_category_id" },
-                  then: {
-                    $map: {
-                      input: "$sub_category_id",
-                      as: "id",
-                      in: { $toObjectId: "$$id" },
-                    },
-                  },
-                  else: [],
-                },
-              },
-            },
-            pipeline: [
-              {
-                $match: {
-                  $expr: {
-                    $and: [
-                      { $in: ["$_id", "$$sub_category_ids"] },
-                      { $eq: ["$isDeleted", false] },
-                    ],
-                  },
-                },
-              },
-              {
-                $project: {
-                  _id: 1,
-                  name: 1,
-                },
-              },
-            ],
-            as: "subCategoryDetails",
-          },
-        },
-        {
-          $lookup: {
-            from: "commoncategories",
-            let: {
-              sub_child_category_ids: {
-                $cond: {
-                  if: { $isArray: "$sub_child_category_id" },
-                  then: {
-                    $map: {
-                      input: "$sub_child_category_id",
-                      as: "id",
-                      in: { $toObjectId: "$$id" },
-                    },
-                  },
-                  else: [],
-                },
-              },
-            },
-            pipeline: [
-              {
-                $match: {
-                  $expr: {
-                    $and: [
-                      { $in: ["$_id", "$$sub_child_category_ids"] },
-                      { $eq: ["$isDeleted", false] },
-                    ],
-                  },
-                },
-              },
-              {
-                $project: {
-                  _id: 1,
-                  name: 1,
-                },
-              },
-            ],
-            as: "subChildCategoryDetails",
-          },
-        },
-        // {
-        //   $lookup: {
-        //     from: "affiliateinvite",
-        //     let: {
-        //       affiliate_id: "$_id",
-        //       isDeleted: false,
-        //       addedBy: new ObjectId(req.identity.id),
-        //       brand_id: new ObjectId(req.identity.id),
-        //     },
-        //     // let: { user_id: "$req.identity.id", fav_user_id: new ObjectId("64d076e86ecebee01af09d8c") },
-        //     pipeline: [
-        //       {
-        //         $match: {
-        //           $expr: {
-        //             $and: [
-        //               { $eq: ["$addedBy", "$$addedBy"] },
-        //               { $eq: ["$isDeleted", "$$isDeleted"] },
-        //               { $eq: ["$affiliate_id", "$$affiliate_id"] },
-        //               { $eq: ["$brand_id", "$$brand_id"] },
-        //             ],
-        //           },
-        //         },
-        //       },
-        //     ],
-        //     as: "invite_affiliate_details",
-        //   },
-        // },
-        // {
-        //   $unwind: {
-        //     path: "$invite_affiliate_details",
-        //     preserveNullAndEmptyArrays: true,
-        //   },
-        // },
-
-        {
-          $lookup: {
-            from: "brandaffiliateassociation",
-            let: {
-              affiliate_id: "$_id",
-              brand_id: new ObjectId(req.identity.id),
-            },
-            pipeline: [
-              {
-                $match: {
-                  $expr: {
-                    $and: [
-                      { $eq: ["$affiliate_id", "$$affiliate_id"] },
-                      { $eq: ["$brand_id", "$$brand_id"] },
-                      { $eq: ["$isDeleted", false] },
-                    ],
-                  },
-                },
-              },
-              {
-                $sort:{
-                  "createdAt":-1
-                }
-              },
-              {
-                $project: { _id: 0, status: 1, campaign_id: 1 }
-              }
-            ],
-            as: "associatedAffiliates",
-          },
-        },
-        {
-          $addFields: {
-            association_status: {
-              $switch: {
-                branches: [
-                  // If any accepted exists
-                  {
-                    case: {
-                      $gt: [
-                        {
-                          $size: {
-                            $filter: {
-                              input: "$associatedAffiliates",
-                              as: "assoc",
-                              cond: { $eq: ["$$assoc.status", "accepted"] }
-                            }
-                          }
-                        },
-                        0
-                      ]
-                    },
-                    then: "accepted"
-                  },
-                  // Else if any rejected exists
-                  {
-                    case: {
-                      $gt: [
-                        {
-                          $size: {
-                            $filter: {
-                              input: "$associatedAffiliates",
-                              as: "assoc",
-                              cond: { $eq: ["$$assoc.status", "rejected"] }
-                            }
-                          }
-                        },
-                        0
-                      ]
-                    },
-                    then: "rejected"
-                  },
-                  // Else if all are pending
-                  {
-                    case: {
-                      $and: [
-                        { $gt: [{ $size: "$associatedAffiliates" }, 0] }, // at least 1
-                        {
-                          $eq: [
-                            {
-                              $size: {
-                                $filter: {
-                                  input: "$associatedAffiliates",
-                                  as: "assoc",
-                                  cond: { $eq: ["$$assoc.status", "pending"] }
-                                }
-                              }
-                            },
-                            { $size: "$associatedAffiliates" } // all are pending
-                          ]
-                        }
-                      ]
-                    },
-                    then: "pending"
-                  }
-                ],
-                default: "not_invite" // if no data
-              }
-            }
+        if (campaign_id) {
+          query.campaign_id = new ObjectId(campaign_id);
+        }
+        if (role) {
+          // console.log(role);
+          query.role = role;
+        } else {
+          if (req.identity.role == "admin") {
+            query.role = { $nin: ["admin"] };
+          } else {
+            query.role = { $nin: ["admin", "team", ""] };
           }
-        },
-        //   {
-        //   $lookup: {
-        //     from: "campaign",
-        //     localField: "associatedAffiliates.campaign_id",
-        //     foreignField: "_id",
-        //     as: "campaign_details",
-        //   },
-        // },
-        // {
-        //   $unwind: {
-        //     path: "$campaign_details",
-        //     preserveNullAndEmptyArrays: true,
-        //   },
-        // },
-        {
-          $addFields: {
-            acceptedCampaignIds: {
-              $map: {
-                input: {
+        }
+        if (affiliate_type) {
+          query.affiliate_type = affiliate_type;
+        }
+
+        if (isDeleted) {
+          query.isDeleted = isDeleted === "true" ? true : false;
+        }
+
+        if (isTrusted) {
+          query.isTrusted = isTrusted === "true" ? true : false;
+        }
+
+        if (isFeatured) {
+          query.isFeatured = isFeatured === "true" ? true : false;
+        }
+
+        if (createBybrand_id) {
+          query.createdByBrand = new ObjectId(createBybrand_id);
+        }
+
+        if (addedBy) {
+          query.addedBy = new ObjectId(addedBy);
+        }
+
+        // if (category_id) {
+        //   category_id = await Services.Utils.parseJsonArrayFilter(category_id);
+        //   query.category_id = { $in: category_id };
+        //   newQuery.category_id = { $in: category_id };
+
+        // }
+
+        // if (sub_child_category_id) {
+        //   sub_child_category_id = await Services.Utils.parseJsonArrayFilter(
+        //     sub_child_category_id
+        //   );
+        //   query.sub_child_category_id = { $in: sub_child_category_id };
+        //   newQuery.sub_child_category_id = { $in: sub_child_category_id };
+
+        // }
+
+        // if (sub_category_id) {
+        //   sub_category_id = await Services.Utils.parseJsonArrayFilter(
+        //     sub_category_id
+        //   );
+        //   query.sub_category_id = { $in: sub_category_id };
+        //   newQuery.sub_category_id = { $in: sub_category_id };
+
+        // }
+         const categoryOrConditions = [];
+
+         if (category_id) {
+           const categoryIds = await Services.Utils.parseJsonArrayFilter(
+             category_id
+           );
+           categoryOrConditions.push({
+             category_id: { $in: categoryIds },
+           });
+         }
+
+         if (sub_category_id) {
+           const subCategoryIds = await Services.Utils.parseJsonArrayFilter(
+             sub_category_id
+           );
+           categoryOrConditions.push({
+             sub_category_id: { $in: subCategoryIds },
+           });
+         }
+
+         if (sub_child_category_id) {
+           const subChildCategoryIds =
+             await Services.Utils.parseJsonArrayFilter(sub_child_category_id);
+           categoryOrConditions.push({
+             sub_child_category_id: { $in: subChildCategoryIds },
+           });
+         }
+
+         if (categoryOrConditions.length > 0) {
+           query.$or = query.$or || [];
+           query.$or.push(...categoryOrConditions);
+         }
+
+
+
+        if (cat_type) {
+          cat_type = await Services.Utils.string_to_array(cat_type);
+          query.cat_type = { $in: cat_type };
+        }
+
+        if (start_date && end_date) {
+          const date = new Date(start_date);
+          const endDate = new Date(end_date);
+          // Set endDate to the end of the day for better inclusiveness
+          endDate.setHours(23, 59, 59, 999);
+
+          query.$and = [
+            { createdAt: { $gte: date } },
+            { createdAt: { $lte: endDate } },
+          ];
+        }
+
+        if (affiliate_group_id) {
+          query.affiliate_group = {
+            $in: string_ids_toObjectIds_array(affiliate_group_id),
+          };
+        }
+        if (invite_status) {
+          query.invite_status = invite_status;
+        }
+        // if (role != "users") {
+        //   query.addedBy = { $eq: null };
+        // }
+        console.log("query", query);
+        console.log("req.query", req.query);
+
+        console.log(req.identity.id);
+        let pipeline = [
+          {
+            $lookup: {
+              from: "affiliatemanagement",
+              localField: "affiliate_group",
+              foreignField: "_id",
+              as: "affiliate_group_details",
+            },
+          },
+          {
+            $unwind: {
+              path: "$affiliate_group_details",
+              preserveNullAndEmptyArrays: true,
+            },
+          },
+          {
+            $lookup: {
+              from: "commoncategories",
+              let: {
+                category_ids: {
+                  $cond: {
+                    if: { $isArray: "$category_id" },
+                    then: {
+                      $map: {
+                        input: "$category_id",
+                        as: "id",
+                        in: { $toObjectId: "$$id" },
+                      },
+                    },
+                    else: [],
+                  },
+                },
+              },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: {
+                      $and: [
+                        { $in: ["$_id", "$$category_ids"] },
+                        { $eq: ["$isDeleted", false] },
+                      ],
+                    },
+                  },
+                },
+                {
+                  $project: {
+                    _id: 1,
+                    name: 1,
+                    cat_type: 1,
+                  },
+                },
+              ],
+              as: "categoryDetails",
+            },
+          },
+          {
+            $lookup: {
+              from: "commoncategories",
+              let: {
+                sub_category_ids: {
+                  $cond: {
+                    if: { $isArray: "$sub_category_id" },
+                    then: {
+                      $map: {
+                        input: "$sub_category_id",
+                        as: "id",
+                        in: { $toObjectId: "$$id" },
+                      },
+                    },
+                    else: [],
+                  },
+                },
+              },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: {
+                      $and: [
+                        { $in: ["$_id", "$$sub_category_ids"] },
+                        { $eq: ["$isDeleted", false] },
+                      ],
+                    },
+                  },
+                },
+                {
+                  $project: {
+                    _id: 1,
+                    name: 1,
+                  },
+                },
+              ],
+              as: "subCategoryDetails",
+            },
+          },
+          {
+            $lookup: {
+              from: "commoncategories",
+              let: {
+                sub_child_category_ids: {
+                  $cond: {
+                    if: { $isArray: "$sub_child_category_id" },
+                    then: {
+                      $map: {
+                        input: "$sub_child_category_id",
+                        as: "id",
+                        in: { $toObjectId: "$$id" },
+                      },
+                    },
+                    else: [],
+                  },
+                },
+              },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: {
+                      $and: [
+                        { $in: ["$_id", "$$sub_child_category_ids"] },
+                        { $eq: ["$isDeleted", false] },
+                      ],
+                    },
+                  },
+                },
+                {
+                  $project: {
+                    _id: 1,
+                    name: 1,
+                  },
+                },
+              ],
+              as: "subChildCategoryDetails",
+            },
+          },
+        
+          // {
+          //   $lookup: {
+          //     from: "affiliateinvite",
+          //     let: {
+          //       affiliate_id: "$_id",
+          //       isDeleted: false,
+          //       addedBy: new ObjectId(req.identity.id),
+          //       brand_id: new ObjectId(req.identity.id),
+          //     },
+          //     // let: { user_id: "$req.identity.id", fav_user_id: new ObjectId("64d076e86ecebee01af09d8c") },
+          //     pipeline: [
+          //       {
+          //         $match: {
+          //           $expr: {
+          //             $and: [
+          //               { $eq: ["$addedBy", "$$addedBy"] },
+          //               { $eq: ["$isDeleted", "$$isDeleted"] },
+          //               { $eq: ["$affiliate_id", "$$affiliate_id"] },
+          //               { $eq: ["$brand_id", "$$brand_id"] },
+          //             ],
+          //           },
+          //         },
+          //       },
+          //     ],
+          //     as: "invite_affiliate_details",
+          //   },
+          // },
+          // {
+          //   $unwind: {
+          //     path: "$invite_affiliate_details",
+          //     preserveNullAndEmptyArrays: true,
+          //   },
+          // },
+
+          {
+            $lookup: {
+              from: "brandaffiliateassociation",
+              let: {
+                affiliate_id: "$_id",
+                brand_id: new ObjectId(req.identity.id),
+              },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: {
+                      $and: [
+                        { $eq: ["$affiliate_id", "$$affiliate_id"] },
+                        { $eq: ["$brand_id", "$$brand_id"] },
+                        { $eq: ["$isDeleted", false] },
+                      ],
+                    },
+                  },
+                },
+                {
+                  $sort: {
+                    createdAt: -1,
+                  },
+                },
+                {
+                  $project: { _id: 0, status: 1, campaign_id: 1 },
+                },
+              ],
+              as: "associatedAffiliates",
+            },
+          },
+          {
+            $addFields: {
+              association_status: {
+                $switch: {
+                  branches: [
+                    // If any accepted exists
+                    {
+                      case: {
+                        $gt: [
+                          {
+                            $size: {
+                              $filter: {
+                                input: "$associatedAffiliates",
+                                as: "assoc",
+                                cond: { $eq: ["$$assoc.status", "accepted"] },
+                              },
+                            },
+                          },
+                          0,
+                        ],
+                      },
+                      then: "accepted",
+                    },
+                    // Else if any rejected exists
+                    {
+                      case: {
+                        $gt: [
+                          {
+                            $size: {
+                              $filter: {
+                                input: "$associatedAffiliates",
+                                as: "assoc",
+                                cond: { $eq: ["$$assoc.status", "rejected"] },
+                              },
+                            },
+                          },
+                          0,
+                        ],
+                      },
+                      then: "rejected",
+                    },
+                    // Else if all are pending
+                    {
+                      case: {
+                        $and: [
+                          { $gt: [{ $size: "$associatedAffiliates" }, 0] }, // at least 1
+                          {
+                            $eq: [
+                              {
+                                $size: {
+                                  $filter: {
+                                    input: "$associatedAffiliates",
+                                    as: "assoc",
+                                    cond: {
+                                      $eq: ["$$assoc.status", "pending"],
+                                    },
+                                  },
+                                },
+                              },
+                              { $size: "$associatedAffiliates" }, // all are pending
+                            ],
+                          },
+                        ],
+                      },
+                      then: "pending",
+                    },
+                  ],
+                  default: "not_invite", // if no data
+                },
+              },
+            },
+          },
+          //   {
+          //   $lookup: {
+          //     from: "campaign",
+          //     localField: "associatedAffiliates.campaign_id",
+          //     foreignField: "_id",
+          //     as: "campaign_details",
+          //   },
+          // },
+          // {
+          //   $unwind: {
+          //     path: "$campaign_details",
+          //     preserveNullAndEmptyArrays: true,
+          //   },
+          // },
+          {
+            $addFields: {
+              acceptedCampaignIds: {
+                $map: {
+                  input: {
+                    $filter: {
+                      input: "$associatedAffiliates",
+                      as: "assoc",
+                      cond: { $eq: ["$$assoc.status", "accepted"] },
+                    },
+                  },
+                  as: "acceptedAssoc",
+                  in: "$$acceptedAssoc.campaign_id",
+                },
+              },
+            },
+          },
+          {
+            $addFields: {
+              acceptedAssoc: {
+                $first: {
                   $filter: {
                     input: "$associatedAffiliates",
                     as: "assoc",
-                    cond: { $eq: ["$$assoc.status", "accepted"] }
-                  }
+                    cond: { $eq: ["$$assoc.status", "accepted"] },
+                  },
                 },
-                as: "acceptedAssoc",
-                in: "$$acceptedAssoc.campaign_id"
-              }
-            }
-          }
-        },
-        {
-          $addFields: {
-            acceptedAssoc: {
-              $first: {
-                $filter: {
-                  input: "$associatedAffiliates",
-                  as: "assoc",
-                  cond: { $eq: ["$$assoc.status", "accepted"] }
-                }
-              }
-            }
-          }
-        },
-        {
-          $lookup: {
-            from: "campaign",
-            let: { campaignId: "$acceptedAssoc.campaign_id" },
-            pipeline: [
-              { $match: { $expr: { $eq: ["$_id", "$$campaignId"] } } },
-              { $project: { _id: 1, name: 1 } }
-            ],
-            as: "campaign_details"
-          }
-        },
-        {
-          $unwind: {
-            path: "$campaign_details",
-            preserveNullAndEmptyArrays: true
-          }
+              },
+            },
+          },
+          {
+            $lookup: {
+              from: "campaign",
+              let: { campaignId: "$acceptedAssoc.campaign_id" },
+              pipeline: [
+                { $match: { $expr: { $eq: ["$_id", "$$campaignId"] } } },
+                { $project: { _id: 1, name: 1 } },
+              ],
+              as: "campaign_details",
+            },
+          },
+          {
+            $unwind: {
+              path: "$campaign_details",
+              preserveNullAndEmptyArrays: true,
+            },
+          },
+        ];
+
+        let projection = {
+          $project: {
+            id: "$_id",
+            firstName: "$firstName",
+            lastName: "$lastName",
+            fullName: { $toLower: "$fullName" },
+            email: "$email",
+            role: "$role",
+            image: "$image",
+            logo: "$logo",
+            address: "$address",
+            country: "$country",
+            mobileNo: "$mobileNo",
+            work_phone: "$work_phone",
+            affiliate_code: "$affiliate_code",
+            affiliate_type: "$affiliate_type",
+            social_media_platforms: "$social_media_platforms",
+            createdByBrand: "$createdByBrand",
+            affiliate_group: "$affiliate_group",
+            affiliate_group_name: "$affiliate_group_details.group_name",
+            invite_affiliate_details: "$invite_affiliate_details",
+            invite_status: {
+              $cond: [
+                { $ifNull: ["$invite_affiliate_details.status", false] },
+                "$invite_affiliate_details.status",
+                "not_invited",
+              ],
+            },
+            campaign_details: {
+              _id: "$campaign_details._id",
+              name: "$campaign_details.name",
+            },
+            invite_affiliate_details_status: "$invite_affiliate_details.status",
+            status: "$status",
+            createdAt: "$createdAt",
+            updatedAt: "$updatedAt",
+            isDeleted: "$isDeleted",
+            addedBy: "$addedBy",
+            location: "$location",
+            isFeatured: "$isFeatured",
+            isTrusted: "$isTrusted",
+            category_id: "$category_id",
+            categoryDetails: "$categoryDetails",
+            subCategoryDetails: "$subCategoryDetails",
+            subChildCategoryDetails: "$subChildCategoryDetails",
+            sub_category_id: "$sub_category_id",
+            sub_child_category_id: "$sub_child_category_id",
+            propertyType: "$propertyType",
+            timezone: "$timezone",
+            association_status: "$association_status",
+            affiliates_active_count: 1,
+            campaign_id: "$campaign_details._id",
+          },
+        };
+        pipeline.push(projection);
+        // pipeline.push({
+        //   $addFields: {
+        //     finalStatus: {
+        //       $cond: {
+        //         if: {
+        //           $or: [
+        //             {
+        //               $eq: [
+        //                 { $toLower: "$invite_affiliate_details.status" },
+        //                 "accepted",
+        //               ],
+        //             },
+        //             {
+        //               $eq: [
+        //                 { $toLower: "$affiliate_group_details.status" },
+        //                 "active",
+        //               ],
+        //             },
+        //             {
+        //               $gt: [
+        //                 {
+        //                   $size: {
+        //                     $filter: {
+        //                       input: "$associatedAffiliates",
+        //                       as: "assoc",
+        //                       cond: { $eq: ["$$assoc.status", "accepted"] },
+        //                     },
+        //                   },
+        //                 },
+        //                 0,
+        //               ],
+        //             },
+        //           ],
+        //         },
+        //         then: "accepted",
+        //         else: "not_accepted",
+        //       },
+        //     },
+        //   },
+        // });
+        // pipeline.push({
+        //   $match: { finalStatus: "accepted" },
+        // });
+
+        pipeline.push({
+          $match: query,
+        });
+         pipeline.push({
+          $match: newQuery,
+        });
+        pipeline.push({
+          $sort: sortquery,
+        });
+        if (lat && lng) {
+          pipeline.unshift({
+            $geoNear: {
+              near: { type: "Point", coordinates: [Number(lng), Number(lat)] },
+              distanceField: "dist.calculated",
+              maxDistance: 200 * 1000, // in km to meter
+              distanceMultiplier: 1 / 1000, // in km
+              query: { isDeleted: false },
+              spherical: true,
+            },
+          });
+        }
+        let totalResult = await db
+          .collection("users")
+          .aggregate(pipeline)
+          .toArray();
+        pipeline.push({
+          $skip: Number(skipNo),
+        });
+        pipeline.push({
+          $limit: Number(count),
+        });
+
+        let result = await db.collection("users").aggregate(pipeline).toArray();
+        let resData = {
+          total: totalResult ? totalResult.length : 0,
+          data: result ? result : [],
+        };
+        if (!req.param("page") && !req.param("count")) {
+          resData.data = totalResult ? totalResult : [];
         }
 
+        // for (let itm of result) {
+        //   const data = await BrandAffiliateAssociation.find({
+        //     affiliate_id: String(itm.id),
+        //     brand_id: req.identity.id,
+        //     isDeleted: false,
+        //   });
 
-      ];
+        //   if (!data || data.length === 0) {
+        //     itm.status = "pending"; // default when no association exists
+        //     continue;
+        //   }
 
-      let projection = {
-        $project: {
-          id: "$_id",
-          firstName: "$firstName",
-          lastName: "$lastName",
-          fullName: { $toLower: "$fullName" },
-          email: "$email",
-          role: "$role",
-          image: "$image",
-          logo: "$logo",
-          address: "$address",
-          country: "$country",
-          mobileNo: "$mobileNo",
-          work_phone: "$work_phone",
-          affiliate_code: "$affiliate_code",
-          affiliate_type: "$affiliate_type",
-          social_media_platforms: "$social_media_platforms",
-          createdByBrand: "$createdByBrand",
-          affiliate_group: "$affiliate_group",
-          affiliate_group_name: "$affiliate_group_details.group_name",
-          invite_affiliate_details: "$invite_affiliate_details",
-          invite_status: {
-            $cond: [
-              { $ifNull: ["$invite_affiliate_details.status", false] },
-              "$invite_affiliate_details.status",
-              "not_invited",
-            ],
-          },
-          campaign_details: {
-            _id: "$campaign_details._id",
-            name: "$campaign_details.name",
-          },
-          invite_affiliate_details_status: "$invite_affiliate_details.status",
-          status: "$status",
-          createdAt: "$createdAt",
-          updatedAt: "$updatedAt",
-          isDeleted: "$isDeleted",
-          addedBy: "$addedBy",
-          location: "$location",
-          isFeatured: "$isFeatured",
-          isTrusted: "$isTrusted",
-          category_id: "$category_id",
-          categoryDetails: "$categoryDetails",
-          subCategoryDetails: "$subCategoryDetails",
-          subChildCategoryDetails: "$subChildCategoryDetails",
-          sub_category_id: "$sub_category_id",
-          sub_child_category_id: "$sub_child_category_id",
-          propertyType: "$propertyType",
-          timezone: "$timezone",
-          association_status: "$association_status",
-          affiliates_active_count: 1,
-          campaign_id:"$campaign_details._id"
-        },
-      };
-      pipeline.push(projection);
-      // pipeline.push({
-      //   $addFields: {
-      //     finalStatus: {
-      //       $cond: {
-      //         if: {
-      //           $or: [
-      //             {
-      //               $eq: [
-      //                 { $toLower: "$invite_affiliate_details.status" },
-      //                 "accepted",
-      //               ],
-      //             },
-      //             {
-      //               $eq: [
-      //                 { $toLower: "$affiliate_group_details.status" },
-      //                 "active",
-      //               ],
-      //             },
-      //             {
-      //               $gt: [
-      //                 {
-      //                   $size: {
-      //                     $filter: {
-      //                       input: "$associatedAffiliates",
-      //                       as: "assoc",
-      //                       cond: { $eq: ["$$assoc.status", "accepted"] },
-      //                     },
-      //                   },
-      //                 },
-      //                 0,
-      //               ],
-      //             },
-      //           ],
-      //         },
-      //         then: "accepted",
-      //         else: "not_accepted",
-      //       },
-      //     },
-      //   },
-      // });
-      // pipeline.push({
-      //   $match: { finalStatus: "accepted" },
-      // });
+        //   // Check priority
+        //   if (data.some(d => d.status === "accepted")) {
+        //     itm.status = "accepted";
+        //   } else if (data.some(d => d.status === "rejected")) {
+        //     itm.status = "rejected";
+        //   } else {
+        //     itm.status = "pending";
+        //   }
+        // }
 
-      pipeline.push({
-        $match: query,
-      });
-      pipeline.push({
-        $sort: sortquery,
-      });
-      if (lat && lng) {
-        pipeline.unshift({
-          $geoNear: {
-            near: { type: "Point", coordinates: [Number(lng), Number(lat)] },
-            distanceField: "dist.calculated",
-            maxDistance: 200 * 1000, // in km to meter
-            distanceMultiplier: 1 / 1000, // in km
-            query: { isDeleted: false },
-            spherical: true,
-          },
-        });
+        return response.success(resData, constants.user.FETCH, req, res);
+      } catch (error) {
+        console.log(error, "---err");
+        return response.failed(null, `${error}`, req, res);
       }
-      let totalResult = await db
-        .collection("users")
-        .aggregate(pipeline)
-        .toArray();
-      pipeline.push({
-        $skip: Number(skipNo),
-      });
-      pipeline.push({
-        $limit: Number(count),
-      });
-
-      let result = await db.collection("users").aggregate(pipeline).toArray();
-      let resData = {
-        total: totalResult ? totalResult.length : 0,
-        data: result ? result : [],
-      };
-      if (!req.param("page") && !req.param("count")) {
-        resData.data = totalResult ? totalResult : [];
-      }
-
-
-      // for (let itm of result) {
-      //   const data = await BrandAffiliateAssociation.find({
-      //     affiliate_id: String(itm.id),
-      //     brand_id: req.identity.id,
-      //     isDeleted: false,
-      //   });
-
-      //   if (!data || data.length === 0) {
-      //     itm.status = "pending"; // default when no association exists
-      //     continue;
-      //   }
-
-      //   // Check priority
-      //   if (data.some(d => d.status === "accepted")) {
-      //     itm.status = "accepted";
-      //   } else if (data.some(d => d.status === "rejected")) {
-      //     itm.status = "rejected";
-      //   } else {
-      //     itm.status = "pending";
-      //   }
-      // }
-
-
-      return response.success(resData, constants.user.FETCH, req, res);
-    } catch (error) {
-      console.log(error, "---err");
-      return response.failed(null, `${error}`, req, res);
-    }
-  },
+    },
 
 
 
