@@ -541,13 +541,16 @@ exports.findGraph = async (req, res) => {
         $group: {
           _id: "$source", // You can change this to "campaign" or any field that makes sense
           totalAmount: { $sum: "$price" },
-          count: { $sum: 1 }
+          count: { $sum: 1 },
+          firstCreatedAt: { $first: "$createdAt"},
+
         }
       },
       {
         $project: {
           totalAmount: 1,
           count: 1,
+          createdAt: "$firstCreatedAt",
           _id: 0
         }
       },

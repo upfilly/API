@@ -1123,6 +1123,7 @@ exports.transactionGraph = async function (req, res) {
           $group: {
             _id: "$transaction_type",
             totalAmount: { $sum: "$amount" },
+             firstCreatedAt: { $first: "$createdAt"},
             count: { $sum: 1 },
           },
         },
@@ -1131,6 +1132,7 @@ exports.transactionGraph = async function (req, res) {
             transaction_type: "$_id",
             totalAmount: 1,
             count: 1,
+            createdAt: "$firstCreatedAt",
             _id: 0,
           },
         },
