@@ -360,42 +360,136 @@ exports.getDefaultAffiliateGroup = async (req, res) => {
     }
 }
 
+// exports.getCampaignsByAffiliate = async (req, res) => {
+//     try {
+//         let {
+//             affiliateId,
+//             brandId,
+//             status
+//         } = req.query;
+
+//         if (!affiliateId) {
+//             return res.status(400).json({
+//                 success: false,
+//                 error: { code: 400, message: "affiliateId is required." },
+//             });
+//         }
+
+//         let query = {
+//             affiliate_id: affiliateId,
+//             brand_id: brandId,
+//             isDeleted: false,
+//             isActive: true,
+//             status: status || "accepted"
+//         }
+
+//         let findCampaigns = await BrandAffiliateAssociation.findOne(query);
+
+//         if (findCampaigns) {
+//          const campaign = await Campaign.findOne({ _id: association.campaign_id });
+
+//       if (campaign) {
+//         const result = {
+//           ...association.toObject(),
+//           campaign_name: campaign.name,
+//           campaign_details: campaign, 
+//         };
+
+//     //     return response.success(
+//     //       result,
+//     //       "Campaigns associated with this affiliate fetched successfully.",
+//     //       req,
+//     //       res
+//     //     );
+//       }
+//             return response.success(result, "Campaigns associated with this affiliate fetched successfully.", req, res);
+//         }
+//         let defaultCampaign = await Campaign.findOne({ brand_id: brandId, isDefault: true })
+//         return response.success(defaultCampaign, "No affiliate-specific campaign found. Showing default campaigns.", req, res);
+
+//     } catch (error) {
+//         console.log("Error in getCampaignsByAffiliate:", error);
+//         return response.failed(null, `${error}`, req, res)
+//     }
+// };
+
+
 exports.getCampaignsByAffiliate = async (req, res) => {
-    try {
-        let {
-            affiliateId,
-            brandId,
-            status
-        } = req.query;
+  try {
+    const { affiliateId, brandId, status } = req.query;
 
-        if (!affiliateId) {
-            return res.status(400).json({
-                success: false,
-                error: { code: 400, message: "affiliateId is required." },
-            });
-        }
-
-        let query = {
-            affiliate_id: affiliateId,
-            brand_id: brandId,
-            isDeleted: false,
-            isActive: true,
-            status: status || "accepted"
-        }
-
-        let findCampaigns = await BrandAffiliateAssociation.findOne(query);
-
-        if (findCampaigns) {
-            return response.success(findCampaigns, "Campaigns associated with this affiliate fetched successfully.", req, res);
-        }
-        let defaultCampaign = await Campaign.findOne({ brand_id: brandId, isDefault: true })
-        return response.success(defaultCampaign, "No affiliate-specific campaign found. Showing default campaigns.", req, res);
-
-    } catch (error) {
-        console.log("Error in getCampaignsByAffiliate:", error);
-        return response.failed(null, `${error}`, req, res)
+    if (!affiliateId) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 400, message: "affiliateId is required." },
+      });
     }
+
+    const query = {
+      affiliate_id: affiliateId,
+      brand_id: brandId,
+      isDeleted: false,
+      isActive: true,
+      status: status || "accepted",
+    };
+
+    const association = await BrandAffiliateAssociation.findOne(query);
+
+    if (association) {
+      const campaign = await Campaign.findOne({ id: association.campaign_id });
+
+      if (campaign) {
+        const result = {
+          ...association,
+          campaign_name: campaign.name,
+          campaign_details: campaign,
+        };
+
+        return response.success(
+          result,
+          "Campaigns associated with this affiliate fetched successfully.",
+          req,
+          res
+        );
+      }
+
+      return response.failed(
+        null,
+        "Campaign associated with this affiliate not found.",
+        req,
+        res
+      );
+    }
+
+    const defaultCampaign = await Campaign.findOne({
+      brand_id: brandId,
+      isDefault: true,
+    });
+
+    if (defaultCampaign) {
+      return response.success(
+        {
+          campaign_name: defaultCampaign.name,
+          campaign_details: defaultCampaign,
+        },
+        "No affiliate-specific campaign found. Showing default campaign.",
+        req,
+        res
+      );
+    }
+
+    return response.failed(
+      null,
+      "No campaign found for this brand or affiliate.",
+      req,
+      res
+    );
+  } catch (error) {
+    console.error("Error in getCampaignsByAffiliate:", error);
+    return response.failed(null, error.message || "Internal server error", req, res);
+  }
 };
+
 
 
 
