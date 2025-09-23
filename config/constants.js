@@ -573,7 +573,7 @@ module.exports.constants = {
 
   AFFILIATEINVITE: {
     INVALID_ID: "Invalid id",
-    ALREADY_EXIST: "Already exist",
+    ALREADY_EXIST: "Invitation is alreday sent.",
     ADDED: "affiliate added successfully",
     FETCHED: "Data Fetched successfully",
     UPDATED: "data updated successfully",
