@@ -167,57 +167,63 @@ exports.addBanner = async (req, res) => {
           id: affiliate.affiliate_id,
           isDeleted: false,
         });
+        if (findUser) {
+          let emailPayload = {
+            brandFullName: req.identity.fullName,
+            affiliateFullName: findUser.fullName,
+            affiliateEmail: findUser.email,
+          };
 
-        let emailPayload = {
-          brandFullName: req.identity.fullName,
-          affiliateFullName: findUser.fullName,
-          affiliateEmail: findUser.email,
-        };
-
-        let emailSentCheck = await EmailSentSetting.findOne({name : "banner",isDeleted:false})
-        if(emailSentCheck.emailSent == true){
-        await Emails.AffiliateBanner.sendEmailAffiliateBanner(emailPayload);
-        }else{
-          console.log("emailSent setting is false in banner")
-        }
-
-        await AffiliateBanners.create({
+          let emailSentCheck = await EmailSentSetting.findOne({
+            name: "banner",
+            isDeleted: false,
+          });
+          if (emailSentCheck.emailSent == true) {
+            await Emails.AffiliateBanner.sendEmailAffiliateBanner(emailPayload);
+          } else {
+            console.log("emailSent setting is false in banner");
+          }
+          await AffiliateBanners.create({
           affiliate_id: affiliate.affiliate_id,
           banner_id: add_detail.id,
           addedBy: req.identity.id,
           updatedBy: req.identity.id,
           access_type: req.body.access_type,
         });
+        }
+       
       }
     } else {
       let findUser = await Users.findOne({
         id: affiliate_id,
         isDeleted: false,
       });
+      if (findUser) {
+        let emailPayload = {
+          brandFullName: req.identity.fullName,
+          affiliateFullName: findUser.fullName,
+          affiliateEmail: findUser.email,
+        };
+        let emailSentCheck = await EmailSentSetting.findOne({
+          name: "banner",
+          isDeleted: false,
+        });
 
-      let emailPayload = {
-        brandFullName: req.identity.fullName,
-        affiliateFullName: findUser.fullName,
-        affiliateEmail: findUser.email,
-      };
-      let emailSentCheck = await EmailSentSetting.findOne({
-        name: "banner",
-        isDeleted: false,
-      });
+        if (emailSentCheck.emailSent == true) {
+          await Emails.AffiliateBanner.sendEmailAffiliateBanner(emailPayload);
+        } else {
+          console.log("emailSent setting is false in add banner");
+        }
 
-      if (emailSentCheck.emailSent == true) {
-        await Emails.AffiliateBanner.sendEmailAffiliateBanner(emailPayload);
-      }else{
-        console.log("emailSent setting is false in add banner")
+        await AffiliateBanners.create({
+          affiliate_id: findUser.id,
+          banner_id: add_detail.id,
+          addedBy: req.identity.id,
+          updatedBy: req.identity.id,
+          access_type: req.body.access_type,
+        });
       }
-
-      await AffiliateBanners.create({
-        affiliate_id: findUser.id,
-        banner_id: add_detail.id,
-        addedBy: req.identity.id,
-        updatedBy: req.identity.id,
-        access_type: req.body.access_type,
-      });
+    
     }
     if (add_detail) {
 
