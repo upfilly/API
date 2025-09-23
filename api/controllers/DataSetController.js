@@ -554,13 +554,15 @@ exports.sendDataSets = async (req, res) => {
         // status: data.affiliateStatus,
         isDeleted: false,
       });
-      let emailPayload = {
-        brandFullName: req.identity.fullName,
-        affiliateFullName: findUser.fullName,
-        affiliateEmail: findUser.email,
-      };
-     
+      if (findUser) {
+        let emailPayload = {
+          brandFullName: req.identity.fullName,
+          affiliateFullName: findUser.fullName,
+          affiliateEmail: findUser.email,
+        };
+
         await Emails.DataSet.sendDataSet(emailPayload);
+      }
     }
     // console.log(listOfAcceptedInvites,'listOfAcceptedInvites')
 
@@ -2054,7 +2056,7 @@ exports.ListDataFeedsBrand = async (req, res) => {
     } else {
       const query = { affiliate_id: affiliate_id };
       dataFeeds = await DataFeeds.find(query)
-        .select(["url", "xml", "filePath", "brand_id"])
+        .select(["doc_name","url", "xml", "filePath", "brand_id"])
         .populate("brand_id")
         .sort("createdAt DESC");
 
