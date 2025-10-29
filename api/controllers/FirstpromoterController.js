@@ -254,14 +254,14 @@ exports.addFirstPromoter = async (req, res) => {
         data.updatedAt = date;
         data.addedBy = req.identity.id;
         data.updatedBy = req.identity.id;
-        const createdPromoter = await FirstPromoter.create(data).fetch();
-      if (createdPromoter) {
+       
+      // if (createdPromoter) {
         let filePath = await Services.scalenutServices.exportScalenutData(data);
         console.log(filePath, "kjkjkjk")
         let updatedPromoter = {};
 
         if (filePath && filePath.success === true) {
-          // Update the FirstPromoter with file path
+          const createdPromoter = await FirstPromoter.create(data).fetch();
           updatedPromoter = await FirstPromoter.updateOne({ id: createdPromoter.id }, { filePath: filePath.msg });
 
           // Store the data in firstpromoterdata collection
@@ -297,7 +297,7 @@ exports.addFirstPromoter = async (req, res) => {
         }
         console.log(updatedPromoter, "0909009")
         return response.success(updatedPromoter, constants.FIRST_PROMOTER.CREATED, req, res);
-      }
+      // }
         throw constants.COMMON.SERVER_ERROR;
     } catch (error) {
         return response.failed(null, `${error}`, req, res);
