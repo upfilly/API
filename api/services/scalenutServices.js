@@ -72,423 +72,319 @@ exports.exportScalenutData = async (data) => {
     page.setDefaultTimeout(120000);
     page.setDefaultNavigationTimeout(120000);
 
-    // INTERCEPT NETWORK REQUESTS to detect login success
-    let loginSuccess = false;
-    await page.setRequestInterception(true);
-
-    page.on('request', (request) => {
-      request.continue();
-    });
-
-    page.on('response', (response) => {
-      const url = response.url();
-      const status = response.status();
-
-      // Check for successful authentication responses
-      if (url.includes('/api/') && status === 200) {
-        console.log(`API Response: ${url} - Status: ${status}`);
-      }
-
-      if (url.includes('my-commissions') && status === 200) {
-        console.log('Commissions page loaded successfully');
-        loginSuccess = true;
-      }
-    });
-
-    // Navigate to login page
+    // Navigate directly to login page
     console.log(`Navigating to URL: ${url}`);
     await page.goto(url, {
       waitUntil: "networkidle2",
       timeout: 60000
     });
 
-    // Wait for page load
     await waitForTimeout(3000);
 
-    // DEBUG: Check initial page state
-    const initialUrl = page.url();
-    console.log(`Initial URL: ${initialUrl}`);
+    // LOGIN PROCESS
+    console.log("Starting login process...");
 
-    // If we're already logged in (redirected directly to commissions), proceed
-    if (initialUrl.includes('my-commissions')) {
-      console.log("Already logged in, proceeding to commissions page");
-      loginSuccess = true;
+    // Fill email
+    const emailField = await page.$('#email');
+    if (!emailField) throw new Error("Email field not found");
+    await emailField.click({ clickCount: 3 });
+    await emailField.type(user_email, { delay: 100 });
+
+    // Fill password
+    const passwordField = await page.$('#password');
+    if (!passwordField) throw new Error("Password field not found");
+    await passwordField.click({ clickCount: 3 });
+    await passwordField.type(user_password, { delay: 100 });
+
+    // Click login button
+    console.log("Clicking login button...");
+    const loginButton = await page.$('button[data-cy="button"][data-fp="primaryButton"]');
+    if (loginButton) {
+      await loginButton.click();
     } else {
-      // LOGIN PROCESS
-      console.log("Attempting login...");
-
-      // Wait for login form with multiple selector options
-      try {
-        await page.waitForSelector('#email, input[type="email"], [name="email"], input[placeholder*="email" i]', {
-          timeout: 10000
-        });
-      } catch (e) {
-        console.log("Email field not found, checking if already logged in...");
-        // Take screenshot to debug
-        await page.screenshot({ path: '/tmp/login-form-not-found.png', fullPage: true });
-      }
-
-      // FILL EMAIL with multiple approaches
-      let emailFilled = false;
-      const emailSelectors = [
-        '#email',
-        'input[type="email"]',
-        '[name="email"]',
-        'input[placeholder*="email" i]',
-        'input[autocomplete="email"]'
-      ];
-
-      for (const selector of emailSelectors) {
-        try {
-          const emailField = await page.$(selector);
-          if (emailField) {
-            await emailField.click({ clickCount: 3 });
-            await emailField.type(user_email, { delay: 50 });
-            console.log(`Email filled using selector: ${selector}`);
-            emailFilled = true;
-            break;
-          }
-        } catch (e) {
-          console.log(`Failed with email selector ${selector}: ${e.message}`);
-        }
-      }
-
-      if (!emailFilled) {
-        throw new Error("Could not find email field with any selector");
-      }
-
-      await waitForTimeout(1000);
-
-      // FILL PASSWORD with multiple approaches
-      let passwordFilled = false;
-      const passwordSelectors = [
-        '#password',
-        'input[type="password"]',
-        '[name="password"]',
-        'input[placeholder*="password" i]',
-        'input[autocomplete="current-password"]'
-      ];
-
-      for (const selector of passwordSelectors) {
-        try {
-          const passwordField = await page.$(selector);
-          if (passwordField) {
-            await passwordField.click({ clickCount: 3 });
-            await passwordField.type(user_password, { delay: 50 });
-            console.log(`Password filled using selector: ${selector}`);
-            passwordFilled = true;
-            break;
-          }
-        } catch (e) {
-          console.log(`Failed with password selector ${selector}: ${e.message}`);
-        }
-      }
-
-      if (!passwordFilled) {
-        throw new Error("Could not find password field with any selector");
-      }
-
-      await waitForTimeout(1000);
-
-      // CLICK LOGIN BUTTON with multiple approaches
-      console.log("Looking for login button...");
-
-      const loginButtonSelectors = [
-        'button[data-cy="button"][data-fp="primaryButton"]',
-        'button[type="submit"]',
-        'input[type="submit"]',
-        'button:contains("Sign In")',
-        'button:contains("Login")',
-        'button:contains("Log In")',
-        '[data-cy*="login"]',
-        '[data-fp*="login"]',
-        'form button',
-        '.login-button',
-        '.submit-button'
-      ];
-
-      let loginClicked = false;
-
-      for (const selector of loginButtonSelectors) {
-        try {
-          let button = null;
-
-          // Handle text-based selectors
-          if (selector.includes(':contains(')) {
-            const text = selector.match(/:contains\("([^"]+)"\)/)[1];
-            button = await page.evaluateHandle((searchText) => {
-              const elements = document.querySelectorAll('button, input[type="submit"], [role="button"]');
-              for (let el of elements) {
-                if (el.textContent && el.textContent.toLowerCase().includes(searchText.toLowerCase())) {
-                  return el;
-                }
-              }
-              return null;
-            }, text);
-          } else {
-            button = await page.$(selector);
-          }
-
-          if (button && (await button.asElement())) {
-            const isVisible = await button.evaluate(el => {
-              const rect = el.getBoundingClientRect();
-              const style = window.getComputedStyle(el);
-              return rect.width > 0 && rect.height > 0 &&
-                style.display !== 'none' &&
-                style.visibility !== 'hidden' &&
-                style.opacity !== '0' &&
-                !el.disabled;
-            });
-
-            if (isVisible) {
-              console.log(`Found login button: ${selector}`);
-
-              // Take screenshot before login
-              await page.screenshot({ path: '/tmp/before-login.png', fullPage: true });
-
-              await button.click();
-              loginClicked = true;
-              console.log("Login button clicked");
-              break;
-            }
-          }
-        } catch (e) {
-          console.log(`Login button selector ${selector} failed: ${e.message}`);
-        }
-      }
-
-      // Fallback: Press Enter
-      if (!loginClicked) {
-        console.log("No login button found, pressing Enter...");
-        await page.keyboard.press('Enter');
-      }
-
-      // WAIT FOR LOGIN SUCCESS with multiple strategies
-      console.log("Waiting for login to complete...");
-
-      await waitForTimeout(5000);
-
-      // Strategy 1: Check URL change
-      const postLoginUrl = page.url();
-      console.log(`Post-login URL: ${postLoginUrl}`);
-
-      if (!postLoginUrl.includes('login') && postLoginUrl !== initialUrl) {
-        loginSuccess = true;
-        console.log("Login successful - URL changed");
-      }
-
-      // Strategy 2: Check for dashboard elements
-      if (!loginSuccess) {
-        try {
-          await page.waitForSelector('.dashboard, [data-cy*="dashboard"], .my-commissions, [href*="commission"], .affiliate-dashboard', {
-            timeout: 10000
-          });
-          loginSuccess = true;
-          console.log("Login successful - Dashboard elements found");
-        } catch (e) {
-          console.log("No dashboard elements found");
-        }
-      }
-
-      // Strategy 3: Check for error messages
-      if (!loginSuccess) {
-        const errorText = await page.evaluate(() => {
-          const errorSelectors = [
-            '.error',
-            '.alert-danger',
-            '.text-red',
-            '[data-cy*="error"]',
-            '[class*="error"]',
-            '[class*="alert"]'
-          ];
-
-          for (const selector of errorSelectors) {
-            const element = document.querySelector(selector);
-            if (element && element.textContent && element.textContent.trim()) {
-              return element.textContent.trim();
-            }
-          }
-          return null;
-        });
-
-        if (errorText) {
-          throw new Error(`Login failed: ${errorText}`);
-        }
-      }
-
-      // Strategy 4: Check page content for success indicators
-      if (!loginSuccess) {
-        const pageText = await page.evaluate(() => document.body.textContent);
-        if (pageText.includes('Welcome') || pageText.includes('Dashboard') || pageText.includes('Commissions')) {
-          loginSuccess = true;
-          console.log("Login successful - Welcome text found");
-        }
-      }
-
-      if (!loginSuccess) {
-        // Take screenshot to debug login failure
-        await page.screenshot({ path: '/tmp/login-failed.png', fullPage: true });
-        throw new Error("Login failed - no success indicators found");
-      }
+      await page.keyboard.press('Enter');
     }
 
-    console.log("Login successful, proceeding to download...");
+    // Wait for login to complete
+    await waitForTimeout(8000);
 
-    // If we're not already on commissions page, navigate there
+    // Check if login was successful by looking for commissions page elements
     const currentUrl = page.url();
+    console.log(`Current URL after login: ${currentUrl}`);
+
+    // If we're not on commissions page, navigate there
     if (!currentUrl.includes('my-commissions')) {
-      console.log("Navigating to commissions page...");
+      console.log("Not on commissions page, navigating directly...");
       const baseUrl = data.url.split('/login')[0];
       const commissionsUrl = `${baseUrl}/my-commissions`;
-
-      await page.goto(commissionsUrl, {
+      await page.goto(commissionsUrl, { 
         waitUntil: "networkidle2",
-        timeout: 30000
+        timeout: 30000 
       });
       await waitForTimeout(5000);
     }
 
-    // Take screenshot of commissions page
-    await page.screenshot({ path: '/tmp/commissions-page.png', fullPage: true });
-    console.log("Commissions page screenshot saved");
+    console.log("On commissions page, looking for download options...");
 
-    // DEBUG: Log page content to identify download elements
-    const pageInfo = await page.evaluate(() => {
-      const buttons = Array.from(document.querySelectorAll('button, a'));
-      return {
-        title: document.title,
-        url: window.location.href,
-        buttons: buttons.map(btn => ({
+    // DEBUG: Get all buttons and links on the page to see what's available
+    const pageElements = await page.evaluate(() => {
+      const elements = [];
+      
+      // Get all buttons
+      const buttons = document.querySelectorAll('button');
+      buttons.forEach(btn => {
+        elements.push({
+          type: 'button',
           text: btn.textContent?.trim(),
           classes: btn.className,
           id: btn.id,
           'data-cy': btn.getAttribute('data-cy'),
           'data-fp': btn.getAttribute('data-fp'),
-          tagName: btn.tagName
-        })).filter(btn => btn.text)
-      };
+          'data-testid': btn.getAttribute('data-testid')
+        });
+      });
+      
+      // Get all links
+      const links = document.querySelectorAll('a');
+      links.forEach(link => {
+        elements.push({
+          type: 'link',
+          text: link.textContent?.trim(),
+          href: link.getAttribute('href'),
+          classes: link.className,
+          id: link.id,
+          'data-cy': link.getAttribute('data-cy'),
+          'data-fp': link.getAttribute('data-fp')
+        });
+      });
+      
+      return elements.filter(el => el.text && el.text.length > 0);
     });
 
-    console.log("Page Info:", JSON.stringify(pageInfo, null, 2));
+    console.log("Page elements found:", JSON.stringify(pageElements, null, 2));
 
-    // DOWNLOAD STRATEGIES
-    console.log("Looking for download options...");
-
-    // Strategy 1: FirstPromoter specific download button
-    const downloadSelectors = [
-      // FirstPromoter specific
+    // STRATEGY 1: FirstPromoter specific download button
+    console.log("STRATEGY 1: Looking for FirstPromoter download button...");
+    
+    const firstPromoterDownloadSelectors = [
       'button[data-cy="commissions-download"]',
-      'button[data-fp="download-button"]',
-      '[data-cy*="download"]',
+      '[data-cy="commissions-download"]',
+      'button[data-fp*="download"]',
       '[data-fp*="download"]',
-      '[data-cy*="export"]',
-      '[data-fp*="export"]',
-
-      // General download buttons
-      'button:contains("Download CSV")',
-      'button:contains("Export CSV")',
-      'button:contains("Download")',
-      'button:contains("Export")',
-      'a:contains("Download CSV")',
-      'a:contains("Export CSV")',
-
-      // Table specific
-      '.table-export',
-      '.data-export',
-      '.csv-export'
+      'button[data-testid*="download"]',
+      '[data-testid*="download"]'
     ];
 
-    let downloadSuccess = false;
-
-    for (const selector of downloadSelectors) {
+    for (const selector of firstPromoterDownloadSelectors) {
       try {
-        console.log(`Trying download selector: ${selector}`);
-
-        let element = null;
-
-        if (selector.includes(':contains(')) {
-          const text = selector.match(/:contains\("([^"]+)"\)/)[1];
-          element = await page.evaluateHandle((searchText) => {
-            const elements = document.querySelectorAll('button, a, [role="button"]');
-            for (let el of elements) {
-              if (el.textContent && el.textContent.includes(searchText)) {
-                return el;
-              }
-            }
-            return null;
-          }, text);
-        } else {
-          element = await page.$(selector);
+        const element = await page.$(selector);
+        if (element) {
+          console.log(`Found FirstPromoter download button: ${selector}`);
+          const filesBeforeDownload = fs.readdirSync(downloadPath);
+          await element.click();
+          console.log("Clicked download button");
+          
+          const downloadedFile = await waitForDownload(downloadPath, filesBeforeDownload, 30000);
+          if (downloadedFile) {
+            console.log(`Download successful: ${downloadedFile}`);
+            const result = await processDownloadedFile(downloadedFile, downloadPath, newFileName);
+            await browser.close();
+            return result;
+          }
         }
+      } catch (error) {
+        console.log(`Selector ${selector} failed: ${error.message}`);
+      }
+    }
 
-        if (element && (await element.asElement())) {
-          const isVisible = await element.evaluate(el => {
-            const rect = el.getBoundingClientRect();
-            const style = window.getComputedStyle(el);
-            return rect.width > 0 && rect.height > 0 &&
-              style.display !== 'none' &&
-              style.visibility !== 'hidden' &&
-              style.opacity !== '0' &&
-              !el.disabled;
-          });
+    // STRATEGY 2: Look for any button with download/export text
+    console.log("STRATEGY 2: Looking for buttons with download/export text...");
+    
+    const downloadTexts = ['download', 'export', 'csv', 'excel', 'spreadsheet'];
+    
+    for (const text of downloadTexts) {
+      try {
+        const button = await page.evaluateHandle((searchText) => {
+          const elements = document.querySelectorAll('button, a, [role="button"]');
+          for (let el of elements) {
+            if (el.textContent && el.textContent.toLowerCase().includes(searchText.toLowerCase())) {
+              return el;
+            }
+          }
+          return null;
+        }, text);
+        
+        if (button && (await button.asElement())) {
+          console.log(`Found button with text: ${text}`);
+          const filesBeforeDownload = fs.readdirSync(downloadPath);
+          await button.click();
+          console.log(`Clicked button with text: ${text}`);
+          
+          const downloadedFile = await waitForDownload(downloadPath, filesBeforeDownload, 30000);
+          if (downloadedFile) {
+            console.log(`Download successful: ${downloadedFile}`);
+            const result = await processDownloadedFile(downloadedFile, downloadPath, newFileName);
+            await browser.close();
+            return result;
+          }
+        }
+      } catch (error) {
+        console.log(`Text search for "${text}" failed: ${error.message}`);
+      }
+    }
 
-          if (isVisible) {
-            console.log(`Found download button: ${selector}`);
+    // STRATEGY 3: Look for export in table controls or toolbar
+    console.log("STRATEGY 3: Looking for table export controls...");
+    
+    const tableExportSelectors = [
+      '.table-actions button',
+      '.toolbar button',
+      '.actions button',
+      '.btn-group button',
+      '.dropdown button',
+      '.export-dropdown',
+      '.download-dropdown'
+    ];
 
+    for (const selector of tableExportSelectors) {
+      try {
+        const elements = await page.$$(selector);
+        for (const element of elements) {
+          const text = await element.evaluate(el => el.textContent?.toLowerCase() || '');
+          if (text.includes('download') || text.includes('export') || text.includes('csv')) {
+            console.log(`Found table export button: ${text}`);
             const filesBeforeDownload = fs.readdirSync(downloadPath);
-            console.log(`Files before click: ${filesBeforeDownload.length}`);
-
             await element.click();
-            console.log("Download button clicked");
-
-            // Wait for download
-            await waitForTimeout(5000);
-
+            
             const downloadedFile = await waitForDownload(downloadPath, filesBeforeDownload, 30000);
-
             if (downloadedFile) {
               console.log(`Download successful: ${downloadedFile}`);
               const result = await processDownloadedFile(downloadedFile, downloadPath, newFileName);
               await browser.close();
               return result;
-            } else {
-              console.log(`No file downloaded with selector: ${selector}`);
             }
           }
         }
       } catch (error) {
-        console.log(`Download selector ${selector} failed: ${error.message}`);
+        console.log(`Table export selector ${selector} failed: ${error.message}`);
       }
     }
 
-    // Strategy 2: Try all buttons that might be download related
-    if (!downloadSuccess) {
-      console.log("Trying all potential download buttons...");
-      const allButtons = await page.$$('button, a[href*=".csv"], a[href*="export"]');
+    // STRATEGY 4: Check if there's a hidden dropdown or menu that needs to be opened first
+    console.log("STRATEGY 4: Looking for dropdown menus...");
+    
+    const dropdownSelectors = [
+      '.dropdown-toggle',
+      '.menu-toggle',
+      '[data-toggle="dropdown"]',
+      '.actions',
+      '.options',
+      '.more-actions'
+    ];
 
-      for (let i = 0; i < allButtons.length; i++) {
-        try {
-          const button = allButtons[i];
-          const buttonText = await button.evaluate(el => el.textContent?.toLowerCase() || '');
-
-          if (buttonText.includes('download') || buttonText.includes('export') || buttonText.includes('csv')) {
-            console.log(`Trying button: ${buttonText}`);
-
-            const filesBeforeDownload = fs.readdirSync(downloadPath);
-            await button.click();
-            await waitForTimeout(3000);
-
-            const downloadedFile = await waitForDownload(downloadPath, filesBeforeDownload, 10000);
-            if (downloadedFile) {
-              console.log(`Download successful via button text: ${downloadedFile}`);
-              const result = await processDownloadedFile(downloadedFile, downloadPath, newFileName);
-              await browser.close();
-              return result;
+    for (const selector of dropdownSelectors) {
+      try {
+        const dropdown = await page.$(selector);
+        if (dropdown) {
+          console.log(`Found dropdown: ${selector}`);
+          await dropdown.click();
+          await waitForTimeout(2000);
+          
+          // Now look for download options in the opened dropdown
+          const downloadOptions = await page.$$('.dropdown-menu button, .dropdown-menu a');
+          for (const option of downloadOptions) {
+            const text = await option.evaluate(el => el.textContent?.toLowerCase() || '');
+            if (text.includes('download') || text.includes('export') || text.includes('csv')) {
+              console.log(`Found download option in dropdown: ${text}`);
+              const filesBeforeDownload = fs.readdirSync(downloadPath);
+              await option.click();
+              
+              const downloadedFile = await waitForDownload(downloadPath, filesBeforeDownload, 30000);
+              if (downloadedFile) {
+                console.log(`Download successful: ${downloadedFile}`);
+                const result = await processDownloadedFile(downloadedFile, downloadPath, newFileName);
+                await browser.close();
+                return result;
+              }
             }
           }
-        } catch (error) {
-          // Continue to next button
         }
+      } catch (error) {
+        console.log(`Dropdown selector ${selector} failed: ${error.message}`);
+      }
+    }
+
+    // STRATEGY 5: Try to find and click any export link that might trigger download
+    console.log("STRATEGY 5: Looking for export links...");
+    
+    const exportLinks = await page.$$('a[href*="export"], a[href*="download"], a[href*="csv"]');
+    for (const link of exportLinks) {
+      try {
+        console.log("Found potential export link");
+        const filesBeforeDownload = fs.readdirSync(downloadPath);
+        await link.click();
+        await waitForTimeout(3000);
+        
+        const downloadedFile = await waitForDownload(downloadPath, filesBeforeDownload, 15000);
+        if (downloadedFile) {
+          console.log(`Download successful via link: ${downloadedFile}`);
+          const result = await processDownloadedFile(downloadedFile, downloadPath, newFileName);
+          await browser.close();
+          return result;
+        }
+      } catch (error) {
+        console.log("Export link click failed:", error.message);
+      }
+    }
+
+    // STRATEGY 6: Use JavaScript to trigger any download functionality
+    console.log("STRATEGY 6: Trying JavaScript execution...");
+    
+    const downloadResult = await page.evaluate(() => {
+      // Look for any element that might have download functionality
+      const elements = document.querySelectorAll('[onclick*="download"], [onclick*="export"], [onclick*="csv"]');
+      for (let el of elements) {
+        try {
+          el.click();
+          return { success: true, element: el.tagName };
+        } catch (e) {
+          continue;
+        }
+      }
+      
+      // Try to find and click any button that looks like download
+      const buttons = document.querySelectorAll('button');
+      for (let btn of buttons) {
+        const text = btn.textContent?.toLowerCase() || '';
+        if (text.includes('download') || text.includes('export') || text.includes('csv')) {
+          try {
+            btn.click();
+            return { success: true, element: 'button', text: text };
+          } catch (e) {
+            continue;
+          }
+        }
+      }
+      
+      return { success: false };
+    });
+
+    if (downloadResult.success) {
+      console.log("JavaScript trigger executed:", downloadResult);
+      await waitForTimeout(5000);
+      
+      // Check if any file was downloaded
+      const finalFiles = fs.readdirSync(downloadPath);
+      const downloadedFiles = finalFiles.filter(file =>
+        (file.endsWith('.csv') || file.endsWith('.xlsx') || file.endsWith('.xls')) &&
+        !file.endsWith('.crdownload')
+      );
+
+      if (downloadedFiles.length > 0) {
+        console.log(`Download successful via JS: ${downloadedFiles[0]}`);
+        const result = await processDownloadedFile(downloadedFiles[0], downloadPath, newFileName);
+        await browser.close();
+        return result;
       }
     }
 
@@ -529,7 +425,7 @@ exports.exportScalenutData = async (data) => {
  */
 async function waitForDownload(downloadPath, filesBeforeDownload, maxWaitTime = 30000) {
   const startTime = Date.now();
-
+  
   while (Date.now() - startTime < maxWaitTime) {
     await waitForTimeout(2000);
 
@@ -541,10 +437,20 @@ async function waitForDownload(downloadPath, filesBeforeDownload, maxWaitTime = 
     );
 
     if (completedFiles.length > 0) {
+      console.log(`Download completed: ${completedFiles[0]}`);
       return completedFiles[0];
     }
+
+    // Check for partial downloads
+    const partialFiles = currentFiles.filter(file =>
+      !filesBeforeDownload.includes(file) &&
+      file.endsWith('.crdownload')
+    );
+
+    console.log(`Waiting for download... Found ${partialFiles.length} partial files`);
   }
 
+  console.log("Download timeout reached");
   return null;
 }
 
