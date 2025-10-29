@@ -155,7 +155,7 @@ exports.exportScalenutData = async (data) => {
     console.log("STRATEGY 2: Trying alternative approach...");
     try {
       // Navigate to rewards page
-      await page.goto(`${data.url}/my-commissions`, { waitUntil: "networkidle2" });
+      await page.goto(`${data.url.replace(/\/login(\/|$)/g, '/').replace(/\/$/, '')}/my-commissions`, { waitUntil: "networkidle2" });
       
       // Look for export link/button
       const exportLink = await page.$('a[href*="export"]');
