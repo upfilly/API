@@ -367,6 +367,7 @@ exports.getAllFirstPromoters = async (req, res) => {
     let skipNo = (Number(page) - 1) * Number(count);
 
 <<<<<<< HEAD
+<<<<<<< HEAD
         if (search) {
             search = Services.Utils.remove_special_char_exept_underscores(search);
             query.$or = [
@@ -461,12 +462,17 @@ exports.getAllFirstPromoters = async (req, res) => {
     } catch (error) {
         return response.failed(null, `${error}`, req, res);
 =======
+=======
+>>>>>>> 8cadf2970c861c4dfbde9064bc29a37992964f2c
     if (search) {
       search = Services.Utils.remove_special_char_exept_underscores(search);
       query.$or = [
         { email: { $regex: search, '$options': 'i' } },
         { url: { $regex: search, '$options': 'i' } },
       ];
+<<<<<<< HEAD
+>>>>>>> 8cadf2970c861c4dfbde9064bc29a37992964f2c
+=======
 >>>>>>> 8cadf2970c861c4dfbde9064bc29a37992964f2c
     }
 
