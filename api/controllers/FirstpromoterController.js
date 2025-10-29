@@ -24,51 +24,51 @@ const csv = require('csv-parser');
  */
 
 
-  exports.removeFirstPromoter= async function (req, res) {
-    const url = `${constants.FIRST_PROMOTER_DELETE}?id=${req.query.id}`;
-    const headers = {
-      "X-Api-Key": `${constants.FIRST_PROMOTER_KEY}`,
-      "Content-Type": "application/json",
-    };
-
-    try {
-      const response = await axios.delete(url, { headers });
-      return res.status(200).json({
-        success: true,
-        message: "First promoter removed successfully",
-        data: response.data,
-      });
-    } catch (error) {
-      return res.status(400).json({
-        success: false,
-        error: { message: error },
-      });
-    }
+exports.removeFirstPromoter = async function (req, res) {
+  const url = `${constants.FIRST_PROMOTER_DELETE}?id=${req.query.id}`;
+  const headers = {
+    "X-Api-Key": `${constants.FIRST_PROMOTER_KEY}`,
+    "Content-Type": "application/json",
   };
 
-  exports.updateFirstPromoter= async function (req, res) {
-    const url = `${constants.FIRST_PROMOTER_UPDATE}`;
-    const headers = {
-      "X-Api-Key": `${constants.FIRST_PROMOTER_KEY}`,
-      "Content-Type": "application/json",
-    };
-    let data = req.body;
-    try {
-      const response = await axios.put(url, data, { headers });
-      return res.status(200).json({
-        success: true,
-        message: "First promoter updated successfully",
-        data: response.data,
-      });
-    } catch (error) {
-      return res.status(400).json({
-        success: false,
-        error: { message: error },
-      });
-    }
-  },
+  try {
+    const response = await axios.delete(url, { headers });
+    return res.status(200).json({
+      success: true,
+      message: "First promoter removed successfully",
+      data: response.data,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      error: { message: error },
+    });
+  }
+};
 
-  exports.exportFirstPromoterData= async function (req, res) {
+exports.updateFirstPromoter = async function (req, res) {
+  const url = `${constants.FIRST_PROMOTER_UPDATE}`;
+  const headers = {
+    "X-Api-Key": `${constants.FIRST_PROMOTER_KEY}`,
+    "Content-Type": "application/json",
+  };
+  let data = req.body;
+  try {
+    const response = await axios.put(url, data, { headers });
+    return res.status(200).json({
+      success: true,
+      message: "First promoter updated successfully",
+      data: response.data,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      error: { message: error },
+    });
+  }
+},
+
+  exports.exportFirstPromoterData = async function (req, res) {
     const loginUrl = `https://aiseo.firstpromoter.com/login?puser[email]=akshaysharma@jcsoftwaresolution.com&puser[password]=Akshay@123`;
     const exportUrl = constants.FIRST_PROMOTER_EXPORT;
 
@@ -125,19 +125,19 @@ const csv = require('csv-parser');
     }
   };
 
-  exports.exportScalenutData= async function (req, res) {
-    // Define the download directory
-    try{
-      const user_password = req.body.password;
-      const user_email = req.body.email;
-      const url = req.body.url;
-       var rootpath = process.cwd();
+exports.exportScalenutData = async function (req, res) {
+  // Define the download directory
+  try {
+    const user_password = req.body.password;
+    const user_email = req.body.email;
+    const url = req.body.url;
+    var rootpath = process.cwd();
     var fullpath = rootpath + "/assets/downloads/"
     const downloadPath = fullpath;
 
     // Create the download directory if it doesn't exist
     if (!fs.existsSync(downloadPath)) {
-        fs.mkdirSync(downloadPath);
+      fs.mkdirSync(downloadPath);
     }
 
     // Generate a unique file name using UUID
@@ -154,12 +154,12 @@ const csv = require('csv-parser');
     // Set up download behavior
     const client = await page.target().createCDPSession();
     await client.send('Page.setDownloadBehavior', {
-        behavior: 'allow',
-        downloadPath: downloadPath,
+      behavior: 'allow',
+      downloadPath: downloadPath,
     });
 
     // Navigate to the login page
-    await page.goto( `${url}`, { waitUntil: 'networkidle2' });
+    await page.goto(`${url}`, { waitUntil: 'networkidle2' });
 
     // Set the viewport size
     await page.setViewport({ width: 1080, height: 1024 });
@@ -187,187 +187,186 @@ const csv = require('csv-parser');
     // Wait for the download to complete
     let files;
     do {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        files = fs.readdirSync(downloadPath);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      files = fs.readdirSync(downloadPath);
     } while (!files.find(file => file.startsWith('rewards')));
 
     // Find the downloaded file
     const downloadedFile = files.find(file => file.startsWith('rewards')); // Adjust prefix if needed
 
     if (downloadedFile) {
-        const oldPath = path.join(downloadPath, downloadedFile);
-        const newPath = path.join(downloadPath, newFileName);
+      const oldPath = path.join(downloadPath, downloadedFile);
+      const newPath = path.join(downloadPath, newFileName);
 
-        try {
-            fs.renameSync(oldPath, newPath);
+      try {
+        fs.renameSync(oldPath, newPath);
 
-            // Process the CSV file
-            fs.createReadStream(`${newPath}`)
-              .pipe(csv())
-              .on('data', (row) => {
-                return res.status(200).json({
-                  success: true,
-                  message: "Data fetched successfully." ,
-                  data:row,
-                });
-              })
-              .on('end', () => {
-                return res.status(200).json({
-                  success: true,
-                  message: "Data fetched successfully." ,
-                  data:[],
-                });
-              });
-        } catch (error) {
-            console.error('Error processing the file:', error);
-        }
+        // Process the CSV file
+        fs.createReadStream(`${newPath}`)
+          .pipe(csv())
+          .on('data', (row) => {
+            return res.status(200).json({
+              success: true,
+              message: "Data fetched successfully.",
+              data: row,
+            });
+          })
+          .on('end', () => {
+            return res.status(200).json({
+              success: true,
+              message: "Data fetched successfully.",
+              data: [],
+            });
+          });
+      } catch (error) {
+        console.error('Error processing the file:', error);
+      }
     } else {
     }
 
     await browser.close();
-  }catch(error){
+  } catch (error) {
     console.error("Error:", error);
     return res.status(400).json({
       success: false,
       error: { message: `An error occurred while exporting Scalenut data.${error}` },
     });
   }
-  };
+};
 
 exports.addFirstPromoter = async (req, res) => {
-    try {
-        let validation_result = await Validations.FirstPromoterValidations.addFirstPromoter(req, res);
+  try {
+    let validation_result = await Validations.FirstPromoterValidations.addFirstPromoter(req, res);
 
-        if (validation_result && !validation_result.success) {
-            throw validation_result.message;
-        }
-        let data = req.body;   
-
-        const existedPromoter = await FirstPromoter.findOne({ email: data.email, isDeleted: false });
-
-        if (existedPromoter) {
-            throw constants.FIRST_PROMOTER.ALREADY_EXIST;
-        }
-
-        const date = new Date();
-        data.createdAt = date;
-        data.updatedAt = date;
-        data.addedBy = req.identity.id;
-        data.updatedBy = req.identity.id;
-        const createdPromoter = await FirstPromoter.create(data).fetch();
-      if (createdPromoter) {
-        let filePath = await Services.scalenutServices.exportScalenutData(data);
-        console.log(filePath, "kjkjkjk")
-        let updatedPromoter = {};
-
-        if (filePath && filePath.success === true) {
-          // Update the FirstPromoter with file path
-          updatedPromoter = await FirstPromoter.updateOne({ id: createdPromoter.id }, { filePath: filePath.msg });
-
-          // Store the data in firstpromoterdata collection
-          if (filePath.data && filePath.data.length > 0) {
-            try {
-              // Prepare data for insertion
-              const firstPromoterDataRecords = filePath.data.map(record => ({
-                lead_email: record.lead_email || record.email || '',
-                lead_id: record.lead_id || '',
-                sub_id: record.sub_id || '',
-                earnings: record.earnings || 0,
-                firstPromoterId: createdPromoter.id, // Reference to the parent FirstPromoter
-                addedBy: req.identity.id,
-                updatedBy: req.identity.id,
-                status: 'active',
-                isDeleted: false,
-                createdAt: new Date(),
-                updatedAt: new Date()
-              }));
-
-              // Insert into firstpromoterdata collection
-              await db.collection('firstpromoterdata').insertMany(firstPromoterDataRecords);
-
-              console.log(`Successfully inserted ${firstPromoterDataRecords.length} records into firstpromoterdata collection`);
-            } catch (insertError) {
-              console.error('Error inserting data into firstpromoterdata:', insertError);
-              // You might want to handle this error differently - maybe not fail the entire request
-            }
-          }
-        } else {
-          return response.failed(null, filePath.msg, req, res);
-        }
-        console.log(updatedPromoter, "0909009")
-        return response.success(updatedPromoter, constants.FIRST_PROMOTER.CREATED, req, res);
-      }
-        throw constants.COMMON.SERVER_ERROR;
-    } catch (error) {
-        return response.failed(null, `${error}`, req, res);
+    if (validation_result && !validation_result.success) {
+      throw validation_result.message;
     }
+    let data = req.body;
+
+    const existedPromoter = await FirstPromoter.findOne({ email: data.email, isDeleted: false });
+
+    if (existedPromoter) {
+      throw constants.FIRST_PROMOTER.ALREADY_EXIST;
+    }
+
+    const date = new Date();
+    data.createdAt = date;
+    data.updatedAt = date;
+    data.addedBy = req.identity.id;
+    data.updatedBy = req.identity.id;
+    const createdPromoter = await FirstPromoter.create(data).fetch();
+    if (createdPromoter) {
+      let filePath = await Services.scalenutServices.exportScalenutData(data);
+      let updatedPromoter = {};
+
+      if (filePath && filePath.success === true) {
+        updatedPromoter = await FirstPromoter.updateOne({ id: createdPromoter.id }, { filePath: filePath.msg });
+
+        if (data && data.length > 0) {
+          try {
+            const firstPromoterDataRecords = data.map(record => ({
+              lead_email: record.lead_email || '',
+              lead_id: record.lead_id || '',
+              sub_id: record.sub_id || '',
+              earnings: record.earnings ? parseFloat(record.earnings.replace('$', '')) || 0 : 0, // Convert "$15.75" to 15.75
+              status: record.status || 'approved',
+              created_at: record.created_at ? new Date(record.created_at) : new Date(),
+              firstPromoterId: createdPromoter.id, // Reference to the parent FirstPromoter
+              addedBy: req.identity.id,
+              updatedBy: req.identity.id,
+              status: 'active',
+              isDeleted: false,
+              createdAt: new Date(),
+              updatedAt: new Date()
+            }));
+
+            // Insert into firstpromoterdata collection
+            await db.collection('firstpromoterdata').insertMany(firstPromoterDataRecords);
+
+            console.log(`Successfully inserted ${firstPromoterDataRecords.length} records into firstpromoterdata collection`);
+          } catch (insertError) {
+            console.error('Error inserting data into firstpromoterdata:', insertError);
+            // You might want to handle this error differently - maybe not fail the entire request
+          }
+        }
+      } else {
+        return response.failed(null, filePath.msg, req, res);
+      }
+      console.log(updatedPromoter, "0909009")
+      return response.success(updatedPromoter, constants.FIRST_PROMOTER.CREATED, req, res);
+    }
+    throw constants.COMMON.SERVER_ERROR;
+  } catch (error) {
+    return response.failed(null, `${error}`, req, res);
+  }
 }
 
 exports.editFirstPromoter = async (req, res) => {
-    try {
-        let validation_result = await Validations.FirstPromoterValidations.editFirstPromoter(req, res);
+  try {
+    let validation_result = await Validations.FirstPromoterValidations.editFirstPromoter(req, res);
 
-        if (validation_result && !validation_result.success) {
-            throw validation_result.message;
-        }
-        const id = req.body.id;
-
-        if (!req.body.email) {
-            throw constants.FIRST_PROMOTER.EMAIL_REQUIRED;
-        }
-
-        const existedPromoter = await FirstPromoter.findOne({
-            id: { "!=": id },
-            email: req.body.email,
-            url:req.body.url,
-            isDeleted: false
-        });
-
-        if (existedPromoter) {
-            throw constants.FIRST_PROMOTER.ALREADY_EXIST;
-        }
-
-        let check_promoter = await FirstPromoter.findOne({ id: id });
-        if (!check_promoter) {
-            throw constants.FIRST_PROMOTER.INVALID_ID;
-        }
-        req.body.updatedBy = req.identity.id;
-        req.body.updatedAt = new Date();
-        const data = await FirstPromoter.updateOne({ id: id }, req.body);
-
-        if (data) {
-            return response.success(null, constants.FIRST_PROMOTER.UPDATED, req, res);
-        }
-        throw constants.FIRST_PROMOTER.INVALID_ID;
-    } catch (error) {
-        return response.failed(null, `${error}`, req, res);
+    if (validation_result && !validation_result.success) {
+      throw validation_result.message;
     }
+    const id = req.body.id;
+
+    if (!req.body.email) {
+      throw constants.FIRST_PROMOTER.EMAIL_REQUIRED;
+    }
+
+    const existedPromoter = await FirstPromoter.findOne({
+      id: { "!=": id },
+      email: req.body.email,
+      url: req.body.url,
+      isDeleted: false
+    });
+
+    if (existedPromoter) {
+      throw constants.FIRST_PROMOTER.ALREADY_EXIST;
+    }
+
+    let check_promoter = await FirstPromoter.findOne({ id: id });
+    if (!check_promoter) {
+      throw constants.FIRST_PROMOTER.INVALID_ID;
+    }
+    req.body.updatedBy = req.identity.id;
+    req.body.updatedAt = new Date();
+    const data = await FirstPromoter.updateOne({ id: id }, req.body);
+
+    if (data) {
+      return response.success(null, constants.FIRST_PROMOTER.UPDATED, req, res);
+    }
+    throw constants.FIRST_PROMOTER.INVALID_ID;
+  } catch (error) {
+    return response.failed(null, `${error}`, req, res);
+  }
 }
 
 exports.firstPromoterDetail = async (req, res) => {
-    try {
-        const id = req.param("id");
-        if (!id) {
-            throw constants.FIRST_PROMOTER.ID_REQUIRED;
-        }
-        const data = await FirstPromoter.findOne({ id: id });
-        if (data) {
-            return response.success(data, constants.FIRST_PROMOTER.FETCHED, req, res);
-        }
-        throw constants.FIRST_PROMOTER.INVALID_ID;
-    } catch (error) {
-        return response.failed(null, `${error}`, req, res);
+  try {
+    const id = req.param("id");
+    if (!id) {
+      throw constants.FIRST_PROMOTER.ID_REQUIRED;
     }
+    const data = await FirstPromoter.findOne({ id: id });
+    if (data) {
+      return response.success(data, constants.FIRST_PROMOTER.FETCHED, req, res);
+    }
+    throw constants.FIRST_PROMOTER.INVALID_ID;
+  } catch (error) {
+    return response.failed(null, `${error}`, req, res);
+  }
 }
 
 exports.getAllFirstPromoters = async (req, res) => {
-    try {
-        let query = {};
-        let count = req.param('count') || 10;
-        let page = req.param('page') || 1;
-        let { search, isDeleted, status, sortBy, addedBy } = req.query;
-        let skipNo = (Number(page) - 1) * Number(count);
+  try {
+    let query = {};
+    let count = req.param('count') || 10;
+    let page = req.param('page') || 1;
+    let { search, isDeleted, status, sortBy, addedBy } = req.query;
+    let skipNo = (Number(page) - 1) * Number(count);
 
+<<<<<<< HEAD
         if (search) {
             search = Services.Utils.remove_special_char_exept_underscores(search);
             query.$or = [
@@ -461,27 +460,122 @@ exports.getAllFirstPromoters = async (req, res) => {
 
     } catch (error) {
         return response.failed(null, `${error}`, req, res);
+=======
+    if (search) {
+      search = Services.Utils.remove_special_char_exept_underscores(search);
+      query.$or = [
+        { email: { $regex: search, '$options': 'i' } },
+        { url: { $regex: search, '$options': 'i' } },
+      ];
+>>>>>>> 8cadf2970c861c4dfbde9064bc29a37992964f2c
     }
+
+    if (isDeleted) {
+      query.isDeleted = isDeleted === 'true';
+    } else {
+      query.isDeleted = false;
+    }
+
+    if (status) {
+      query.status = status;
+    }
+
+    let sortquery = {};
+    if (sortBy) {
+      let typeArr = sortBy.split(" ");
+      let sortType = typeArr[1];
+      let field = typeArr[0];
+      sortquery[field ? field : 'createdAt'] = sortType ? (sortType === 'desc' ? -1 : 1) : -1;
+    } else {
+      sortquery = { updatedAt: -1 };
+    }
+
+    if (addedBy) {
+      query.addedBy = new ObjectId(addedBy);
+    }
+
+    // Pipeline Stages
+    let pipeline = [
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'addedBy',
+          foreignField: '_id',
+          as: "addedBy_details"
+        }
+      },
+      {
+        $unwind: {
+          path: '$addedBy_details',
+          preserveNullAndEmptyArrays: true
+        }
+      },
+    ];
+
+    let projection = {
+      $project: {
+        id: "$_id",
+        email: "$email",
+        url: "$url",
+        status: "$status",
+        addedBy: "$addedBy",
+        addedBy_name: "$addedBy_details.fullName",
+        updatedBy: "$updatedBy",
+        updatedAt: "$updatedAt",
+        isDeleted: "$isDeleted",
+        createdAt: "$createdAt",
+        updatedAt: "$updatedAt",
+      }
+    };
+
+    pipeline.push(projection);
+    pipeline.push({
+      $match: query
+    });
+    pipeline.push({
+      $sort: sortquery
+    });
+
+    let totalresult = await db.collection('firstpromoter').aggregate(pipeline).toArray();
+    pipeline.push({
+      $skip: Number(skipNo)
+    });
+    pipeline.push({
+      $limit: Number(count)
+    });
+    let result = await db.collection("firstpromoter").aggregate(pipeline).toArray();
+    let resData = {
+      total_count: totalresult ? totalresult.length : 0,
+      data: result ? result : [],
+    };
+    if (!req.param('page') && !req.param('count')) {
+      resData = totalresult ? totalresult : [];
+    }
+    return response.success(resData, constants.FIRST_PROMOTER.FETCHED_ALL, req, res);
+
+  } catch (error) {
+    return response.failed(null, `${error}`, req, res);
+  }
 }
 
 exports.deleteFirstPromoter = async (req, res) => {
-    try {
-        const id = req.query.id;
-        if (!id) {
-            throw constants.FIRST_PROMOTER.ID_REQUIRED;
-        }
-        const data = await FirstPromoter.updateOne({ id: id }, { isDeleted: true, updatedBy: req.identity.id });
-        return response.success(null, constants.FIRST_PROMOTER.DELETED, req, res);
-    } catch (error) {
-        return response.failed(null, `${error}`, req, res);
+  try {
+    const id = req.query.id;
+    if (!id) {
+      throw constants.FIRST_PROMOTER.ID_REQUIRED;
     }
+    const data = await FirstPromoter.updateOne({ id: id }, { isDeleted: true, updatedBy: req.identity.id });
+    return response.success(null, constants.FIRST_PROMOTER.DELETED, req, res);
+  } catch (error) {
+    return response.failed(null, `${error}`, req, res);
+  }
 }
 
 exports.importFirstPromoter = async (req, res) => {
   let duplicate = 0;
   let createdCount = 0;
   const errors = []; // To collect errors
-  let uploadedFile="";
+  let uploadedFile = "";
   try {
     const firstPromoter = await new Promise((resolve, reject) => {
       req.file("file").upload(
@@ -538,7 +632,7 @@ exports.importFirstPromoter = async (req, res) => {
     }
 
     // Remove the uploaded file if no errors
-    if(uploadedFile.fd){
+    if (uploadedFile.fd) {
       fs.unlink(uploadedFile.fd, (err) => {
         if (err) {
           console.error(`Error deleting file: ${uploadedFile.fd}`, err);
@@ -574,15 +668,28 @@ exports.firstPromoterDataListing = async (req, res) => {
     let query = {};
     let count = req.param('count') || 10;
     let page = req.param('page') || 1;
-    let { search, isDeleted, status, sortBy, addedBy, sub_id } = req.query; // Added sub_id here
+    let { search, isDeleted, status, sortBy, addedBy, sub_id, lead_email, lead_id } = req.query;
     let skipNo = (Number(page) - 1) * Number(count);
 
     if (search) {
       search = Services.Utils.remove_special_char_exept_underscores(search);
       query.$or = [
-        { email: { $regex: search, '$options': 'i' } },
-        { url: { $regex: search, '$options': 'i' } },
+        { lead_email: { $regex: search, '$options': 'i' } },
+        { lead_id: { $regex: search, '$options': 'i' } },
+        { sub_id: { $regex: search, '$options': 'i' } },
       ];
+    }
+
+    if (lead_email) {
+      query.lead_email = { $regex: lead_email, '$options': 'i' };
+    }
+
+    if (lead_id) {
+      query.lead_id = lead_id;
+    }
+
+    if (sub_id) {
+      query.sub_id = sub_id;
     }
 
     if (isDeleted) {
@@ -595,11 +702,6 @@ exports.firstPromoterDataListing = async (req, res) => {
       query.status = status;
     }
 
-    // Add sub_id filter
-    if (sub_id) {
-      query.sub_id = sub_id;
-    }
-
     let sortquery = {};
     if (sortBy) {
       let typeArr = sortBy.split(" ");
@@ -607,14 +709,13 @@ exports.firstPromoterDataListing = async (req, res) => {
       let field = typeArr[0];
       sortquery[field ? field : 'createdAt'] = sortType ? (sortType === 'desc' ? -1 : 1) : -1;
     } else {
-      sortquery = { updatedAt: -1 };
+      sortquery = { createdAt: -1 };
     }
 
     if (addedBy) {
       query.addedBy = new ObjectId(addedBy);
     }
 
-    // Pipeline Stages
     let pipeline = [
       {
         $lookup: {
@@ -630,6 +731,20 @@ exports.firstPromoterDataListing = async (req, res) => {
           preserveNullAndEmptyArrays: true
         }
       },
+      {
+        $lookup: {
+          from: 'firstpromoters', // Join with firstpromoters collection
+          localField: 'firstPromoterId',
+          foreignField: '_id',
+          as: "firstPromoter_details"
+        }
+      },
+      {
+        $unwind: {
+          path: '$firstPromoter_details',
+          preserveNullAndEmptyArrays: true
+        }
+      }
     ];
 
     let projection = {
@@ -638,9 +753,14 @@ exports.firstPromoterDataListing = async (req, res) => {
         lead_id: "$lead_id",
         sub_id: "$sub_id",
         earnings: "$earnings",
+        original_status: "$status", // Original status from the data
+        current_status: "$status", // Current system status
+        created_at: "$created_at", // Original creation date from data
+        firstPromoterId: "$firstPromoterId",
+        firstPromoter_name: "$firstPromoter_details.name", // Get promoter name from joined collection
         addedBy: "$addedBy",
+        addedBy_name: "$addedBy_details.name", // Get user name who added the data
         updatedBy: "$updatedBy",
-        status: "$status",
         isDeleted: "$isDeleted",
         updatedAt: "$updatedAt",
         createdAt: "$createdAt"
@@ -656,20 +776,40 @@ exports.firstPromoterDataListing = async (req, res) => {
     });
 
     let totalresult = await db.collection('firstpromoterdata').aggregate(pipeline).toArray();
+
+    // Count total documents for pagination
+    let totalCount = await db.collection('firstpromoterdata').countDocuments(query);
+
     pipeline.push({
       $skip: Number(skipNo)
     });
     pipeline.push({
       $limit: Number(count)
     });
+
     let result = await db.collection("firstpromoterdata").aggregate(pipeline).toArray();
+
+    // Calculate total earnings for the filtered results
+    let totalEarnings = 0;
+    if (result.length > 0) {
+      totalEarnings = result.reduce((sum, item) => {
+        return sum + (parseFloat(item.earnings) || 0);
+      }, 0);
+    }
+
     let resData = {
-      total_count: totalresult ? totalresult.length : 0,
+      total_count: totalCount,
+      filtered_count: totalresult ? totalresult.length : 0,
+      current_page: Number(page),
+      total_pages: Math.ceil(totalCount / Number(count)),
+      total_earnings: totalEarnings.toFixed(2),
       data: result ? result : [],
     };
+
     if (!req.param('page') && !req.param('count')) {
       resData = totalresult ? totalresult : [];
     }
+
     return response.success(resData, constants.FIRST_PROMOTER.FETCHED_ALL, req, res);
 
   } catch (error) {
