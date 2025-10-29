@@ -34,7 +34,7 @@ exports.exportScalenutData = async (data) => {
     const uniqueId = uuidv4();
     const newFileName = `file_${uniqueId}.csv`;
 
-    // Launch the browser
+    // Enhanced browser launch options for server compatibility
     console.log("Launching browser...");
     browser = await puppeteer.launch({
       args: [
@@ -44,13 +44,20 @@ exports.exportScalenutData = async (data) => {
         "--disable-accelerated-2d-canvas",
         "--no-first-run",
         "--no-zygote",
-        "--disable-gpu"
+        "--disable-gpu",
+        "--single-process", // Important for some server environments
+        "--disable-web-security",
+        "--disable-features=VizDisplayCompositor"
       ],
-      headless: true,
+      headless: "new", // Use new headless mode
       ignoreHTTPSErrors: true,
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined, // For Docker environments
     });
 
     const page = await browser.newPage();
+
+    // Set viewport to a common desktop size
+    await page.setViewport({ width: 1366, height: 768 });
 
     // Set up download behavior
     console.log("Setting up download behavior...");
@@ -60,150 +67,240 @@ exports.exportScalenutData = async (data) => {
       downloadPath: downloadPath,
     });
 
-    // Set longer timeouts
-    page.setDefaultTimeout(60000);
-    page.setDefaultNavigationTimeout(60000);
+    // Set longer timeouts for server environments
+    page.setDefaultTimeout(120000);
+    page.setDefaultNavigationTimeout(120000);
 
-    // Navigate to the URL
+    // Navigate to the URL with better error handling
     console.log(`Navigating to URL: ${url}`);
-    await page.goto(url, {
-      waitUntil: "networkidle2",
-      timeout: 60000
-    });
+    try {
+      await page.goto(url, {
+        waitUntil: ["domcontentloaded", "networkidle0"],
+        timeout: 60000
+      });
+    } catch (navigationError) {
+      console.log("Initial navigation failed, trying with networkidle2...");
+      await page.goto(url, {
+        waitUntil: "networkidle2",
+        timeout: 60000
+      });
+    }
 
-    // Wait for page to load completely
-    await page.waitForFunction(() => document.readyState === 'complete');
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    // Improved wait for page load
+    await page.waitForFunction(() => document.readyState === 'complete', { timeout: 30000 });
+    await page.waitForTimeout(5000);
 
-    // Login process
+    // Login process with enhanced selectors and fallbacks
     console.log("Attempting login...");
 
-    // Fill email
-    const emailField = await page.$('#email');
-    if (!emailField) throw new Error("Email field not found");
-    await emailField.click({ clickCount: 3 });
-    await emailField.type(user_email, { delay: 100 });
+    // Wait for login form to be present with multiple selector options
+    try {
+      await page.waitForSelector('#email, input[type="email"], [name="email"]', { timeout: 15000 });
+    } catch (e) {
+      // If no email field found, check if we're already logged in
+      const currentUrl = page.url();
+      if (currentUrl.includes('my-commissions') || !currentUrl.includes('login')) {
+        console.log("Already logged in or on different page, proceeding...");
+      } else {
+        throw new Error("Login form not found");
+      }
+    }
 
-    // Fill password
-    const passwordField = await page.$('#password');
-    if (!passwordField) throw new Error("Password field not found");
-    await passwordField.click({ clickCount: 3 });
-    await passwordField.type(user_password, { delay: 100 });
+    // Fill email with multiple selector options
+    const emailSelectors = ['#email', 'input[type="email"]', '[name="email"]'];
+    let emailField = null;
 
-    // Click login button
-    console.log("Clicking login button...");
-    const loginButton = await page.$('button[data-cy="button"][data-fp="primaryButton"]');
-    if (loginButton) {
-      await loginButton.click();
+    for (const selector of emailSelectors) {
+      emailField = await page.$(selector);
+      if (emailField) break;
+    }
+
+    if (emailField) {
+      await emailField.click({ clickCount: 3 });
+      await emailField.type(user_email, { delay: 100 });
     } else {
+      throw new Error("Email field not found with any selector");
+    }
+
+    // Fill password with multiple selector options
+    const passwordSelectors = ['#password', 'input[type="password"]', '[name="password"]'];
+    let passwordField = null;
+
+    for (const selector of passwordSelectors) {
+      passwordField = await page.$(selector);
+      if (passwordField) break;
+    }
+
+    if (passwordField) {
+      await passwordField.click({ clickCount: 3 });
+      await passwordField.type(user_password, { delay: 100 });
+    } else {
+      throw new Error("Password field not found with any selector");
+    }
+
+    // Enhanced login button click with multiple selector options
+    console.log("Clicking login button...");
+    const loginButtonSelectors = [
+      'button[data-cy="button"][data-fp="primaryButton"]',
+      'button[type="submit"]',
+      'input[type="submit"]',
+      '.login-button',
+      'button:contains("Login")',
+      'button:contains("Sign In")'
+    ];
+
+    let loginClicked = false;
+
+    for (const selector of loginButtonSelectors) {
+      try {
+        const button = await page.$(selector);
+        if (button) {
+          await button.click();
+          loginClicked = true;
+          console.log(`Clicked login button with selector: ${selector}`);
+          break;
+        }
+      } catch (e) {
+        console.log(`Failed to click with selector ${selector}: ${e.message}`);
+      }
+    }
+
+    // Fallback to Enter key
+    if (!loginClicked) {
+      console.log("No button found, pressing Enter...");
       await page.keyboard.press('Enter');
     }
 
-    // Wait for navigation
+    // Enhanced navigation wait with multiple strategies
+    console.log("Waiting for post-login navigation...");
+
     try {
-      await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 15000 });
+      // Strategy 1: Wait for URL change
+      await page.waitForFunction(
+        (originalUrl) => window.location.href !== originalUrl,
+        { timeout: 15000 },
+        url
+      );
+      console.log("URL changed detected");
     } catch (e) {
-      console.log("No navigation occurred");
+      console.log("No URL change detected");
     }
 
-    // Wait for dashboard to load
-    await new Promise(resolve => setTimeout(resolve, 5000));
-    console.log("Login successful");
+    try {
+      // Strategy 2: Wait for network idle
+      await page.waitForNavigation({
+        waitUntil: ['networkidle0', 'domcontentloaded'],
+        timeout: 15000
+      });
+    } catch (e) {
+      console.log("No navigation event detected");
+    }
 
-    // STRATEGY 1: Direct download button click
-    console.log("STRATEGY 1: Looking for direct download button...");
-    const downloadButton = await page.$('button[data-cy="commissions-download"][data-fp="plainButton"]');
+    // Strategy 3: Wait for specific elements that indicate successful login
+    try {
+      await page.waitForSelector('.dashboard, [data-cy*="dashboard"], .my-commissions, [href*="commission"]', {
+        timeout: 15000
+      });
+      console.log("Dashboard elements found");
+    } catch (e) {
+      console.log("No specific dashboard elements found, continuing anyway");
+    }
 
-    if (downloadButton) {
-      console.log("Found download button, attempting download...");
-      const filesBeforeDownload = fs.readdirSync(downloadPath);
+    // Final wait to ensure page is stable
+    await page.waitForTimeout(5000);
+    console.log("Login process completed");
 
-      // Try clicking
-      await downloadButton.click();
-      await new Promise(resolve => setTimeout(resolve, 5000));
+    // STRATEGY 1: Direct download button click with enhanced selectors
+    console.log("STRATEGY 1: Looking for download buttons...");
 
-      // Wait for download to complete
-      let downloadedFile = null;
-      const maxWaitTime = 60000;
-      const startTime = Date.now();
+    const downloadButtonSelectors = [
+      'button[data-cy="commissions-download"][data-fp="plainButton"]',
+      'button:contains("Download")',
+      'a:contains("Export")',
+      'button[title*="download" i]',
+      'button[title*="export" i]',
+      '[data-cy*="download"]',
+      '[data-testid*="download"]'
+    ];
 
-      while (Date.now() - startTime < maxWaitTime) {
-        await new Promise(resolve => setTimeout(resolve, 2000));
+    let downloadClicked = false;
 
-        const currentFiles = fs.readdirSync(downloadPath);
-        const completedFiles = currentFiles.filter(file =>
-          !filesBeforeDownload.includes(file) &&
-          (file.endsWith('.csv') || file.endsWith('.xlsx') || file.endsWith('.xls')) &&
-          !file.endsWith('.crdownload')
-        );
+    for (const selector of downloadButtonSelectors) {
+      try {
+        const downloadButton = await page.$(selector);
+        if (downloadButton) {
+          console.log(`Found download button with selector: ${selector}`);
 
-        if (completedFiles.length > 0) {
-          downloadedFile = completedFiles[0];
-          console.log(`Download completed: ${downloadedFile}`);
+          const filesBeforeDownload = fs.readdirSync(downloadPath);
+          await downloadButton.click();
+          console.log("Download button clicked");
+
+          downloadClicked = true;
+
+          // Wait for download with improved logic
+          const downloadedFile = await waitForDownload(downloadPath, filesBeforeDownload, 60000);
+
+          if (downloadedFile) {
+            const result = await processDownloadedFile(downloadedFile, downloadPath, newFileName);
+            await browser.close();
+            return result;
+          }
           break;
         }
-      }
-
-      if (downloadedFile) {
-        const result = await processDownloadedFile(downloadedFile, downloadPath, newFileName);
-        await browser.close();
-        return result;
+      } catch (buttonError) {
+        console.log(`Failed with selector ${selector}: ${buttonError.message}`);
       }
     }
 
-    // STRATEGY 2: Alternative approach - navigate to rewards page and export
-    console.log("STRATEGY 2: Trying alternative approach...");
-    try {
-      // Navigate to rewards page
-      await page.goto(`${data.url.replace(/\/login(\/|$)/g, '/').replace(/\/$/, '')}/my-commissions`, { waitUntil: "networkidle2" });
-      
-      // Look for export link/button
-      const exportLink = await page.$('a[href*="export"]');
-      if (exportLink) {
-        console.log("Found export link, clicking...");
-        const filesBeforeDownload = fs.readdirSync(downloadPath);
-        
-        await exportLink.click();
-        await new Promise(resolve => setTimeout(resolve, 5000));
+    // STRATEGY 2: Navigate directly to commissions page
+    if (!downloadClicked) {
+      console.log("STRATEGY 2: Navigating directly to commissions page...");
+      try {
+        const commissionsUrl = `${data.url.replace(/\/login(\/|$)/g, '/').replace(/\/$/, '')}/my-commissions`;
+        console.log(`Navigating to: ${commissionsUrl}`);
 
-        // Wait for download
-        let downloadedFile = null;
-        const maxWaitTime = 30000;
-        const startTime = Date.now();
+        await page.goto(commissionsUrl, {
+          waitUntil: ["domcontentloaded", "networkidle0"],
+          timeout: 30000
+        });
 
-        while (Date.now() - startTime < maxWaitTime) {
-          await new Promise(resolve => setTimeout(resolve, 2000));
+        await page.waitForTimeout(5000);
 
-          const currentFiles = fs.readdirSync(downloadPath);
-          const completedFiles = currentFiles.filter(file =>
-            !filesBeforeDownload.includes(file) &&
-            (file.endsWith('.csv') || file.endsWith('.xlsx') || file.endsWith('.xls')) &&
-            !file.endsWith('.crdownload')
-          );
+        // Retry download buttons on commissions page
+        for (const selector of downloadButtonSelectors) {
+          try {
+            const downloadButton = await page.$(selector);
+            if (downloadButton) {
+              console.log(`Found download button on commissions page: ${selector}`);
 
-          if (completedFiles.length > 0) {
-            downloadedFile = completedFiles[0];
-            console.log(`Download completed: ${downloadedFile}`);
-            break;
+              const filesBeforeDownload = fs.readdirSync(downloadPath);
+              await downloadButton.click();
+              console.log("Download button clicked on commissions page");
+
+              const downloadedFile = await waitForDownload(downloadPath, filesBeforeDownload, 60000);
+
+              if (downloadedFile) {
+                const result = await processDownloadedFile(downloadedFile, downloadPath, newFileName);
+                await browser.close();
+                return result;
+              }
+              break;
+            }
+          } catch (buttonError) {
+            console.log(`Failed with selector ${selector}: ${buttonError.message}`);
           }
         }
-
-        if (downloadedFile) {
-          const result = await processDownloadedFile(downloadedFile, downloadPath, newFileName);
-          await browser.close();
-          return result;
-        }
+      } catch (commissionsError) {
+        console.log("Commissions page navigation failed:", commissionsError.message);
       }
-    } catch (altError) {
-      console.log("Alternative approach failed:", altError.message);
     }
 
     // Final check for any downloaded files
     const finalFiles = fs.readdirSync(downloadPath);
     const downloadedFiles = finalFiles.filter(file =>
-      file.endsWith('.csv') || file.endsWith('.xlsx') || file.endsWith('.xls')
+      (file.endsWith('.csv') || file.endsWith('.xlsx') || file.endsWith('.xls')) &&
+      !file.endsWith('.crdownload')
     );
-    console.log(downloadedFiles,downloadedFiles?.length,"downloadedFilesdownloadedFiles")
 
     if (downloadedFiles.length > 0) {
       console.log(`Found downloaded file: ${downloadedFiles[0]}`);
@@ -231,11 +328,52 @@ exports.exportScalenutData = async (data) => {
 };
 
 /**
+ * Wait for download to complete
+ */
+async function waitForDownload(downloadPath, filesBeforeDownload, maxWaitTime = 60000) {
+  const startTime = Date.now();
+
+  while (Date.now() - startTime < maxWaitTime) {
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    const currentFiles = fs.readdirSync(downloadPath);
+    const completedFiles = currentFiles.filter(file =>
+      !filesBeforeDownload.includes(file) &&
+      (file.endsWith('.csv') || file.endsWith('.xlsx') || file.endsWith('.xls')) &&
+      !file.endsWith('.crdownload')
+    );
+
+    if (completedFiles.length > 0) {
+      console.log(`Download completed: ${completedFiles[0]}`);
+      return completedFiles[0];
+    }
+
+    // Check for partial downloads
+    const partialFiles = currentFiles.filter(file =>
+      !filesBeforeDownload.includes(file) &&
+      file.endsWith('.crdownload')
+    );
+
+    if (partialFiles.length === 0 && currentFiles.length > filesBeforeDownload.length) {
+      // No partial downloads but new files exist
+      const newFiles = currentFiles.filter(file => !filesBeforeDownload.includes(file));
+      if (newFiles.length > 0) {
+        console.log(`Found new file (no partial downloads): ${newFiles[0]}`);
+        return newFiles[0];
+      }
+    }
+  }
+
+  console.log("Download timeout reached");
+  return null;
+}
+
+/**
  * Process downloaded file (NO DATABASE OPERATIONS)
  */
 async function processDownloadedFile(downloadedFile, downloadPath, newFileName) {
   const downloadedFilePath = path.join(downloadPath, downloadedFile);
-  const finalFilePath = path.join(downloadPath, newFileName);
+  let finalFilePath = path.join(downloadPath, newFileName);
 
   console.log(`Processing downloaded file: ${downloadedFile}`);
   let rowData = [];
@@ -273,6 +411,7 @@ async function processDownloadedFile(downloadedFile, downloadPath, newFileName) 
     console.error("Error renaming file:", renameError);
     // If rename fails, use the original downloaded file
     finalFilePath = downloadedFilePath;
+    newFileName = downloadedFile;
   }
 
   return {
@@ -287,15 +426,3 @@ async function processDownloadedFile(downloadedFile, downloadPath, newFileName) 
 
 // Export the processDownloadedFile function
 exports.processDownloadedFile = processDownloadedFile;
-
-exports.viewScalenutData = async (data) => {
-  try {
-    // Your view functionality here
-    return { success: true, msg: "View functionality not implemented yet" };
-  } catch (error) {
-    return {
-      success: false,
-      msg: error.message
-    };
-  }
-};
