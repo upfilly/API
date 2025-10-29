@@ -203,6 +203,7 @@ exports.exportScalenutData = async (data) => {
     const downloadedFiles = finalFiles.filter(file =>
       file.endsWith('.csv') || file.endsWith('.xlsx') || file.endsWith('.xls')
     );
+    console.log(downloadedFiles,downloadedFiles?.length,"downloadedFilesdownloadedFiles")
 
     if (downloadedFiles.length > 0) {
       console.log(`Found downloaded file: ${downloadedFiles[0]}`);
