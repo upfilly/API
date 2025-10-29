@@ -241,7 +241,9 @@ exports.addFirstPromoter = async (req, res) => {
         if (validation_result && !validation_result.success) {
             throw validation_result.message;
         }
-        let data = req.body;   
+        let data = req.body;  
+        
+        console.log(data,"jkjkjkjkkjkj")
 
         const existedPromoter = await FirstPromoter.findOne({ email: data.email, isDeleted: false });
 
