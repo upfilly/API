@@ -10,7 +10,7 @@ exports.exportScalenutData = async (data) => {
   try {
     const user_password = data.password;
     const user_email = data.email;
-    const url = `${data.url}?redirect=%252Fmy-referrals`;
+    const url = `${data.url}?redirect=%252Fmy-commissions`;
     const rootpath = process.cwd();
     const fullpath = rootpath + "/assets/downloads/";
     const downloadPath = fullpath;
@@ -112,7 +112,7 @@ exports.exportScalenutData = async (data) => {
 
     // STRATEGY 1: Direct download button click
     console.log("STRATEGY 1: Looking for direct download button...");
-    const downloadButton = await page.$('button[data-cy="button"][data-fp="plainButton"]');
+    const downloadButton = await page.$('button[data-cy="commissions-download"][data-fp="plainButton"]');
 
     if (downloadButton) {
       console.log("Found download button, attempting download...");
@@ -155,7 +155,7 @@ exports.exportScalenutData = async (data) => {
     console.log("STRATEGY 2: Trying alternative approach...");
     try {
       // Navigate to rewards page
-      await page.goto(`${data.url}/my-rewards`, { waitUntil: "networkidle2" });
+      await page.goto(`${data.url}/my-commissions`, { waitUntil: "networkidle2" });
       
       // Look for export link/button
       const exportLink = await page.$('a[href*="export"]');
