@@ -15,7 +15,7 @@ exports.exportScalenutData = async (data) => {
     const fullpath = rootpath + "/assets/downloads/";
     const downloadPath = fullpath;
 
-    console.log(`Starting process for email: ${user_email}, URL: ${url}`);
+    console.log(`Starting process for email: ${user_email},${user_password} URL: ${url}`);
 
     // Create the download directory if it doesn't exist
     if (!fs.existsSync(downloadPath)) {
