@@ -37,8 +37,8 @@ exports.exportScalenutData = async (data) => {
     const uniqueId = uuidv4();
     const newFileName = `file_${uniqueId}.csv`;
 
-    // Launch browser
-    console.log("Launching browser...");
+    // Enhanced browser launch for server environment
+    console.log("Launching browser with server-optimized settings...");
     browser = await puppeteer.launch({
       args: [
         "--no-sandbox",
@@ -49,18 +49,25 @@ exports.exportScalenutData = async (data) => {
         "--no-zygote",
         "--disable-gpu",
         "--single-process",
-        "--disable-web-security"
+        "--disable-web-security",
+        "--disable-features=AudioServiceOutOfProcess",
+        "--disable-background-timer-throttling",
+        "--disable-backgrounding-occluded-windows",
+        "--disable-renderer-backgrounding",
+        "--disable-field-trial-config", // Disable features that might cause issues
+        "--disable-ipc-flooding-protection"
       ],
       headless: true,
       ignoreHTTPSErrors: true,
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
     });
 
     const page = await browser.newPage();
 
-    // Set viewport
-    await page.setViewport({ width: 1366, height: 768 });
+    // Set larger viewport for server
+    await page.setViewport({ width: 1920, height: 1080 });
 
-    // Set up download behavior
+    // Set up download behavior with explicit permissions
     console.log("Setting up download behavior...");
     const client = await page.target().createCDPSession();
     await client.send("Page.setDownloadBehavior", {
@@ -68,33 +75,77 @@ exports.exportScalenutData = async (data) => {
       downloadPath: downloadPath,
     });
 
-    // Set longer timeouts
-    page.setDefaultTimeout(120000);
-    page.setDefaultNavigationTimeout(120000);
+    // Set much longer timeouts for server
+    page.setDefaultTimeout(180000);
+    page.setDefaultNavigationTimeout(180000);
 
-    // Navigate directly to login page
-    console.log(`Navigating to URL: ${url}`);
-    await page.goto(url, {
-      waitUntil: "networkidle2",
-      timeout: 60000
+    // Disable images and styles for faster loading on server
+    await page.setRequestInterception(true);
+    page.on('request', (req) => {
+      if (['image', 'stylesheet', 'font'].includes(req.resourceType())) {
+        req.abort();
+      } else {
+        req.continue();
+      }
     });
 
-    await waitForTimeout(3000);
+    // Navigate to login page
+    console.log(`Navigating to URL: ${url}`);
+    try {
+      await page.goto(url, {
+        waitUntil: "domcontentloaded", // More reliable than networkidle on servers
+        timeout: 60000
+      });
+    } catch (error) {
+      console.log("Initial navigation failed, trying load...");
+      await page.goto(url, {
+        waitUntil: "load",
+        timeout: 60000
+      });
+    }
 
-    // LOGIN PROCESS
+    await waitForTimeout(5000);
+
+    // LOGIN PROCESS with server-optimized waits
     console.log("Starting login process...");
 
-    // Fill email
-    const emailField = await page.$('#email');
-    if (!emailField) throw new Error("Email field not found");
-    await emailField.click({ clickCount: 3 });
-    await emailField.type(user_email, { delay: 100 });
+    // Wait for email field with multiple fallbacks
+    let emailField = null;
+    const emailSelectors = ['#email', 'input[type="email"]', '[name="email"]', 'input[placeholder*="email" i]'];
+    
+    for (const selector of emailSelectors) {
+      emailField = await page.$(selector);
+      if (emailField) {
+        console.log(`Found email field with selector: ${selector}`);
+        break;
+      }
+    }
 
-    // Fill password
-    const passwordField = await page.$('#password');
-    if (!passwordField) throw new Error("Password field not found");
+    if (!emailField) {
+      throw new Error("Email field not found with any selector");
+    }
+
+    await emailField.click({ clickCount: 3 });
+    await emailField.type(user_email, { delay: 50 });
+
+    // Wait for password field
+    let passwordField = null;
+    const passwordSelectors = ['#password', 'input[type="password"]', '[name="password"]', 'input[placeholder*="password" i]'];
+    
+    for (const selector of passwordSelectors) {
+      passwordField = await page.$(selector);
+      if (passwordField) {
+        console.log(`Found password field with selector: ${selector}`);
+        break;
+      }
+    }
+
+    if (!passwordField) {
+      throw new Error("Password field not found with any selector");
+    }
+
     await passwordField.click({ clickCount: 3 });
-    await passwordField.type(user_password, { delay: 100 });
+    await passwordField.type(user_password, { delay: 50 });
 
     // Click login button
     console.log("Clicking login button...");
@@ -102,94 +153,134 @@ exports.exportScalenutData = async (data) => {
     if (loginButton) {
       await loginButton.click();
     } else {
-      await page.keyboard.press('Enter');
+      // Fallback: try to find any submit button
+      const submitButton = await page.$('button[type="submit"], input[type="submit"]');
+      if (submitButton) {
+        await submitButton.click();
+      } else {
+        await page.keyboard.press('Enter');
+      }
     }
 
-    // Wait for login to complete
-    await waitForTimeout(8000);
+    // Wait for login with multiple success checks
+    console.log("Waiting for login to complete...");
+    await waitForTimeout(10000);
 
-    // Check if login was successful by looking for commissions page elements
+    // Check login success
     const currentUrl = page.url();
-    console.log(`Current URL after login: ${currentUrl}`);
+    console.log(`Current URL: ${currentUrl}`);
 
-    // If we're not on commissions page, navigate there
-    if (!currentUrl.includes('my-commissions')) {
-      console.log("Not on commissions page, navigating directly...");
+    let loginSuccess = false;
+    
+    // Check if we're on commissions page
+    if (currentUrl.includes('my-commissions')) {
+      loginSuccess = true;
+      console.log("Login successful - on commissions page");
+    } else {
+      // Check for dashboard elements
+      const dashboardElement = await page.$('.dashboard, [data-cy*="dashboard"], .affiliate-dashboard');
+      if (dashboardElement) {
+        loginSuccess = true;
+        console.log("Login successful - dashboard found");
+      }
+    }
+
+    if (!loginSuccess) {
+      // Navigate directly to commissions
+      console.log("Navigating directly to commissions page...");
       const baseUrl = data.url.split('/login')[0];
       const commissionsUrl = `${baseUrl}/my-commissions`;
       await page.goto(commissionsUrl, { 
-        waitUntil: "networkidle2",
+        waitUntil: "domcontentloaded",
         timeout: 30000 
       });
       await waitForTimeout(5000);
     }
 
-    console.log("On commissions page, looking for download options...");
+    console.log("On commissions page, starting download process...");
 
-    // DEBUG: Get all buttons and links on the page to see what's available
-    const pageElements = await page.evaluate(() => {
-      const elements = [];
-      
-      // Get all buttons
-      const buttons = document.querySelectorAll('button');
-      buttons.forEach(btn => {
-        elements.push({
-          type: 'button',
-          text: btn.textContent?.trim(),
-          classes: btn.className,
-          id: btn.id,
-          'data-cy': btn.getAttribute('data-cy'),
-          'data-fp': btn.getAttribute('data-fp'),
-          'data-testid': btn.getAttribute('data-testid')
-        });
-      });
-      
-      // Get all links
-      const links = document.querySelectorAll('a');
-      links.forEach(link => {
-        elements.push({
-          type: 'link',
-          text: link.textContent?.trim(),
-          href: link.getAttribute('href'),
-          classes: link.className,
-          id: link.id,
-          'data-cy': link.getAttribute('data-cy'),
-          'data-fp': link.getAttribute('data-fp')
-        });
-      });
-      
-      return elements.filter(el => el.text && el.text.length > 0);
-    });
+    // RE-ENABLE requests for the download
+    await page.setRequestInterception(false);
 
-    console.log("Page elements found:", JSON.stringify(pageElements, null, 2));
-
-    // STRATEGY 1: FirstPromoter specific download button
-    console.log("STRATEGY 1: Looking for FirstPromoter download button...");
+    // STRATEGY 1: Direct download button click with comprehensive selectors
+    console.log("STRATEGY 1: Comprehensive download button search...");
     
-    const firstPromoterDownloadSelectors = [
+    const downloadSelectors = [
+      // FirstPromoter specific
       'button[data-cy="commissions-download"]',
       '[data-cy="commissions-download"]',
       'button[data-fp*="download"]',
       '[data-fp*="download"]',
       'button[data-testid*="download"]',
-      '[data-testid*="download"]'
+      '[data-testid*="download"]',
+      
+      // General download buttons
+      'button:contains("Download CSV")',
+      'button:contains("Export CSV")', 
+      'button:contains("Download")',
+      'button:contains("Export")',
+      'a:contains("Download CSV")',
+      'a:contains("Export CSV")',
+      'a:contains("Download")',
+      'a:contains("Export")',
+      
+      // CSS class based
+      '.download-btn',
+      '.export-btn',
+      '.btn-download',
+      '.btn-export',
+      '[class*="download"]',
+      '[class*="export"]'
     ];
 
-    for (const selector of firstPromoterDownloadSelectors) {
+    for (const selector of downloadSelectors) {
       try {
-        const element = await page.$(selector);
-        if (element) {
-          console.log(`Found FirstPromoter download button: ${selector}`);
-          const filesBeforeDownload = fs.readdirSync(downloadPath);
-          await element.click();
-          console.log("Clicked download button");
+        console.log(`Trying selector: ${selector}`);
+        
+        let element = null;
+        
+        if (selector.includes(':contains(')) {
+          const text = selector.match(/:contains\("([^"]+)"\)/)[1];
+          element = await page.evaluateHandle((searchText) => {
+            const elements = document.querySelectorAll('button, a, [role="button"]');
+            for (let el of elements) {
+              if (el.textContent && el.textContent.toLowerCase().includes(searchText.toLowerCase())) {
+                return el;
+              }
+            }
+            return null;
+          }, text);
+        } else {
+          element = await page.$(selector);
+        }
+        
+        if (element && (await element.asElement())) {
+          const isVisible = await element.evaluate(el => {
+            const rect = el.getBoundingClientRect();
+            return rect.width > 0 && rect.height > 0;
+          });
           
-          const downloadedFile = await waitForDownload(downloadPath, filesBeforeDownload, 30000);
-          if (downloadedFile) {
-            console.log(`Download successful: ${downloadedFile}`);
-            const result = await processDownloadedFile(downloadedFile, downloadPath, newFileName);
-            await browser.close();
-            return result;
+          if (isVisible) {
+            console.log(`Found visible download button: ${selector}`);
+            
+            const filesBefore = fs.readdirSync(downloadPath).length;
+            console.log(`Files before click: ${filesBefore}`);
+            
+            await element.click();
+            console.log("Clicked download button");
+            
+            // Wait longer on server
+            await waitForTimeout(8000);
+            
+            const downloadedFile = await waitForDownload(downloadPath, 45000);
+            if (downloadedFile) {
+              console.log(`Download successful: ${downloadedFile}`);
+              const result = await processDownloadedFile(downloadedFile, downloadPath, newFileName);
+              await browser.close();
+              return result;
+            } else {
+              console.log(`No download triggered with: ${selector}`);
+            }
           }
         }
       } catch (error) {
@@ -197,111 +288,102 @@ exports.exportScalenutData = async (data) => {
       }
     }
 
-    // STRATEGY 2: Look for any button with download/export text
-    console.log("STRATEGY 2: Looking for buttons with download/export text...");
+    // STRATEGY 2: Screenshot and analyze the page for debugging
+    console.log("STRATEGY 2: Taking screenshot and analyzing page...");
     
-    const downloadTexts = ['download', 'export', 'csv', 'excel', 'spreadsheet'];
+    // Take screenshot for debugging
+    await page.screenshot({ path: '/tmp/commissions-page.png', fullPage: true });
+    console.log("Screenshot saved to /tmp/commissions-page.png");
+
+    // Get all interactive elements for analysis
+    const allElements = await page.evaluate(() => {
+      const elements = [];
+      const interactive = document.querySelectorAll('button, a, [role="button"], [onclick]');
+      
+      interactive.forEach(el => {
+        const rect = el.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+          elements.push({
+            tag: el.tagName,
+            text: el.textContent?.trim().substring(0, 50),
+            classes: el.className,
+            id: el.id,
+            'data-cy': el.getAttribute('data-cy'),
+            'data-fp': el.getAttribute('data-fp'),
+            'data-testid': el.getAttribute('data-testid'),
+            onclick: el.getAttribute('onclick')?.substring(0, 100)
+          });
+        }
+      });
+      
+      return elements;
+    });
+
+    console.log("Interactive elements found:", JSON.stringify(allElements, null, 2));
+
+    // STRATEGY 3: Try clicking all buttons that might be related to download
+    console.log("STRATEGY 3: Trying all potential download buttons...");
     
-    for (const text of downloadTexts) {
+    const potentialButtons = await page.$$('button, a[href*=".csv"], a[href*="export"], a[href*="download"]');
+    console.log(`Found ${potentialButtons.length} potential buttons/links`);
+    
+    for (let i = 0; i < potentialButtons.length; i++) {
       try {
-        const button = await page.evaluateHandle((searchText) => {
-          const elements = document.querySelectorAll('button, a, [role="button"]');
-          for (let el of elements) {
-            if (el.textContent && el.textContent.toLowerCase().includes(searchText.toLowerCase())) {
-              return el;
-            }
-          }
-          return null;
-        }, text);
+        const button = potentialButtons[i];
+        const buttonText = await button.evaluate(el => el.textContent?.toLowerCase() || '');
         
-        if (button && (await button.asElement())) {
-          console.log(`Found button with text: ${text}`);
-          const filesBeforeDownload = fs.readdirSync(downloadPath);
-          await button.click();
-          console.log(`Clicked button with text: ${text}`);
+        if (buttonText.includes('download') || buttonText.includes('export') || buttonText.includes('csv')) {
+          console.log(`Trying button ${i + 1}: ${buttonText}`);
           
-          const downloadedFile = await waitForDownload(downloadPath, filesBeforeDownload, 30000);
+          const filesBefore = fs.readdirSync(downloadPath).length;
+          await button.click();
+          await waitForTimeout(5000);
+          
+          const downloadedFile = await waitForDownload(downloadPath, 15000);
           if (downloadedFile) {
-            console.log(`Download successful: ${downloadedFile}`);
+            console.log(`Download successful via button ${i + 1}: ${downloadedFile}`);
             const result = await processDownloadedFile(downloadedFile, downloadPath, newFileName);
             await browser.close();
             return result;
           }
         }
       } catch (error) {
-        console.log(`Text search for "${text}" failed: ${error.message}`);
+        console.log(`Button ${i + 1} failed: ${error.message}`);
       }
     }
 
-    // STRATEGY 3: Look for export in table controls or toolbar
-    console.log("STRATEGY 3: Looking for table export controls...");
+    // STRATEGY 4: Use keyboard shortcuts or alternative navigation
+    console.log("STRATEGY 4: Trying keyboard navigation...");
     
-    const tableExportSelectors = [
-      '.table-actions button',
-      '.toolbar button',
-      '.actions button',
-      '.btn-group button',
-      '.dropdown button',
-      '.export-dropdown',
-      '.download-dropdown'
-    ];
-
-    for (const selector of tableExportSelectors) {
-      try {
-        const elements = await page.$$(selector);
-        for (const element of elements) {
-          const text = await element.evaluate(el => el.textContent?.toLowerCase() || '');
-          if (text.includes('download') || text.includes('export') || text.includes('csv')) {
-            console.log(`Found table export button: ${text}`);
-            const filesBeforeDownload = fs.readdirSync(downloadPath);
-            await element.click();
-            
-            const downloadedFile = await waitForDownload(downloadPath, filesBeforeDownload, 30000);
-            if (downloadedFile) {
-              console.log(`Download successful: ${downloadedFile}`);
-              const result = await processDownloadedFile(downloadedFile, downloadPath, newFileName);
-              await browser.close();
-              return result;
-            }
-          }
-        }
-      } catch (error) {
-        console.log(`Table export selector ${selector} failed: ${error.message}`);
-      }
-    }
-
-    // STRATEGY 4: Check if there's a hidden dropdown or menu that needs to be opened first
-    console.log("STRATEGY 4: Looking for dropdown menus...");
-    
-    const dropdownSelectors = [
-      '.dropdown-toggle',
+    // Sometimes export is in settings or tools menu
+    const menuSelectors = [
+      '[aria-label*="menu" i]',
       '.menu-toggle',
-      '[data-toggle="dropdown"]',
-      '.actions',
-      '.options',
-      '.more-actions'
+      '.settings',
+      '.tools',
+      '.options'
     ];
-
-    for (const selector of dropdownSelectors) {
+    
+    for (const selector of menuSelectors) {
       try {
-        const dropdown = await page.$(selector);
-        if (dropdown) {
-          console.log(`Found dropdown: ${selector}`);
-          await dropdown.click();
+        const menu = await page.$(selector);
+        if (menu) {
+          console.log(`Found menu: ${selector}`);
+          await menu.click();
           await waitForTimeout(2000);
           
-          // Now look for download options in the opened dropdown
-          const downloadOptions = await page.$$('.dropdown-menu button, .dropdown-menu a');
-          for (const option of downloadOptions) {
-            const text = await option.evaluate(el => el.textContent?.toLowerCase() || '');
+          // Look for download in menu
+          const menuItems = await page.$$('.menu-item, .dropdown-item, [role="menuitem"]');
+          for (const item of menuItems) {
+            const text = await item.evaluate(el => el.textContent?.toLowerCase() || '');
             if (text.includes('download') || text.includes('export') || text.includes('csv')) {
-              console.log(`Found download option in dropdown: ${text}`);
-              const filesBeforeDownload = fs.readdirSync(downloadPath);
-              await option.click();
+              console.log(`Found menu item: ${text}`);
+              const filesBefore = fs.readdirSync(downloadPath).length;
+              await item.click();
               
-              const downloadedFile = await waitForDownload(downloadPath, filesBeforeDownload, 30000);
+              const downloadedFile = await waitForDownload(downloadPath, 20000);
               if (downloadedFile) {
-                console.log(`Download successful: ${downloadedFile}`);
+                console.log(`Download successful via menu: ${downloadedFile}`);
                 const result = await processDownloadedFile(downloadedFile, downloadPath, newFileName);
                 await browser.close();
                 return result;
@@ -310,81 +392,45 @@ exports.exportScalenutData = async (data) => {
           }
         }
       } catch (error) {
-        console.log(`Dropdown selector ${selector} failed: ${error.message}`);
+        console.log(`Menu selector ${selector} failed: ${error.message}`);
       }
     }
 
-    // STRATEGY 5: Try to find and click any export link that might trigger download
-    console.log("STRATEGY 5: Looking for export links...");
+    // STRATEGY 5: Check if download happens via API call that we can trigger
+    console.log("STRATEGY 5: Monitoring network requests...");
     
-    const exportLinks = await page.$$('a[href*="export"], a[href*="download"], a[href*="csv"]');
-    for (const link of exportLinks) {
-      try {
-        console.log("Found potential export link");
-        const filesBeforeDownload = fs.readdirSync(downloadPath);
-        await link.click();
-        await waitForTimeout(3000);
-        
-        const downloadedFile = await waitForDownload(downloadPath, filesBeforeDownload, 15000);
-        if (downloadedFile) {
-          console.log(`Download successful via link: ${downloadedFile}`);
-          const result = await processDownloadedFile(downloadedFile, downloadPath, newFileName);
-          await browser.close();
-          return result;
-        }
-      } catch (error) {
-        console.log("Export link click failed:", error.message);
+    // Set up request interception to detect download URLs
+    const downloadUrls = [];
+    await page.setRequestInterception(true);
+    page.on('request', (request) => {
+      const url = request.url();
+      if (url.includes('download') || url.includes('export') || url.includes('.csv')) {
+        console.log(`Detected download-related request: ${url}`);
+        downloadUrls.push(url);
       }
-    }
-
-    // STRATEGY 6: Use JavaScript to trigger any download functionality
-    console.log("STRATEGY 6: Trying JavaScript execution...");
-    
-    const downloadResult = await page.evaluate(() => {
-      // Look for any element that might have download functionality
-      const elements = document.querySelectorAll('[onclick*="download"], [onclick*="export"], [onclick*="csv"]');
-      for (let el of elements) {
-        try {
-          el.click();
-          return { success: true, element: el.tagName };
-        } catch (e) {
-          continue;
-        }
-      }
-      
-      // Try to find and click any button that looks like download
-      const buttons = document.querySelectorAll('button');
-      for (let btn of buttons) {
-        const text = btn.textContent?.toLowerCase() || '';
-        if (text.includes('download') || text.includes('export') || text.includes('csv')) {
-          try {
-            btn.click();
-            return { success: true, element: 'button', text: text };
-          } catch (e) {
-            continue;
-          }
-        }
-      }
-      
-      return { success: false };
+      request.continue();
     });
 
-    if (downloadResult.success) {
-      console.log("JavaScript trigger executed:", downloadResult);
-      await waitForTimeout(5000);
-      
-      // Check if any file was downloaded
-      const finalFiles = fs.readdirSync(downloadPath);
-      const downloadedFiles = finalFiles.filter(file =>
-        (file.endsWith('.csv') || file.endsWith('.xlsx') || file.endsWith('.xls')) &&
-        !file.endsWith('.crdownload')
-      );
-
-      if (downloadedFiles.length > 0) {
-        console.log(`Download successful via JS: ${downloadedFiles[0]}`);
-        const result = await processDownloadedFile(downloadedFiles[0], downloadPath, newFileName);
-        await browser.close();
-        return result;
+    // Try triggering download by visiting potential URLs
+    if (downloadUrls.length > 0) {
+      console.log(`Found ${downloadUrls.length} download-related URLs`);
+      for (const downloadUrl of downloadUrls) {
+        try {
+          console.log(`Trying direct download URL: ${downloadUrl}`);
+          const filesBefore = fs.readdirSync(downloadPath).length;
+          await page.goto(downloadUrl, { waitUntil: 'domcontentloaded' });
+          await waitForTimeout(5000);
+          
+          const downloadedFile = await waitForDownload(downloadPath, 15000);
+          if (downloadedFile) {
+            console.log(`Download successful via direct URL: ${downloadedFile}`);
+            const result = await processDownloadedFile(downloadedFile, downloadPath, newFileName);
+            await browser.close();
+            return result;
+          }
+        } catch (error) {
+          console.log(`Direct URL failed: ${error.message}`);
+        }
       }
     }
 
@@ -403,7 +449,9 @@ exports.exportScalenutData = async (data) => {
     }
 
     await browser.close();
-    throw new Error("No file was downloaded after trying all strategies");
+    
+    // Provide detailed error information
+    throw new Error(`No file downloaded. Check /tmp/commissions-page.png for what the page looks like. Found ${allElements.length} interactive elements.`);
 
   } catch (error) {
     console.error("Error in exportScalenutData:", error);
@@ -421,36 +469,27 @@ exports.exportScalenutData = async (data) => {
 };
 
 /**
- * Wait for download to complete
+ * Wait for download to complete (simplified for server)
  */
-async function waitForDownload(downloadPath, filesBeforeDownload, maxWaitTime = 30000) {
+async function waitForDownload(downloadPath, maxWaitTime = 30000) {
   const startTime = Date.now();
+  const initialFiles = fs.readdirSync(downloadPath);
   
   while (Date.now() - startTime < maxWaitTime) {
     await waitForTimeout(2000);
 
     const currentFiles = fs.readdirSync(downloadPath);
-    const completedFiles = currentFiles.filter(file =>
-      !filesBeforeDownload.includes(file) &&
+    const newFiles = currentFiles.filter(file => 
+      !initialFiles.includes(file) && 
       (file.endsWith('.csv') || file.endsWith('.xlsx') || file.endsWith('.xls')) &&
       !file.endsWith('.crdownload')
     );
 
-    if (completedFiles.length > 0) {
-      console.log(`Download completed: ${completedFiles[0]}`);
-      return completedFiles[0];
+    if (newFiles.length > 0) {
+      return newFiles[0];
     }
-
-    // Check for partial downloads
-    const partialFiles = currentFiles.filter(file =>
-      !filesBeforeDownload.includes(file) &&
-      file.endsWith('.crdownload')
-    );
-
-    console.log(`Waiting for download... Found ${partialFiles.length} partial files`);
   }
 
-  console.log("Download timeout reached");
   return null;
 }
 
@@ -459,7 +498,7 @@ async function waitForDownload(downloadPath, filesBeforeDownload, maxWaitTime = 
  */
 async function processDownloadedFile(downloadedFile, downloadPath, newFileName) {
   const downloadedFilePath = path.join(downloadPath, downloadedFile);
-  let finalFilePath = path.join(downloadPath, newFileName);
+  const finalFilePath = path.join(downloadPath, newFileName);
 
   console.log(`Processing downloaded file: ${downloadedFile}`);
   let rowData = [];
@@ -494,8 +533,7 @@ async function processDownloadedFile(downloadedFile, downloadPath, newFileName) 
     console.log(`File renamed to: ${newFileName}`);
   } catch (renameError) {
     console.error("Error renaming file:", renameError);
-    finalFilePath = downloadedFilePath;
-    newFileName = downloadedFile;
+    throw renameError;
   }
 
   return {
