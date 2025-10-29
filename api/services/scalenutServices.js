@@ -5,6 +5,9 @@ const fs = require("fs");
 const path = require("path");
 const puppeteer = require("puppeteer");
 
+// Helper function for timeouts (compatible with all Puppeteer versions)
+const waitForTimeout = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
 exports.exportScalenutData = async (data) => {
   let browser;
   try {
@@ -45,13 +48,13 @@ exports.exportScalenutData = async (data) => {
         "--no-first-run",
         "--no-zygote",
         "--disable-gpu",
-        "--single-process", // Important for some server environments
+        "--single-process",
         "--disable-web-security",
         "--disable-features=VizDisplayCompositor"
       ],
-      headless: "new", // Use new headless mode
+      headless: true, // Use classic headless for older versions
       ignoreHTTPSErrors: true,
-      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined, // For Docker environments
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
     });
 
     const page = await browser.newPage();
@@ -86,9 +89,18 @@ exports.exportScalenutData = async (data) => {
       });
     }
 
-    // Improved wait for page load
-    await page.waitForFunction(() => document.readyState === 'complete', { timeout: 30000 });
-    await page.waitForTimeout(5000);
+    // Improved wait for page load using evaluate
+    await page.evaluate(() => {
+      return new Promise((resolve) => {
+        if (document.readyState === 'complete') {
+          resolve();
+        } else {
+          window.addEventListener('load', resolve);
+        }
+      });
+    });
+    
+    await waitForTimeout(5000);
 
     // Login process with enhanced selectors and fallbacks
     console.log("Attempting login...");
@@ -109,12 +121,12 @@ exports.exportScalenutData = async (data) => {
     // Fill email with multiple selector options
     const emailSelectors = ['#email', 'input[type="email"]', '[name="email"]'];
     let emailField = null;
-
+    
     for (const selector of emailSelectors) {
       emailField = await page.$(selector);
       if (emailField) break;
     }
-
+    
     if (emailField) {
       await emailField.click({ clickCount: 3 });
       await emailField.type(user_email, { delay: 100 });
@@ -125,12 +137,12 @@ exports.exportScalenutData = async (data) => {
     // Fill password with multiple selector options
     const passwordSelectors = ['#password', 'input[type="password"]', '[name="password"]'];
     let passwordField = null;
-
+    
     for (const selector of passwordSelectors) {
       passwordField = await page.$(selector);
       if (passwordField) break;
     }
-
+    
     if (passwordField) {
       await passwordField.click({ clickCount: 3 });
       await passwordField.type(user_password, { delay: 100 });
@@ -145,20 +157,27 @@ exports.exportScalenutData = async (data) => {
       'button[type="submit"]',
       'input[type="submit"]',
       '.login-button',
-      'button:contains("Login")',
-      'button:contains("Sign In")'
+      'button',
     ];
 
     let loginClicked = false;
-
+    
     for (const selector of loginButtonSelectors) {
       try {
         const button = await page.$(selector);
         if (button) {
-          await button.click();
-          loginClicked = true;
-          console.log(`Clicked login button with selector: ${selector}`);
-          break;
+          // Check if button is visible and clickable
+          const isVisible = await button.evaluate(el => {
+            const style = window.getComputedStyle(el);
+            return style && style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
+          });
+          
+          if (isVisible) {
+            await button.click();
+            loginClicked = true;
+            console.log(`Clicked login button with selector: ${selector}`);
+            break;
+          }
         }
       } catch (e) {
         console.log(`Failed to click with selector ${selector}: ${e.message}`);
@@ -173,7 +192,7 @@ exports.exportScalenutData = async (data) => {
 
     // Enhanced navigation wait with multiple strategies
     console.log("Waiting for post-login navigation...");
-
+    
     try {
       // Strategy 1: Wait for URL change
       await page.waitForFunction(
@@ -188,9 +207,9 @@ exports.exportScalenutData = async (data) => {
 
     try {
       // Strategy 2: Wait for network idle
-      await page.waitForNavigation({
-        waitUntil: ['networkidle0', 'domcontentloaded'],
-        timeout: 15000
+      await page.waitForNavigation({ 
+        waitUntil: ['networkidle0', 'domcontentloaded'], 
+        timeout: 15000 
       });
     } catch (e) {
       console.log("No navigation event detected");
@@ -198,21 +217,22 @@ exports.exportScalenutData = async (data) => {
 
     // Strategy 3: Wait for specific elements that indicate successful login
     try {
-      await page.waitForSelector('.dashboard, [data-cy*="dashboard"], .my-commissions, [href*="commission"]', {
-        timeout: 15000
-      });
+      await page.waitForFunction(() => {
+        const elements = document.querySelectorAll('.dashboard, [data-cy*="dashboard"], .my-commissions, [href*="commission"]');
+        return elements.length > 0;
+      }, { timeout: 15000 });
       console.log("Dashboard elements found");
     } catch (e) {
       console.log("No specific dashboard elements found, continuing anyway");
     }
 
     // Final wait to ensure page is stable
-    await page.waitForTimeout(5000);
+    await waitForTimeout(5000);
     console.log("Login process completed");
 
     // STRATEGY 1: Direct download button click with enhanced selectors
     console.log("STRATEGY 1: Looking for download buttons...");
-
+    
     const downloadButtonSelectors = [
       'button[data-cy="commissions-download"][data-fp="plainButton"]',
       'button:contains("Download")',
@@ -224,22 +244,37 @@ exports.exportScalenutData = async (data) => {
     ];
 
     let downloadClicked = false;
-
+    
     for (const selector of downloadButtonSelectors) {
       try {
-        const downloadButton = await page.$(selector);
-        if (downloadButton) {
+        // Use evaluate to find elements by text content for contains selectors
+        let downloadButton;
+        if (selector.includes('contains("')) {
+          downloadButton = await page.evaluateHandle((sel) => {
+            const elements = document.querySelectorAll('button, a');
+            for (let el of elements) {
+              if (el.textContent.includes(sel.split('contains("')[1].split('")')[0])) {
+                return el;
+              }
+            }
+            return null;
+          }, selector);
+        } else {
+          downloadButton = await page.$(selector);
+        }
+        
+        if (downloadButton && (await downloadButton.asElement())) {
           console.log(`Found download button with selector: ${selector}`);
-
+          
           const filesBeforeDownload = fs.readdirSync(downloadPath);
           await downloadButton.click();
           console.log("Download button clicked");
-
+          
           downloadClicked = true;
-
+          
           // Wait for download with improved logic
           const downloadedFile = await waitForDownload(downloadPath, filesBeforeDownload, 60000);
-
+          
           if (downloadedFile) {
             const result = await processDownloadedFile(downloadedFile, downloadPath, newFileName);
             await browser.close();
@@ -258,27 +293,41 @@ exports.exportScalenutData = async (data) => {
       try {
         const commissionsUrl = `${data.url.replace(/\/login(\/|$)/g, '/').replace(/\/$/, '')}/my-commissions`;
         console.log(`Navigating to: ${commissionsUrl}`);
-
-        await page.goto(commissionsUrl, {
+        
+        await page.goto(commissionsUrl, { 
           waitUntil: ["domcontentloaded", "networkidle0"],
-          timeout: 30000
+          timeout: 30000 
         });
-
-        await page.waitForTimeout(5000);
-
+        
+        await waitForTimeout(5000);
+        
         // Retry download buttons on commissions page
         for (const selector of downloadButtonSelectors) {
           try {
-            const downloadButton = await page.$(selector);
-            if (downloadButton) {
+            let downloadButton;
+            if (selector.includes('contains("')) {
+              downloadButton = await page.evaluateHandle((sel) => {
+                const elements = document.querySelectorAll('button, a');
+                for (let el of elements) {
+                  if (el.textContent.includes(sel.split('contains("')[1].split('")')[0])) {
+                    return el;
+                  }
+                }
+                return null;
+              }, selector);
+            } else {
+              downloadButton = await page.$(selector);
+            }
+            
+            if (downloadButton && (await downloadButton.asElement())) {
               console.log(`Found download button on commissions page: ${selector}`);
-
+              
               const filesBeforeDownload = fs.readdirSync(downloadPath);
               await downloadButton.click();
               console.log("Download button clicked on commissions page");
-
+              
               const downloadedFile = await waitForDownload(downloadPath, filesBeforeDownload, 60000);
-
+              
               if (downloadedFile) {
                 const result = await processDownloadedFile(downloadedFile, downloadPath, newFileName);
                 await browser.close();
@@ -292,6 +341,36 @@ exports.exportScalenutData = async (data) => {
         }
       } catch (commissionsError) {
         console.log("Commissions page navigation failed:", commissionsError.message);
+      }
+    }
+
+    // STRATEGY 3: Try JavaScript-based download
+    if (!downloadClicked) {
+      console.log("STRATEGY 3: Attempting JavaScript download trigger...");
+      try {
+        const filesBeforeDownload = fs.readdirSync(downloadPath);
+        
+        // Try to trigger download via JavaScript
+        await page.evaluate(() => {
+          // Look for any element that might trigger download
+          const downloadElements = document.querySelectorAll('[onclick*="download"], [onclick*="export"], [href*=".csv"], [href*=".xlsx"]');
+          for (let el of downloadElements) {
+            el.click();
+            return true;
+          }
+          return false;
+        });
+        
+        await waitForTimeout(5000);
+        
+        const downloadedFile = await waitForDownload(downloadPath, filesBeforeDownload, 30000);
+        if (downloadedFile) {
+          const result = await processDownloadedFile(downloadedFile, downloadPath, newFileName);
+          await browser.close();
+          return result;
+        }
+      } catch (jsError) {
+        console.log("JavaScript download trigger failed:", jsError.message);
       }
     }
 
@@ -332,9 +411,9 @@ exports.exportScalenutData = async (data) => {
  */
 async function waitForDownload(downloadPath, filesBeforeDownload, maxWaitTime = 60000) {
   const startTime = Date.now();
-
+  
   while (Date.now() - startTime < maxWaitTime) {
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await waitForTimeout(2000);
 
     const currentFiles = fs.readdirSync(downloadPath);
     const completedFiles = currentFiles.filter(file =>
