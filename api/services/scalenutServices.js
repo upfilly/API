@@ -11,7 +11,7 @@ exports.exportScalenutData = async (data) => {
     const user_password = data.password;
     const user_email = data.email;
     const url = `${data.url}?redirect=%252Fmy-commissions`;
-
+    
     // Use absolute path that works in both environments
     const rootpath = process.cwd();
     const fullpath = path.join(rootpath, "assets", "downloads");
@@ -59,14 +59,14 @@ exports.exportScalenutData = async (data) => {
       ],
       headless: true,
       ignoreHTTPSErrors: true,
-      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined, // For Docker/cloud environments
     });
 
     const page = await browser.newPage();
 
     // Enhanced page configuration
     await page.setViewport({ width: 1280, height: 720 });
-    page.setDefaultTimeout(120000);
+    page.setDefaultTimeout(120000); // Increased timeout for browser environment
     page.setDefaultNavigationTimeout(120000);
 
     // Set up download behavior with error handling
@@ -94,7 +94,7 @@ exports.exportScalenutData = async (data) => {
       console.log("Navigation timeout, continuing anyway:", navError.message);
     }
 
-    // Wait for page to load completely
+    // Wait for page to load completely with multiple strategies
     await page.waitForFunction(() => document.readyState === 'complete', { timeout: 30000 })
       .catch(() => console.log("Page ready state check failed, continuing..."));
 
@@ -154,19 +154,16 @@ exports.exportScalenutData = async (data) => {
 
     // Enhanced login button click with multiple strategies
     console.log("Clicking login button...");
-
-    // Try multiple login button selectors (using valid CSS selectors)
+    
+    // Try multiple login button selectors
     const loginButtonSelectors = [
       'button[data-cy="button"][data-fp="primaryButton"]',
       'button[type="submit"]',
       'input[type="submit"]',
-      'button[data-cy*="login"]',
-      'button[data-cy*="signin"]',
-      'button[id*="login"]',
-      'button[id*="signin"]',
+      'button:contains("Login")',
+      'button:contains("Sign In")',
       'input[value*="Login" i]',
-      'input[value*="Sign" i]',
-      'button'
+      'input[value*="Sign" i]'
     ];
 
     let loginClicked = false;
@@ -191,18 +188,18 @@ exports.exportScalenutData = async (data) => {
 
     // Wait for navigation with better handling
     try {
-      await page.waitForNavigation({
-        waitUntil: ['networkidle2', 'domcontentloaded'],
-        timeout: 30000
+      await page.waitForNavigation({ 
+        waitUntil: ['networkidle2', 'domcontentloaded'], 
+        timeout: 30000 
       });
       console.log("Navigation after login completed");
     } catch (e) {
       console.log("No navigation occurred after login, continuing...");
     }
 
-    // Wait for dashboard to load
+    // Wait for dashboard to load with multiple checks
     await new Promise(resolve => setTimeout(resolve, 8000));
-
+    
     // Check if login was successful by looking for dashboard elements
     const dashboardIndicators = [
       '.dashboard',
@@ -242,39 +239,25 @@ exports.exportScalenutData = async (data) => {
       console.log("No clear login status, continuing anyway...");
     }
 
-    // Enhanced download strategies with VALID CSS selectors
+    // Enhanced download strategies
     console.log("STRATEGY 1: Looking for direct download button...");
-
+    
     const downloadButtonSelectors = [
       'button[data-cy="commissions-download"][data-fp="plainButton"]',
-      'button[data-cy*="download"]',
-      'button[id*="download"]',
-      'button[class*="download"]',
-      'a[data-cy*="download"]',
-      'a[id*="download"]',
-      'a[class*="download"]',
-      'a[href*="export"]',
-      'a[href*="download"]',
-      'button',
-      'a'
+      'button:contains("Download")',
+      'button:contains("Export")',
+      'a:contains("Download")',
+      'a:contains("Export")',
+      '[data-cy*="download"]',
+      '[class*="download"]'
     ];
 
     let downloadButton = null;
     for (const selector of downloadButtonSelectors) {
-      try {
-        downloadButton = await page.$(selector);
-        if (downloadButton) {
-          // Check if the button contains download-related text
-          const buttonText = await page.evaluate(el => el.textContent, downloadButton);
-          if (buttonText && /download|export|csv|excel/i.test(buttonText)) {
-            console.log(`Found download button with selector: ${selector} - Text: "${buttonText}"`);
-            break;
-          } else {
-            downloadButton = null; // Reset if text doesn't match
-          }
-        }
-      } catch (error) {
-        console.log(`Error checking selector ${selector}:`, error.message);
+      downloadButton = await page.$(selector);
+      if (downloadButton) {
+        console.log(`Found download button with selector: ${selector}`);
+        break;
       }
     }
 
@@ -291,7 +274,7 @@ exports.exportScalenutData = async (data) => {
       }
 
       const downloadedFile = await waitForDownload(downloadPath, filesBeforeDownload, 60000);
-
+      
       if (downloadedFile) {
         const result = await processDownloadedFile(downloadedFile, downloadPath, newFileName);
         await browser.close();
@@ -299,81 +282,52 @@ exports.exportScalenutData = async (data) => {
       }
     }
 
-    // STRATEGY 2: Alternative approach - find by text content using XPath
-    console.log("STRATEGY 2: Trying XPath approach...");
+    // STRATEGY 2: Alternative approach
+    console.log("STRATEGY 2: Trying alternative approach...");
     try {
-      // Use XPath to find elements by text content
-      const downloadXPaths = [
-        '//button[contains(translate(text(), "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"), "download")]',
-        '//a[contains(translate(text(), "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"), "download")]',
-        '//button[contains(translate(text(), "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"), "export")]',
-        '//a[contains(translate(text(), "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"), "export")]',
-        '//*[contains(translate(text(), "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"), "csv")]',
-        '//*[contains(translate(text(), "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"), "excel")]'
+      // Navigate directly to commissions page if not already there
+      const currentUrl = page.url();
+      if (!currentUrl.includes('my-commissions')) {
+        await page.goto(`${data.url.replace(/\/login(\/|$)/g, '/').replace(/\/$/, '')}/my-commissions`, { 
+          waitUntil: "networkidle2",
+          timeout: 30000 
+        });
+      }
+
+      // Look for export options with multiple selectors
+      const exportSelectors = [
+        'a[href*="export"]',
+        'button[onclick*="export"]',
+        '[data-cy*="export"]',
+        'button:contains("CSV")',
+        'button:contains("Excel")'
       ];
 
-      let downloadElement = null;
-      for (const xpath of downloadXPaths) {
-        try {
-          const elements = await page.$x(xpath);
-          if (elements.length > 0) {
-            downloadElement = elements[0];
-            console.log(`Found download element with XPath: ${xpath}`);
-            break;
-          }
-        } catch (xpathError) {
-          console.log(`XPath error for ${xpath}:`, xpathError.message);
+      let exportElement = null;
+      for (const selector of exportSelectors) {
+        exportElement = await page.$(selector);
+        if (exportElement) {
+          console.log(`Found export element with selector: ${selector}`);
+          break;
         }
       }
 
-      if (downloadElement) {
-        console.log("Found download element via XPath, clicking...");
+      if (exportElement) {
+        console.log("Found export element, clicking...");
         const filesBeforeDownload = fs.readdirSync(downloadPath);
-
-        await downloadElement.click();
-
+        
+        await exportElement.click();
+        
         const downloadedFile = await waitForDownload(downloadPath, filesBeforeDownload, 45000);
-
+        
         if (downloadedFile) {
           const result = await processDownloadedFile(downloadedFile, downloadPath, newFileName);
           await browser.close();
           return formatBrowserResponse(result);
         }
       }
-    } catch (xpathError) {
-      console.log("XPath approach failed:", xpathError.message);
-    }
-
-    // STRATEGY 3: Navigate directly to export URL if pattern is known
-    console.log("STRATEGY 3: Trying direct export URL...");
-    try {
-      // Try common export URL patterns
-      const exportUrls = [
-        `${data.url.replace(/\/login(\/|$)/g, '/').replace(/\/$/, '')}/export`,
-        `${data.url.replace(/\/login(\/|$)/g, '/').replace(/\/$/, '')}/commissions/export`,
-        `${data.url.replace(/\/login(\/|$)/g, '/').replace(/\/$/, '')}/download`,
-        `${data.url.replace(/\/login(\/|$)/g, '/').replace(/\/$/, '')}/commissions/download`
-      ];
-
-      for (const exportUrl of exportUrls) {
-        try {
-          console.log(`Trying export URL: ${exportUrl}`);
-          const filesBeforeDownload = fs.readdirSync(downloadPath);
-
-          await page.goto(exportUrl, { waitUntil: 'networkidle2', timeout: 30000 });
-
-          const downloadedFile = await waitForDownload(downloadPath, filesBeforeDownload, 30000);
-          if (downloadedFile) {
-            const result = await processDownloadedFile(downloadedFile, downloadPath, newFileName);
-            await browser.close();
-            return formatBrowserResponse(result);
-          }
-        } catch (urlError) {
-          console.log(`Export URL ${exportUrl} failed:`, urlError.message);
-        }
-      }
-    } catch (exportError) {
-      console.log("Direct export URL approach failed:", exportError.message);
+    } catch (altError) {
+      console.log("Alternative approach failed:", altError.message);
     }
 
     // Final check for any downloaded files
@@ -416,7 +370,7 @@ exports.exportScalenutData = async (data) => {
  */
 async function waitForDownload(downloadPath, filesBeforeDownload, maxWaitTime = 60000) {
   const startTime = Date.now();
-
+  
   while (Date.now() - startTime < maxWaitTime) {
     await new Promise(resolve => setTimeout(resolve, 2000));
 
@@ -434,10 +388,10 @@ async function waitForDownload(downloadPath, filesBeforeDownload, maxWaitTime = 
       }
 
       // Check for .crdownload files (in-progress downloads)
-      const inProgressFiles = currentFiles.filter(file =>
+      const inProgressFiles = currentFiles.filter(file => 
         file.endsWith('.crdownload') && !filesBeforeDownload.includes(file)
       );
-
+      
       if (inProgressFiles.length > 0) {
         console.log(`Download in progress: ${inProgressFiles.length} files`);
       }
@@ -445,7 +399,7 @@ async function waitForDownload(downloadPath, filesBeforeDownload, maxWaitTime = 
       console.log("Error checking download directory:", fileError.message);
     }
   }
-
+  
   console.log("Download timeout reached");
   return null;
 }
@@ -455,6 +409,7 @@ async function waitForDownload(downloadPath, filesBeforeDownload, maxWaitTime = 
  */
 function formatBrowserResponse(result) {
   // For browser responses, ensure the response is JSON-serializable
+  // and doesn't contain circular references or Buffer data
   if (result.success && result.data) {
     return {
       success: true,
@@ -462,6 +417,7 @@ function formatBrowserResponse(result) {
       data: result.data,
       fileName: result.fileName,
       recordCount: result.recordCount
+      // Remove filePath as it's not useful in browser context
     };
   } else {
     return {
@@ -473,7 +429,7 @@ function formatBrowserResponse(result) {
 }
 
 /**
- * Process downloaded file
+ * Process downloaded file (NO DATABASE OPERATIONS)
  */
 async function processDownloadedFile(downloadedFile, downloadPath, newFileName) {
   const downloadedFilePath = path.join(downloadPath, downloadedFile);
@@ -513,6 +469,7 @@ async function processDownloadedFile(downloadedFile, downloadPath, newFileName) 
     console.log(`File renamed to: ${newFileName}`);
   } catch (renameError) {
     console.error("Error renaming file:", renameError);
+    // If rename fails, use the original downloaded file
     finalFilePath = downloadedFilePath;
   }
 
@@ -526,10 +483,12 @@ async function processDownloadedFile(downloadedFile, downloadPath, newFileName) 
   };
 }
 
+// Export the processDownloadedFile function
 exports.processDownloadedFile = processDownloadedFile;
 
 exports.viewScalenutData = async (data) => {
   try {
+    // Your view functionality here
     return { success: true, msg: "View functionality not implemented yet" };
   } catch (error) {
     return {
