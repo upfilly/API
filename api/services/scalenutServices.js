@@ -7,23 +7,32 @@ const puppeteer = require("puppeteer");
 
 exports.exportScalenutData = async (data) => {
   let browser;
+  const downloadPath = path.join(process.cwd(), "assets", "downloads");
+
   try {
     const user_password = data.password;
     const user_email = data.email;
     const url = `${data.url}?redirect=%252Fmy-commissions`;
     
-    // Use absolute path that works in both environments
-    const rootpath = process.cwd();
-    const fullpath = path.join(rootpath, "assets", "downloads");
-    const downloadPath = fullpath;
-
     console.log(`Starting process for email: ${user_email}, URL: ${url}`);
     console.log(`Download path: ${downloadPath}`);
 
-    // Create the download directory if it doesn't exist
+    // Create the download directory if it doesn't exist with proper permissions
     if (!fs.existsSync(downloadPath)) {
-      fs.mkdirSync(downloadPath, { recursive: true });
+      fs.mkdirSync(downloadPath, { 
+        recursive: true,
+        mode: 0o755
+      });
       console.log(`Created download directory: ${downloadPath}`);
+    }
+
+    // Verify directory is writable
+    try {
+      fs.accessSync(downloadPath, fs.constants.W_OK);
+      console.log("Download directory is writable");
+    } catch (accessError) {
+      console.error("Download directory is not writable, fixing permissions:", accessError.message);
+      fs.chmodSync(downloadPath, 0o755);
     }
 
     // Clear any existing files in download directory
@@ -43,9 +52,14 @@ exports.exportScalenutData = async (data) => {
     const uniqueId = uuidv4();
     const newFileName = `file_${uniqueId}.csv`;
 
-    // Enhanced browser launch configuration
+    // Detect if running on server
+    const isServerEnvironment = !process.env.PUPPETEER_EXECUTABLE_PATH || 
+                               process.env.NODE_ENV === 'production' || 
+                               process.env.IS_SERVER;
+
+    // Enhanced browser launch configuration for server
     console.log("Launching browser...");
-    browser = await puppeteer.launch({
+    const launchOptions = {
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
@@ -55,19 +69,54 @@ exports.exportScalenutData = async (data) => {
         "--no-zygote",
         "--disable-gpu",
         "--single-process",
-        "--no-zygote"
+        "--disable-web-security",
+        "--disable-features=VizDisplayCompositor",
+        "--disable-ipc-flooding-protection",
+        "--disable-background-timer-throttling",
+        "--disable-backgrounding-occluded-windows",
+        "--disable-renderer-backgrounding",
+        "--disable-field-trial-config",
+        "--disable-cloud-import",
+        "--ignore-certificate-errors",
+        "--ignore-certificate-errors-spki-list",
+        "--enable-features=NetworkService,NetworkServiceInProcess"
       ],
       headless: true,
       ignoreHTTPSErrors: true,
-      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined, // For Docker/cloud environments
-    });
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+    };
+
+    if (isServerEnvironment) {
+      console.log("Applying server-specific browser settings");
+      launchOptions.args.push("--single-process");
+    }
+
+    browser = await puppeteer.launch(launchOptions);
 
     const page = await browser.newPage();
 
-    // Enhanced page configuration
+    // Enhanced page configuration with server adjustments
     await page.setViewport({ width: 1280, height: 720 });
-    page.setDefaultTimeout(120000); // Increased timeout for browser environment
-    page.setDefaultNavigationTimeout(120000);
+    
+    if (isServerEnvironment) {
+      page.setDefaultTimeout(180000);
+      page.setDefaultNavigationTimeout(180000);
+      await page.setUserAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+    } else {
+      page.setDefaultTimeout(120000);
+      page.setDefaultNavigationTimeout(120000);
+    }
+
+    // Enhanced debugging for server environment
+    page.on('console', msg => console.log('PAGE LOG:', msg.text()));
+    page.on('response', response => {
+      if (response.status() >= 400) {
+        console.log(`HTTP ${response.status()} for: ${response.url()}`);
+      }
+    });
+    page.on('requestfailed', request => {
+      console.log(`Request failed: ${request.url()} ${request.failure().errorText}`);
+    });
 
     // Set up download behavior with error handling
     console.log("Setting up download behavior...");
@@ -82,23 +131,72 @@ exports.exportScalenutData = async (data) => {
       console.log("CDP session failed, continuing without download behavior:", cdpError.message);
     }
 
-    // Navigate to the URL with better error handling
+    // Enhanced navigation with multiple retries
     console.log(`Navigating to URL: ${url}`);
-    try {
-      await page.goto(url, {
-        waitUntil: ["networkidle2", "domcontentloaded"],
-        timeout: 60000
-      });
-      console.log("Navigation completed");
-    } catch (navError) {
-      console.log("Navigation timeout, continuing anyway:", navError.message);
+    let navigationSuccess = false;
+    let retryCount = 0;
+    const maxRetries = 3;
+
+    while (!navigationSuccess && retryCount < maxRetries) {
+      try {
+        const response = await page.goto(url, {
+          waitUntil: ["networkidle0", "domcontentloaded", "load"],
+          timeout: 60000
+        });
+
+        // Check if response is valid
+        if (response && response.status() === 200) {
+          console.log("Navigation completed successfully");
+          navigationSuccess = true;
+        } else {
+          console.log(`Navigation response status: ${response ? response.status() : 'no response'}`);
+          throw new Error(`Navigation failed with status: ${response ? response.status() : 'no response'}`);
+        }
+      } catch (navError) {
+        retryCount++;
+        console.log(`Navigation attempt ${retryCount} failed:`, navError.message);
+        
+        if (retryCount < maxRetries) {
+          console.log(`Retrying navigation in 3 seconds...`);
+          await new Promise(resolve => setTimeout(resolve, 3000));
+        } else {
+          console.log("All navigation attempts failed, continuing with current page state...");
+          // Take screenshot for debugging
+          await page.screenshot({ path: path.join(downloadPath, 'navigation-failed.png') });
+        }
+      }
     }
 
-    // Wait for page to load completely with multiple strategies
-    await page.waitForFunction(() => document.readyState === 'complete', { timeout: 30000 })
-      .catch(() => console.log("Page ready state check failed, continuing..."));
+    // Enhanced page load detection
+    console.log("Waiting for page to load completely...");
+    try {
+      // Wait for network to be idle
+      await page.waitForNetworkIdle({ timeout: 30000 });
+    } catch (e) {
+      console.log("Network idle timeout, continuing...");
+    }
 
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    // Multiple strategies to ensure page is loaded
+    await Promise.race([
+      page.waitForSelector('body', { timeout: 30000 }),
+      page.waitForFunction(() => document.readyState === 'complete', { timeout: 30000 })
+    ]).catch(() => console.log("Page load detection timeout, continuing..."));
+
+    // Additional wait for dynamic content
+    await new Promise(resolve => setTimeout(resolve, 8000));
+
+    // Check if we're on the expected page
+    const currentUrl = page.url();
+    console.log(`Current URL: ${currentUrl}`);
+
+    if (currentUrl.includes('login') || currentUrl.includes('auth')) {
+      console.log("Still on login/auth page, proceeding with login...");
+    } else {
+      console.log("Already on target page, skipping login...");
+    }
+
+    // Take initial screenshot for debugging
+    await page.screenshot({ path: path.join(downloadPath, 'initial-page.png') });
 
     // Enhanced login process with multiple selectors
     console.log("Attempting login...");
@@ -109,7 +207,10 @@ exports.exportScalenutData = async (data) => {
       'input[type="email"]',
       'input[name="email"]',
       'input[placeholder*="email" i]',
-      'input[placeholder*="mail" i]'
+      'input[placeholder*="mail" i]',
+      '[data-cy="email"]',
+      '.email-input',
+      'input[id*="email"]'
     ];
 
     let emailField = null;
@@ -135,7 +236,10 @@ exports.exportScalenutData = async (data) => {
       '#password',
       'input[type="password"]',
       'input[name="password"]',
-      'input[placeholder*="password" i]'
+      'input[placeholder*="password" i]',
+      '[data-cy="password"]',
+      '.password-input',
+      'input[id*="password"]'
     ];
 
     let passwordField = null;
@@ -147,10 +251,16 @@ exports.exportScalenutData = async (data) => {
       }
     }
 
-    if (!passwordField) throw new Error("Password field not found with any selector");
+    if (!passwordField) {
+      await page.screenshot({ path: path.join(downloadPath, 'debug-password.png') });
+      throw new Error("Password field not found with any selector");
+    }
 
     await passwordField.click({ clickCount: 3 });
     await passwordField.type(user_password, { delay: 100 });
+
+    // Take pre-login screenshot
+    await page.screenshot({ path: path.join(downloadPath, 'pre-login.png') });
 
     // Enhanced login button click with multiple strategies
     console.log("Clicking login button...");
@@ -163,7 +273,10 @@ exports.exportScalenutData = async (data) => {
       'button:contains("Login")',
       'button:contains("Sign In")',
       'input[value*="Login" i]',
-      'input[value*="Sign" i]'
+      'input[value*="Sign" i]',
+      '[data-cy="login-button"]',
+      '.login-btn',
+      'button[class*="login"]'
     ];
 
     let loginClicked = false;
@@ -198,15 +311,20 @@ exports.exportScalenutData = async (data) => {
     }
 
     // Wait for dashboard to load with multiple checks
-    await new Promise(resolve => setTimeout(resolve, 8000));
+    await new Promise(resolve => setTimeout(resolve, 10000));
     
+    // Take post-login screenshot
+    await page.screenshot({ path: path.join(downloadPath, 'post-login.png') });
+
     // Check if login was successful by looking for dashboard elements
     const dashboardIndicators = [
       '.dashboard',
       '[data-cy*="dashboard"]',
       '[class*="dashboard"]',
       'my-commissions',
-      'commissions'
+      'commissions',
+      '.my-commissions',
+      '[href*="commissions"]'
     ];
 
     let loginSuccessful = false;
@@ -225,7 +343,10 @@ exports.exportScalenutData = async (data) => {
         '.error',
         '[class*="error"]',
         '[data-cy*="error"]',
-        '#error'
+        '#error',
+        '.alert-error',
+        '.login-error',
+        '[role="alert"]'
       ];
 
       for (const selector of errorSelectors) {
@@ -249,15 +370,22 @@ exports.exportScalenutData = async (data) => {
       'a:contains("Download")',
       'a:contains("Export")',
       '[data-cy*="download"]',
-      '[class*="download"]'
+      '[class*="download"]',
+      '.download-btn',
+      '[title*="Download"]',
+      '[aria-label*="Download"]'
     ];
 
     let downloadButton = null;
     for (const selector of downloadButtonSelectors) {
-      downloadButton = await page.$(selector);
-      if (downloadButton) {
-        console.log(`Found download button with selector: ${selector}`);
-        break;
+      try {
+        downloadButton = await page.$(selector);
+        if (downloadButton) {
+          console.log(`Found download button with selector: ${selector}`);
+          break;
+        }
+      } catch (selectorError) {
+        console.log(`Error with selector ${selector}:`, selectorError.message);
       }
     }
 
@@ -282,16 +410,23 @@ exports.exportScalenutData = async (data) => {
       }
     }
 
-    // STRATEGY 2: Alternative approach
+    // STRATEGY 2: Alternative approach - Navigate directly to commissions page
     console.log("STRATEGY 2: Trying alternative approach...");
     try {
       // Navigate directly to commissions page if not already there
       const currentUrl = page.url();
       if (!currentUrl.includes('my-commissions')) {
-        await page.goto(`${data.url.replace(/\/login(\/|$)/g, '/').replace(/\/$/, '')}/my-commissions`, { 
+        const commissionsUrl = `${data.url.replace(/\/login(\/|$)/g, '/').replace(/\/$/, '')}/my-commissions`;
+        console.log(`Navigating directly to commissions page: ${commissionsUrl}`);
+        
+        await page.goto(commissionsUrl, { 
           waitUntil: "networkidle2",
           timeout: 30000 
         });
+        
+        // Wait for commissions page to load
+        await new Promise(resolve => setTimeout(resolve, 8000));
+        await page.screenshot({ path: path.join(downloadPath, 'commissions-page.png') });
       }
 
       // Look for export options with multiple selectors
@@ -300,7 +435,11 @@ exports.exportScalenutData = async (data) => {
         'button[onclick*="export"]',
         '[data-cy*="export"]',
         'button:contains("CSV")',
-        'button:contains("Excel")'
+        'button:contains("Excel")',
+        'a:contains("CSV")',
+        'a:contains("Excel")',
+        '.export-btn',
+        '[title*="Export"]'
       ];
 
       let exportElement = null;
@@ -330,7 +469,42 @@ exports.exportScalenutData = async (data) => {
       console.log("Alternative approach failed:", altError.message);
     }
 
+    // STRATEGY 3: Try JavaScript-based download
+    console.log("STRATEGY 3: Trying JavaScript execution...");
+    try {
+      const filesBeforeDownload = fs.readdirSync(downloadPath);
+      
+      // Try to trigger download via JavaScript
+      const downloadTriggered = await page.evaluate(() => {
+        // Look for any element that might trigger download
+        const downloadElements = document.querySelectorAll('[data-cy*="download"], [onclick*="download"], [onclick*="export"], button, a');
+        
+        for (let element of downloadElements) {
+          const text = element.textContent.toLowerCase();
+          if (text.includes('download') || text.includes('export') || text.includes('csv') || text.includes('excel')) {
+            element.click();
+            return true;
+          }
+        }
+        return false;
+      });
+
+      if (downloadTriggered) {
+        console.log("JavaScript download triggered");
+        const downloadedFile = await waitForDownload(downloadPath, filesBeforeDownload, 45000);
+        
+        if (downloadedFile) {
+          const result = await processDownloadedFile(downloadedFile, downloadPath, newFileName);
+          await browser.close();
+          return formatBrowserResponse(result);
+        }
+      }
+    } catch (jsError) {
+      console.log("JavaScript approach failed:", jsError.message);
+    }
+
     // Final check for any downloaded files
+    console.log("Performing final files check...");
     await new Promise(resolve => setTimeout(resolve, 10000));
     const finalFiles = fs.readdirSync(downloadPath);
     const downloadedFiles = finalFiles.filter(file =>
@@ -338,7 +512,7 @@ exports.exportScalenutData = async (data) => {
       !file.endsWith('.crdownload')
     );
 
-    console.log("Final files check:", downloadedFiles, downloadedFiles?.length);
+    console.log("Final files check:", downloadedFiles);
 
     if (downloadedFiles.length > 0) {
       console.log(`Found downloaded file: ${downloadedFiles[0]}`);
@@ -347,19 +521,34 @@ exports.exportScalenutData = async (data) => {
       return formatBrowserResponse(result);
     }
 
+    // Take final screenshot for debugging
+    await page.screenshot({ path: path.join(downloadPath, 'final-state.png') });
+
     await browser.close();
     throw new Error("No file was downloaded after trying all strategies");
 
   } catch (error) {
     console.error("Error in exportScalenutData:", error);
 
+    // Take final screenshot for debugging
     if (browser) {
+      try {
+        const pages = await browser.pages();
+        if (pages.length > 0) {
+          await pages[0].screenshot({ 
+            path: path.join(downloadPath, 'final-error-state.png') 
+          });
+        }
+      } catch (screenshotError) {
+        console.error("Could not take final screenshot:", screenshotError);
+      }
+      
       await browser.close();
     }
 
     return formatBrowserResponse({
       success: false,
-      msg: error.message,
+      msg: `Server execution failed: ${error.message}`,
       error: error.toString()
     });
   }
