@@ -272,7 +272,7 @@ exports.addFirstPromoter = async (req, res) => {
             const firstPromoterDataRecords = filePath.data.map(record => ({
               lead_email: record.lead_email || '',
                 lead_id: record.lead_id || '',
-                sub_id: record.sub_id || '',
+                sub_id: new ObjectId(record.sub_id) || '',
               earnings: record.earnings ? parseFloat(record.earnings.replace('$', '')) || 0 : 0, // Convert "$15.75" to 15.75
               status: record.status || 'approved',
               created_at: record.created_at ? new Date(record.created_at) : new Date(),
@@ -611,11 +611,6 @@ exports.firstPromoterDataListing = async (req, res) => {
       query.status = status;
     }
 
-    // Add sub_id filter
-    if (sub_id) {
-      query.sub_id = sub_id;
-    }
-
     let sortquery = {};
     if (sortBy) {
       let typeArr = sortBy.split(" ");
@@ -646,21 +641,59 @@ exports.firstPromoterDataListing = async (req, res) => {
           preserveNullAndEmptyArrays: true
         }
       },
+      // Convert sub_id string to ObjectId and lookup
+      {
+        $addFields: {
+          sub_id_objectId: {
+            $cond: {
+              if: { $ne: ["$sub_id", null] },
+              then: { $toObjectId: "$sub_id" },
+              else: null
+            }
+          }
+        }
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'sub_id_objectId',
+          foreignField: '_id',
+          as: "sub_id_details"
+        }
+      },
+      {
+        $unwind: {
+          path: '$sub_id_details',
+          preserveNullAndEmptyArrays: true
+        }
+      },
     ];
 
     let projection = {
       $project: {
         lead_email: "$lead_email",
         lead_id: "$lead_id",
-        sub_id: "$sub_id",
+        sub_id: "$sub_id", // Keep original string sub_id
         earnings: "$earnings",
-        original_status: "$status", // Original status from the data
-        current_status: "$status", // Current system status
-        created_at: "$created_at", // Original creation date from data
+        original_status: "$status",
+        current_status: "$status",
+        created_at: "$created_at",
         firstPromoterId: "$firstPromoterId",
-        firstPromoter_name: "$firstPromoter_details.name", // Get promoter name from joined collection
+        firstPromoter_name: "$firstPromoter_details.name",
         addedBy: "$addedBy",
-        addedBy_name: "$addedBy_details.name", // Get user name who added the data
+        addedBy_name: "$addedBy_details.name",
+        // Add populated sub_id user data
+        sub_id_user: {
+          $cond: {
+            if: { $ne: ["$sub_id_details", null] },
+            then: {
+              fullName: "$sub_id_details.fullName",
+              email: "$sub_id_details.email",
+              id:"$sub_id_details._id"
+            },
+            else: null
+          }
+        },
         updatedBy: "$updatedBy",
         isDeleted: "$isDeleted",
         updatedAt: "$updatedAt",

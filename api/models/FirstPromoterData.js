@@ -10,7 +10,7 @@
       attributes: {
         lead_email:{type:"string"},
         lead_id:{type:"string"},
-        sub_id:{type:"string"},
+        sub_id:{model:"users"},
         earnings:{type:"string"},
         addedBy: { model: "users" },
         updatedBy: { model: "users" },
