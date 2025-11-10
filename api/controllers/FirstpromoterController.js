@@ -107,7 +107,7 @@ const csv = require('csv-parser');
           },
         }
       );
-      const responseData = exportResponse.data;
+      const responseData = res
       return res.status(200).json({
         responseData,
       });
@@ -241,7 +241,9 @@ exports.addFirstPromoter = async (req, res) => {
         if (validation_result && !validation_result.success) {
             throw validation_result.message;
         }
-        let data = req.body;   
+        let data = req.body;  
+        
+        console.log(data,"jkjkjkjkkjkj")
 
         const existedPromoter = await FirstPromoter.findOne({ email: data.email, isDeleted: false });
 
@@ -254,18 +256,50 @@ exports.addFirstPromoter = async (req, res) => {
         data.updatedAt = date;
         data.addedBy = req.identity.id;
         data.updatedBy = req.identity.id;
-        const createdPromoter = await FirstPromoter.create(data).fetch();
-        if (createdPromoter) {
-            let filePath = await Services.scalenutServices.exportScalenutData(data);
-            let updatedPromoter = {};
-            if(filePath && filePath.success === true ){
-               updatedPromoter = await FirstPromoter.updateOne({id:createdPromoter.id},{filePath:filePath.msg});
-               await this.exportFirstPromoterData.insertMany(filePath.data)
-            }else{
-              return response.failed(null,filePath.msg , req, res);  
+       
+      // if (createdPromoter) {
+        let filePath = await Services.scalenutServices.exportScalenutData(data);
+        console.log(filePath, "kjkjkjk")
+        let updatedPromoter = {};
+
+        if (filePath && filePath.success === true) {
+          const createdPromoter = await FirstPromoter.create(data).fetch();
+          updatedPromoter = await FirstPromoter.updateOne({ id: createdPromoter.id }, { filePath: filePath.msg });
+
+          // Store the data in firstpromoterdata collection
+          if (filePath.data && filePath.data.length > 0) {
+            try {
+            const firstPromoterDataRecords = filePath.data.map(record => ({
+              lead_email: record.lead_email || '',
+                lead_id: record.lead_id || '',
+                sub_id: new ObjectId(record.sub_id) || '',
+              earnings: record.earnings ? parseFloat(record.earnings.replace('$', '')) || 0 : 0, // Convert "$15.75" to 15.75
+              status: record.status || 'approved',
+              created_at: record.created_at ? new Date(record.created_at) : new Date(),
+                firstPromoterId: createdPromoter.id, // Reference to the parent FirstPromoter
+                addedBy: req.identity.id,
+                updatedBy: req.identity.id,
+                status: 'active',
+                isDeleted: false,
+                createdAt: new Date(),
+                updatedAt: new Date()
+              }));
+
+              // Insert into firstpromoterdata collection
+              await db.collection('firstpromoterdata').insertMany(firstPromoterDataRecords);
+
+              console.log(`Successfully inserted ${firstPromoterDataRecords.length} records into firstpromoterdata collection`);
+            } catch (insertError) {
+              console.error('Error inserting data into firstpromoterdata:', insertError);
+              // You might want to handle this error differently - maybe not fail the entire request
             }
-            return response.success(updatedPromoter, constants.FIRST_PROMOTER.CREATED, req, res);
+          }
+        } else {
+          return response.failed(null, filePath.msg, req, res);
         }
+        console.log(updatedPromoter, "0909009")
+        return response.success(updatedPromoter, constants.FIRST_PROMOTER.CREATED, req, res);
+      // }
         throw constants.COMMON.SERVER_ERROR;
     } catch (error) {
         return response.failed(null, `${error}`, req, res);
@@ -355,15 +389,15 @@ exports.getAllFirstPromoters = async (req, res) => {
             query.status = status;
         }
 
-         let sortquery = {};
-         if (sortBy && typeof sortBy === "string") {
-           const [rawField, rawOrder] = sortBy.trim().split(/\s+/);
-           const field = rawField || "createdAt";
-           const sortType = rawOrder?.toLowerCase() === "asc" ? 1 : -1;
-           sortquery[field] = sortType;
-         } else {
-           sortquery = { updatedAt: -1 };
-         }
+        let sortquery = {};
+    if (sortBy && typeof sortBy === "string") {
+      const [rawField, rawOrder] = sortBy.trim().split(/\s+/);
+      const field = rawField || "createdAt";
+      const sortType = rawOrder?.toLowerCase() === "asc" ? 1 : -1;
+      sortquery[field] = sortType;
+        } else {
+            sortquery = { updatedAt: -1 };
+        }
 
         if (addedBy) {
             query.addedBy = new ObjectId(addedBy);
@@ -450,7 +484,7 @@ exports.importFirstPromoter = async (req, res) => {
   let duplicate = 0;
   let createdCount = 0;
   const errors = []; // To collect errors
-  let uploadedFile="";
+  let uploadedFile = "";
   try {
     const firstPromoter = await new Promise((resolve, reject) => {
       req.file("file").upload(
@@ -507,7 +541,7 @@ exports.importFirstPromoter = async (req, res) => {
     }
 
     // Remove the uploaded file if no errors
-    if(uploadedFile.fd){
+    if (uploadedFile.fd) {
       fs.unlink(uploadedFile.fd, (err) => {
         if (err) {
           console.error(`Error deleting file: ${uploadedFile.fd}`, err);
@@ -538,105 +572,179 @@ exports.importFirstPromoter = async (req, res) => {
     });
   }
 };
-exports.firstPromoterDataListing = async(req,res)=>{
+exports.firstPromoterDataListing = async (req, res) => {
   try {
     let query = {};
     let count = req.param('count') || 10;
     let page = req.param('page') || 1;
-    let { search, isDeleted, status, sortBy, addedBy } = req.query;
+    let { search, isDeleted, status, sortBy, addedBy, sub_id, lead_email, lead_id } = req.query;
     let skipNo = (Number(page) - 1) * Number(count);
 
     if (search) {
-        search = Services.Utils.remove_special_char_exept_underscores(search);
-        query.$or = [
-            { email: { $regex: search, '$options': 'i' } },
-            { url: { $regex: search, '$options': 'i' } },
-        ];
+      search = Services.Utils.remove_special_char_exept_underscores(search);
+      query.$or = [
+        { lead_email: { $regex: search, '$options': 'i' } },
+        { lead_id: { $regex: search, '$options': 'i' } },
+        { sub_id: { $regex: search, '$options': 'i' } },
+      ];
+    }
+
+    if (lead_email) {
+      query.lead_email = { $regex: lead_email, '$options': 'i' };
+    }
+
+    if (lead_id) {
+      query.lead_id = lead_id;
+    }
+
+    if (sub_id) {
+      query.sub_id = sub_id;
     }
 
     if (isDeleted) {
-        query.isDeleted = isDeleted === 'true';
+      query.isDeleted = isDeleted === 'true';
     } else {
-        query.isDeleted = false;
+      query.isDeleted = false;
     }
 
     if (status) {
-        query.status = status;
+      query.status = status;
     }
 
     let sortquery = {};
     if (sortBy) {
-        let typeArr = sortBy.split(" ");
-        let sortType = typeArr[1];
-        let field = typeArr[0];
-        sortquery[field ? field : 'createdAt'] = sortType ? (sortType === 'desc' ? -1 : 1) : -1;
+      let typeArr = sortBy.split(" ");
+      let sortType = typeArr[1];
+      let field = typeArr[0];
+      sortquery[field ? field : 'createdAt'] = sortType ? (sortType === 'desc' ? -1 : 1) : -1;
     } else {
-        sortquery = { updatedAt: -1 };
+      sortquery = { createdAt: -1 };
     }
 
     if (addedBy) {
-        query.addedBy = new ObjectId(addedBy);
+      query.addedBy = new ObjectId(addedBy);
     }
 
     // Pipeline Stages
     let pipeline = [
-        {
-            $lookup: {
-                from: 'users',
-                localField: 'addedBy',
-                foreignField: '_id',
-                as: "addedBy_details"
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'addedBy',
+          foreignField: '_id',
+          as: "addedBy_details"
+        }
+      },
+      {
+        $unwind: {
+          path: '$addedBy_details',
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      // Convert sub_id string to ObjectId and lookup
+      {
+        $addFields: {
+          sub_id_objectId: {
+            $cond: {
+              if: { $ne: ["$sub_id", null] },
+              then: { $toObjectId: "$sub_id" },
+              else: null
             }
-        },
-        {
-            $unwind: {
-                path: '$addedBy_details',
-                preserveNullAndEmptyArrays: true
-            }
-        },
+          }
+        }
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'sub_id_objectId',
+          foreignField: '_id',
+          as: "sub_id_details"
+        }
+      },
+      {
+        $unwind: {
+          path: '$sub_id_details',
+          preserveNullAndEmptyArrays: true
+        }
+      },
     ];
 
     let projection = {
-        $project: {
-          lead_email:"$lead_email",
-          lead_id:"$lead_id",
-          sub_id:"$sub_id",
-          earnings:"$earnings",
-          addedBy:"$addedBy",
-          updatedBy:"$updatedBy",
-          status:"$status",
-          isDeleted:"$isDeleted",
-          updatedAt:"$updatedAt",
-          createdAt:"$createdAt"
-        }
+      $project: {
+        lead_email: "$lead_email",
+        lead_id: "$lead_id",
+        sub_id: "$sub_id", // Keep original string sub_id
+        earnings: "$earnings",
+        original_status: "$status",
+        current_status: "$status",
+        created_at: "$created_at",
+        firstPromoterId: "$firstPromoterId",
+        firstPromoter_name: "$firstPromoter_details.name",
+        addedBy: "$addedBy",
+        addedBy_name: "$addedBy_details.name",
+        // Add populated sub_id user data
+        sub_id_user: {
+          $cond: {
+            if: { $ne: ["$sub_id_details", null] },
+            then: {
+              fullName: "$sub_id_details.fullName",
+              email: "$sub_id_details.email",
+              id:"$sub_id_details._id"
+            },
+            else: null
+          }
+        },
+        updatedBy: "$updatedBy",
+        isDeleted: "$isDeleted",
+        updatedAt: "$updatedAt",
+        createdAt: "$createdAt"
+      }
     };
 
     pipeline.push(projection);
     pipeline.push({
-        $match: query
+      $match: query
     });
     pipeline.push({
-        $sort: sortquery
+      $sort: sortquery
     });
 
     let totalresult = await db.collection('firstpromoterdata').aggregate(pipeline).toArray();
+
+    // Count total documents for pagination
+    let totalCount = await db.collection('firstpromoterdata').countDocuments(query);
+
     pipeline.push({
-        $skip: Number(skipNo)
+      $skip: Number(skipNo)
     });
     pipeline.push({
-        $limit: Number(count)
+      $limit: Number(count)
     });
+
     let result = await db.collection("firstpromoterdata").aggregate(pipeline).toArray();
+
+    // Calculate total earnings for the filtered results
+    let totalEarnings = 0;
+    if (result.length > 0) {
+      totalEarnings = result.reduce((sum, item) => {
+        return sum + (parseFloat(item.earnings) || 0);
+      }, 0);
+    }
+
     let resData = {
-        total_count: totalresult ? totalresult.length : 0,
-        data: result ? result : [],
+      total_count: totalCount,
+      filtered_count: totalresult ? totalresult.length : 0,
+      current_page: Number(page),
+      total_pages: Math.ceil(totalCount / Number(count)),
+      total_earnings: totalEarnings.toFixed(2),
+      data: result ? result : [],
     };
     if (!req.param('page') && !req.param('count')) {
-        resData = totalresult ? totalresult : [];
+      resData = totalresult ? totalresult : [];
     }
     return response.success(resData, constants.FIRST_PROMOTER.FETCHED_ALL, req, res);
 
-} catch (error) {
+  } catch (error) {
     return response.failed(null, `${error}`, req, res);
-}
+  }
 }
