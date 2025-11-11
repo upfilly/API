@@ -956,6 +956,7 @@ exports.affiliateCount = async (req, res) => {
     let get_my_total_campaigns = 0;
     let associated_affiliates_count = 0;
     let affiliates_active_count = 0;
+    let affiliates_pending_count = 0; //  new field
 
     if (brandId) {
       // Campaigns of this brand
@@ -973,6 +974,16 @@ exports.affiliateCount = async (req, res) => {
       );
 
       const uniqueAffiliates = _.uniq(records.map((r) => r.affiliate_id));
+
+      // Pending affiliates (brand needs to accept/decline)
+      const pendingRecords = await BrandAffiliateAssociation.find(
+        withDateFilter({
+          status: "pending",
+          isDeleted: false,
+          brand_id: brandId,
+        })
+      );
+      affiliates_pending_count = pendingRecords.length;
 
       // Find affiliates who interacted (cookies + links)
       const cookies = await Cookies.find(withDateFilter({ brand_id: brandId }));
@@ -997,7 +1008,7 @@ exports.affiliateCount = async (req, res) => {
 
       const activeAffiliateIds = activeAffiliates.map((a) => a.id);
 
-      // ✅ Joined affiliates = accepted affiliates excluding actives
+      // Joined affiliates = accepted affiliates excluding actives
       const joinedAffiliates = uniqueAffiliates.filter(
         (id) => !activeAffiliateIds.includes(id)
       );
@@ -1013,10 +1024,101 @@ exports.affiliateCount = async (req, res) => {
       myTotalCampaigns: get_my_total_campaigns || 0,
       totalJoined: associated_affiliates_count || 0,
       totalActive: affiliates_active_count || 0,
+      totalPending: affiliates_pending_count || 0, // added here
     });
   } catch (error) {
     console.log("error", error);
     return response.failed(null, `${error}`, req, res);
   }
 };
+
+// exports.affiliateCount = async (req, res) => {
+//   try {
+//     const brandId = req.identity.id;
+//     const { before, after } = req.query;
+
+//     // Helper for date filters
+//     const withDateFilter = (baseQuery, dateField = "createdAt") => {
+//       const query = { ...baseQuery };
+//       if (before && after) {
+//         query[dateField] = { ">=": new Date(after), "<=": new Date(before) };
+//       } else if (before) {
+//         query[dateField] = { "<=": new Date(before) };
+//       } else if (after) {
+//         query[dateField] = { ">=": new Date(after) };
+//       }
+//       return query;
+//     };
+
+//     // Total campaigns (all brands)
+//     const get_total_campaigns = await Campaign.count(
+//       withDateFilter({ isDeleted: false })
+//     );
+
+//     let get_my_total_campaigns = 0;
+//     let associated_affiliates_count = 0;
+//     let affiliates_active_count = 0;
+
+//     if (brandId) {
+//       // Campaigns of this brand
+//       get_my_total_campaigns = await Campaign.count(
+//         withDateFilter({ isDeleted: false, brand_id: brandId, isArchive: false })
+//       );
+
+//       // Accepted affiliates for this brand
+//       const records = await BrandAffiliateAssociation.find(
+//         withDateFilter({
+//           status: "accepted",
+//           isDeleted: false,
+//           brand_id: brandId,
+//         })
+//       );
+
+//       const uniqueAffiliates = _.uniq(records.map((r) => r.affiliate_id));
+
+//       // Find affiliates who interacted (cookies + links)
+//       const cookies = await Cookies.find(withDateFilter({ brand_id: brandId }));
+//       const affiliateLinks = await AffiliateLink.find(
+//         withDateFilter({ brand_id: brandId })
+//       );
+
+//       const affiliateIds = [
+//         ...new Set(
+//           [
+//             ...cookies.map((c) => c.affiliate_id),
+//             ...affiliateLinks.map((a) => a.affiliate_id),
+//           ].filter((id) => id != null)
+//         ),
+//       ];
+
+//       // Get active affiliates from Users
+//       const activeAffiliates = await Users.find({
+//         id: affiliateIds,
+//         status: "active",
+//       }).select(["id"]);
+
+//       const activeAffiliateIds = activeAffiliates.map((a) => a.id);
+
+//       // ✅ Joined affiliates = accepted affiliates excluding actives
+//       const joinedAffiliates = uniqueAffiliates.filter(
+//         (id) => !activeAffiliateIds.includes(id)
+//       );
+
+//       associated_affiliates_count = joinedAffiliates.length;
+//       affiliates_active_count = activeAffiliateIds.length;
+//     }
+
+//     // Final response
+//     return res.status(200).json({
+//       success: true,
+//       totalCampaigns: get_total_campaigns || 0,
+//       myTotalCampaigns: get_my_total_campaigns || 0,
+//       totalJoined: associated_affiliates_count || 0,
+//       totalActive: affiliates_active_count || 0,
+//     });
+//   } catch (error) {
+//     console.log("error", error);
+//     return response.failed(null, `${error}`, req, res);
+//   }
+// };
 
