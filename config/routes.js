@@ -8,7 +8,6 @@
  * https://sailsjs.com/anatomy/config/routes-js
  */
 
-
 module.exports.routes = {
   /***************************************************************************
    *                                                                          *
@@ -66,15 +65,14 @@ module.exports.routes = {
   "get /user/reverify": "UsersController.reverifyUser",
   "delete /remove/user": "UsersController.deleteUser",
   "delete /destroy/user": "UsersController.deleteUserWithoutAuth",
-  "get /google/login/authentication": "UsersController.googleLoginAuthentication",
+  "get /google/login/authentication":
+    "UsersController.googleLoginAuthentication",
   "post /google/login": "UsersController.googleLogin",
   "put /user/account-request-status": "UsersController.updateRequestStatus",
   "post /register/brand": "UsersController.registerBrandWithPlan",
   "get/affiliate/detail": "UsersController.affiliateDetail",
   "get /userName/list": "UsersController.getAllUserName",
   "post /userName/check": "UsersController.userNameCheck",
-
-
 
   /**
    * @CommonAPIs
@@ -126,7 +124,7 @@ module.exports.routes = {
    * @Braintree
    */
   //With 3rd party- Braintree
-/*
+  /*
   "post /subscription-plan/braintree":
     "SubscriptionPlansController.addSubscriptionPlanBraintree",
   "post /subscribe/braintree":
@@ -142,7 +140,7 @@ module.exports.routes = {
   "get /transaction/contract-all":
     "TransactionsController.getAllTransactionsContracts",
   "get /transaction/graph": "TransactionsController.getTransactionsGraphData",
-  "get /transactionGraph":"TransactionsController.transactionGraph",
+  "get /transactionGraph": "TransactionsController.transactionGraph",
 
   /**
    * @Cards
@@ -155,7 +153,7 @@ module.exports.routes = {
   "delete /card": "StripeController.deleteCard",
   // "post /hook": "StripeController.webhook",
   "post /create/session": "StripeController.createCheckoutSession",
-  "post /pay/commission/to/admin" : "StripeController.payToAdmin",
+  "post /pay/commission/to/admin": "StripeController.payToAdmin",
 
   /**
    * @SMTP
@@ -279,15 +277,16 @@ module.exports.routes = {
   "post /campaign": "CampaignController.addCampaign",
   "get /campaign": "CampaignController.getCampaignById",
   "put /campaign": "CampaignController.editCampaign",
-  "get /campaign/affiliate/all": "CampaignController.getAllCampaignRequestsForAffiliate",
+  "get /campaign/affiliate/all":
+    "CampaignController.getAllCampaignRequestsForAffiliate",
   "get /campaign/brand/all": "CampaignController.getAllCampaignsForBrand",
   "put /campaign/change-status": "CampaignController.changeCampaignStatus",
   "delete /campaign": "CampaignController.deleteCampaign",
-  "get /campaign/public/all": "CampaignController.listPublicCampaignsOfAllBrands",
+  "get /campaign/public/all":
+    "CampaignController.listPublicCampaignsOfAllBrands",
   "post /campaign/remove": "CampaignController.removeAffiliate",
   "get /campaign/all/affiliates": "CampaignController.campaignAffiliates",
   "get /campaign/affiliate": "CampaignController.getAllCampaignsForAffiliate",
-
 
   /**
    * @Proposals
@@ -373,7 +372,8 @@ module.exports.routes = {
   "get /my-total-users": "DashboardController.myTotalUsers",
   "get /total-campaigns": "DashboardController.totalCampaigns",
   "get /recent-users": "DashboardController.recentUser",
-  "get /dashboard/campaign-request": "DashboardController.totalCampaignsRequests",
+  "get /dashboard/campaign-request":
+    "DashboardController.totalCampaignsRequests",
 
   /**
    * @Product
@@ -515,7 +515,7 @@ module.exports.routes = {
   "get /dataset/list": "DataSetController.listOfDataSet",
   "get /dataset/view": "DataSetController.importCsvDataHttp",
   "get /listDataSets": "DataSetController.ListDataFeedsBrand",
-  "get /csv" : "DataSetController.viewCSVAffiliate",
+  "get /csv": "DataSetController.viewCSVAffiliate",
   /**
    * @EmailMessageTemplate
    *
@@ -540,7 +540,7 @@ module.exports.routes = {
 
   "POST /affiliatelink": "AffiliateLinkController.create",
   "GET /affiliatelink/all": "AffiliateLinkController.find",
-  "GET /findGraph":"AffiliateLinkController.findGraph",
+  "GET /findGraph": "AffiliateLinkController.findGraph",
   "GET /affiliatelink": "AffiliateLinkController.findOne",
   "PUT /affiliatelink": "AffiliateLinkController.update",
   "DELETE /affiliatelink": "AffiliateLinkController.destroy",
@@ -551,7 +551,8 @@ module.exports.routes = {
    * @FirstPromoter
    */
 
-  "GET /firstpromoterdata/listing": "FirstpromoterController.firstPromoterDataListing",
+  "GET /firstpromoterdata/listing":
+    "FirstpromoterController.firstPromoterDataListing",
   "DELETE /firstpromoter/delete": "FirstpromoterController.removeFirstPromoter",
   "PUT /firstpromoter/update": "FirstpromoterController.updateFirstPromoter",
   "POST /firstpromoterdata/export":
@@ -565,10 +566,9 @@ module.exports.routes = {
   "DELETE /promoters/delete": "FirstpromoterController.deleteFirstPromoter",
   "POST /promoters/import": "FirstpromoterController.importFirstPromoter",
 
-
   /**
- * @ActivityHistory
- */
+   * @ActivityHistory
+   */
 
   "get /activity-logs": "ActivityHistoryController.getAllActivityHistory",
   "get /activity-log": "ActivityHistoryController.getActivityHistoryById",
@@ -578,64 +578,74 @@ module.exports.routes = {
    */
 
   "get /analytics-sales": "AnalyticsController.salesAnalytics",
-  "get /analytics-reports":"AnalyticsController.reportAnalytics",
-  "get /analytics-click" : "AnalyticsController.clickAnalytics",
+  "get /analytics-reports": "AnalyticsController.reportAnalytics",
+  "get /analytics-click": "AnalyticsController.clickAnalytics",
 
-   /**
+  /**
    * @GeneralPurposeTracking
    */
 
-   "post /gptrack": "GeneralPurposeTrackingController.addGPT",
-   "get /gptrack": "GeneralPurposeTrackingController.getGPTById",
-   "get /gptrack/list": "GeneralPurposeTrackingController.getAllGPT",
-   "delete /gptrack/delete": "GeneralPurposeTrackingController.deleteGPTById",
+  "post /gptrack": "GeneralPurposeTrackingController.addGPT",
+  "get /gptrack": "GeneralPurposeTrackingController.getGPTById",
+  "get /gptrack/list": "GeneralPurposeTrackingController.getAllGPT",
+  "delete /gptrack/delete": "GeneralPurposeTrackingController.deleteGPTById",
 
-   /**
-    * @CampaignRequestByAffiliate
-    */
-   "post /campaign-request": "CampaignRequestByAffiliateController.sendCampaignRequestToBrand",
-   "get /campaign-request": "CampaignRequestByAffiliateController.getRequestById",
-   "get /campaign-requests": "CampaignRequestByAffiliateController.getAllRequestsForBrand",
+  /**
+   * @CampaignRequestByAffiliate
+   */
+  "post /campaign-request":
+    "CampaignRequestByAffiliateController.sendCampaignRequestToBrand",
+  "get /campaign-request":
+    "CampaignRequestByAffiliateController.getRequestById",
+  "get /campaign-requests":
+    "CampaignRequestByAffiliateController.getAllRequestsForBrand",
   //  "get /campaign-request/public-campaigns": "CampaignRequestByAffiliateController.getAllPublicCampaigns",
-   "put /campaign-request/change-status": "CampaignRequestByAffiliateController.changeRequestStatus",
+  "put /campaign-request/change-status":
+    "CampaignRequestByAffiliateController.changeRequestStatus",
 
   /*
-  * @BankAccount
-  */
- "post /account/create": "BankAccountController.createAccount",
- "post /account/update/status": "BankAccountController.updateAccountStatus",
- "get /account/transfer/listing": "BankAccountController.transferListing",
- "get /account/transfer/detail": "BankAccountController.transferDetail",
- "post /account/webhook": "BankAccountController.webhook",
- "get /account/retrieve": "BankAccountController.retriveAccount",
- "post /account/link/regenerate": "BankAccountController.regenrateOnBoardingLink",
+   * @BankAccount
+   */
+  "post /account/create": "BankAccountController.createAccount",
+  "post /account/update/status": "BankAccountController.updateAccountStatus",
+  "get /account/transfer/listing": "BankAccountController.transferListing",
+  "get /account/transfer/detail": "BankAccountController.transferDetail",
+  "post /account/webhook": "BankAccountController.webhook",
+  "get /account/retrieve": "BankAccountController.retriveAccount",
+  "post /account/link/regenerate":
+    "BankAccountController.regenrateOnBoardingLink",
   "delete /account/delete": "BankAccountController.deleteAccount",
   /**
    * @BankAccountController
    */
 
-  "post /transfer/payment" : "BankAccountController.transferPayment",
+  "post /transfer/payment": "BankAccountController.transferPayment",
 
   // new api which take only link
-  "get /link/:link" : "CookiesController.getLink",
-
+  "get /link/:link": "CookiesController.getLink",
 
   /**
    * @EmailSentSettingController
    */
-  "post /email/setting/add" : "EmailSentSettingController.addEmailSentSetting",
-  "put /email/setting/update" : "EmailSentSettingController.updateEmailSentSetting",
-  "get /email/setting/list" : "EmailSentSettingController.getAllEmailSentSettingList",
-  "get /email/setting/detail" : "EmailSentSettingController.getById",
-  "delete /email/setting/delete" : "EmailSentSettingController.deleteEmailSent",
+  "post /email/setting/add": "EmailSentSettingController.addEmailSentSetting",
+  "put /email/setting/update":
+    "EmailSentSettingController.updateEmailSentSetting",
+  "get /email/setting/list":
+    "EmailSentSettingController.getAllEmailSentSettingList",
+  "get /email/setting/detail": "EmailSentSettingController.getById",
+  "delete /email/setting/delete": "EmailSentSettingController.deleteEmailSent",
 
   /**
    * @LinkGenerateController
    */
-  "post /link/generate/add" : "LinkGenerateController.addLinkGenerate",
-  "put /link/generate/update" : "LinkGenerateController.updateLinkGenerate",
-  "get /link/generate/detail" : "LinkGenerateController.getByIdLinkGenerate",
-  "get /link/generate/listing" : "LinkGenerateController.getAllLinkGenerate",
-  "delete /link/generate/delete" : "LinkGenerateController.deleteLinkGenerate"
+  "post /link/generate/add": "LinkGenerateController.addLinkGenerate",
+  "put /link/generate/update": "LinkGenerateController.updateLinkGenerate",
+  "get /link/generate/detail": "LinkGenerateController.getByIdLinkGenerate",
+  "get /link/generate/listing": "LinkGenerateController.getAllLinkGenerate",
+  "delete /link/generate/delete": "LinkGenerateController.deleteLinkGenerate",
 
-};   
+  /**
+   * @ExportController
+   */
+  "get /reports/performance/export": "ExportController.exportPerformanceReport",
+};
