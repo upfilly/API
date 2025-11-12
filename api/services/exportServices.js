@@ -8,15 +8,15 @@
 //   // Main export function for performance reports
 //   exportPerformanceReport: async function (req, res) {
 //     try {
-//       const { 
-//         format = 'csv', 
-//         startDate, 
-//         endDate, 
-//         brand_id, 
-//         affiliate_id, 
+//       const {
+//         format = 'csv',
+//         startDate,
+//         endDate,
+//         brand_id,
+//         affiliate_id,
 //         campaign,
 //         search,
-//         filter 
+//         filter
 //       } = req.query;
 
 //       // Fetch only the necessary data
@@ -120,7 +120,7 @@
 //     if (startDate && endDate) {
 //       return `${moment(startDate).format('MMM DD, YYYY')} - ${moment(endDate).format('MMM DD, YYYY')}`;
 //     }
-    
+
 //     switch (filter) {
 //       case "this_week":
 //         return `This Week (${moment().startOf('week').format('MMM DD')} - ${moment().endOf('week').format('MMM DD, YYYY')})`;
@@ -274,7 +274,7 @@
 //   // Date range helper
 //   getDateRange: function (filterType) {
 //     let startDate, endDate;
-    
+
 //     switch (filterType) {
 //       case "this_week":
 //         startDate = moment().startOf("week").toDate();
@@ -304,7 +304,7 @@
 //         startDate = moment().startOf("month").toDate();
 //         endDate = moment().endOf("month").toDate();
 //     }
-    
+
 //     return { startDate, endDate };
 //   },
 
@@ -317,7 +317,7 @@
 //       // Add headers
 //       const headers = ['Date Range', 'Clicks', 'Sales', 'Conversion Rate'];
 //       const headerRow = worksheet.addRow(headers);
-      
+
 //       // Style header row
 //       headerRow.eachCell((cell) => {
 //         cell.fill = {
@@ -376,13 +376,13 @@
 //   exportToCSV: async function (res, data, startDate, endDate, filter) {
 //     try {
 //       const timestamp = new Date().toISOString().split('T')[0];
-      
+
 //       // Define fields for CSV
 //       const fields = ['Date Range', 'Clicks', 'Sales', 'Conversion Rate'];
-      
+
 //       // Create parser with only required fields
 //       const parser = new Parser({ fields });
-      
+
 //       // Parse data to CSV
 //       let csv;
 //       if (data && data.length > 0) {
@@ -399,7 +399,7 @@
 //       // Set response headers
 //       res.setHeader('Content-Type', 'text/csv');
 //       res.setHeader('Content-Disposition', `attachment; filename=performance_report_${timestamp}.csv`);
-      
+
 //       return res.send(csv);
 //     } catch (error) {
 //       console.error('CSV export error:', error);
@@ -420,7 +420,7 @@
 //             ExportTime: new Date().toLocaleTimeString()
 //           },
 //           Data: {
-//             Record: data && data.length > 0 ? 
+//             Record: data && data.length > 0 ?
 //               data.map(item => ({
 //                 DateRange: item['Date Range'],
 //                 Clicks: item['Clicks'],
@@ -442,7 +442,7 @@
 //       // Set response headers
 //       res.setHeader('Content-Type', 'application/xml');
 //       res.setHeader('Content-Disposition', `attachment; filename=performance_report_${timestamp}.xml`);
-      
+
 //       return res.send(xml);
 //     } catch (error) {
 //       console.error('XML export error:', error);
@@ -451,40 +451,39 @@
 //   }
 // };
 
-
-
-
-const { Parser } = require('json2csv');
-const ExcelJS = require('exceljs');
-const moment = require('moment');
-const ObjectId = require('mongodb').ObjectId;
-const { js2xml } = require('xml-js');
+const { Parser } = require("json2csv");
+const ExcelJS = require("exceljs");
+const moment = require("moment");
+const ObjectId = require("mongodb").ObjectId;
+const { js2xml } = require("xml-js");
 
 module.exports = {
   // Main export function for performance reports
   exportPerformanceReport: async function (req, res) {
     try {
-      const { 
-        format = 'csv', 
-        startDate, 
-        endDate, 
-        brand_id, 
-        affiliate_id, 
+      let {
+        format = "csv",
+        startDate,
+        endDate,
+        brand_id,
+        affiliate_id,
         campaign,
         search,
-        filter 
+        filter,
       } = req.query;
+
+      format = decodeURIComponent(format || "csv")
+        .trim()
+        .replace(/[^a-z0-9]/gi, "")
+        .toLowerCase();
 
       // Set endDate equal to startDate if only startDate is provided
       const adjustedEndDate = endDate || startDate;
 
       // Fetch only the necessary data
-      const [
-        clickAnalyticsData,
-        reportAnalyticsData
-      ] = await Promise.all([
+      const [clickAnalyticsData, reportAnalyticsData] = await Promise.all([
         this.getClickAnalyticsData(req, startDate, adjustedEndDate),
-        this.getReportAnalyticsData(req, startDate, adjustedEndDate)
+        this.getReportAnalyticsData(req, startDate, adjustedEndDate),
       ]);
 
       // Generate daily data for complete month
@@ -496,44 +495,68 @@ module.exports = {
         filter
       );
 
-      if (format === 'excel') {
-        return await this.exportToExcel(res, dailyData, startDate, adjustedEndDate, filter);
-      } else if (format === 'xml') {
-        return await this.exportToXML(res, dailyData, startDate, adjustedEndDate, filter);
+      if (format === "excel") {
+        return await this.exportToExcel(
+          res,
+          dailyData,
+          startDate,
+          adjustedEndDate,
+          filter
+        );
+      } else if (format === "xml") {
+        return await this.exportToXML(
+          res,
+          dailyData,
+          startDate,
+          adjustedEndDate,
+          filter
+        );
       } else {
-        return await this.exportToCSV(res, dailyData, startDate, adjustedEndDate, filter);
+        return await this.exportToCSV(
+          res,
+          dailyData,
+          startDate,
+          adjustedEndDate,
+          filter
+        );
       }
     } catch (error) {
-      console.error('Export error:', error);
-      return res.serverError('Failed to export performance report');
+      console.error("Export error:", error);
+      return res.serverError("Failed to export performance report");
     }
   },
 
   // Generate daily data for complete month in YYYY-MM-DD format
-  generateDailyData: function (clickData, reportData, startDate, endDate, filter) {
+  generateDailyData: function (
+    clickData,
+    reportData,
+    startDate,
+    endDate,
+    filter
+  ) {
     try {
       // Get date range
       let dateRange;
       if (startDate && endDate) {
         dateRange = {
           start: moment(startDate),
-          end: moment(endDate)
+          end: moment(endDate),
         };
       } else {
         const range = this.getDateRange(filter);
         dateRange = {
           start: moment(range.startDate),
-          end: moment(range.endDate)
+          end: moment(range.endDate),
         };
       }
 
       // Generate all dates in the range
       const dates = [];
       let currentDate = dateRange.start.clone();
-      
+
       while (currentDate <= dateRange.end) {
-        dates.push(currentDate.format('YYYY-MM-DD'));
-        currentDate = currentDate.clone().add(1, 'days');
+        dates.push(currentDate.format("YYYY-MM-DD"));
+        currentDate = currentDate.clone().add(1, "days");
       }
 
       // Extract daily data from analytics
@@ -541,42 +564,45 @@ module.exports = {
       const dailySales = this.extractDailySales(reportData);
 
       // Combine data for all dates
-      const dailyData = dates.map(date => {
+      const dailyData = dates.map((date) => {
         const clicks = dailyClicks[date] || 0;
         const sales = dailySales[date] || 0;
         const conversionRate = clicks > 0 ? (sales / clicks) * 100 : 0;
 
         return {
-          'Date': date,
-          'Clicks': clicks,
-          'Sales': sales,
-          'Conversion Rate': `${conversionRate.toFixed(2)}%`
+          Date: date,
+          Clicks: clicks,
+          Sales: sales,
+          "Conversion Rate": `${conversionRate.toFixed(2)}%`,
         };
       });
 
       return dailyData;
     } catch (error) {
-      console.error('Error generating daily data:', error);
-      return [{
-        'Date': moment().format('YYYY-MM-DD'),
-        'Clicks': 0,
-        'Sales': 0,
-        'Conversion Rate': '0.00%'
-      }];
+      console.error("Error generating daily data:", error);
+      return [
+        {
+          Date: moment().format("YYYY-MM-DD"),
+          Clicks: 0,
+          Sales: 0,
+          "Conversion Rate": "0.00%",
+        },
+      ];
     }
   },
 
   // Extract daily clicks from click analytics data
   extractDailyClicks: function (clickData) {
     const dailyClicks = {};
-    
+
     if (clickData && clickData.data && clickData.data.length > 0) {
-      clickData.data.forEach(item => {
+      clickData.data.forEach((item) => {
         if (item.clicks && Array.isArray(item.clicks)) {
-          item.clicks.forEach(click => {
+          item.clicks.forEach((click) => {
             if (click.createdAt) {
-              const dateKey = moment(click.createdAt).format('YYYY-MM-DD');
-              dailyClicks[dateKey] = (dailyClicks[dateKey] || 0) + (click.count || 0);
+              const dateKey = moment(click.createdAt).format("YYYY-MM-DD");
+              dailyClicks[dateKey] =
+                (dailyClicks[dateKey] || 0) + (click.count || 0);
             }
           });
         }
@@ -589,14 +615,15 @@ module.exports = {
   // Extract daily sales from report analytics data
   extractDailySales: function (reportData) {
     const dailySales = {};
-    
+
     if (reportData && reportData.data && reportData.data.length > 0) {
-      reportData.data.forEach(item => {
+      reportData.data.forEach((item) => {
         if (item.actions && Array.isArray(item.actions)) {
-          item.actions.forEach(action => {
+          item.actions.forEach((action) => {
             if (action.createdAt) {
-              const dateKey = moment(action.createdAt).format('YYYY-MM-DD');
-              dailySales[dateKey] = (dailySales[dateKey] || 0) + (action.action || 0);
+              const dateKey = moment(action.createdAt).format("YYYY-MM-DD");
+              dailySales[dateKey] =
+                (dailySales[dateKey] || 0) + (action.action || 0);
             }
           });
         }
@@ -616,10 +643,16 @@ module.exports = {
 
       // Date filtering logic - use provided dates or filter
       if (startDate && endDate) {
-        query.createdAt = { $gte: new Date(startDate), $lte: new Date(endDate) };
+        query.createdAt = {
+          $gte: new Date(startDate),
+          $lte: new Date(endDate),
+        };
       } else {
         const dateRange = this.getDateRange(filter);
-        query.createdAt = { $gte: dateRange.startDate, $lte: dateRange.endDate };
+        query.createdAt = {
+          $gte: dateRange.startDate,
+          $lte: dateRange.endDate,
+        };
       }
 
       if (affiliate_id) {
@@ -639,29 +672,31 @@ module.exports = {
 
       const pipeline = [
         {
-          $match: query
+          $match: query,
         },
         {
           $group: {
             _id: {
-              date: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }
+              date: {
+                $dateToString: { format: "%Y-%m-%d", date: "$createdAt" },
+              },
             },
-            count: { $sum: 1 }
-          }
+            count: { $sum: 1 },
+          },
         },
         {
           $project: {
             date: "$_id.date",
             count: 1,
-            _id: 0
-          }
+            _id: 0,
+          },
         },
-        { $sort: { date: 1 } }
+        { $sort: { date: 1 } },
       ];
 
-      const result = await Cookies.native(function(err, collection) {
+      const result = await Cookies.native(function (err, collection) {
         if (err) {
-          console.error('Error getting native collection:', err);
+          console.error("Error getting native collection:", err);
           return [];
         }
         return collection.aggregate(pipeline).toArray();
@@ -669,17 +704,19 @@ module.exports = {
 
       // Format the result for easier processing
       const formattedResult = {
-        data: [{
-          clicks: result.map(item => ({
-            createdAt: item.date,
-            count: item.count
-          }))
-        }]
+        data: [
+          {
+            clicks: result.map((item) => ({
+              createdAt: item.date,
+              count: item.count,
+            })),
+          },
+        ],
       };
 
       return { data: formattedResult.data || [] };
     } catch (error) {
-      console.error('Error fetching click analytics:', error);
+      console.error("Error fetching click analytics:", error);
       return { data: [] };
     }
   },
@@ -692,7 +729,10 @@ module.exports = {
 
       // Date filtering logic - use provided dates or filter
       if (startDate && endDate) {
-        query.createdAt = { $gte: new Date(startDate), $lte: new Date(endDate) };
+        query.createdAt = {
+          $gte: new Date(startDate),
+          $lte: new Date(endDate),
+        };
       }
 
       if (affiliate_id) {
@@ -712,33 +752,35 @@ module.exports = {
 
       const pipeline = [
         {
-          $match: query
+          $match: query,
         },
         {
           $group: {
             _id: {
-              date: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }
+              date: {
+                $dateToString: { format: "%Y-%m-%d", date: "$createdAt" },
+              },
             },
             sales: {
               $sum: {
-                $cond: [{ $ne: ["$order_id", ""] }, 1, 0]
-              }
-            }
-          }
+                $cond: [{ $ne: ["$order_id", ""] }, 1, 0],
+              },
+            },
+          },
         },
         {
           $project: {
             date: "$_id.date",
             sales: 1,
-            _id: 0
-          }
+            _id: 0,
+          },
         },
-        { $sort: { date: 1 } }
+        { $sort: { date: 1 } },
       ];
 
-      const result = await AffiliateLink.native(function(err, collection) {
+      const result = await AffiliateLink.native(function (err, collection) {
         if (err) {
-          console.error('Error getting native collection:', err);
+          console.error("Error getting native collection:", err);
           return [];
         }
         return collection.aggregate(pipeline).toArray();
@@ -746,17 +788,19 @@ module.exports = {
 
       // Format the result for easier processing
       const formattedResult = {
-        data: [{
-          actions: result.map(item => ({
-            createdAt: item.date,
-            action: item.sales
-          }))
-        }]
+        data: [
+          {
+            actions: result.map((item) => ({
+              createdAt: item.date,
+              action: item.sales,
+            })),
+          },
+        ],
       };
 
       return { data: formattedResult.data || [] };
     } catch (error) {
-      console.error('Error fetching report analytics:', error);
+      console.error("Error fetching report analytics:", error);
       return { data: [] };
     }
   },
@@ -764,7 +808,7 @@ module.exports = {
   // Date range helper
   getDateRange: function (filterType) {
     let startDate, endDate;
-    
+
     switch (filterType) {
       case "this_week":
         startDate = moment().startOf("week").toDate();
@@ -794,7 +838,7 @@ module.exports = {
         startDate = moment().startOf("month").toDate();
         endDate = moment().endOf("month").toDate();
     }
-    
+
     return { startDate, endDate };
   },
 
@@ -802,282 +846,270 @@ module.exports = {
   exportToExcel: async function (res, data, startDate, endDate, filter) {
     try {
       const workbook = new ExcelJS.Workbook();
-      const worksheet = workbook.addWorksheet('Daily Performance Report');
+      const worksheet = workbook.addWorksheet("Daily Performance Report");
 
       // Add report header with date information
-      const reportPeriod = startDate && endDate ? 
-        `${moment(startDate).format('YYYY-MM-DD')} to ${moment(endDate).format('YYYY-MM-DD')}` : 
-        'Current Month';
-      
-      worksheet.addRow(['Report Period:', reportPeriod]);
-      worksheet.addRow(['Report Generated:', moment().format('YYYY-MM-DD HH:mm:ss')]);
+      const reportPeriod =
+        startDate && endDate
+          ? `${moment(startDate).format("YYYY-MM-DD")} to ${moment(
+              endDate
+            ).format("YYYY-MM-DD")}`
+          : "Current Month";
+
+      worksheet.addRow(["Report Period:", reportPeriod]);
+      worksheet.addRow([
+        "Report Generated:",
+        moment().format("YYYY-MM-DD HH:mm:ss"),
+      ]);
       worksheet.addRow([]); // Empty row
 
       // Add headers
-      const headers = ['Date', 'Clicks', 'Sales', 'Conversion Rate'];
+      const headers = ["Date", "Clicks", "Sales", "Conversion Rate"];
       const headerRow = worksheet.addRow(headers);
-      
+
       // Style header row
       headerRow.eachCell((cell) => {
         cell.fill = {
-          type: 'pattern',
-          pattern: 'solid',
-          fgColor: { argb: 'FF4472C4' }
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FF4472C4" },
         };
         cell.font = {
-          color: { argb: 'FFFFFFFF' },
-          bold: true
+          color: { argb: "FFFFFFFF" },
+          bold: true,
         };
         cell.border = {
-          top: { style: 'thin' },
-          left: { style: 'thin' },
-          bottom: { style: 'thin' },
-          right: { style: 'thin' }
+          top: { style: "thin" },
+          left: { style: "thin" },
+          bottom: { style: "thin" },
+          right: { style: "thin" },
         };
       });
 
       // Add data rows
       if (data && data.length > 0) {
-        data.forEach(row => {
+        data.forEach((row) => {
           const rowData = [
-            row['Date'],
-            row['Clicks'],
-            row['Sales'],
-            row['Conversion Rate']
+            row["Date"],
+            row["Clicks"],
+            row["Sales"],
+            row["Conversion Rate"],
           ];
           const dataRow = worksheet.addRow(rowData);
-          
+
           // Add light border to data rows
           dataRow.eachCell((cell) => {
             cell.border = {
-              top: { style: 'thin' },
-              left: { style: 'thin' },
-              bottom: { style: 'thin' },
-              right: { style: 'thin' }
+              top: { style: "thin" },
+              left: { style: "thin" },
+              bottom: { style: "thin" },
+              right: { style: "thin" },
             };
           });
         });
 
         // Add total row
-        const totalClicks = data.reduce((sum, row) => sum + row['Clicks'], 0);
-        const totalSales = data.reduce((sum, row) => sum + row['Sales'], 0);
-        const totalConversionRate = totalClicks > 0 ? (totalSales / totalClicks) * 100 : 0;
+        const totalClicks = data.reduce((sum, row) => sum + row["Clicks"], 0);
+        const totalSales = data.reduce((sum, row) => sum + row["Sales"], 0);
+        const totalConversionRate =
+          totalClicks > 0 ? (totalSales / totalClicks) * 100 : 0;
 
         worksheet.addRow([]); // Empty row
         const totalRow = worksheet.addRow([
-          'TOTAL',
+          "TOTAL",
           totalClicks,
           totalSales,
-          `${totalConversionRate.toFixed(2)}%`
+          `${totalConversionRate.toFixed(2)}%`,
         ]);
 
         // Style total row
         totalRow.eachCell((cell) => {
           cell.font = { bold: true };
           cell.fill = {
-            type: 'pattern',
-            pattern: 'solid',
-            fgColor: { argb: 'FFF2F2F2' }
+            type: "pattern",
+            pattern: "solid",
+            fgColor: { argb: "FFF2F2F2" },
           };
           cell.border = {
-            top: { style: 'thin' },
-            left: { style: 'thin' },
-            bottom: { style: 'thin' },
-            right: { style: 'thin' }
+            top: { style: "thin" },
+            left: { style: "thin" },
+            bottom: { style: "thin" },
+            right: { style: "thin" },
           };
         });
       } else {
-        worksheet.addRow(['No data available', '', '', '']);
+        worksheet.addRow(["No data available", "", "", ""]);
       }
 
       // Auto-fit columns
-      worksheet.columns.forEach(column => {
+      worksheet.columns.forEach((column) => {
         column.width = 15;
       });
 
       // Set response headers
-      const timestamp = moment().format('YYYY-MM-DD');
-      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-      res.setHeader('Content-Disposition', `attachment; filename=daily_performance_${timestamp}.xlsx`);
+      const timestamp = moment().format("YYYY-MM-DD");
+      res.setHeader(
+        "Content-Type",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      );
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename=daily_performance_${timestamp}.xlsx`
+      );
 
       // Write to response
       await workbook.xlsx.write(res);
       res.end();
-
     } catch (error) {
-      console.error('Excel export error:', error);
-      throw new Error('Excel export failed: ' + error.message);
+      console.error("Excel export error:", error);
+      throw new Error("Excel export failed: " + error.message);
     }
   },
 
   // Export to CSV - Daily data in YYYY-MM-DD format
   exportToCSV: async function (res, data, startDate, endDate, filter) {
     try {
-      const timestamp = moment().format('YYYY-MM-DD');
-      
+      const timestamp = moment().format("YYYY-MM-DD");
+
       let csvData = [];
-      
+
       // Add report header
-      const reportPeriod = startDate && endDate ? 
-        `${moment(startDate).format('YYYY-MM-DD')} to ${moment(endDate).format('YYYY-MM-DD')}` : 
-        'Current Month';
-      
-      csvData.push('DAILY PERFORMANCE REPORT');
+      const reportPeriod =
+        startDate && endDate
+          ? `${moment(startDate).format("YYYY-MM-DD")} to ${moment(
+              endDate
+            ).format("YYYY-MM-DD")}`
+          : "Current Month";
+
+      csvData.push("DAILY PERFORMANCE REPORT");
       csvData.push(`Report Period: ${reportPeriod}`);
-      csvData.push(`Report Generated: ${moment().format('YYYY-MM-DD HH:mm:ss')}`);
-      csvData.push('');
-      
+      csvData.push(
+        `Report Generated: ${moment().format("YYYY-MM-DD HH:mm:ss")}`
+      );
+      csvData.push("");
+
       // Define fields for CSV
-      const fields = ['Date', 'Clicks', 'Sales', 'Conversion Rate'];
+      const fields = ["Date", "Clicks", "Sales", "Conversion Rate"];
       const parser = new Parser({ fields });
-      
+
       // Parse data to CSV
       if (data && data.length > 0) {
         csvData.push(parser.parse(data));
-        
+
         // Add total row
-        const totalClicks = data.reduce((sum, row) => sum + row['Clicks'], 0);
-        const totalSales = data.reduce((sum, row) => sum + row['Sales'], 0);
-        const totalConversionRate = totalClicks > 0 ? (totalSales / totalClicks) * 100 : 0;
-        
-        csvData.push('');
-        csvData.push(`TOTAL,${totalClicks},${totalSales},${totalConversionRate.toFixed(2)}%`);
+        const totalClicks = data.reduce((sum, row) => sum + row["Clicks"], 0);
+        const totalSales = data.reduce((sum, row) => sum + row["Sales"], 0);
+        const totalConversionRate =
+          totalClicks > 0 ? (totalSales / totalClicks) * 100 : 0;
+
+        csvData.push("");
+        csvData.push(
+          `TOTAL,${totalClicks},${totalSales},${totalConversionRate.toFixed(
+            2
+          )}%`
+        );
       } else {
-        csvData.push(parser.parse([{
-          'Date': 'No data available',
-          'Clicks': '',
-          'Sales': '',
-          'Conversion Rate': ''
-        }]));
+        csvData.push(
+          parser.parse([
+            {
+              Date: "No data available",
+              Clicks: "",
+              Sales: "",
+              "Conversion Rate": "",
+            },
+          ])
+        );
       }
 
-      const finalCSV = csvData.join('\n');
+      const finalCSV = csvData.join("\n");
 
       // Set response headers
-      res.setHeader('Content-Type', 'text/csv');
-      res.setHeader('Content-Disposition', `attachment; filename=daily_performance_${timestamp}.csv`);
-      
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename=daily_performance_${timestamp}.csv`
+      );
+
       return res.send(finalCSV);
     } catch (error) {
-      console.error('CSV export error:', error);
-      throw new Error('CSV export failed: ' + error.message);
+      console.error("CSV export error:", error);
+      throw new Error("CSV export failed: " + error.message);
     }
   },
 
   // Export to XML - Daily data in YYYY-MM-DD format
   exportToXML: async function (res, data, startDate, endDate, filter) {
     try {
-      const timestamp = moment().format('YYYY-MM-DD');
+      const timestamp = moment().format("YYYY-MM-DD");
 
       // Calculate totals
       let totalClicks = 0;
       let totalSales = 0;
-      
+
       if (data && data.length > 0) {
-        totalClicks = data.reduce((sum, row) => sum + row['Clicks'], 0);
-        totalSales = data.reduce((sum, row) => sum + row['Sales'], 0);
+        totalClicks = data.reduce((sum, row) => sum + row["Clicks"], 0);
+        totalSales = data.reduce((sum, row) => sum + row["Sales"], 0);
       }
 
-      const totalConversionRate = totalClicks > 0 ? (totalSales / totalClicks) * 100 : 0;
+      const totalConversionRate =
+        totalClicks > 0 ? (totalSales / totalClicks) * 100 : 0;
 
       // Convert data to XML structure with daily data
       const xmlData = {
         DailyPerformanceReport: {
           ReportInfo: {
-            ExportDate: moment().format('YYYY-MM-DD'),
-            ExportTime: moment().format('HH:mm:ss'),
-            Period: startDate && endDate ? 
-              `${moment(startDate).format('YYYY-MM-DD')} to ${moment(endDate).format('YYYY-MM-DD')}` : 
-              'Current Month'
+            ExportDate: moment().format("YYYY-MM-DD"),
+            ExportTime: moment().format("HH:mm:ss"),
+            Period:
+              startDate && endDate
+                ? `${moment(startDate).format("YYYY-MM-DD")} to ${moment(
+                    endDate
+                  ).format("YYYY-MM-DD")}`
+                : "Current Month",
           },
           DailyData: {
-            Day: data && data.length > 0 ? 
-              data.map(item => ({
-                Date: item['Date'],
-                Clicks: item['Clicks'],
-                Sales: item['Sales'],
-                ConversionRate: item['Conversion Rate']
-              })) : [{
-                Date: 'No data available',
-                Clicks: '0',
-                Sales: '0',
-                ConversionRate: '0%'
-              }]
+            Day:
+              data && data.length > 0
+                ? data.map((item) => ({
+                    Date: item["Date"],
+                    Clicks: item["Clicks"],
+                    Sales: item["Sales"],
+                    ConversionRate: item["Conversion Rate"],
+                  }))
+                : [
+                    {
+                      Date: "No data available",
+                      Clicks: "0",
+                      Sales: "0",
+                      ConversionRate: "0%",
+                    },
+                  ],
           },
           Summary: {
             TotalClicks: totalClicks,
             TotalSales: totalSales,
-            TotalConversionRate: `${totalConversionRate.toFixed(2)}%`
-          }
-        }
+            TotalConversionRate: `${totalConversionRate.toFixed(2)}%`,
+          },
+        },
       };
 
       // Convert to XML
       const xml = js2xml(xmlData, { compact: true, spaces: 2 });
 
       // Set response headers
-      res.setHeader('Content-Type', 'application/xml');
-      res.setHeader('Content-Disposition', `attachment; filename=daily_performance_${timestamp}.xml`);
-      
+      res.setHeader("Content-Type", "application/xml");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename=daily_performance_${timestamp}.xml`
+      );
+
       return res.send(xml);
     } catch (error) {
-      console.error('XML export error:', error);
-      throw new Error('XML export failed: ' + error.message);
+      console.error("XML export error:", error);
+      throw new Error("XML export failed: " + error.message);
     }
-  }
+  },
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // const { Parser } = require('json2csv');
 // const ExcelJS = require('exceljs');
@@ -1089,15 +1121,15 @@ module.exports = {
 //   // Main export function for performance reports
 //   exportPerformanceReport: async function (req, res) {
 //     try {
-//       const { 
-//         format = 'csv', 
-//         startDate, 
-//         endDate, 
-//         brand_id, 
-//         affiliate_id, 
+//       const {
+//         format = 'csv',
+//         startDate,
+//         endDate,
+//         brand_id,
+//         affiliate_id,
 //         campaign,
 //         search,
-//         filter 
+//         filter
 //       } = req.query;
 
 //       // Fetch only the necessary data
@@ -1152,7 +1184,7 @@ module.exports = {
 //       // Generate all dates in the range
 //       const dates = [];
 //       let currentDate = dateRange.start.clone();
-      
+
 //       while (currentDate <= dateRange.end) {
 //         dates.push(currentDate.format('YYYY-MM-DD'));
 //         currentDate = currentDate.clone().add(1, 'days');
@@ -1191,7 +1223,7 @@ module.exports = {
 //   // Extract daily clicks from click analytics data
 //   extractDailyClicks: function (clickData) {
 //     const dailyClicks = {};
-    
+
 //     if (clickData && clickData.data && clickData.data.length > 0) {
 //       clickData.data.forEach(item => {
 //         if (item.clicks && Array.isArray(item.clicks)) {
@@ -1211,7 +1243,7 @@ module.exports = {
 //   // Extract daily sales from report analytics data
 //   extractDailySales: function (reportData) {
 //     const dailySales = {};
-    
+
 //     if (reportData && reportData.data && reportData.data.length > 0) {
 //       reportData.data.forEach(item => {
 //         if (item.actions && Array.isArray(item.actions)) {
@@ -1385,7 +1417,7 @@ module.exports = {
 //   // Date range helper
 //   getDateRange: function (filterType) {
 //     let startDate, endDate;
-    
+
 //     switch (filterType) {
 //       case "this_week":
 //         startDate = moment().startOf("week").toDate();
@@ -1415,7 +1447,7 @@ module.exports = {
 //         startDate = moment().startOf("month").toDate();
 //         endDate = moment().endOf("month").toDate();
 //     }
-    
+
 //     return { startDate, endDate };
 //   },
 
@@ -1428,7 +1460,7 @@ module.exports = {
 //       // Add headers
 //       const headers = ['Date', 'Clicks', 'Sales', 'Conversion Rate'];
 //       const headerRow = worksheet.addRow(headers);
-      
+
 //       // Style header row
 //       headerRow.eachCell((cell) => {
 //         cell.fill = {
@@ -1458,7 +1490,7 @@ module.exports = {
 //             row['Conversion Rate']
 //           ];
 //           const dataRow = worksheet.addRow(rowData);
-          
+
 //           // Add light border to data rows
 //           dataRow.eachCell((cell) => {
 //             cell.border = {
@@ -1526,23 +1558,23 @@ module.exports = {
 //   exportToCSV: async function (res, data, startDate, endDate, filter) {
 //     try {
 //       const timestamp = moment().format('YYYY-MM-DD');
-      
+
 //       // Define fields for CSV
 //       const fields = ['Date', 'Clicks', 'Sales', 'Conversion Rate'];
-      
+
 //       // Create parser with only required fields
 //       const parser = new Parser({ fields });
-      
+
 //       // Parse data to CSV
 //       let csv;
 //       if (data && data.length > 0) {
 //         csv = parser.parse(data);
-        
+
 //         // Add total row
 //         const totalClicks = data.reduce((sum, row) => sum + row['Clicks'], 0);
 //         const totalSales = data.reduce((sum, row) => sum + row['Sales'], 0);
 //         const totalConversionRate = totalClicks > 0 ? (totalSales / totalClicks) * 100 : 0;
-        
+
 //         csv += `\nTOTAL,${totalClicks},${totalSales},${totalConversionRate.toFixed(2)}%`;
 //       } else {
 //         csv = parser.parse([{
@@ -1556,7 +1588,7 @@ module.exports = {
 //       // Set response headers
 //       res.setHeader('Content-Type', 'text/csv');
 //       res.setHeader('Content-Disposition', `attachment; filename=daily_performance_${timestamp}.csv`);
-      
+
 //       return res.send(csv);
 //     } catch (error) {
 //       console.error('CSV export error:', error);
@@ -1572,7 +1604,7 @@ module.exports = {
 //       // Calculate totals
 //       let totalClicks = 0;
 //       let totalSales = 0;
-      
+
 //       if (data && data.length > 0) {
 //         totalClicks = data.reduce((sum, row) => sum + row['Clicks'], 0);
 //         totalSales = data.reduce((sum, row) => sum + row['Sales'], 0);
@@ -1585,12 +1617,12 @@ module.exports = {
 //         DailyPerformanceReport: {
 //           ReportInfo: {
 //             ExportDate: moment().format('YYYY-MM-DD'),
-//             Period: startDate && endDate ? 
-//               `${moment(startDate).format('YYYY-MM-DD')} to ${moment(endDate).format('YYYY-MM-DD')}` : 
+//             Period: startDate && endDate ?
+//               `${moment(startDate).format('YYYY-MM-DD')} to ${moment(endDate).format('YYYY-MM-DD')}` :
 //               'Current Month'
 //           },
 //           DailyData: {
-//             Day: data && data.length > 0 ? 
+//             Day: data && data.length > 0 ?
 //               data.map(item => ({
 //                 Date: item['Date'],
 //                 Clicks: item['Clicks'],
@@ -1617,7 +1649,7 @@ module.exports = {
 //       // Set response headers
 //       res.setHeader('Content-Type', 'application/xml');
 //       res.setHeader('Content-Disposition', `attachment; filename=daily_performance_${timestamp}.xml`);
-      
+
 //       return res.send(xml);
 //     } catch (error) {
 //       console.error('XML export error:', error);
