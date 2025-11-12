@@ -1011,7 +1011,8 @@ exports.affiliateCount = async (req, res) => {
       // Joined affiliates = accepted affiliates excluding actives
       const joinedAffiliates = uniqueAffiliates.filter(
         (id) => !activeAffiliateIds.includes(id)
-      );
+      ); 
+      
 
       associated_affiliates_count = joinedAffiliates.length;
       affiliates_active_count = activeAffiliateIds.length;
