@@ -1042,6 +1042,7 @@ exports.getAllBanner = async (req, res) => {
 
       query.isDeleted = isDeleted === "true";
       // query.addType = "banner";
+      
 
       if (is_animation !== undefined)
         query.is_animation = is_animation === "true";
