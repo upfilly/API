@@ -1576,7 +1576,7 @@ exports.getById = async (req, res) => {
       }
     } else {
       let categoryDetail = await CommonCategories.find({
-        where: { id: { in: get_link.linkCategory } },
+        where: { id: { in: get_detail.linkCategory } },
       });
       let uniqueValue = { ...get_detail, linkCategory: categoryDetail || [] };
       return response.success(
@@ -1606,6 +1606,7 @@ exports.getById = async (req, res) => {
 
     // }
   } catch (err) {
+    console.log(err)
     return response.failed(null, `${err}`, req, res);
   }
 };
