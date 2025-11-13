@@ -8,7 +8,7 @@ exports.addLinkGenerate = async (req, res, next) => {
     description: Joi.string().optional(),
     startDate: Joi.date().required(),
     endDate: Joi.date().required(),
-    seo: Joi.boolean().required(),
+    seo: Joi.boolean().optional(),
     deepLink: Joi.boolean().optional(),
     category: Joi.array().items(Joi.string()).optional(),
   });

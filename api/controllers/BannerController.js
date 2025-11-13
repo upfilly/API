@@ -13,7 +13,6 @@ const Services = require("../services/index");
 const ObjectId = require("mongodb").ObjectId;
 const Emails = require("../Emails/index");
 
-
 function isValidObjectId(id) {
   return /^[a-f\d]{24}$/i.test(id);
 }
@@ -26,145 +25,177 @@ exports.addBanner = async (req, res) => {
       throw validation_result.message;
     }
 
-    let {
-      title,
-      activation_date,
-      availability_date,
-      expiration_date,
-      category_id,
-      subCategory,
-      subChildCategory,
-      access_type,
-      affiliate_id,
-      expireCheck
-    } = req.body;
+    if (req.body.addType == "banner") {
+      let {
+        title,
+        activation_date,
+        availability_date,
+        expiration_date,
+        category_id,
+        subCategory,
+        subChildCategory,
+        access_type,
+        affiliate_id,
+        expireCheck,
+      } = req.body;
 
-    let query = {};
-    
-    if (expireCheck === true || expireCheck === "true") {
-      delete req.body.expiration_date;
-    }
+      let query = {};
 
-    query.title = title.toLowerCase();
-    query.isDeleted = false;
-
-    let get_banner = await Banner.findOne(query);
-
-    if (get_banner) {
-      throw constants.BANNER.ALREADY_EXIST;
-    }
-
-    if (affiliate_id) {
-      let get_affiliateId = await Users.findOne({ id: affiliate_id });
-
-      if (!get_affiliateId) {
-        throw constants.BANNER.INVALID_AFFILIATE;
+      if (expireCheck === true || expireCheck === "true") {
+        delete req.body.expiration_date;
       }
-    }
 
-    if (category_id && category_id.length > 0) {
-      for (const id of category_id) {
-        if (!isValidObjectId(id)) {
-          throw new Error(`Invalid category ID format: ${id}`);
-        }
+      query.title = title.toLowerCase();
+      query.isDeleted = false;
 
-        const exists = await CommonCategories.findOne({ id });
-        if (!exists) {
-          throw constants.BANNER.INVALID_CATEGORY;
+      let get_banner = await Banner.findOne(query);
+
+      if (get_banner) {
+        throw constants.BANNER.ALREADY_EXIST;
+      }
+
+      if (affiliate_id) {
+        let get_affiliateId = await Users.findOne({ id: affiliate_id });
+
+        if (!get_affiliateId) {
+          throw constants.BANNER.INVALID_AFFILIATE;
         }
       }
-    }
 
-    if (subCategory && subCategory.length > 0) {
-      for (const id of subCategory) {
-        if (!isValidObjectId(id)) {
-          throw new Error(`Invalid subcategory ID format: ${id}`);
-        }
+      if (category_id && category_id.length > 0) {
+        for (const id of category_id) {
+          if (!isValidObjectId(id)) {
+            throw new Error(`Invalid category ID format: ${id}`);
+          }
 
-        const exists = await CommonCategories.findOne({ id });
-        if (!exists) {
-          throw constants.BANNER.INVALID_SUBCATEGORY;
-        }
-      }
-    }
-
-    if (subChildCategory && subChildCategory.length > 0) {
-      for (const id of subChildCategory) {
-        if (!isValidObjectId(id)) {
-          throw new Error(`Invalid subChildCategory ID format: ${id}`);
-        }
-
-        const exists = await SubChildCategory.findOne({ id });
-        if (!exists) {
-          throw constants.BANNER.INVALID_SUBCHILDCATEGORY;
+          const exists = await CommonCategories.findOne({ id });
+          if (!exists) {
+            throw constants.BANNER.INVALID_CATEGORY;
+          }
         }
       }
-    }
 
-    let query1 = {
-      addedBy: req.identity.id,
-      status: "accepted",
-      isDeleted: false,
-    };
+      if (subCategory && subCategory.length > 0) {
+        for (const id of subCategory) {
+          if (!isValidObjectId(id)) {
+            throw new Error(`Invalid subcategory ID format: ${id}`);
+          }
 
-    let query2 = {
-      brand_id: req.identity.id,
-      status: "accepted",
-      isDeleted: false,
-    };
-
-    // let listOfAcceptedInvites = await AffiliateInvite.find(query1);
-
-    // let listOfBrandInvite = await AffiliateBrandInvite.find(query2);
-    let listOfBrandInvite = await BrandAffiliateAssociation.find(query2);
-
-
-    function removeDuplicates(array, key) {
-      const seen = new Set();
-      return array.filter((item) => {
-        const keyValue = item[key];
-        if (seen.has(keyValue)) {
-          return false;
+          const exists = await CommonCategories.findOne({ id });
+          if (!exists) {
+            throw constants.BANNER.INVALID_SUBCATEGORY;
+          }
         }
-        seen.add(keyValue);
-        return true;
-      });
-    }
+      }
 
-    // let combinedList = [...listOfBrandInvite, ...listOfAcceptedInvites];
-    let combinedList = [...listOfBrandInvite];
+      if (subChildCategory && subChildCategory.length > 0) {
+        for (const id of subChildCategory) {
+          if (!isValidObjectId(id)) {
+            throw new Error(`Invalid subChildCategory ID format: ${id}`);
+          }
 
-    listOfAcceptedInvites = removeDuplicates(combinedList, "affiliate_id");
+          const exists = await SubChildCategory.findOne({ id });
+          if (!exists) {
+            throw constants.BANNER.INVALID_SUBCHILDCATEGORY;
+          }
+        }
+      }
 
-    req.body.addedBy = req.identity.id;
+      let query1 = {
+        addedBy: req.identity.id,
+        status: "accepted",
+        isDeleted: false,
+      };
 
-    req.body.title = req.body.title.toLowerCase();
+      let query2 = {
+        brand_id: req.identity.id,
+        status: "accepted",
+        isDeleted: false,
+      };
 
-    if (activation_date) {
-      req.body.activation_date = new Date(activation_date);
-    }
+      // let listOfAcceptedInvites = await AffiliateInvite.find(query1);
 
-    if (availability_date) {
-      req.body.availability_date = new Date(availability_date);
-    }
-    //new changes 
+      // let listOfBrandInvite = await AffiliateBrandInvite.find(query2);
+      let listOfBrandInvite = await BrandAffiliateAssociation.find(query2);
 
-       if (expireCheck === false || expireCheck === "false") {
-      if (expiration_date) {
-      req.body.expiration_date = new Date(expiration_date);
-    }
-    }
-    //old 
-    // if (expiration_date) {
-    //   req.body.expiration_date = new Date(expiration_date);
-    // }
+      function removeDuplicates(array, key) {
+        const seen = new Set();
+        return array.filter((item) => {
+          const keyValue = item[key];
+          if (seen.has(keyValue)) {
+            return false;
+          }
+          seen.add(keyValue);
+          return true;
+        });
+      }
 
-    let add_detail = await Banner.create(req.body).fetch();
+      // let combinedList = [...listOfBrandInvite, ...listOfAcceptedInvites];
+      let combinedList = [...listOfBrandInvite];
 
-    if (access_type === "public") {
-      for (let affiliate of listOfAcceptedInvites) {
+      listOfAcceptedInvites = removeDuplicates(combinedList, "affiliate_id");
+
+      req.body.addedBy = req.identity.id;
+
+      req.body.title = req.body.title.toLowerCase();
+
+      if (activation_date) {
+        req.body.activation_date = new Date(activation_date);
+      }
+
+      if (availability_date) {
+        req.body.availability_date = new Date(availability_date);
+      }
+      //new changes
+
+      if (expireCheck === false || expireCheck === "false") {
+        if (expiration_date) {
+          req.body.expiration_date = new Date(expiration_date);
+        }
+      }
+      //old
+      // if (expiration_date) {
+      //   req.body.expiration_date = new Date(expiration_date);
+      // }
+
+      let add_detail = await Banner.create(req.body).fetch();
+
+      if (access_type === "public") {
+        for (let affiliate of listOfAcceptedInvites) {
+          let findUser = await Users.findOne({
+            id: affiliate.affiliate_id,
+            isDeleted: false,
+          });
+          if (findUser) {
+            let emailPayload = {
+              brandFullName: req.identity.fullName,
+              affiliateFullName: findUser.fullName,
+              affiliateEmail: findUser.email,
+            };
+
+            let emailSentCheck = await EmailSentSetting.findOne({
+              name: "banner",
+              isDeleted: false,
+            });
+            if (emailSentCheck.emailSent == true) {
+              await Emails.AffiliateBanner.sendEmailAffiliateBanner(
+                emailPayload
+              );
+            } else {
+              console.log("emailSent setting is false in banner");
+            }
+            await AffiliateBanners.create({
+              affiliate_id: affiliate.affiliate_id,
+              banner_id: add_detail.id,
+              addedBy: req.identity.id,
+              updatedBy: req.identity.id,
+              access_type: req.body.access_type,
+            });
+          }
+        }
+      } else {
         let findUser = await Users.findOne({
-          id: affiliate.affiliate_id,
+          id: affiliate_id,
           isDeleted: false,
         });
         if (findUser) {
@@ -173,80 +204,85 @@ exports.addBanner = async (req, res) => {
             affiliateFullName: findUser.fullName,
             affiliateEmail: findUser.email,
           };
-
           let emailSentCheck = await EmailSentSetting.findOne({
             name: "banner",
             isDeleted: false,
           });
+
           if (emailSentCheck.emailSent == true) {
             await Emails.AffiliateBanner.sendEmailAffiliateBanner(emailPayload);
           } else {
-            console.log("emailSent setting is false in banner");
+            console.log("emailSent setting is false in add banner");
           }
+
           await AffiliateBanners.create({
-          affiliate_id: affiliate.affiliate_id,
-          banner_id: add_detail.id,
-          addedBy: req.identity.id,
-          updatedBy: req.identity.id,
-          access_type: req.body.access_type,
-        });
+            affiliate_id: findUser.id,
+            banner_id: add_detail.id,
+            addedBy: req.identity.id,
+            updatedBy: req.identity.id,
+            access_type: req.body.access_type,
+          });
         }
-       
       }
-    } else {
-      let findUser = await Users.findOne({
-        id: affiliate_id,
+      if (add_detail) {
+        if (["operator", "super_user"].includes(req.identity.role)) {
+          //----------------get main account manager---------------------
+          let get_account_manager = await Users.findOne({
+            id: req.identity.addedBy,
+            isDeleted: false,
+          });
+          await Services.activityHistoryServices.create_activity_history(
+            req.identity.id,
+            "banner",
+            "created",
+            add_detail,
+            add_detail,
+            get_account_manager.id ? get_account_manager.id : null
+          );
+        } else if (["brand"].includes(req.identity.role)) {
+          //----------------get main account manager---------------------
+          let get_all_admin = await Services.UserServices.get_users_with_role([
+            "admin",
+          ]);
+          let get_account_manager = get_all_admin[0].id;
+          await Services.activityHistoryServices.create_activity_history(
+            req.identity.id,
+            "banner",
+            "created",
+            add_detail,
+            add_detail,
+            get_account_manager ? get_account_manager.id : null
+          );
+        }
+
+        return response.success(add_detail, constants.BANNER.ADDED, req, res);
+      }
+      // throw constants.COMMON.SERVER_ERROR;
+    } else if (req.body.addType == "link") {
+      if (req.body.linkName) {
+        req.body.linkName = req.body.linkName.toLowerCase();
+      }
+
+      let get_link = await Banner.findOne({
+        linkName: req.body.linkName,
         isDeleted: false,
       });
-      if (findUser) {
-        let emailPayload = {
-          brandFullName: req.identity.fullName,
-          affiliateFullName: findUser.fullName,
-          affiliateEmail: findUser.email,
-        };
-        let emailSentCheck = await EmailSentSetting.findOne({
-          name: "banner",
-          isDeleted: false,
-        });
-
-        if (emailSentCheck.emailSent == true) {
-          await Emails.AffiliateBanner.sendEmailAffiliateBanner(emailPayload);
-        } else {
-          console.log("emailSent setting is false in add banner");
-        }
-
-        await AffiliateBanners.create({
-          affiliate_id: findUser.id,
-          banner_id: add_detail.id,
-          addedBy: req.identity.id,
-          updatedBy: req.identity.id,
-          access_type: req.body.access_type,
-        });
-      }
-    
-    }
-    if (add_detail) {
-
-      if (['operator', 'super_user'].includes(req.identity.role)) {
-
-        //----------------get main account manager---------------------
-        let get_account_manager = await Users.findOne({ id: req.identity.addedBy, isDeleted: false })
-        await Services.activityHistoryServices.create_activity_history(req.identity.id, 'banner', 'created', add_detail, add_detail, get_account_manager.id ? get_account_manager.id : null)
-
-      } else if (['brand'].includes(req.identity.role)) {
-
-        //----------------get main account manager---------------------
-        let get_all_admin = await Services.UserServices.get_users_with_role(["admin"])
-        let get_account_manager = get_all_admin[0].id
-        await Services.activityHistoryServices.create_activity_history(req.identity.id, 'banner', 'created', add_detail, add_detail, get_account_manager ? get_account_manager.id : null)
-
+      if (get_link) {
+        throw constants.LINKGENERATE.ALREADY_EXIST;
       }
 
-      return response.success(add_detail, constants.BANNER.ADDED, req, res);
+      req.body.linkStartDate = new Date(req.body.linkStartDate);
+      req.body.linkEndDate = new Date(req.body.linkEndDate);
+
+      req.body.addedBy = req.identity.id;
+
+      await Banner.create(req.body).fetch();
+      return response.success(null, constants.LINKGENERATE.ADDED, req, res);
+    } else {
+      throw constants.COMMON.SERVER_ERROR;
     }
-    throw constants.COMMON.SERVER_ERROR;
   } catch (err) {
-    console.log("error",err)
+    console.log("error", err);
     return response.failed(null, `${err}`, req, res);
   }
 };
@@ -258,445 +294,724 @@ exports.editBanner = async (req, res) => {
     if (validation_result && !validation_result.success) {
       throw validation_result.message;
     }
+    if (req.body.addType == "banner") {
+      let {
+        title,
+        id,
+        activation_date,
+        availability_date,
+        expiration_date,
+        affiliate_id,
+        category_id,
+        subCategory,
+        subChildCategory,
+      } = req.body;
 
-    let { title, id, activation_date, availability_date, expiration_date, affiliate_id, category_id, subCategory, subChildCategory } =
-      req.body;
+      let query = {
+        title: title.toLowerCase(),
+        isDeleted: false,
+        id: { "!=": id },
+      };
 
-    let query = {
-      title: title.toLowerCase(),
-      isDeleted: false,
-      id: { "!=": id },
-    };
-
-    let name_exist = await Banner.findOne(query);
-    if (name_exist) {
-      throw constants.BANNER.ALREADY_EXIST;
-    }
-
-    req.body.updatedBy = req.identity.id;
-    req.body.title = req.body.title.toLowerCase();
-
-    if (activation_date) {
-      req.body.activation_date = new Date(activation_date);
-    }
-
-    if (availability_date) {
-      req.body.availability_date = new Date(availability_date);
-    }
-
-   
-//old check
-    // if (expiration_date) {
-    //   req.body.expiration_date = new Date(expiration_date);
-    // }
-
-    if (affiliate_id) {
-      let get_affiliateId = await Users.findOne({ id: affiliate_id });
-
-      if (!get_affiliateId) {
-        throw constants.BANNER.INVALID_AFFILIATE;
+      let name_exist = await Banner.findOne(query);
+      if (name_exist) {
+        throw constants.BANNER.ALREADY_EXIST;
       }
-    }
 
-    if (category_id && category_id.length > 0) {
-      for (const id of category_id) {
-        if (!isValidObjectId(id)) {
-          throw new Error(`Invalid category ID format: ${id}`);
-        }
+      req.body.updatedBy = req.identity.id;
+      req.body.title = req.body.title.toLowerCase();
 
-        const exists = await CommonCategories.findOne({ id });
-        if (!exists) {
-          throw constants.BANNER.INVALID_CATEGORY;
+      if (activation_date) {
+        req.body.activation_date = new Date(activation_date);
+      }
+
+      if (availability_date) {
+        req.body.availability_date = new Date(availability_date);
+      }
+
+      //old check
+      // if (expiration_date) {
+      //   req.body.expiration_date = new Date(expiration_date);
+      // }
+
+      if (affiliate_id) {
+        let get_affiliateId = await Users.findOne({ id: affiliate_id });
+
+        if (!get_affiliateId) {
+          throw constants.BANNER.INVALID_AFFILIATE;
         }
       }
-    }
 
-    if (subCategory && subCategory.length > 0) {
-      for (const id of subCategory) {
-        if (!isValidObjectId(id)) {
-          throw new Error(`Invalid subcategory ID format: ${id}`);
-        }
+      if (category_id && category_id.length > 0) {
+        for (const id of category_id) {
+          if (!isValidObjectId(id)) {
+            throw new Error(`Invalid category ID format: ${id}`);
+          }
 
-        const exists = await CommonCategories.findOne({ id });
-        if (!exists) {
-          throw constants.BANNER.INVALID_SUBCATEGORY;
-        }
-      }
-    }
-
-    if (subChildCategory && subChildCategory.length > 0) {
-      for (const id of subChildCategory) {
-        if (!isValidObjectId(id)) {
-          throw new Error(`Invalid subChildCategory ID format: ${id}`);
-        }
-
-        const exists = await SubChildCategory.findOne({ id });
-        if (!exists) {
-          throw constants.BANNER.INVALID_SUBCHILDCATEGORY;
+          const exists = await CommonCategories.findOne({ id });
+          if (!exists) {
+            throw constants.BANNER.INVALID_CATEGORY;
+          }
         }
       }
-    }
 
+      if (subCategory && subCategory.length > 0) {
+        for (const id of subCategory) {
+          if (!isValidObjectId(id)) {
+            throw new Error(`Invalid subcategory ID format: ${id}`);
+          }
 
-    let get_banner = await Banner.findOne({ id: id, isDeleted: false });
-    if (!get_banner) {
-      throw constants.BANNER.INVALID_ID;
-    }
+          const exists = await CommonCategories.findOne({ id });
+          if (!exists) {
+            throw constants.BANNER.INVALID_SUBCATEGORY;
+          }
+        }
+      }
+
+      if (subChildCategory && subChildCategory.length > 0) {
+        for (const id of subChildCategory) {
+          if (!isValidObjectId(id)) {
+            throw new Error(`Invalid subChildCategory ID format: ${id}`);
+          }
+
+          const exists = await SubChildCategory.findOne({ id });
+          if (!exists) {
+            throw constants.BANNER.INVALID_SUBCHILDCATEGORY;
+          }
+        }
+      }
+
+      let get_banner = await Banner.findOne({ id: id, isDeleted: false });
+      if (!get_banner) {
+        throw constants.BANNER.INVALID_ID;
+      }
       if (get_banner.expireCheck == false) {
-     if (expiration_date) {
-      req.body.expiration_date = new Date(expiration_date);
-    }
-    }else if (req.body?.expireCheck  == false) {
-      req.body.expiration_date = new Date(expiration_date);
-     }else{
-      delete req.body.expiration_date
-     }
-    
-
-    await AffiliateBanners.update({ banner_id: id }, { isDeleted: true });
-
-    let query1 = {
-      addedBy: req.identity.id,
-      status: "accepted",
-      isDeleted: false,
-    };
-    let query2 = {
-      brand_id: req.identity.id,
-      status: "accepted",
-      isDeleted: false,
-    };
-
-    let listOfAcceptedInvites = await AffiliateInvite.find(query1);
-    let listOfBrandInvite = await AffiliateBrandInvite.find(query2);
-
-    function removeDuplicates(array, key) {
-      const seen = new Set();
-      return array.filter((item) => {
-        const keyValue = item[key];
-        if (seen.has(keyValue)) {
-          return false;
+        if (expiration_date) {
+          req.body.expiration_date = new Date(expiration_date);
         }
-        seen.add(keyValue);
-        return true;
-      });
-    }
-
-    let combinedList = [...listOfBrandInvite, ...listOfAcceptedInvites];
-    listOfAcceptedInvites = removeDuplicates(combinedList, "affiliate_id");
-
-    req.body.addedBy = req.identity.id;
-    req.body.updatedBy = req.identity.id;
-
-    let update_detail = await Banner.updateOne({ id: id }, req.body);
-    if (update_detail) {
-
-      if (['operator', 'super_user'].includes(req.identity.role)) {
-
-        //----------------get main account manager---------------------
-        let get_account_manager = await Users.findOne({ id: req.identity.addedBy, isDeleted: false })
-        await Services.activityHistoryServices.create_activity_history(req.identity.id, 'banner', 'updated', update_detail, get_banner, get_account_manager.id ? get_account_manager.id : null)
-
-      } else if (['brand'].includes(req.identity.role)) {
-
-        //----------------get main account manager---------------------
-        let get_all_admin = await Services.UserServices.get_users_with_role(["admin"])
-        let get_account_manager = get_all_admin[0].id
-        await Services.activityHistoryServices.create_activity_history(req.identity.id, 'banner', 'updated', update_detail, get_banner, get_account_manager ? get_account_manager.id : null)
-
+      } else if (req.body?.expireCheck == false) {
+        req.body.expiration_date = new Date(expiration_date);
+      } else {
+        delete req.body.expiration_date;
       }
 
+      await AffiliateBanners.update({ banner_id: id }, { isDeleted: true });
 
-      for (let affiliate of listOfAcceptedInvites) {
-        let findUser = await Users.findOne({
-          id: affiliate.affiliate_id,
-          isDeleted: false,
+      let query1 = {
+        addedBy: req.identity.id,
+        status: "accepted",
+        isDeleted: false,
+      };
+      let query2 = {
+        brand_id: req.identity.id,
+        status: "accepted",
+        isDeleted: false,
+      };
+
+      let listOfAcceptedInvites = await AffiliateInvite.find(query1);
+      let listOfBrandInvite = await AffiliateBrandInvite.find(query2);
+
+      function removeDuplicates(array, key) {
+        const seen = new Set();
+        return array.filter((item) => {
+          const keyValue = item[key];
+          if (seen.has(keyValue)) {
+            return false;
+          }
+          seen.add(keyValue);
+          return true;
         });
-        let emailPayload = {
-          brandFullName: req.identity.fullName,
-          affiliateFullName: findUser.fullName,
-          affiliateEmail: findUser.email,
-        };
+      }
 
-         let emailSentCheck = await EmailSentSetting.findOne({
-        name: "banner",
+      let combinedList = [...listOfBrandInvite, ...listOfAcceptedInvites];
+      listOfAcceptedInvites = removeDuplicates(combinedList, "affiliate_id");
+
+      req.body.addedBy = req.identity.id;
+      req.body.updatedBy = req.identity.id;
+
+      let update_detail = await Banner.updateOne({ id: id }, req.body);
+      if (update_detail) {
+        if (["operator", "super_user"].includes(req.identity.role)) {
+          //----------------get main account manager---------------------
+          let get_account_manager = await Users.findOne({
+            id: req.identity.addedBy,
+            isDeleted: false,
+          });
+          await Services.activityHistoryServices.create_activity_history(
+            req.identity.id,
+            "banner",
+            "updated",
+            update_detail,
+            get_banner,
+            get_account_manager.id ? get_account_manager.id : null
+          );
+        } else if (["brand"].includes(req.identity.role)) {
+          //----------------get main account manager---------------------
+          let get_all_admin = await Services.UserServices.get_users_with_role([
+            "admin",
+          ]);
+          let get_account_manager = get_all_admin[0].id;
+          await Services.activityHistoryServices.create_activity_history(
+            req.identity.id,
+            "banner",
+            "updated",
+            update_detail,
+            get_banner,
+            get_account_manager ? get_account_manager.id : null
+          );
+        }
+
+        for (let affiliate of listOfAcceptedInvites) {
+          let findUser = await Users.findOne({
+            id: affiliate.affiliate_id,
+            isDeleted: false,
+          });
+          let emailPayload = {
+            brandFullName: req.identity.fullName,
+            affiliateFullName: findUser.fullName,
+            affiliateEmail: findUser.email,
+          };
+
+          let emailSentCheck = await EmailSentSetting.findOne({
+            name: "banner",
+            isDeleted: false,
+          });
+
+          if (emailSentCheck.emailSent == true) {
+            await Emails.AffiliateBanner.sendEmailAffiliateBanner(emailPayload);
+          } else {
+            console.log("emailSent setting is false in edit banner");
+          }
+
+          await AffiliateBanners.create({
+            affiliate_id: affiliate.affiliate_id,
+            banner_id: update_detail.id,
+            addedBy: req.identity.id,
+            updatedBy: req.identity.id,
+          });
+        }
+
+        return response.success(
+          update_detail,
+          constants.BANNER.UPDATED,
+          req,
+          res
+        );
+      }
+      throw constants.BANNER.INVALID_ID;
+    } else if (req.body.addType == "link") {
+      let idCheck = await Banner.findOne({
+        id: req.body.id,
         isDeleted: false,
       });
 
-      if (emailSentCheck.emailSent == true) {
-        await Emails.AffiliateBanner.sendEmailAffiliateBanner(emailPayload);
-      }else{
-        console.log("emailSent setting is false in edit banner")
+      if (!idCheck) {
+        throw constants.LINKGENERATE.NOT;
       }
 
-
-        await AffiliateBanners.create({
-          affiliate_id: affiliate.affiliate_id,
-          banner_id: update_detail.id,
-          addedBy: req.identity.id,
-          updatedBy: req.identity.id,
+      if (req.body.linkName) {
+        req.body.linkName = req.body.linkName.toLowerCase();
+        let get_link = await Banner.findOne({
+          linkName: req.body.linkName,
+          isDeleted: false,
+          id: { "!=": req.body.id },
         });
+        if (get_link) {
+          throw constants.LINKGENERATE.ALREADY_EXIST;
+        }
       }
+      if (req.body.linkStartDate) {
+        req.body.linkStartDate = new Date(req.body.linkStartDate);
+      }
+      if (req.body.linkEndDate) {
+        req.body.linkEndDate = new Date(req.body.linkEndDate);
+      }
+
+      req.body.updatedBy = req.identity.id;
+
+      delete req.body.id;
+
+      let linkUpdate = await Banner.updateOne({ id: idCheck.id }).set(req.body);
 
       return response.success(
-        update_detail,
-        constants.BANNER.UPDATED,
+        linkUpdate,
+        constants.LINKGENERATE.UPDATED,
         req,
         res
       );
     }
-    throw constants.BANNER.INVALID_ID;
   } catch (err) {
-    console.log("err",err)
+    console.log("err", err);
     return response.failed(null, `${err}`, req, res);
   }
 };
 
 exports.getAllBanner = async (req, res) => {
   try {
-    let query = {};
-    let count = req.param("count") || 10;
-    let page = req.param("page") || 1;
-    let skipNo = (Number(page) - 1) * Number(count);
+    if (req.query.addType == "banner") {
+      let query = {};
+      let count = req.param("count") || 10;
+      let page = req.param("page") || 1;
+      let skipNo = (Number(page) - 1) * Number(count);
 
-    let {
-      search,
-      isDeleted,
-      status,
-      sortBimation,
-      is_deep_linking,
-      mobile_creative,
-      addedBy,
-      category_id,
-      subChildCategory,
-      subCategory,
-      affiliate_id,
-      is_animation,
-      sortBy,
-      affiliate_banner_id
-    } = req.query;
+      let {
+        search,
+        isDeleted,
+        status,
+        sortBimation,
+        is_deep_linking,
+        mobile_creative,
+        addedBy,
+        category_id,
+        subChildCategory,
+        subCategory,
+        affiliate_id,
+        is_animation,
+        sortBy,
+        affiliate_banner_id,
+      } = req.query;
 
-    if (search) {
-      search = Services.Utils.remove_special_char_exept_underscores(search);
-      query.$or = [
-        { title: { $regex: search, $options: "i" } },
-        { destination_url: { $regex: search, $options: "i" } },
-      ];
-    }
+      if (search) {
+        search = Services.Utils.remove_special_char_exept_underscores(search);
+        query.$or = [
+          { title: { $regex: search, $options: "i" } },
+          { destination_url: { $regex: search, $options: "i" } },
+        ];
+      }
 
-    query.isDeleted = isDeleted === "true";
-    if (is_animation !== undefined) query.is_animation = is_animation === "true";
-    if (is_deep_linking !== undefined) query.is_deep_linking = is_deep_linking === "true";
-    if (mobile_creative !== undefined) query.mobile_creative = mobile_creative === "true";
-    if (addedBy) query.addedBy = new ObjectId(addedBy);
+      query.isDeleted = isDeleted === "true";
+      query.addType = "banner";
 
-   if (affiliate_banner_id) {
-     if (typeof affiliate_banner_id === "string") {
-     }
-     affiliate_banner_id = await Services.Utils.string_ids_toObjectIds_array(
-       affiliate_banner_id
-     );
-     query.affiliate_banner_id = { $in: affiliate_banner_id };
-   }
+      if (is_animation !== undefined)
+        query.is_animation = is_animation === "true";
+      if (is_deep_linking !== undefined)
+        query.is_deep_linking = is_deep_linking === "true";
+      if (mobile_creative !== undefined)
+        query.mobile_creative = mobile_creative === "true";
+      if (addedBy) query.addedBy = new ObjectId(addedBy);
 
-
-    if (affiliate_id) query.affiliate_id = affiliate_id;
-
-    let sortquery = {};
-        if (sortBy && typeof sortBy === 'string') {
-            const [rawField, rawOrder] = sortBy.trim().split(/\s+/);
-            const field = rawField || 'createdAt';
-            const sortType = rawOrder?.toLowerCase() === 'asc' ? 1 : -1;
-            sortquery[field] = sortType;
-        } else {
-            sortquery = { updatedAt: -1 };
+      if (affiliate_banner_id) {
+        if (typeof affiliate_banner_id === "string") {
         }
+        affiliate_banner_id = await Services.Utils.string_ids_toObjectIds_array(
+          affiliate_banner_id
+        );
+        query.affiliate_banner_id = { $in: affiliate_banner_id };
+      }
 
-    if (category_id) {
-      category_id = await Services.Utils.string_ids_toObjectIds_array(category_id);
-      query.category_id = { $in: category_id };
-    }
-    if (subChildCategory) {
-      subChildCategory = await Services.Utils.string_ids_toObjectIds_array(subChildCategory);
-      query.subChildCategory = { $in: subChildCategory };
-    }
-    if (subCategory) {
-      subCategory = await Services.Utils.string_ids_toObjectIds_array(subCategory);
-      query.subCategory = { $in: subCategory };
-    }
+      if (affiliate_id) query.affiliate_id = affiliate_id;
 
-    let pipeline = [
-      {
-        $lookup: {
-          from: "users",
-          localField: "addedBy",
-          foreignField: "_id",
-          as: "addedBy_details",
+      let sortquery = {};
+      if (sortBy && typeof sortBy === "string") {
+        const [rawField, rawOrder] = sortBy.trim().split(/\s+/);
+        const field = rawField || "createdAt";
+        const sortType = rawOrder?.toLowerCase() === "asc" ? 1 : -1;
+        sortquery[field] = sortType;
+      } else {
+        sortquery = { updatedAt: -1 };
+      }
+
+      if (category_id) {
+        category_id = await Services.Utils.string_ids_toObjectIds_array(
+          category_id
+        );
+        query.category_id = { $in: category_id };
+      }
+      if (subChildCategory) {
+        subChildCategory = await Services.Utils.string_ids_toObjectIds_array(
+          subChildCategory
+        );
+        query.subChildCategory = { $in: subChildCategory };
+      }
+      if (subCategory) {
+        subCategory = await Services.Utils.string_ids_toObjectIds_array(
+          subCategory
+        );
+        query.subCategory = { $in: subCategory };
+      }
+
+      let pipeline = [
+        {
+          $lookup: {
+            from: "users",
+            localField: "addedBy",
+            foreignField: "_id",
+            as: "addedBy_details",
+          },
         },
-      },
-      {
-        $unwind: {
-          path: "$addedBy_details",
-          preserveNullAndEmptyArrays: true,
+        {
+          $unwind: {
+            path: "$addedBy_details",
+            preserveNullAndEmptyArrays: true,
+          },
         },
-      },
-      {
-        $lookup: {
-          from: "commoncategories",
-          localField: "category_id",
-          foreignField: "_id",
-          as: "categories_details",
+        {
+          $lookup: {
+            from: "commoncategories",
+            localField: "category_id",
+            foreignField: "_id",
+            as: "categories_details",
+          },
         },
-      },
-      {
-        $unwind: {
-          path: "$categories_details",
-          preserveNullAndEmptyArrays: true,
+        {
+          $unwind: {
+            path: "$categories_details",
+            preserveNullAndEmptyArrays: true,
+          },
         },
-      },
-      {
-        $addFields: {
-          affiliateObjectId: {
-            $cond: [
-              {
-                $and: [
-                  { $ne: ["$affiliate_id", null] },
-                  { $ne: ["$affiliate_id", ""] },
-                ],
+        {
+          $addFields: {
+            affiliateObjectId: {
+              $cond: [
+                {
+                  $and: [
+                    { $ne: ["$affiliate_id", null] },
+                    { $ne: ["$affiliate_id", ""] },
+                  ],
+                },
+                { $toObjectId: "$affiliate_id" },
+                null,
+              ],
+            },
+          },
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "affiliateObjectId",
+            foreignField: "_id",
+            as: "affiliate_details",
+          },
+        },
+        {
+          $unwind: {
+            path: "$affiliate_details",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $addFields: {
+            isExpired: {
+              $cond: [
+                {
+                  $and: [
+                    { $ne: ["$expiration_date", null] },
+                    { $lt: ["$expiration_date", new Date()] },
+                  ],
+                },
+                true,
+                false,
+              ],
+            },
+            status: {
+              $cond: [
+                {
+                  $and: [
+                    { $ne: ["$expiration_date", null] },
+                    { $lt: ["$expiration_date", new Date()] },
+                  ],
+                },
+                "deactive",
+                "$status",
+              ],
+            },
+          },
+        },
+        {
+          $lookup: {
+            from: "affiliatebanners",
+            localField: "_id",
+            foreignField: "banner_id",
+            as: "AffiliateBanners_details",
+          },
+        },
+        // {
+        //   $unwind: {
+        //     path: "$AffiliateBanners_details",
+        //     preserveNullAndEmptyArrays: true,
+        //   },
+        // },
+        {
+          $project: {
+            id: "$_id",
+            title: "$title",
+            destination_url: "$destination_url",
+            description: "$description",
+            activation_date: "$activation_date",
+            availability_date: "$availability_date",
+            expiration_date: "$expiration_date",
+            image: "$image",
+            is_animation: "$is_animation",
+            is_deep_linking: "$is_deep_linking",
+            mobile_creative: "$mobile_creative",
+            seo_attributes: "$seo_attributes",
+            category_id: "$category_id",
+            subChildCategory: "$subChildCategory",
+            subCategory: "$subCategory",
+            categories_details: "$categories_details",
+            status: "$status",
+            isExpired: "$isExpired",
+            addedBy: "$addedBy",
+            addedBy_name: "$addedBy_details.fullName",
+            addedBy_details: "$addedBy_details",
+            updatedBy: "$updatedBy",
+            updatedAt: "$updatedAt",
+            isDeleted: "$isDeleted",
+            createdAt: "$createdAt",
+            affiliate_id: "$affiliate_id",
+            affiliate_details: {
+              id: "$affiliate_details._id",
+              name: "$affiliate_details.fullName",
+              email: "$affiliate_details.email",
+              isDeleted: "$affiliate_details.isDeleted",
+            },
+            expiration_date: "$expiration_date",
+            expireCheck: "$expireCheck",
+            affiliate_banner_details: "$AffiliateBanners_details",
+            affiliate_banner_id: "$AffiliateBanners_details.affiliate_id",
+            addType: "$addType",
+          },
+        },
+        {
+          $match: query,
+        },
+      ];
+
+      if (status) {
+        pipeline.push({
+          $match: { status: status },
+        });
+      }
+
+      pipeline.push({ $sort: sortquery });
+
+      let totalresult = await db
+        .collection("banner")
+        .aggregate([...pipeline])
+        .toArray();
+
+      pipeline.push({ $skip: Number(skipNo) });
+      pipeline.push({ $limit: Number(count) });
+
+      let result = await db.collection("banner").aggregate(pipeline).toArray();
+
+      let resData = {
+        total_count: totalresult.length,
+        data: result,
+      };
+
+      if (!req.param("page") && !req.param("count")) {
+        resData.data = totalresult;
+      }
+
+      return response.success(resData, constants.BANNER.FETCHED_ALL, req, res);
+    } else if (req.query.addType == "link") {
+      let query = {};
+      let count = req.param("count") || 10;
+      let page = req.param("page") || 1;
+
+      let {
+        search,
+        sortBy,
+        isDeleted,
+        addedBy,
+        linkStartDate,
+        linkEndDate,
+        linkSeo,
+        linkDeepLink,
+        linkCategory,
+        status,
+      } = req.query;
+
+      let skipNo = Number(page - 1) * Number(count);
+
+      if (search) {
+        query.$or = [
+          { linkName: { $regex: search, $options: "i" } },
+          { destinationUrl: { $regex: search, $options: "i" } },
+        ];
+      }
+
+      if (isDeleted) {
+        query.isDeleted = isDeleted === "true";
+      } else {
+        query.isDeleted = false;
+      }
+      query.addType = "link";
+      let sortquery = {};
+      if (sortBy && typeof sortBy === "string") {
+        const [rawField, rawOrder] = sortBy.trim().split(/\s+/);
+        const field = rawField || "createdAt";
+        const sortType = rawOrder?.toLowerCase() === "asc" ? 1 : -1;
+        sortquery[field] = sortType;
+      } else {
+        sortquery = { updatedAt: -1 };
+      }
+
+      if (addedBy) query.addedBy = new ObjectId(addedBy);
+      if (linkSeo) query.linkSeo = linkSeo === "true";
+      if (linkDeepLink) query.linkDeepLink = linkDeepLink === "true";
+      if (linkCategory) query.linkCategory = { $in: [linkCategory] };
+
+      let statusFilter = null;
+      if (status) {
+        statusFilter = status;
+      }
+
+      if (linkStartDate && linkEndDate) {
+        const start = new Date(linkStartDate);
+        const endD = new Date(linkEndDate);
+        start.setUTCHours(0, 0, 0, 0);
+        endD.setUTCHours(23, 59, 59, 999);
+        query.linkStartDate = { $gte: start };
+        query.linkEndDate = { $lte: endD };
+      }
+
+      let pipeline = [
+        {
+          $lookup: {
+            from: "commoncategories",
+            let: {
+              category_ids: {
+                $cond: {
+                  if: { $isArray: "$linkCategory" },
+                  then: {
+                    $map: {
+                      input: "$linkCategory",
+                      as: "id",
+                      in: { $toObjectId: "$$id" },
+                    },
+                  },
+                  else: [],
+                },
               },
-              { $toObjectId: "$affiliate_id" },
-              null,
-            ],
-          },
-        },
-      },
-      {
-        $lookup: {
-          from: "users",
-          localField: "affiliateObjectId",
-          foreignField: "_id",
-          as: "affiliate_details",
-        },
-      },
-      {
-        $unwind: {
-          path: "$affiliate_details",
-          preserveNullAndEmptyArrays: true,
-        },
-      },
-      {
-        $addFields: {
-          isExpired: {
-            $cond: [
+            },
+            pipeline: [
               {
-                $and: [
-                  { $ne: ["$expiration_date", null] },
-                  { $lt: ["$expiration_date", new Date()] },
-                ],
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $in: ["$_id", "$$category_ids"] },
+                      { $eq: ["$isDeleted", false] },
+                    ],
+                  },
+                },
               },
-              true,
-              false,
-            ],
-          },
-          status: {
-            $cond: [
               {
-                $and: [
-                  { $ne: ["$expiration_date", null] },
-                  { $lt: ["$expiration_date", new Date()] },
-                ],
+                $project: {
+                  _id: 1,
+                  name: 1,
+                  cat_type: 1,
+                },
               },
-              "deactive",
-              "$status",
             ],
+            as: "categoryDetails",
           },
         },
-      },
-       {
-        $lookup: {
-          from: "affiliatebanners",
-          localField: "_id",
-          foreignField: "banner_id",
-          as: "AffiliateBanners_details",
-        },
-      },
-      // {
-      //   $unwind: {
-      //     path: "$AffiliateBanners_details",
-      //     preserveNullAndEmptyArrays: true,
-      //   },
-      // },
-      {
-        $project: {
-          id: "$_id",
-          title: "$title",
-          destination_url: "$destination_url",
-          description: "$description",
-          activation_date: "$activation_date",
-          availability_date: "$availability_date",
-          expiration_date: "$expiration_date",
-          image: "$image",
-          is_animation: "$is_animation",
-          is_deep_linking: "$is_deep_linking",
-          mobile_creative: "$mobile_creative",
-          seo_attributes: "$seo_attributes",
-          category_id: "$category_id",
-          subChildCategory: "$subChildCategory",
-          subCategory: "$subCategory",
-          categories_details: "$categories_details",
-          status: "$status",
-          isExpired: "$isExpired",
-          addedBy: "$addedBy",
-          addedBy_name: "$addedBy_details.fullName",
-          addedBy_details: "$addedBy_details",
-          updatedBy: "$updatedBy",
-          updatedAt: "$updatedAt",
-          isDeleted: "$isDeleted",
-          createdAt: "$createdAt",
-          affiliate_id: "$affiliate_id",
-          affiliate_details: {
-            id: "$affiliate_details._id",
-            name: "$affiliate_details.fullName",
-            email: "$affiliate_details.email",
-            isDeleted: "$affiliate_details.isDeleted",
+        {
+          $lookup: {
+            from: "users",
+            localField: "addedBy",
+            foreignField: "_id",
+            as: "addedBy_details",
           },
-          expiration_date:"$expiration_date",
-          expireCheck:"$expireCheck",
-          affiliate_banner_details:"$AffiliateBanners_details",
-          affiliate_banner_id : "$AffiliateBanners_details.affiliate_id"
         },
-      },
-      {
-        $match: query,
-      },
-    ];
+        {
+          $unwind: {
+            path: "$addedBy_details",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $addFields: {
+            isExpired: {
+              $cond: [
+                {
+                  $and: [
+                    { $ne: ["$linkEndDate", null] },
+                    { $lt: ["$linkEndDate", new Date()] },
+                  ],
+                },
+                true,
+                false,
+              ],
+            },
+            status: {
+              $cond: [
+                {
+                  $and: [
+                    { $ne: ["$linkEndDate", null] },
+                    { $lt: ["$linkEndDate", new Date()] },
+                  ],
+                },
+                "deactive",
+                "$status",
+              ],
+            },
+          },
+        },
+        {
+          $project: {
+            id: "$_id",
+            linkName: "$linkName",
+            linkDestinationUrl: "$linkDestinationUrl",
+            linkDescription: "$linkDescription",
+            linkStartDate: "$linkStartDate",
+            linkEndDate: "$linkEndDate",
+            linkSeo: "$linkSeo",
+            linkDeepLink: "$linkDeepLink",
+            linkCategory: "$linkCategory",
+            categroyDetails: "$categoryDetails",
+            isDeleted: "$isDeleted",
+            createdAt: "$createdAt",
+            updatedAt: "$updatedAt",
+            addedBy: "$addedBy",
+            status: "$status",
+            isExpired: "$isExpired",
+            addType: "$addType",
+          },
+        },
+        {
+          $match: query,
+        },
+      ];
 
-    if (status) {
-      pipeline.push({
-        $match: { status: status },
-      });
+      if (statusFilter) {
+        pipeline.push({
+          $match: { status: statusFilter },
+        });
+      }
+
+      pipeline.push({ $sort: sortquery });
+
+      let totalresult = await db
+        .collection("banner")
+        .aggregate([...pipeline])
+        .toArray();
+
+      pipeline.push({ $skip: Number(skipNo) });
+      pipeline.push({ $limit: Number(count) });
+
+      let result = await db.collection("banner").aggregate(pipeline).toArray();
+
+      let resData = {
+        data: result || [],
+        total_count: totalresult ? totalresult.length : 0,
+      };
+
+      if (!req.param("page") && !req.param("count")) {
+        resData.data = totalresult || [];
+      }
+
+      return response.success(
+        resData,
+        constants.LINKGENERATE.FETCHED,
+        req,
+        res
+      );
     }
-
-    pipeline.push({ $sort: sortquery });
-
-    let totalresult = await db.collection("banner").aggregate([...pipeline]).toArray();
-
-    pipeline.push({ $skip: Number(skipNo) });
-    pipeline.push({ $limit: Number(count) });
-
-    let result = await db.collection("banner").aggregate(pipeline).toArray();
-
-    let resData = {
-      total_count: totalresult.length,
-      data: result,
-    };
-
-    if (!req.param("page") && !req.param("count")) {
-      resData.data = totalresult;
-    }
-
-    return response.success(resData, constants.BANNER.FETCHED_ALL, req, res);
   } catch (err) {
-    console.log("err",err)
+    console.log("err", err);
     return response.failed(null, `${err}`, req, res);
   }
 };
@@ -907,7 +1222,7 @@ exports.getAllBanner = async (req, res) => {
 //           email: "$affiliate_details.email",
 //           isDeleted: "$affiliate_details.isDeleted",
 //         },
-//        isExpired: "$isExpired",  
+//        isExpired: "$isExpired",
 //       },
 //     };
 //     pipeline.push({ $addFields: {
@@ -931,7 +1246,7 @@ exports.getAllBanner = async (req, res) => {
 //                 { $lt: ["$expiration_date", new Date()] },
 //               ],
 //             },
-//             "deactive", 
+//             "deactive",
 //             "$status",
 //           ],
 //         },
@@ -969,27 +1284,50 @@ exports.getAllBanner = async (req, res) => {
 
 exports.getById = async (req, res) => {
   try {
-    let id = req.param("id");
-    if (!id) {
-      throw constants.BANNER.ID_REQUIRED;
+    if (req.query.addType == "banner") {
+      let id = req.param("id") || req.query.id;
+      if (!id) {
+        throw constants.BANNER.ID_REQUIRED;
+      }
+      let get_detail = await Banner.findOne({ id: id });
+
+      const [categories, subCategories, childSubCategories] = await Promise.all(
+        [
+          CommonCategories.find({ id: get_detail.category_id }),
+          CommonCategories.find({ id: get_detail.subCategory }),
+          SubChildCategory.find({ id: get_detail.subChildCategory }),
+        ]
+      );
+
+      get_detail.categoryData = categories;
+      get_detail.subCategoryData = subCategories;
+      get_detail.childSubCategoryData = childSubCategories;
+
+      if (get_detail) {
+        return response.success(get_detail, constants.BANNER.FETCHED, req, res);
+      }
+      throw constants.BANNER.INVALID_ID;
+    } else if (req.query.addType == "link") {
+      let id = req.param("id") || req.query.id;
+      if (!id) {
+        throw constants.LINKGENERATE.ID_REQUIRED;
+      }
+
+      let get_link = await Banner.findOne({ id: id }).populate("addedBy");
+      if (!get_link) {
+        throw constants.LINKGENERATE.NOT;
+      }
+      let categoryDetail = await CommonCategories.find({
+        where: { id: { in: get_link.linkCategory } },
+      });
+      let uniqueValue = { ...get_link, linkCategory: categoryDetail || [] };
+      return response.success(
+        uniqueValue,
+        constants.LINKGENERATE.FETCHED,
+        req,
+        res
+      );
     }
-    let get_detail = await Banner.findOne({ id: id })
-
-    const [categories, subCategories, childSubCategories] = await Promise.all([
-      CommonCategories.find({ id: get_detail.category_id }),
-      CommonCategories.find({ id: get_detail.subCategory }),
-      SubChildCategory.find({ id: get_detail.subChildCategory }),
-    ]);
-
-    get_detail.categoryData = categories;
-    get_detail.subCategoryData = subCategories;
-    get_detail.childSubCategoryData = childSubCategories;
-
-
-    if (get_detail) {
-      return response.success(get_detail, constants.BANNER.FETCHED, req, res);
-    }
-    throw constants.BANNER.INVALID_ID;
   } catch (err) {
     return response.failed(null, `${err}`, req, res);
   }
@@ -1026,9 +1364,7 @@ exports.getAllAffiliateBanner = async (req, res) => {
     let skipNo = (Number(page) - 1) * Number(count);
 
     if (search) {
-      search = Services.Utils.remove_special_char_exept_underscores(
-        search
-      );
+      search = Services.Utils.remove_special_char_exept_underscores(search);
       query.$or = [
         { title: { $regex: search, $options: "i" } },
         { destination_url: { $regex: search, $options: "i" } },
@@ -1168,7 +1504,8 @@ exports.getAllAffiliateBanner = async (req, res) => {
       $sort: sortquery,
     });
     // Pipeline Stages
-    let totalresult = await db.collection("affiliatebanners")
+    let totalresult = await db
+      .collection("affiliatebanners")
       .aggregate(pipeline)
       .toArray();
     pipeline.push({
@@ -1177,7 +1514,8 @@ exports.getAllAffiliateBanner = async (req, res) => {
     pipeline.push({
       $limit: Number(count),
     });
-    let result = await db.collection("affiliatebanners")
+    let result = await db
+      .collection("affiliatebanners")
       .aggregate(pipeline)
       .toArray();
     let resData = {
@@ -1187,13 +1525,7 @@ exports.getAllAffiliateBanner = async (req, res) => {
     if (!req.param("page") && !req.param("count")) {
       resData.data = totalresult ? totalresult : [];
     }
-    return response.success(
-      resData,
-      constants.BANNER.FETCHED_ALL,
-      req,
-      res
-    );
-
+    return response.success(resData, constants.BANNER.FETCHED_ALL, req, res);
   } catch (err) {
     return response.failed(null, `${err}`, req, res);
   }
