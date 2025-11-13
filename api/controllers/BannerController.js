@@ -1009,8 +1009,8 @@ exports.getAllBanner = async (req, res) => {
         req,
         res
       );
-    }else{
-        let query = {};
+    } else {
+      let query = {};
       let count = req.param("count") || 10;
       let page = req.param("page") || 1;
       let skipNo = (Number(page) - 1) * Number(count);
@@ -1019,7 +1019,6 @@ exports.getAllBanner = async (req, res) => {
         search,
         isDeleted,
         status,
-        sortBimation,
         is_deep_linking,
         mobile_creative,
         addedBy,
@@ -1030,6 +1029,7 @@ exports.getAllBanner = async (req, res) => {
         is_animation,
         sortBy,
         affiliate_banner_id,
+        addType
       } = req.query;
 
       if (search) {
@@ -1041,9 +1041,10 @@ exports.getAllBanner = async (req, res) => {
       }
 
       query.isDeleted = isDeleted === "true";
-      // query.addType = "banner";
-      
 
+      if(addType){
+        query.addType = addType
+      }
       if (is_animation !== undefined)
         query.is_animation = is_animation === "true";
       if (is_deep_linking !== undefined)
@@ -1232,14 +1233,14 @@ exports.getAllBanner = async (req, res) => {
             affiliate_banner_details: "$AffiliateBanners_details",
             affiliate_banner_id: "$AffiliateBanners_details.affiliate_id",
             addType: "$addType",
-            linkName:"$linkName",
-            linkDestinationUrl:"$linkDestinationUrl",
-            linkDescription:"$linkDescription",
-            linkStartDate:"$linkStartDate",
-            linkEndDate:"$linkEndDate",
-            linkSeo:"$linkSeo",
-            linkDeepLink:"$linkDeepLink",
-            linkCategory:"$linkCategory",
+            linkName: "$linkName",
+            linkDestinationUrl: "$linkDestinationUrl",
+            linkDescription: "$linkDescription",
+            linkStartDate: "$linkStartDate",
+            linkEndDate: "$linkEndDate",
+            linkSeo: "$linkSeo",
+            linkDeepLink: "$linkDeepLink",
+            linkCategory: "$linkCategory",
 
           },
         },
@@ -1551,13 +1552,13 @@ exports.getAllBanner = async (req, res) => {
 
 exports.getById = async (req, res) => {
   try {
-    if (req.query.addType == "banner") {
-      let id = req.param("id") || req.query.id;
-      if (!id) {
-        throw constants.BANNER.ID_REQUIRED;
-      }
-      let get_detail = await Banner.findOne({ id: id });
-
+    // if (req.query.addType == "banner") {
+    let id = req.param("id") || req.query.id;
+    if (!id) {
+      throw constants.BANNER.ID_REQUIRED;
+    }
+    let get_detail = await Banner.findOne({ id: id });
+    if (get_detail.addType == "banner") {
       const [categories, subCategories, childSubCategories] = await Promise.all(
         [
           CommonCategories.find({ id: get_detail.category_id }),
@@ -1573,17 +1574,7 @@ exports.getById = async (req, res) => {
       if (get_detail) {
         return response.success(get_detail, constants.BANNER.FETCHED, req, res);
       }
-      throw constants.BANNER.INVALID_ID;
-    } else if (req.query.addType == "link") {
-      let id = req.param("id") || req.query.id;
-      if (!id) {
-        throw constants.LINKGENERATE.ID_REQUIRED;
-      }
-
-      let get_link = await Banner.findOne({ id: id }).populate("addedBy");
-      if (!get_link) {
-        throw constants.LINKGENERATE.NOT;
-      }
+    } else {
       let categoryDetail = await CommonCategories.find({
         where: { id: { in: get_link.linkCategory } },
       });
@@ -1595,6 +1586,25 @@ exports.getById = async (req, res) => {
         res
       );
     }
+
+    throw constants.BANNER.INVALID_ID;
+    // }
+    // else if (req.query.addType == "link") {
+    //   let id = req.param("id") || req.query.id;
+    //   if (!id) {
+    //     throw constants.LINKGENERATE.ID_REQUIRED;
+    //   }
+
+    //   let get_link = await Banner.findOne({ id: id }).populate("addedBy");
+    //   if (!get_link) {
+    //     throw constants.LINKGENERATE.NOT;
+    //   }
+    //   let categoryDetail = await CommonCategories.find({
+    //     where: { id: { in: get_link.linkCategory } },
+    //   });
+    //   let uniqueValue = { ...get_link, linkCategory: categoryDetail || [] };
+
+    // }
   } catch (err) {
     return response.failed(null, `${err}`, req, res);
   }
