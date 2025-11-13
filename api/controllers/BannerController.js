@@ -1578,7 +1578,7 @@ exports.getById = async (req, res) => {
       let categoryDetail = await CommonCategories.find({
         where: { id: { in: get_link.linkCategory } },
       });
-      let uniqueValue = { ...get_link, linkCategory: categoryDetail || [] };
+      let uniqueValue = { ...get_detail, linkCategory: categoryDetail || [] };
       return response.success(
         uniqueValue,
         constants.LINKGENERATE.FETCHED,
