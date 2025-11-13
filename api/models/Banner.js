@@ -10,7 +10,7 @@ module.exports = {
   attributes: {
     title: { type: "string" },
     destination_url: { type: "string" },
-    affiliate_id:{type:"string"},
+    affiliate_id: { type: "string" },
     description: { type: "string" },
     seo_attributes: { type: "string" },
     access_type: { type: "string" },
@@ -26,7 +26,6 @@ module.exports = {
     subCategory: { type: "json", defaultsTo: [] },
     subChildCategory: { type: "json", defaultsTo: [] },
 
-
     //Common keys
     isDeleted: { type: "Boolean", defaultsTo: false },
     status: {
@@ -39,95 +38,17 @@ module.exports = {
     createdAt: { type: "ref", autoCreatedAt: true },
     updatedAt: { type: "ref", autoUpdatedAt: true },
     expireCheck: { type: "Boolean", defaultsTo: true },
+    //link generate key merge
+
+    linkName: { type: "string" },
+    linkDestinationUrl: { type: "string" },
+    linkDescription: { type: "string" },
+    linkStartDate: { type: "ref", columnType: "datetime" },
+    linkEndDate: { type: "ref", columnType: "datetime" },
+    linkSeo: { type: "boolean", defaultsTo: false },
+    linkDeepLink: { type: "boolean", defaultsTo: false },
+    linkCategory: { type: "json" },
+    addType: { type: "string" },
 
   },
-
-  // afterCreate: async function (newlyInsertedRecord, proceed) {
-  //   await AuditService.log(
-  //     'create',
-  //     'Banners',
-  //     null,
-  //     newlyInsertedRecord,
-  //     newlyInsertedRecord.addedBy// or fetch from the session if available
-  //   );
-  //   return proceed();
-  // },
-  // beforeUpdate: async function (newlyInsertedRecord, proceed) {
-  //   let isExists = await Banners.findOne({id:newlyInsertedRecord.id,isDeleted:false})
-  //   if(isExists){
-  //     await AuditService.log(
-  //       'update',
-  //       'Banners',
-  //       isExists,
-  //       newlyInsertedRecord,
-  //       newlyInsertedRecord.addedBy// or fetch from the session if available
-  //     );
-  //   }
-  //   return proceed();
-  // },
-
-  // afterDestroy: async function (destroyedRecords, proceed) {
-  //   for (let record of destroyedRecords) {
-  //     await AuditService.log(
-  //       'delete',
-  //       'Banners',
-  //       record.previousState,
-  //       null,
-  //       'system' // or fetch from the session if available
-  //     );
-  //   }
-  //   return proceed();
-  // },
-/**
- * 
- * beforeUpdate: async function (valuesToUpdate, proceed) {
-    const previousState = await User.findOne(valuesToUpdate.id);
-    valuesToUpdate.previousState = previousState;
-    return proceed();
-  },
-
-  afterUpdate: async function (updatedRecord, proceed) {
-    await AuditService.log(
-      'update',
-      'User',
-      updatedRecord.previousState,
-      updatedRecord,
-      'system' // or fetch from the session if available
-    );
-    return proceed();
-  },
-
-  beforeDestroy: async function (criteria, proceed) {
-    const previousState = await User.findOne(criteria.where.id);
-    criteria.previousState = previousState;
-    return proceed();
-  },
-
-  afterDestroy: async function (destroyedRecords, proceed) {
-    for (let record of destroyedRecords) {
-      await AuditService.log(
-        'delete',
-        'User',
-        record.previousState,
-        null,
-        'system' // or fetch from the session if available
-      );
-    }
-    return proceed();
-  },
-
-  afterCreate: async function (newlyInsertedRecord, proceed) {
-    await AuditService.log(
-      'create',
-      'User',
-      null,
-      newlyInsertedRecord,
-      'system' // or fetch from the session if available
-    );
-    return proceed();
-  },
- * 
- * 
- */
-
 };
