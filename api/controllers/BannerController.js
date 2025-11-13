@@ -1009,6 +1009,273 @@ exports.getAllBanner = async (req, res) => {
         req,
         res
       );
+    }else{
+        let query = {};
+      let count = req.param("count") || 10;
+      let page = req.param("page") || 1;
+      let skipNo = (Number(page) - 1) * Number(count);
+
+      let {
+        search,
+        isDeleted,
+        status,
+        sortBimation,
+        is_deep_linking,
+        mobile_creative,
+        addedBy,
+        category_id,
+        subChildCategory,
+        subCategory,
+        affiliate_id,
+        is_animation,
+        sortBy,
+        affiliate_banner_id,
+      } = req.query;
+
+      if (search) {
+        search = Services.Utils.remove_special_char_exept_underscores(search);
+        query.$or = [
+          { title: { $regex: search, $options: "i" } },
+          { destination_url: { $regex: search, $options: "i" } },
+        ];
+      }
+
+      query.isDeleted = isDeleted === "true";
+      // query.addType = "banner";
+      
+
+      if (is_animation !== undefined)
+        query.is_animation = is_animation === "true";
+      if (is_deep_linking !== undefined)
+        query.is_deep_linking = is_deep_linking === "true";
+      if (mobile_creative !== undefined)
+        query.mobile_creative = mobile_creative === "true";
+      if (addedBy) query.addedBy = new ObjectId(addedBy);
+
+      if (affiliate_banner_id) {
+        if (typeof affiliate_banner_id === "string") {
+        }
+        affiliate_banner_id = await Services.Utils.string_ids_toObjectIds_array(
+          affiliate_banner_id
+        );
+        query.affiliate_banner_id = { $in: affiliate_banner_id };
+      }
+
+      if (affiliate_id) query.affiliate_id = affiliate_id;
+
+      let sortquery = {};
+      if (sortBy && typeof sortBy === "string") {
+        const [rawField, rawOrder] = sortBy.trim().split(/\s+/);
+        const field = rawField || "createdAt";
+        const sortType = rawOrder?.toLowerCase() === "asc" ? 1 : -1;
+        sortquery[field] = sortType;
+      } else {
+        sortquery = { updatedAt: -1 };
+      }
+
+      if (category_id) {
+        category_id = await Services.Utils.string_ids_toObjectIds_array(
+          category_id
+        );
+        query.category_id = { $in: category_id };
+      }
+      if (subChildCategory) {
+        subChildCategory = await Services.Utils.string_ids_toObjectIds_array(
+          subChildCategory
+        );
+        query.subChildCategory = { $in: subChildCategory };
+      }
+      if (subCategory) {
+        subCategory = await Services.Utils.string_ids_toObjectIds_array(
+          subCategory
+        );
+        query.subCategory = { $in: subCategory };
+      }
+
+      let pipeline = [
+        {
+          $lookup: {
+            from: "users",
+            localField: "addedBy",
+            foreignField: "_id",
+            as: "addedBy_details",
+          },
+        },
+        {
+          $unwind: {
+            path: "$addedBy_details",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $lookup: {
+            from: "commoncategories",
+            localField: "category_id",
+            foreignField: "_id",
+            as: "categories_details",
+          },
+        },
+        {
+          $unwind: {
+            path: "$categories_details",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $addFields: {
+            affiliateObjectId: {
+              $cond: [
+                {
+                  $and: [
+                    { $ne: ["$affiliate_id", null] },
+                    { $ne: ["$affiliate_id", ""] },
+                  ],
+                },
+                { $toObjectId: "$affiliate_id" },
+                null,
+              ],
+            },
+          },
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "affiliateObjectId",
+            foreignField: "_id",
+            as: "affiliate_details",
+          },
+        },
+        {
+          $unwind: {
+            path: "$affiliate_details",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $addFields: {
+            isExpired: {
+              $cond: [
+                {
+                  $and: [
+                    { $ne: ["$expiration_date", null] },
+                    { $lt: ["$expiration_date", new Date()] },
+                  ],
+                },
+                true,
+                false,
+              ],
+            },
+            status: {
+              $cond: [
+                {
+                  $and: [
+                    { $ne: ["$expiration_date", null] },
+                    { $lt: ["$expiration_date", new Date()] },
+                  ],
+                },
+                "deactive",
+                "$status",
+              ],
+            },
+          },
+        },
+        {
+          $lookup: {
+            from: "affiliatebanners",
+            localField: "_id",
+            foreignField: "banner_id",
+            as: "AffiliateBanners_details",
+          },
+        },
+        // {
+        //   $unwind: {
+        //     path: "$AffiliateBanners_details",
+        //     preserveNullAndEmptyArrays: true,
+        //   },
+        // },
+        {
+          $project: {
+            id: "$_id",
+            title: "$title",
+            destination_url: "$destination_url",
+            description: "$description",
+            activation_date: "$activation_date",
+            availability_date: "$availability_date",
+            expiration_date: "$expiration_date",
+            image: "$image",
+            is_animation: "$is_animation",
+            is_deep_linking: "$is_deep_linking",
+            mobile_creative: "$mobile_creative",
+            seo_attributes: "$seo_attributes",
+            category_id: "$category_id",
+            subChildCategory: "$subChildCategory",
+            subCategory: "$subCategory",
+            categories_details: "$categories_details",
+            status: "$status",
+            isExpired: "$isExpired",
+            addedBy: "$addedBy",
+            addedBy_name: "$addedBy_details.fullName",
+            addedBy_details: "$addedBy_details",
+            updatedBy: "$updatedBy",
+            updatedAt: "$updatedAt",
+            isDeleted: "$isDeleted",
+            createdAt: "$createdAt",
+            affiliate_id: "$affiliate_id",
+            affiliate_details: {
+              id: "$affiliate_details._id",
+              name: "$affiliate_details.fullName",
+              email: "$affiliate_details.email",
+              isDeleted: "$affiliate_details.isDeleted",
+            },
+            expiration_date: "$expiration_date",
+            expireCheck: "$expireCheck",
+            affiliate_banner_details: "$AffiliateBanners_details",
+            affiliate_banner_id: "$AffiliateBanners_details.affiliate_id",
+            addType: "$addType",
+            linkName:"$linkName",
+            linkDestinationUrl:"$linkDestinationUrl",
+            linkDescription:"$linkDescription",
+            linkStartDate:"$linkStartDate",
+            linkEndDate:"$linkEndDate",
+            linkSeo:"$linkSeo",
+            linkDeepLink:"$linkDeepLink",
+            linkCategory:"$linkCategory",
+
+          },
+        },
+        {
+          $match: query,
+        },
+      ];
+
+      if (status) {
+        pipeline.push({
+          $match: { status: status },
+        });
+      }
+
+      pipeline.push({ $sort: sortquery });
+
+      let totalresult = await db
+        .collection("banner")
+        .aggregate([...pipeline])
+        .toArray();
+
+      pipeline.push({ $skip: Number(skipNo) });
+      pipeline.push({ $limit: Number(count) });
+
+      let result = await db.collection("banner").aggregate(pipeline).toArray();
+
+      let resData = {
+        total_count: totalresult.length,
+        data: result,
+      };
+
+      if (!req.param("page") && !req.param("count")) {
+        resData.data = totalresult;
+      }
+
+      return response.success(resData, constants.BANNER.FETCHED_ALL, req, res);
     }
   } catch (err) {
     console.log("err", err);
