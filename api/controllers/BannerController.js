@@ -569,6 +569,8 @@ exports.getAllBanner = async (req, res) => {
         is_animation,
         sortBy,
         affiliate_banner_id,
+        startDate,
+        endDate,
       } = req.query;
 
       if (search) {
@@ -628,6 +630,16 @@ exports.getAllBanner = async (req, res) => {
           subCategory
         );
         query.subCategory = { $in: subCategory };
+      }
+
+      if (startDate && endDate) {
+        const start = new Date(startDate);
+        start.setHours(0, 0, 0, 0); // start of day
+
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999); // end of day
+
+        query.createdAt = { $gte: start, $lte: end };
       }
 
       let pipeline = [
@@ -815,8 +827,8 @@ exports.getAllBanner = async (req, res) => {
         sortBy,
         isDeleted,
         addedBy,
-        linkStartDate,
-        linkEndDate,
+        startDate,
+        endDate,
         linkSeo,
         linkDeepLink,
         linkCategory,
@@ -858,14 +870,26 @@ exports.getAllBanner = async (req, res) => {
         statusFilter = status;
       }
 
-      if (linkStartDate && linkEndDate) {
-        const start = new Date(linkStartDate);
-        const endD = new Date(linkEndDate);
-        start.setUTCHours(0, 0, 0, 0);
-        endD.setUTCHours(23, 59, 59, 999);
-        query.linkStartDate = { $gte: start };
-        query.linkEndDate = { $lte: endD };
+      // if (startDate && endDate) {
+      //   const start = new Date(startDate);
+      //   const endD = new Date(endDate);
+      //   start.setUTCHours(0, 0, 0, 0);
+      //   endD.setUTCHours(23, 59, 59, 999);
+      //   query.linkStartDate = { $gte: start };
+      //   query.linkEndDate = { $lte: endD };
+      // }
+
+      if (startDate && endDate) {
+        const start = new Date(startDate);
+        start.setHours(0, 0, 0, 0); 
+
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999); 
+
+        query.createdAt = { $gte: start, $lte: end };
       }
+
+      console.log("query", query);
 
       let pipeline = [
         {
@@ -1029,7 +1053,9 @@ exports.getAllBanner = async (req, res) => {
         is_animation,
         sortBy,
         affiliate_banner_id,
-        addType
+        addType,
+        startDate,
+        endDate,
       } = req.query;
 
       if (search) {
@@ -1042,8 +1068,8 @@ exports.getAllBanner = async (req, res) => {
 
       query.isDeleted = isDeleted === "true";
 
-      if(addType){
-        query.addType = addType
+      if (addType) {
+        query.addType = addType;
       }
       if (is_animation !== undefined)
         query.is_animation = is_animation === "true";
@@ -1091,6 +1117,16 @@ exports.getAllBanner = async (req, res) => {
           subCategory
         );
         query.subCategory = { $in: subCategory };
+      }
+
+      if (startDate && endDate) {
+        const start = new Date(startDate);
+        start.setHours(0, 0, 0, 0);
+
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+
+        query.createdAt = { $gte: start, $lte: end };
       }
 
       let pipeline = [
@@ -1241,7 +1277,6 @@ exports.getAllBanner = async (req, res) => {
             linkSeo: "$linkSeo",
             linkDeepLink: "$linkDeepLink",
             linkCategory: "$linkCategory",
-
           },
         },
         {
@@ -1606,7 +1641,7 @@ exports.getById = async (req, res) => {
 
     // }
   } catch (err) {
-    console.log(err)
+    console.log(err);
     return response.failed(null, `${err}`, req, res);
   }
 };
