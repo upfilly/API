@@ -73,6 +73,8 @@ module.exports.routes = {
   "get/affiliate/detail": "UsersController.affiliateDetail",
   "get /userName/list": "UsersController.getAllUserName",
   "post /userName/check": "UsersController.userNameCheck",
+  "post /userRegisterByBrandId": "UsersController.registerWithBrandId",
+
 
   /**
    * @CommonAPIs

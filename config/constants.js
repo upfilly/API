@@ -61,7 +61,9 @@ module.exports.constants = {
     INVITED_USER_DETAILS: "Invited user details fetched",
     CURRENCY_EXIST: "Can't delete currency",
     FETCH : "Data fetch successfully",
-    USERNAMENOTEXIST : "Successfully."
+    USERNAMENOTEXIST : "Successfully.",
+    BRAND_ID_NOTEXIST: "This brand id not exist.",
+
   },
   COMMON: {
     COUNTRY_CODE_REQUIRED: "Country  code is required",
