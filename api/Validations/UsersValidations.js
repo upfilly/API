@@ -36,6 +36,9 @@ exports.register = async (req, res, next) => {
         propertyType: Joi.array().optional().allow(null),
         defaultCurrency : Joi.string().optional().allow(""),
         userName: Joi.string().optional(),
+        request_status : Joi.string().optional().valid('accepted','pending').allow("",null),
+        brand_id : Joi.string().optional().allow("",null),
+
 
     });
     return await Validate(schema, req, res);
