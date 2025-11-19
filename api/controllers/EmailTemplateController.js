@@ -976,14 +976,33 @@ exports.affiliateCount = async (req, res) => {
       const uniqueAffiliates = _.uniq(records.map((r) => r.affiliate_id));
 
       // Pending affiliates (brand needs to accept/decline)
-      const pendingRecords = await BrandAffiliateAssociation.find(
-        withDateFilter({
-          status: "pending",
-          isDeleted: false,
-          brand_id: brandId,
-        })
-      );
-      affiliates_pending_count = pendingRecords.length;
+      // const pendingRecords = await BrandAffiliateAssociation.find(
+      //   withDateFilter({
+      //     status: "pending",
+      //     isDeleted: false,
+      //     brand_id: brandId,
+      //   })
+      // );
+      
+
+      //this is old code 
+      // affiliates_pending_count = pendingRecords.length;
+      // console.log("affiliates_pending_coun",affiliates_pending_count)
+
+      //  uniqueAffiliatesPending = _.uniq(pendingRecords.map((r) => r.affiliate_id));
+      //  affiliates_pending_count = uniqueAffiliatesPending.length
+
+        const get_total_pending_campaign =  await CampaignRequestByAffiliate.find(
+      withDateFilter({
+        status:"pending",
+        isDeleted: false,
+        brand_id : brandId
+       })
+    );
+
+       affiliates_pending_count = get_total_pending_campaign.length
+
+      // console.log("affiliates_pending_coun1",affiliates_pending_count)
 
       // Find affiliates who interacted (cookies + links)
       const cookies = await Cookies.find(withDateFilter({ brand_id: brandId }));

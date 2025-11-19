@@ -110,7 +110,6 @@ exports.sendCampaignRequestToBrand = async (req, res) => {
 };
 
 exports.getAllRequestsForBrand = async (req, res) => {
-    console.log("alpha")
     try {
         let query = {};
         let count = req.param('count') || 10;
