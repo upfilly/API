@@ -1666,6 +1666,8 @@ module.exports = {
           association_status: "$association_status",
           affiliates_active_count: 1,
           campaign_id: "$campaign_details._id",
+          logo1 : "$logo1",
+          affiliateSignupText : "$affiliateSignupText"
         },
       };
       pipeline.push(projection);
@@ -2058,6 +2060,8 @@ module.exports = {
           sub_category_id: "$sub_category_id",
           sub_child_category_id: "$sub_child_category_id",
           request_status: "$request_status",
+          logo1 : "$logo1",
+          affiliateSignupText : "$affiliateSignupText",
         },
       };
       pipeline.push(projection);
@@ -2295,6 +2299,8 @@ module.exports = {
           addedBy: "$addedBy",
           location: "$location",
           userName: "$userName",
+          logo1 : "$logo1",
+          affiliateSignupText : "$affiliateSignupText",
         },
       };
       pipeline.push(projection);

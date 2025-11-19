@@ -38,8 +38,8 @@ exports.register = async (req, res, next) => {
         userName: Joi.string().optional(),
         request_status : Joi.string().optional().valid('accepted','pending').allow("",null),
         brand_id : Joi.string().optional().allow("",null),
-
-
+        logo1 : Joi.string().optional().allow("",null),
+        affiliateSignupText : Joi.string().optional().allow("",null),
     });
     return await Validate(schema, req, res);
 
@@ -87,6 +87,8 @@ exports.registerBrandWithPlan = async (req, res, next) => {
         promoId: Joi.string().optional().allow(""),
         timezone: Joi.string().optional().allow(""),
         userName: Joi.string().optional(),
+         logo1 : Joi.string().optional().allow("",null),
+        affiliateSignupText : Joi.string().optional().allow("",null),
     }).options({ allowUnknown: true });
     return await Validate(schema, req, res);
 
@@ -225,6 +227,8 @@ exports.addUser = async (req, res, next) => {
         propertyType: Joi.array().optional().allow(null),
         defaultCurrency : Joi.string().optional().allow(""),
         userName: Joi.string().optional(),
+         logo1 : Joi.string().optional().allow("",null),
+        affiliateSignupText : Joi.string().optional().allow("",null),
 
 
     });
@@ -384,6 +388,8 @@ exports.editProfile = async (req, res, next) => {
         propertyType: Joi.array().optional().allow(null),
         defaultCurrency : Joi.string().optional().allow(""),
         userName: Joi.string().optional(),
+         logo1 : Joi.string().optional().allow("",null),
+        affiliateSignupText : Joi.string().optional().allow("",null),
 
     });
     return await Validate(schema, req, res);
@@ -514,7 +520,7 @@ exports.updateBasicDetails = async (req, res, next) => {
         dialCode: Joi.string().optional().allow(""),
         mobileNo: Joi.string().optional().allow("").min(5).max(12),
         image: Joi.string().optional().allow(""),
-        logo: Joi.string().optional().allow(""),
+        logo1: Joi.string().optional().allow(""),
         banner_image: Joi.string().optional().allow(""),
     });
     return await Validate(schema, req, res);

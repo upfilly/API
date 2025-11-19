@@ -197,7 +197,11 @@ module.exports = {
     currencies : {type:"json",defaultsTo:[]},
     defaultCurrency : {type:"string",defaultsTo:""},
     propertyType : {type:"json",defaultsTo:[]},
-    userName : {type : "string"}
+    userName : {type : "string"},
+    //new keys 
+    logo1: { type: 'string' },
+    affiliateSignupText: { type: 'string' },
+
     
 
   },

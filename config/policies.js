@@ -34,6 +34,7 @@ module.exports.policies = {
     'userDetails': true,
     "forgotPasswordFrontend": true,
     "registerWithBrandId" : true,
+    "userDetail" : true,
     userAutoLogin: true,
     getUserByEmail: true,
     userSocialLogin: true,
