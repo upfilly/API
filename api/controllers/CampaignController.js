@@ -1166,7 +1166,8 @@ exports.getAllCampaignsForAffiliate = async (req, res) => {
       })
       let data = validUsers
        
-        res.status(200).json({ message: constants.CAMPAIGN.AFFILIATE_FETCH_IN_CAMPAIGN, data });
+        return response.success(data,constants.CAMPAIGN.AFFILIATE_FETCH_IN_CAMPAIGN, req, res);
+
     }
 
     } catch (err) {
