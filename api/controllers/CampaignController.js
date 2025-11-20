@@ -1122,6 +1122,7 @@ exports.getAllCampaignsForBrand = async (req, res) => {
 }
 exports.getAllCampaignsForAffiliate = async (req, res) => {
     try {
+        if(req.query.campaign){
         const { campaign } = req.query;
 
         if (!campaign || campaign.length === 0) {
@@ -1146,8 +1147,29 @@ exports.getAllCampaignsForAffiliate = async (req, res) => {
              affiliateFetch
         }
         return response.success(data, constants.CAMPAIGN.AFFILIATE_FETCH_IN_CAMPAIGN, req, res);
+    }else{
 
+        let brandId = req.identity.id;
+         const records = await BrandAffiliateAssociation.find(
+        {
+          status: "accepted",
+          isDeleted: false,
+          brand_id: brandId,
+        }
+      );
+
+       const uniqueAffiliates = _.uniq(records.map((r) => r.affiliate_id));
+
+      const validUsers = await Users.find({
+        id: uniqueAffiliates,
+        isDeleted: false,
+      })
+      let data ={
+       validUsers
+      } 
         res.status(200).json({ message: constants.CAMPAIGN.AFFILIATE_FETCH_IN_CAMPAIGN, data });
+    }
+
     } catch (err) {
         console.log("err", err)
         return response.failed(null, `${err}`, req, res);
