@@ -1164,9 +1164,8 @@ exports.getAllCampaignsForAffiliate = async (req, res) => {
         id: uniqueAffiliates,
         isDeleted: false,
       })
-      let data ={
-       validUsers
-      } 
+      let data = validUsers
+       
         res.status(200).json({ message: constants.CAMPAIGN.AFFILIATE_FETCH_IN_CAMPAIGN, data });
     }
 
