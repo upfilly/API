@@ -83,11 +83,11 @@ exports.addCampaign = async (req, res) => {
         if (!get_brand) {
             return response.failed(null, constants.CAMPAIGN.INVALID_BRAND_ID, req, res);
         }
-        
+
         if (req.body.isDefault) {
             //make all other campaigns non-default
             await Campaign.update({ brand_id: brand_id, isDefault: true }).set({ isDefault: false });
-            
+
         } else {
             let defaultCampaign = await Campaign.findOne({ brand_id: brand_id, isDefault: true, isDeleted: false });
             if (!defaultCampaign) {
@@ -290,7 +290,7 @@ exports.listPublicCampaignsOfAllBrands = async (req, res) => {
 //             ];
 //         }
 
-    
+
 
 //         query.isDeleted = false;
 
@@ -325,7 +325,7 @@ exports.listPublicCampaignsOfAllBrands = async (req, res) => {
 //         }
 //         // new_query.campaign_commission = { $gt: 0 }
 //         let sortquery = {};
-        
+
 //         if (sortBy && typeof sortBy === 'string') {
 //             const [rawField, rawOrder] = sortBy.trim().split(/\s+/); 
 //             const field = rawField || 'createdAt';
@@ -535,7 +535,7 @@ exports.getAllCampaignRequestsForAffiliate = async (req, res) => {
 
         if (status) {
             query.$or = [
-                { source: "campaign", status: status }
+                {  status: status }
             ];
         } else {
             query.$or = [
@@ -601,7 +601,7 @@ exports.getAllCampaignRequestsForAffiliate = async (req, res) => {
             {
                 $unwind: {
                     path: "$campaign_detail",
-                    preserveNullAndEmptyArrays: false 
+                    preserveNullAndEmptyArrays: false
                 }
             },
             {
@@ -693,7 +693,8 @@ exports.getAllCampaignRequestsForAffiliate = async (req, res) => {
                     region: "$campaign_detail.region",
                     region_continents: "$campaign_detail.region_continents",
                     lead_amount: "$campaign_detail.lead_amount",
-                    campaign_type: "$campaign_detail.campaign_type"
+                    campaign_type: "$campaign_detail.campaign_type",
+                    source:1
                 }
             },
             {
@@ -733,442 +734,444 @@ exports.getAllCampaignRequestsForAffiliate = async (req, res) => {
 
 exports.getAllCampaignsForBrand = async (req, res) => {
     try {
-      let user_id = req.identity.id;
-      let {
-        category,
-        sub_category,
-        category_type,
-        sub_child_category,
-        region,
-        status,
-        isArchive,
-        access_type,
-      } = req.query;
-      let loggedInUser = await Users.findOne({ id: user_id, isDeleted: false });
-      if (loggedInUser.addedBy) {
-        let get_account_manager_detail = await Users.findOne({
-          id: loggedInUser.addedBy,
-          isDeleted: false,
-        });
-        if (get_account_manager_detail && get_account_manager_detail.role) {
-          if (
-            loggedInUser.role === "brand" ||
-            loggedInUser.role === "affiliate"
-          ) {
-            var isPermissionExists = await Permissions.findOne({
-              role: loggedInUser.role,
-              //account_manager: get_account_manager_detail.role
+        let user_id = req.identity.id;
+        let {
+            category,
+            sub_category,
+            category_type,
+            sub_child_category,
+            region,
+            status,
+            isArchive,
+            access_type,
+            affiliate_ids,
+        } = req.query;
+        let loggedInUser = await Users.findOne({ id: user_id, isDeleted: false });
+        if (loggedInUser.addedBy) {
+            let get_account_manager_detail = await Users.findOne({
+                id: loggedInUser.addedBy,
+                isDeleted: false,
             });
-          } else {
-            var isPermissionExists = await Permissions.findOne({
-              role: loggedInUser.role,
-              account_manager: get_account_manager_detail.role,
-            });
-          }
-          if (!isPermissionExists) {
-            throw "Permission not exists";
-          }
+            if (get_account_manager_detail && get_account_manager_detail.role) {
+                if (
+                    loggedInUser.role === "brand" ||
+                    loggedInUser.role === "affiliate"
+                ) {
+                    var isPermissionExists = await Permissions.findOne({
+                        role: loggedInUser.role,
+                        //account_manager: get_account_manager_detail.role
+                    });
+                } else {
+                    var isPermissionExists = await Permissions.findOne({
+                        role: loggedInUser.role,
+                        account_manager: get_account_manager_detail.role,
+                    });
+                }
+                if (!isPermissionExists) {
+                    throw "Permission not exists";
+                }
+            }
         }
-      }
 
-      let query = {};
-      let new_query = {};
-      let count = req.param("count") || 10;
-      let page = req.param("page") || 1;
-      let { search, sortBy, brand_id } = req.query;
+        let query = {};
+        let new_query = {};
+        let count = req.param("count") || 10;
+        let page = req.param("page") || 1;
+        let { search, sortBy, brand_id } = req.query;
 
-      let skipNo = (Number(page) - 1) * Number(count);
+        let skipNo = (Number(page) - 1) * Number(count);
 
-      // if (search) {
-      //     search = Services.Utils.remove_special_char_exept_underscores(search);
-      //     query.$or = [
-      //         { name: { $regex: search, '$options': 'i' } },
-      //     ]
-      //     new_query.$or = [
-      //         { commissionToString: { $regex: search, "$options": "i" } }
-      //     ]
-      // }
+        // if (search) {
+        //     search = Services.Utils.remove_special_char_exept_underscores(search);
+        //     query.$or = [
+        //         { name: { $regex: search, '$options': 'i' } },
+        //     ]
+        //     new_query.$or = [
+        //         { commissionToString: { $regex: search, "$options": "i" } }
+        //     ]
+        // }
 
-      if (search && search.trim()) {
-        search = Services.Utils.remove_special_char_exept_underscores(
-          search.trim()
-        );
+        if (search && search.trim()) {
+            search = Services.Utils.remove_special_char_exept_underscores(
+                search.trim()
+            );
 
-        new_query.$or = [
-          { name: { $regex: search, $options: "i" } },
-          { commissionToString: { $regex: search, $options: "i" } },
-        ];
-      }
+            new_query.$or = [
+                { name: { $regex: search, $options: "i" } },
+                { commissionToString: { $regex: search, $options: "i" } },
+            ];
+        }
 
-      query.isDeleted = false;
-      if (status) {
-        query.status = status;
-      }
-      if (access_type) {
-        query.access_type = access_type;
-      }
-      if (brand_id) {
-        query.brand_id = new ObjectId(brand_id);
-      }
-      // let sortquery = {};
-      // if (sortBy) {
-      //     let typeArr = [];
-      //     typeArr = sortBy.split(" ");
-      //     let sortType = typeArr[1];
-      //     let field = typeArr[0];
-      //     // if (field === 'event_type') {
-      //     //     sortquery['event_type_length'] = sortType ? (sortType == 'desc' ? -1 : 1) : -1;
-      //     // } else {
-      //     //     sortquery[field ? field : 'createdAt'] = sortType ? (sortType == 'desc' ? -1 : 1) : -1;
-      //     // }
-      //     // sortquery[field ? field : 'createdAt'] = sortType ? (sortType == 'desc' ? -1 : 1) : -1;
+        query.isDeleted = false;
+        if (status) {
+            query.status = status;
+        }
+        if (access_type) {
+            query.access_type = access_type;
+        }
+        if (brand_id) {
+            query.brand_id = new ObjectId(brand_id);
+        }
 
-      //     if (field === "event_type") {
-      //       sortquery["event_type_length"] = sortType === "desc" ? -1 : 1;
-      //     } else {
-      //       sortquery[field || "createdAt"] = sortType === "desc" ? -1 : 1;
-      //     }
+        let sortquery = {};
+        if (sortBy && typeof sortBy === "string") {
+            const [rawField, rawOrder] = sortBy.trim().split(/\s+/);
+            const field = rawField || "createdAt";
+            const sortType = rawOrder?.toLowerCase() === "asc" ? 1 : -1;
 
-      // } else {
-      //     sortquery = { updatedAt: -1 }
-      // }
-     
-      let sortquery = {};
-      if (sortBy && typeof sortBy === "string") {
-        const [rawField, rawOrder] = sortBy.trim().split(/\s+/);
-        const field = rawField || "createdAt";
-        const sortType = rawOrder?.toLowerCase() === "asc" ? 1 : -1;
-
-        if (field === "event_type") {
-          sortquery["event_type_length"] = sortType;
+            if (field === "event_type") {
+                sortquery["event_type_length"] = sortType;
+            } else {
+                sortquery[field] = sortType;
+            }
         } else {
-          sortquery[field] = sortType;
+            sortquery = { updatedAt: -1 };
         }
-      } else {
-        sortquery = { updatedAt: -1 };
-      }
 
-      if (sub_category) {
-        // query.sub_category_id = new ObjectId(sub_category_id);
-        sub_category = await Services.Utils.string_ids_toObjectIds_array(
-          sub_category
-        );
-        query.sub_category = { $in: sub_category };
-      }
-      if (category) {
-        query.category = await Services.Utils.string_ids_toObjectIds_array(
-          category
-        );
-        query.category = { $in: category };
-      }
-      if (category_type) {
-        category_type = await Services.Utils.string_to_array(category_type);
-        query.category_type = { $in: category_type };
-      }
-      if (category_type) {
-        sub_child_category = await Services.Utils.string_to_array(
-          sub_child_category
-        );
-        query.sub_child_category = { $in: sub_child_category };
-      }
-      if (region) {
-        query.region = { $in: [region] };
-      }
-      query.isArchive = isArchive == "true" ? true : false;
-      // Pipeline Stages
-      let pipeline = [
-        // lookups for categories
-        //  {
-        //     $lookup: {
-        //         from: "commoncategories",
-        //         localField: "category",
-        //         foreignField: "_id",
-        //         as: "category_detail"
-        //     }
-        // },
-        // {
-        //     $unwind: {
-        //         path: '$category_detail',
-        //         preserveNullAndEmptyArrays: true
-        //     }
-        // },
-        {
-          $lookup: {
-            from: "commoncategories",
-            let: { categoryIds: "$category" },
-            pipeline: [
-              {
-                $match: {
-                  $expr: {
-                    $in: [
-                      "$_id",
-                      {
-                        $map: {
-                          input: "$$categoryIds",
-                          as: "id",
-                          in: { $toObjectId: "$$id" },
+        if (sub_category) {
+            // query.sub_category_id = new ObjectId(sub_category_id);
+            sub_category = await Services.Utils.string_ids_toObjectIds_array(
+                sub_category
+            );
+            query.sub_category = { $in: sub_category };
+        }
+        if (category) {
+            query.category = await Services.Utils.string_ids_toObjectIds_array(
+                category
+            );
+            query.category = { $in: category };
+        }
+        if (category_type) {
+            category_type = await Services.Utils.string_to_array(category_type);
+            query.category_type = { $in: category_type };
+        }
+        if (category_type) {
+            sub_child_category = await Services.Utils.string_to_array(
+                sub_child_category
+            );
+            query.sub_child_category = { $in: sub_child_category };
+        }
+        if (region) {
+            query.region = { $in: [region] };
+        }
+        query.isArchive = isArchive == "true" ? true : false;
+
+        let affiliateIdArray = [];
+        if (affiliate_ids) {
+            affiliateIdArray = affiliate_ids.split(",").map(id => new ObjectId(id.trim()));
+        }
+
+        // Pipeline Stages
+        let pipeline = [
+
+            {
+                $lookup: {
+                    from: "commoncategories",
+                    let: { categoryIds: "$category" },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $in: [
+                                        "$_id",
+                                        {
+                                            $map: {
+                                                input: "$$categoryIds",
+                                                as: "id",
+                                                in: { $toObjectId: "$$id" },
+                                            },
+                                        },
+                                    ],
+                                },
+                            },
                         },
-                      },
                     ],
-                  },
+                    as: "category_detail",
                 },
-              },
-            ],
-            as: "category_detail",
-          },
-        },
-
-        // {
-        //     $lookup: {
-        //         from: "commoncategories",
-        //         localField: "sub_category",
-        //         foreignField: "_id",
-        //         as: "sub_category_detail"
-        //     }
-        // },
-        // {
-        //     $unwind: {
-        //         path: '$sub_category_detail',
-        //         preserveNullAndEmptyArrays: true
-        //     }
-        // },
-        {
-          $lookup: {
-            from: "commoncategories",
-            let: { categoryIds: "$sub_category" },
-            pipeline: [
-              {
-                $match: {
-                  $expr: {
-                    $in: [
-                      "$_id",
-                      {
-                        $map: {
-                          input: "$$categoryIds",
-                          as: "id",
-                          in: { $toObjectId: "$$id" },
-                        },
-                      },
-                    ],
-                  },
-                },
-              },
-            ],
-            as: "sub_category_detail",
-          },
-        },
-
-        // {
-        //     $lookup: {
-        //         from: "subchildcategory",
-        //         localField: "sub_child_category",
-        //         foreignField: "_id",
-        //         as: "sub_child_category_detail"
-        //     }
-        // },
-        // {
-        //     $unwind: {
-        //         path: '$sub_child_category_detail',
-        //         preserveNullAndEmptyArrays: true
-        //     }
-        // },
-
-        {
-          $lookup: {
-            from: "subchildcategory",
-            let: { categoryIds: "$sub_child_category" },
-            pipeline: [
-              {
-                $match: {
-                  $expr: {
-                    $in: [
-                      "$_id",
-                      {
-                        $map: {
-                          input: "$$categoryIds",
-                          as: "id",
-                          in: { $toObjectId: "$$id" },
-                        },
-                      },
-                    ],
-                  },
-                },
-              },
-            ],
-            as: "sub_child_category_detail",
-          },
-        },
-
-        {
-          $lookup: {
-            from: "brandaffiliateassociation",
-            let: {
-              brand_id: new ObjectId(req.identity.id),
-              campaign: "$_id",
-              status: "accepted",
             },
-            pipeline: [
-              {
-                $match: {
-                  $expr: {
-                    $and: [
-                      { $eq: ["$brand_id", "$$brand_id"] },
-                      { $eq: ["$campaign_id", "$$campaign"] },
-                      { $eq: ["$status", "$$status"] },
-                    ],
-                  },
-                },
-              },
-            ],
-            as: "affiliateCount",
-          },
-        },
-        {
-          $addFields: {
-            event_type_length: { $size: { $ifNull: ["$event_type", []] } },
-          },
-        },
 
-        {
-          $match: query,
-        },
-        {
-          $project: {
-            _id: 1,
-            brand_id: 1,
-            parent_id: 1,
-            parent_role: 1,
-            name: { $toLower: "$name" },
-            description: 1,
-            images: 1,
-            documents: 1,
-            videos: 1,
-            access_type: 1,
-            amount: 1,
-            event_type: 1,
-            campaign_unique_id: 1,
-            addedBy: 1,
-            updatedBy: 1,
-            createdAt: 1,
-            updatedAt: 1,
-            isDefault: 1,
-            isDeleted: 1,
-            commission: 1,
-            commissionToString: { $toString: "$commission" },
-            commission_event_type: 1,
-            commission_type: 1,
-            category: 1,
-            sub_category: 1,
-            category_type: 1,
-            sub_child_category: 1,
-            region: 1,
-            region_continents: 1,
-            category_detail: "$category_detail",
-            sub_category_detail: "$sub_category_detail",
-            sub_child_category_detail: "$sub_child_category_detail",
-            lead_amount: 1,
-            campaign_type: 1,
-            currencies: 1,
-            deDuplicate: 1,
-            publisher: 1,
-            ppc: 1,
-            transaction: 1,
-            legalTerm: 1,
-            islegal: 1,
-            status: 1,
-            isArchive: 1,
-            affiliateCount: { $size: "$affiliateCount" },
-            event_type_length: 1,
-            access_type: 1,
-          },
-        },
-        {
-          $match: new_query,
-        },
-        {
-          $sort: sortquery,
-        },
-      ];
-      let totalresult = await db
-        .collection("campaign")
-        .aggregate(pipeline)
-        .toArray();
-      pipeline.push({
-        $skip: Number(skipNo),
-      });
-      pipeline.push({
-        $limit: Number(count),
-      });
-      let result = await db
-        .collection("campaign")
-        .aggregate(pipeline)
-        .toArray();
-      let resData = {
-        total_count: totalresult ? totalresult.length : 0,
-        data: result ? result : [],
-      };
-      if (!req.param("page") && !req.param("count")) {
-        resData.data = totalresult ? totalresult : [];
-      }
-      return response.success(
-        resData,
-        constants.CAMPAIGN.FETCHED_ALL,
-        req,
-        res
-      );
+            // {
+            //     $lookup: {
+            //         from: "commoncategories",
+            //         localField: "sub_category",
+            //         foreignField: "_id",
+            //         as: "sub_category_detail"
+            //     }
+            // },
+            // {
+            //     $unwind: {
+            //         path: '$sub_category_detail',
+            //         preserveNullAndEmptyArrays: true
+            //     }
+            // },
+            {
+                $lookup: {
+                    from: "commoncategories",
+                    let: { categoryIds: "$sub_category" },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $in: [
+                                        "$_id",
+                                        {
+                                            $map: {
+                                                input: "$$categoryIds",
+                                                as: "id",
+                                                in: { $toObjectId: "$$id" },
+                                            },
+                                        },
+                                    ],
+                                },
+                            },
+                        },
+                    ],
+                    as: "sub_category_detail",
+                },
+            },
+
+            // {
+            //     $lookup: {
+            //         from: "subchildcategory",
+            //         localField: "sub_child_category",
+            //         foreignField: "_id",
+            //         as: "sub_child_category_detail"
+            //     }
+            // },
+            // {
+            //     $unwind: {
+            //         path: '$sub_child_category_detail',
+            //         preserveNullAndEmptyArrays: true
+            //     }
+            // },
+
+            {
+                $lookup: {
+                    from: "subchildcategory",
+                    let: { categoryIds: "$sub_child_category" },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $in: [
+                                        "$_id",
+                                        {
+                                            $map: {
+                                                input: "$$categoryIds",
+                                                as: "id",
+                                                in: { $toObjectId: "$$id" },
+                                            },
+                                        },
+                                    ],
+                                },
+                            },
+                        },
+                    ],
+                    as: "sub_child_category_detail",
+                },
+            },
+
+            {
+                $lookup: {
+                    from: "brandaffiliateassociation",
+                    let: {
+                        brand_id: new ObjectId(req.identity.id),
+                        campaign: "$_id",
+                        status: "accepted",
+                    },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ["$brand_id", "$$brand_id"] },
+                                        { $eq: ["$campaign_id", "$$campaign"] },
+                                        { $eq: ["$status", "$$status"] },
+                                    ],
+                                },
+                            },
+                        },
+                    ],
+                    as: "affiliateCount",
+                },
+            },
+            {
+                $lookup: {
+                    from: "brandaffiliateassociation",
+                    let: {
+                        campaign_id: "$_id",
+                        brand_id: new ObjectId(req.identity.id),
+                        affiliateIds: affiliateIdArray
+                    },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ["$brand_id", "$$brand_id"] },
+                                        { $eq: ["$campaign_id", "$$campaign_id"] },
+                                        { $eq: ["$status", "accepted"] },
+                                        { $in: ["$affiliate_id", "$$affiliateIds"] }   // ← Correct filtering
+                                    ]
+                                }
+                            }
+                        }
+                    ],
+                    as: "filtered_affiliates"
+                }
+            },
+            {
+                $match: {
+                    ...(affiliateIdArray.length > 0 ? { filtered_affiliates: { $ne: [] } } : {})
+                }
+            },
+            {
+                $addFields: {
+                    event_type_length: { $size: { $ifNull: ["$event_type", []] } },
+                },
+            },
+
+            {
+                $match: query,
+            },
+            {
+                $project: {
+                    _id: 1,
+                    brand_id: 1,
+                    parent_id: 1,
+                    parent_role: 1,
+                    name: { $toLower: "$name" },
+                    description: 1,
+                    images: 1,
+                    documents: 1,
+                    videos: 1,
+                    access_type: 1,
+                    amount: 1,
+                    event_type: 1,
+                    campaign_unique_id: 1,
+                    addedBy: 1,
+                    updatedBy: 1,
+                    createdAt: 1,
+                    updatedAt: 1,
+                    isDefault: 1,
+                    isDeleted: 1,
+                    commission: 1,
+                    commissionToString: { $toString: "$commission" },
+                    commission_event_type: 1,
+                    commission_type: 1,
+                    category: 1,
+                    sub_category: 1,
+                    category_type: 1,
+                    sub_child_category: 1,
+                    region: 1,
+                    region_continents: 1,
+                    category_detail: "$category_detail",
+                    sub_category_detail: "$sub_category_detail",
+                    sub_child_category_detail: "$sub_child_category_detail",
+                    lead_amount: 1,
+                    campaign_type: 1,
+                    currencies: 1,
+                    deDuplicate: 1,
+                    publisher: 1,
+                    ppc: 1,
+                    transaction: 1,
+                    legalTerm: 1,
+                    islegal: 1,
+                    status: 1,
+                    isArchive: 1,
+                    affiliateCount: { $size: "$affiliateCount" },
+                    event_type_length: 1,
+                    access_type: 1,
+                    affiliate_data: "$affiliate_data"
+                },
+            },
+            {
+                $match: new_query,
+            },
+            {
+                $sort: sortquery,
+            },
+        ];
+        let totalresult = await db
+            .collection("campaign")
+            .aggregate(pipeline)
+            .toArray();
+        pipeline.push({
+            $skip: Number(skipNo),
+        });
+        pipeline.push({
+            $limit: Number(count),
+        });
+        let result = await db
+            .collection("campaign")
+            .aggregate(pipeline)
+            .toArray();
+        let resData = {
+            total_count: totalresult ? totalresult.length : 0,
+            data: result ? result : [],
+        };
+        if (!req.param("page") && !req.param("count")) {
+            resData.data = totalresult ? totalresult : [];
+        }
+        return response.success(
+            resData,
+            constants.CAMPAIGN.FETCHED_ALL,
+            req,
+            res
+        );
     } catch (err) {
         return response.failed(null, `${err}`, req, res);
     }
 }
 exports.getAllCampaignsForAffiliate = async (req, res) => {
     try {
-        if(req.query.campaign){
-        const { campaign } = req.query;
+        if (req.query.campaign) {
+            const { campaign } = req.query;
 
-        if (!campaign || campaign.length === 0) {
-            return res.status(400).json({ message: "No campaign provided." });
-        }
-        const idArray = campaign.split(',');
-
-        const affiliateFetch = [];
-
-        for (let campaignId of idArray) {
-            const campaignData = await BrandAffiliateAssociation.find({
-              where: { campaign_id: campaignId, isDeleted: false,status:"accepted" }
-            }).populate('affiliate_id');
-
-            if (!campaignData) {
-                console.log(`Campaign with ID ${campaignId} not found. Skipping...`);
-                continue;
+            if (!campaign || campaign.length === 0) {
+                return res.status(400).json({ message: "No campaign provided." });
             }
-             affiliateFetch.push(...campaignData.map(item => item.affiliate_id));
+            const idArray = campaign.split(',');
+
+            const affiliateFetch = [];
+
+            for (let campaignId of idArray) {
+                const campaignData = await BrandAffiliateAssociation.find({
+                    where: { campaign_id: campaignId, isDeleted: false, status: "accepted" }
+                }).populate('affiliate_id');
+
+                if (!campaignData) {
+                    console.log(`Campaign with ID ${campaignId} not found. Skipping...`);
+                    continue;
+                }
+                affiliateFetch.push(...campaignData.map(item => item.affiliate_id));
+            }
+            let data = {
+                affiliateFetch
+            }
+            return response.success(data, constants.CAMPAIGN.AFFILIATE_FETCH_IN_CAMPAIGN, req, res);
+        } else {
+
+            let brandId = req.identity.id;
+            const records = await BrandAffiliateAssociation.find(
+                {
+                    status: "accepted",
+                    isDeleted: false,
+                    brand_id: brandId,
+                }
+            );
+
+            const uniqueAffiliates = _.uniq(records.map((r) => r.affiliate_id));
+
+            const validUsers = await Users.find({
+                id: uniqueAffiliates,
+                isDeleted: false,
+            })
+            let data = validUsers
+
+            return response.success(data, constants.CAMPAIGN.AFFILIATE_FETCH_IN_CAMPAIGN, req, res);
+
         }
-        let data = {
-             affiliateFetch
-        }
-        return response.success(data, constants.CAMPAIGN.AFFILIATE_FETCH_IN_CAMPAIGN, req, res);
-    }else{
-
-        let brandId = req.identity.id;
-         const records = await BrandAffiliateAssociation.find(
-        {
-          status: "accepted",
-          isDeleted: false,
-          brand_id: brandId,
-        }
-      );
-
-       const uniqueAffiliates = _.uniq(records.map((r) => r.affiliate_id));
-
-      const validUsers = await Users.find({
-        id: uniqueAffiliates,
-        isDeleted: false,
-      })
-      let data = validUsers
-       
-        return response.success(data,constants.CAMPAIGN.AFFILIATE_FETCH_IN_CAMPAIGN, req, res);
-
-    }
 
     } catch (err) {
         console.log("err", err)
@@ -1437,7 +1440,7 @@ exports.getCampaignById = async (req, res) => {
         if (get_campaign.sub_child_category && get_campaign.sub_child_category.length > 0) {
             let sub_child_category = []
             for await (let cat of get_campaign.sub_child_category) {
-                let data = await SubChildCategory.findOne({ id: cat.id || cat  }).select(["id", "name"])
+                let data = await SubChildCategory.findOne({ id: cat.id || cat }).select(["id", "name"])
                 sub_child_category.push(data)
             }
             get_campaign.sub_child_category = sub_child_category
@@ -1525,20 +1528,20 @@ exports.changeCampaignStatus = async (req, res) => {
             // await PublicCampaigns.create({ affiliate_id: req.identity.id, campaign_id: get_campaign.id, brand_id: get_campaign.addedBy, addedBy: req.identity.id });
             //Email to brand when status of a campaign changes
             let email_payload = {
-              affiliate_id: req.body.affiliate_id,
-              brand_id: get_campaign.brand_id,
-              status: req.body.status,
-              campaign_id:get_campaign.campaign_id.id,
-              reason: req.body.reason ? req.body.reason : "",
+                affiliate_id: req.body.affiliate_id,
+                brand_id: get_campaign.brand_id,
+                status: req.body.status,
+                campaign_id: get_campaign.campaign_id.id,
+                reason: req.body.reason ? req.body.reason : "",
             };
             let emailSentCheck = await EmailSentSetting.findOne({
-              name: "campaigns",
-              isDeleted: false,
+                name: "campaigns",
+                isDeleted: false,
             });
 
             if (emailSentCheck.emailSent == true) {
-              await Emails.CampaignEmails.changeStatus(email_payload);
-            }else{
+                await Emails.CampaignEmails.changeStatus(email_payload);
+            } else {
                 console.log("emailSent setting is false in campaign")
             }
 
@@ -1565,7 +1568,7 @@ exports.changeCampaignStatus = async (req, res) => {
             return response.failed(null, constants.CAMPAIGN.NOT_FOUND);
         }
     } catch (error) {
-        console.log("error",error)
+        console.log("error", error)
         return response.failed(null, `${error}`, req, res)
     }
 }
