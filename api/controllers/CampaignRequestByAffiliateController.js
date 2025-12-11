@@ -123,7 +123,7 @@ exports.getAllRequestsForBrand = async (req, res) => {
                 { name: { $regex: search, '$options': 'i' } }
             ]
         }
-        
+
         if (isDeleted) {
             query.isDeleted = isDeleted === 'true' ? true : false;
         } else {
@@ -146,11 +146,12 @@ exports.getAllRequestsForBrand = async (req, res) => {
             }
         }
 
-        if(campaign_id) {
-            query.campaign_id = new ObjectId(product_id);
+        if (campaign_id) {
+            // FIXED: Changed product_id to campaign_id
+            query.campaign_id = new ObjectId(campaign_id);
         }
 
-         let sortquery = {};
+        let sortquery = {};
         if (sortBy && typeof sortBy === 'string') {
             const [rawField, rawOrder] = sortBy.trim().split(/\s+/);
             const field = rawField || 'createdAt';
@@ -176,22 +177,6 @@ exports.getAllRequestsForBrand = async (req, res) => {
                     preserveNullAndEmptyArrays: true
                 }
             },
-            // {
-            //     $lookup: {
-            //         from: "users",
-            //         localField: "brand_id",
-            //         foreignField: "_id",
-            //         as: "brand_id_details"
-            //     }
-            // },
-            // {
-            //     $unwind: {
-            //         path: '$brand_id_details',
-            //         preserveNullAndEmptyArrays: true
-            //     }
-            // },
-            
-
             {
                 $lookup: {
                     from: "campaign",
@@ -205,8 +190,7 @@ exports.getAllRequestsForBrand = async (req, res) => {
                     path: '$campaign_details',
                     preserveNullAndEmptyArrays: true
                 }
-            },
-
+            }
         ];
 
         let projection = {
@@ -214,19 +198,20 @@ exports.getAllRequestsForBrand = async (req, res) => {
                 id: "$_id",
                 product_id: "$product_id",
                 affiliate_id: "$affiliate_id",
-                affiliate_name: "$affiliate_details.fullName",
+                // FIXED: Changed from affiliate_details to affiliate_id_details
+                affiliate_name: "$affiliate_id_details.fullName",
+                affiliate_email: "$affiliate_id_details.email", // Added for more info
                 campaign_details: "$campaign_details",
                 brand_id: "$brand_id",
-                campaign_name: {$toLower:"$campaign_details.name"},
-                association:"$association",
-                reason : "$reason",
+                campaign_name: { $toLower: "$campaign_details.name" },
+                association: "$association",
+                reason: "$reason",
                 status: "$status",
                 addedBy: "$addedBy",
                 updatedBy: "$updatedBy",
                 isDeleted: "$isDeleted",
                 createdAt: "$createdAt",
                 updatedAt: "$updatedAt",
-
             }
         };
 
@@ -237,6 +222,7 @@ exports.getAllRequestsForBrand = async (req, res) => {
         pipeline.push({
             $sort: sortquery
         });
+
         // Pipeline Stages
         let totalresult = await db.collection('campaignrequestbyaffiliate').aggregate(pipeline).toArray();
         pipeline.push({
