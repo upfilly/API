@@ -143,6 +143,7 @@ module.exports.routes = {
     "TransactionsController.getAllTransactionsContracts",
   "get /transaction/graph": "TransactionsController.getTransactionsGraphData",
   "get /transactionGraph": "TransactionsController.transactionGraph",
+  "get /payableMonthlyTransactions": "TransactionsController.monthlyPendingTransactions",
 
   /**
    * @Cards

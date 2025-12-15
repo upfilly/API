@@ -14,6 +14,9 @@ const credentials = require('../../config/local.js'); //sails.config.env.product
 const Services = require('../services/index');
 const excel = require('exceljs');
 const pdf = require('html-pdf-phantomjs-included');
+const { start } = require('pm2');
+const { Transaction } = require('mongodb');
+const { getTasks } = require('node-cron');
 
 exports.getAllTransactions = async (req, res) => {
     try {
@@ -1145,6 +1148,40 @@ exports.transactionGraph = async function (req, res) {
   
     } catch (err) {
       sails.log.error("Transaction graph error:", err);
+      return res.serverError({ success: false, message: err.message });
+    }
+}
+
+exports.monthlyPendingTransactions = async function (req, res) {
+    try
+    {
+        const date = new Date();
+        const startDate = new Date(Date.UTC(date.getFullYear(), date.getMonth(), 1));
+        const endDate = new Date(Date.UTC(date.getFullYear(), date.getMonth() + 1,  0, 23, 59, 59, 999));
+        // console.log("Start date  = ", startDate, "End Date = ", endDate);
+        let monthlyData = {}; // Object containing response
+
+        const getTransactions = await Transactions.find({ createdAt: { '>=': startDate, '<=': endDate}, user_id: req.identity?.id, transaction_type: "pay_commission", transaction_status: "pending" });
+        if(!getTransactions)
+        {
+            return res.status(400).json({ success: false, message: "No pending transactions found within the month"});
+        }
+
+        monthlyData.totalPendingTransactions = getTransactions.length;
+
+        let totalAmount = 0, arr = [];
+        for(let obj of getTransactions)
+        {
+            arr.push(obj.id);
+            totalAmount += obj.amount;
+        }
+        monthlyData.totalPayableAmount = totalAmount;
+        monthlyData.ids = arr;
+
+        return res.status(200).json({ success: true, data: monthlyData });
+    }
+    catch (err) {
+      sails.log.error("Payable Monthly Pending Transactions error:", err);
       return res.serverError({ success: false, message: err.message });
     }
 }

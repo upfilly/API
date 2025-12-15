@@ -1659,30 +1659,47 @@ exports.webhook = async (request, response) => {
                 
                 if (event_object) {
                     if(event_object.metadata.commission === "paid"){
-                        // update user
-                        console.log(event_object.metadata.brandAssociateId,'event_object.metadata.brandAssociateId')
-                        await AffiliateLink.updateOne({id:event_object.metadata.brandAssociateId},{commission_paid :"paid"})
-                        
-                        let get_admin = await Users.findOne({role:"admin"})
-                        console.log(get_admin,'=============amdin details')
-                        let transaction_payload = {
-                            user_id: event_object.metadata.user_id,
-                            paid_to: get_admin.id,
-                            transaction_type: "pay_commission",
-                            transaction_id: event_object.invoice,
-                            // subscription_id: event_object.subscription,
-                            stripe_charge_id: event_object.invoice,
-                            currency: event_object.currency,
-                            amount: event_object.amount_subtotal ? event_object.amount_subtotal / 100 : 0,
-                            transaction_status: event_object.payment_status
+                        if(event_object.metadata?.brandAssociateId && Array.isArray(event_object.metadata?.brandAssociateId))
+                        {
+                            let brandAssociateIds = event_object.metadata?.brandAssociateId;
+                            let invoiceId = event_object.invoice;
+                            // Get invoice details from invoiceId
+                            const invoice = await stripe.invoices.retrieve(invoiceId);
+                            // console.log("Invoice = ", invoice);
+                            // Iterate through array of ids and update the invoice in transactions collection
+                            for(let brandId of brandAssociateIds)
+                            {
+                                // console.log("Brand id = ", brandId);
+                                await AffiliateLink.updateOne({ id: brandId },{ commission_paid :"paid", invoice: invoice?.hosted_invoice_url });
+                            }
                         }
-
-                        if (event_object.payment_status == "paid") {
-                            transaction_payload.transaction_status = "successful";
+                        else
+                        {
+                            // update user
+                            console.log(event_object.metadata?.brandAssociateId,'event_object.metadata.brandAssociateId')
+                            await AffiliateLink.updateOne({id:event_object.metadata.brandAssociateId},{commission_paid :"paid"})
+                            
+                            let get_admin = await Users.findOne({role:"admin"})
+                            console.log(get_admin,'=============amdin details')
+                            let transaction_payload = {
+                                user_id: event_object.metadata.user_id,
+                                paid_to: get_admin.id,
+                                transaction_type: "pay_commission",
+                                transaction_id: event_object.invoice,
+                                // subscription_id: event_object.subscription,
+                                stripe_charge_id: event_object.invoice,
+                                currency: event_object.currency,
+                                amount: event_object.amount_subtotal ? event_object.amount_subtotal / 100 : 0,
+                                transaction_status: event_object.payment_status
+                            }
+    
+                            if (event_object.payment_status == "paid") {
+                                transaction_payload.transaction_status = "successful";
+                            }
+    
+                             let data = await Transactions.create(transaction_payload).fetch();
+                             console.log(data,'--created transaction')
                         }
-
-                         let data = await Transactions.create(transaction_payload).fetch();
-                         console.log(data,'--created transaction')
                          break;
                     }else {
                         let create_subscription_payload = {
@@ -1854,6 +1871,58 @@ exports.payToAdmin = async(req,res) =>{
         }
     } catch (error) {
         console.log(error,'-===========================')
+          // Handle errors and respond with an error message
+          return res.serverError({
+            success: false,
+            message: 'Error creating Checkout Session',
+        });
+    }
+}
+
+// Pay monthly pending transactions all at once
+exports.payMonthlyTransactions = async(req, res) => {
+    try
+    {
+        const { amount, brandAssociateId: brandIds } = req.body;
+        let user_id = req.identity.id
+        if (user_id) {
+            var get_user = await Users.findOne({ id: user_id, isDeleted: false });
+        }
+
+        line_items = [{
+            // 'price': commission * 100 || 0,
+            "price_data": {
+                currency: "usd",
+                unit_amount: amount * 100 || 0,
+                product_data: {
+                    name: "Commission Payment",  // Product name (could be a generic name)
+                    description: "Payment for commission"
+                },
+              },
+            'quantity': 1,
+        }];
+
+        // Create a Checkout Session
+        let create_session = await Services.StripeServices.one_time_payment_for_commission({
+            lineItems: line_items,
+            metadata: {
+                user_id: user_id,
+                commission : "paid",
+                brandAssociateId : brandIds
+            },
+            email: get_user.email
+        });
+
+        if (create_session) {
+            let resData = {
+                url: create_session.url
+            }
+
+            return response.success(resData, constants.COMMON.SUCCESS, req, res);
+        }
+    }
+    catch (error) {
+        console.log("Pay monthly transactions error: ", error)
           // Handle errors and respond with an error message
           return res.serverError({
             success: false,

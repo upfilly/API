@@ -854,6 +854,47 @@ exports.updateCommission = async (req, res) => {
       id: id,
       isDeleted: false,
     }).set(req.body);
+
+    if(commission_status == 'accepted')
+    {
+      let stripe_transaction_fee = 3.5;
+      let total_amount = Number(updatedAffiliateLink?.amount_of_commission) + (stripe_transaction_fee / 100);
+      // Find user acitve subscription plan
+      const user_active_subscription = await Subscriptions.findOne({ user_id: req.identity?.id, status: "active" }).populate("subscription_plan_id");
+      let commission_override = 0;
+      if(user_active_subscription)
+      {
+        commission_override = user_active_subscription?.subscription_plan_id?.commission_override;
+      }
+      // Find commission from campaigns table 
+      let brandAssociation = await BrandAffiliateAssociation.findOne({ affiliate_id: updatedAffiliateLink?.affiliate_id, brand_id: updatedAffiliateLink?.brand_id, isActive: true }).populate("campaign_id");
+
+      let commission = brandAssociation?.campaign_id?.commission || 0;
+      // Calculate total amount by adding final commission
+      total_amount += Number(calculatetotalCommission(brandAssociation?.campaign_id?.commission_type, updatedAffiliateLink?.price, commission, commission_override).split("$")[1]);
+
+      // Get Admin Details
+      let get_admin = await Users.findOne({role:"admin"});
+      let data = {
+        user_id: req.identity?.id,
+        paid_to: get_admin.id || "654227e78fd3b1018600710d",
+        transaction_type: "pay_commission",
+        transaction_id: "",
+        stripe_charge_id: "",
+        currency: updatedAffiliateLink?.currency,
+        amount: total_amount.toFixed(2),
+        transaction_status: "pending",
+        special_plan_id: null,
+        subscription_id: null,
+        stripe_subscription_id: "",
+        addedBy: req.identity?.id,
+        updatedBy: null,
+        paypal_transaction_id: "",
+        paypal_transaction_status: ""
+      };
+
+      await Transactions.create(data);
+    }
     return response.success(updatedAffiliateLink, constants.AFFILIATELINK.UPDATED, req, res);
 
 
