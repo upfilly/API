@@ -1659,9 +1659,9 @@ exports.webhook = async (request, response) => {
                 
                 if (event_object) {
                     if(event_object.metadata.commission === "paid"){
-                        if(event_object.metadata?.brandAssociateId && Array.isArray(event_object.metadata?.brandAssociateId))
+                        if(event_object.metadata?.brandIds && Array.isArray(event_object.metadata?.brandIds))
                         {
-                            let brandAssociateIds = event_object.metadata?.brandAssociateId;
+                            let brandAssociateIds = event_object.metadata?.brandIds;
                             let invoiceId = event_object.invoice;
                             // Get invoice details from invoiceId
                             const invoice = await stripe.invoices.retrieve(invoiceId);
@@ -1832,7 +1832,7 @@ exports.createCheckoutSession = async (req, res) => {
 // brand pay affiliate commission to admin
 exports.payToAdmin = async(req,res) =>{ 
     try {
-        const { commission, brandAssociateId } = req.body;
+        const { commission, brandAssociateId, brandIds } = req.body;
         let user_id = req.identity.id
         if (user_id) {
             var get_user = await Users.findOne({ id: user_id, isDeleted: false });
@@ -1857,7 +1857,8 @@ exports.payToAdmin = async(req,res) =>{
             metadata: {
                 user_id: user_id,
                 commission : "paid",
-                brandAssociateId : brandAssociateId
+                brandAssociateId : brandAssociateId || "",
+                brandIds
             },
             email: get_user.email
         });
@@ -1871,58 +1872,6 @@ exports.payToAdmin = async(req,res) =>{
         }
     } catch (error) {
         console.log(error,'-===========================')
-          // Handle errors and respond with an error message
-          return res.serverError({
-            success: false,
-            message: 'Error creating Checkout Session',
-        });
-    }
-}
-
-// Pay monthly pending transactions all at once
-exports.payMonthlyTransactions = async(req, res) => {
-    try
-    {
-        const { amount, brandAssociateId: brandIds } = req.body;
-        let user_id = req.identity.id
-        if (user_id) {
-            var get_user = await Users.findOne({ id: user_id, isDeleted: false });
-        }
-
-        line_items = [{
-            // 'price': commission * 100 || 0,
-            "price_data": {
-                currency: "usd",
-                unit_amount: amount * 100 || 0,
-                product_data: {
-                    name: "Commission Payment",  // Product name (could be a generic name)
-                    description: "Payment for commission"
-                },
-              },
-            'quantity': 1,
-        }];
-
-        // Create a Checkout Session
-        let create_session = await Services.StripeServices.one_time_payment_for_commission({
-            lineItems: line_items,
-            metadata: {
-                user_id: user_id,
-                commission : "paid",
-                brandAssociateId : brandIds
-            },
-            email: get_user.email
-        });
-
-        if (create_session) {
-            let resData = {
-                url: create_session.url
-            }
-
-            return response.success(resData, constants.COMMON.SUCCESS, req, res);
-        }
-    }
-    catch (error) {
-        console.log("Pay monthly transactions error: ", error)
           // Handle errors and respond with an error message
           return res.serverError({
             success: false,

@@ -109,7 +109,7 @@ exports.generateLinkOfAffiliate = async (req, res) => {
 
 exports.create = async function (req, res) {
   try {
-    const { event, timestamp, urlParams, data,couponId } = req.body;
+    const { event, timestamp, urlParams, data, couponId } = req.body;
 
     if (!event || !timestamp) {
       return response.failed(null, constants.AFFILIATELINK.MISSING_FIELDS, req, res);
@@ -146,7 +146,7 @@ exports.find = async function (req, res) {
 
     let skipNo = (page - 1) * count;
 
-    let { search, sortBy, status, isDeleted, format, addedBy, affiliate_id, brand_id, campaignId, commission_status, commission_paid, admin_paid, export_to_xls, startDate, endDate,couponId } = req.query;
+    let { search, sortBy, status, isDeleted, format, addedBy, affiliate_id, brand_id, campaignId, commission_status, commission_paid, admin_paid, export_to_xls, startDate, endDate, couponId } = req.query;
 
     // Handle search
     if (search) {
@@ -165,24 +165,24 @@ exports.find = async function (req, res) {
       query.isDeleted = false;
     }
 
-    
+
     let sortquery = {};
-  if (sortBy && typeof sortBy === "string") {
-    const [rawField, rawOrder] = sortBy.trim().split(/\s+/);
-    const field = rawField || "createdAt";
-    const sortType = rawOrder?.toLowerCase() === "asc" ? 1 : -1;
-    sortquery[field] = sortType;
-  } else {
-    sortquery = { updatedAt: -1 };
-  }
+    if (sortBy && typeof sortBy === "string") {
+      const [rawField, rawOrder] = sortBy.trim().split(/\s+/);
+      const field = rawField || "createdAt";
+      const sortType = rawOrder?.toLowerCase() === "asc" ? 1 : -1;
+      sortquery[field] = sortType;
+    } else {
+      sortquery = { updatedAt: -1 };
+    }
 
 
     // Handle status
     if (status) {
       query.status = status;
     }
-   
-     if (couponId) {
+
+    if (couponId) {
       query.couponId = new ObjectId(couponId);
     }
 
@@ -348,8 +348,8 @@ exports.find = async function (req, res) {
         lead_id: "$lead_id",
         amount_of_commission: "$amount_of_commission",
         commission_type: "$commission_type",
-        couponId:"$couponId",
-        couponDetails:"$coupondetalis"
+        couponId: "$couponId",
+        couponDetails: "$coupondetalis"
       },
     };
 
@@ -419,7 +419,7 @@ exports.find = async function (req, res) {
           order_id: obj?.order_id,
           commission: obj?.commission ? obj?.commission_type === "amount" ? `$${obj?.commission}` : `${obj?.commission}%` : "--",
           // amount_of_commission: obj?.amount_of_commission,
-           amount_of_commission: calculatetotalCommission(obj?.commission_type, obj?.price, obj?.commission, commission_override),
+          amount_of_commission: calculatetotalCommission(obj?.commission_type, obj?.price, obj?.commission, commission_override),
           commission_paid: obj?.commission_paid,
           commission_status: obj?.commission_status,
           counter: counter
@@ -479,7 +479,7 @@ exports.find = async function (req, res) {
 
 exports.findGraph = async (req, res) => {
   try {
-    const { startDate, endDate, filter,brand_id, affiliate_id } = req.query;
+    const { startDate, endDate, filter, brand_id, affiliate_id } = req.query;
 
     const moment = require('moment');
     let start, end;
@@ -520,10 +520,10 @@ exports.findGraph = async (req, res) => {
       }
     }
     let matchConditions = {}
-    if(brand_id){
+    if (brand_id) {
       matchConditions.brand_id = new ObjectId(brand_id)
     }
-    if(affiliate_id){
+    if (affiliate_id) {
       matchConditions.affiliate_id = new ObjectId(affiliate_id)
     }
 
@@ -535,14 +535,14 @@ exports.findGraph = async (req, res) => {
         },
       },
       {
-          $match: matchConditions
-        },
+        $match: matchConditions
+      },
       {
         $group: {
           _id: "$source", // You can change this to "campaign" or any field that makes sense
           totalAmount: { $sum: "$price" },
           count: { $sum: 1 },
-          firstCreatedAt: { $first: "$createdAt"},
+          firstCreatedAt: { $first: "$createdAt" },
 
         }
       },
@@ -583,15 +583,15 @@ exports.findOne = async function (req, res) {
 
 exports.update = async function (req, res) {
   try {
-    const { event, timestamp, urlParams, data ,couponId} = req.body;
+    const { event, timestamp, urlParams, data, couponId } = req.body;
 
     if (!event || !timestamp || !urlParams || !data) {
       return res
         .status(400)
         .json({ error: constants.AFFILIATELINK.MISSING_FIELDS });
     }
-    
-     if (couponId) {
+
+    if (couponId) {
       const couponCheck = await Coupon.findOne({ _id: couponId });
       if (!couponCheck) {
         return response.failed(
@@ -659,7 +659,7 @@ exports.report = async function (req, res) {
     query.isDeleted = false;
   }
 
- 
+
   let sortquery = {};
   if (sortBy && typeof sortBy === "string") {
     const [rawField, rawOrder] = sortBy.trim().split(/\s+/);
@@ -721,7 +721,7 @@ exports.report = async function (req, res) {
         updatedAt: '$updatedAt',
         createdAt: '$createdAt',
         month: { $month: "$createdAt" },
-        couponId:"$couponId",
+        couponId: "$couponId",
       }
     },
     {
@@ -849,22 +849,21 @@ exports.updateCommission = async (req, res) => {
         .status(400)
         .json({ error: constants.AFFILIATELINK.MISSING_FIELDS });
     }
-
     const updatedAffiliateLink = await AffiliateLink.updateOne({
       id: id,
       isDeleted: false,
     }).set(req.body);
-
-    if(commission_status == 'accepted')
-    {
-      let stripe_transaction_fee = 3.5;
-      let total_amount = Number(updatedAffiliateLink?.amount_of_commission) + (stripe_transaction_fee / 100);
+    
+    if (commission_status == 'accepted') {
+      let total_amount = calculateStripeFee(updatedAffiliateLink?.amount_of_commission)
+      // let total_amount = Number(updatedAffiliateLink?.amount_of_commission) + (stripe_transaction_fee / 100);
       // Find user acitve subscription plan
       const user_active_subscription = await Subscriptions.findOne({ user_id: req.identity?.id, status: "active" }).populate("subscription_plan_id");
       let commission_override = 0;
-      if(user_active_subscription)
-      {
+      if (user_active_subscription) {
         commission_override = user_active_subscription?.subscription_plan_id?.commission_override;
+      } else {
+        return response.failed(null, "You don't have any active plan", req, res);
       }
       // Find commission from campaigns table 
       let brandAssociation = await BrandAffiliateAssociation.findOne({ affiliate_id: updatedAffiliateLink?.affiliate_id, brand_id: updatedAffiliateLink?.brand_id, isActive: true }).populate("campaign_id");
@@ -874,7 +873,7 @@ exports.updateCommission = async (req, res) => {
       total_amount += Number(calculatetotalCommission(brandAssociation?.campaign_id?.commission_type, updatedAffiliateLink?.price, commission, commission_override).split("$")[1]);
 
       // Get Admin Details
-      let get_admin = await Users.findOne({role:"admin"});
+      let get_admin = await Users.findOne({ role: "admin" });
       let data = {
         user_id: req.identity?.id,
         paid_to: get_admin.id || "654227e78fd3b1018600710d",
@@ -895,12 +894,22 @@ exports.updateCommission = async (req, res) => {
 
       await Transactions.create(data);
     }
+
+
     return response.success(updatedAffiliateLink, constants.AFFILIATELINK.UPDATED, req, res);
 
 
   } catch (error) {
+    console.log(error, "error")
     return response.failed(null, `${error}`, req, res);
   }
 }
 
+
+function calculateStripeFee(amount) {
+  const PERCENT_FEE = 0.029; // 2.9%
+  const FIXED_FEE = 0.30;    // $0.30
+
+  return (amount * PERCENT_FEE) + FIXED_FEE;
+}
 
