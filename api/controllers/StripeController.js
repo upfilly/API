@@ -1861,7 +1861,11 @@ exports.payToAdmin = async (req, res) => {
                 brandAssociateId: brandAssociateId || "",
                 transaction_ids: transaction_ids.join(",")
             },
-            email: get_user.email
+            email: get_user.email,
+            invoice_creation: {
+                enabled: true
+            }
+
         });
 
         if (create_session) {
