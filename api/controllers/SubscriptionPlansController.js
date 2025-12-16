@@ -1782,17 +1782,14 @@ exports.webhook = async (request, response) => {
                             if (event_object.metadata?.transaction_ids) {
                                 let transaction_ids = event_object.metadata?.transaction_ids;
                                 transaction_ids = transaction_ids.split(",")
-                                let invoiceId = event_object.invoice;
-                                // Get invoice details from invoiceId
-                                const invoice = await stripe.invoices.retrieve(invoiceId);
-                                console.log("Invoice = ", invoice);
+                                
                                 // Iterate through array of ids and update the invoice in transactions collection
                                 for (let transaction_id of transaction_ids) {
                                     const get_transaction = await Transactions.findOne({ id: transaction_id })
                                     if (!get_transaction.affiliateLinkId) {
                                         continue
                                     }
-                                    await Transactions.updateOne({ id: transaction_id }, { invoice_url: invoice?.hosted_invoice_url, transaction_status: event_object.payment_status })
+                                    await Transactions.updateOne({ id: transaction_id }, { transaction_status: event_object.payment_status })
                                     await AffiliateLink.updateOne({ id: get_transaction.affiliateLinkId }, { commission_paid: "paid" });
                                 }
                             } else {
