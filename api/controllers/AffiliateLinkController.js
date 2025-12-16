@@ -889,7 +889,8 @@ exports.updateCommission = async (req, res) => {
         addedBy: req.identity?.id,
         updatedBy: null,
         paypal_transaction_id: "",
-        paypal_transaction_status: ""
+        paypal_transaction_status: "",
+        affiliateLinkId: id
       };
 
       await Transactions.create(data);

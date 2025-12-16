@@ -1481,7 +1481,10 @@ exports.stripeAccountTransfer = async (req, res) => {
     }
 
 }
-
+/**
+ * Don't use below webhook its wrong
+ * instead use subscription Plans webhook
+ */
 exports.webhook = async (request, response) => {
     try {
         const event = request.body;
@@ -1829,7 +1832,7 @@ exports.createCheckoutSession = async (req, res) => {
 // brand pay affiliate commission to admin
 exports.payToAdmin = async (req, res) => {
     try {
-        const { commission, brandAssociateId, brandIds } = req.body;
+        const { commission, brandAssociateId, transaction_ids } = req.body;
         let user_id = req.identity.id
         if (user_id) {
             var get_user = await Users.findOne({ id: user_id, isDeleted: false });
@@ -1856,7 +1859,7 @@ exports.payToAdmin = async (req, res) => {
                 user_id: user_id,
                 commission: "paid",
                 brandAssociateId: brandAssociateId || "",
-                brandIds: brandIds.join(",")
+                transaction_ids: transaction_ids.join(",")
             },
             email: get_user.email
         });

@@ -29,6 +29,9 @@ module.exports = {
         createdAt: { type: "ref", autoCreatedAt: true, },
         updatedAt: { type: "ref", autoUpdatedAt: true, },
         transactions_number: { type: "number" },
+        // new key
+        affiliateLinkId : {model:"affiliatelink"},
+        invoice_url: {type:"string"},
         // contract_id: { model: "contracts" },
 
 

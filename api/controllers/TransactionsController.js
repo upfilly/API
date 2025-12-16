@@ -1176,7 +1176,7 @@ exports.monthlyPendingTransactions = async function (req, res) {
             totalAmount += obj.amount;
         }
         monthlyData.totalPayableAmount = totalAmount;
-        monthlyData.ids = arr;
+        monthlyData.transaction_ids = arr;
 
         return res.status(200).json({ success: true, data: monthlyData });
     }
