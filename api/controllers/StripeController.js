@@ -182,7 +182,7 @@ exports.getAllCards = async (req, res) => {
         }
 
         // console.log(JSON.stringify(query), '-------query');
-        let totalresult = await  db.collection('cards').aggregate([
+        let totalresult = await db.collection('cards').aggregate([
             {
                 $project: {
                     id: "$_id",
@@ -200,62 +200,62 @@ exports.getAllCards = async (req, res) => {
                 $match: query
             }
         ]).toArray();
-            if (err) {
-                return response.failed(null, `${err}`, req, res);
+        if (err) {
+            return response.failed(null, `${err}`, req, res);
+        }
+
+        let result = await db.collection('cards').aggregate([
+            {
+                $project: {
+                    id: "$_id",
+                    card_id: "$card_id",
+                    isPrimary: "$isPrimary",
+                    user_id: "$user_id",
+                    addedBy: "$addedBy",
+                    updatedBy: "$updatedBy",
+                    isDeleted: "$isDeleted",
+                    createdAt: "$createdAt",
+                    updatedAt: "$updatedAt",
+                },
+            },
+            {
+                $match: query
+            },
+            {
+                $sort: { createdAt: -1 }
+            },
+            {
+                $skip: Number(skipNo)
+            },
+            {
+                $limit: Number(count)
             }
 
-            let result = await   db.collection('cards').aggregate([
-                {
-                    $project: {
-                        id: "$_id",
-                        card_id: "$card_id",
-                        isPrimary: "$isPrimary",
-                        user_id: "$user_id",
-                        addedBy: "$addedBy",
-                        updatedBy: "$updatedBy",
-                        isDeleted: "$isDeleted",
-                        createdAt: "$createdAt",
-                        updatedAt: "$updatedAt",
-                    },
-                },
-                {
-                    $match: query
-                },
-                {
-                    $sort: { createdAt: -1 }
-                },
-                {
-                    $skip: Number(skipNo)
-                },
-                {
-                    $limit: Number(count)
-                }
+        ]).toArray();
+        if (err) {
+            return response.failed(null, `${err}`, req, res);
+        }
 
-            ]).toArray();
-                if (err) {
-                    return response.failed(null, `${err}`, req, res);
+        if (result && result.length > 0) {
+            for await (let item of result) {
+                let get_user = await Users.findOne({ id: `${item.user_id}` });
+                // console.log(get_user,"--get_user");
+                let get_card_details = await Services.StripeServices.retrieve_source({
+                    stripe_customer_id: get_user.stripe_customer_id,
+                    card_id: item.card_id
+                })
+                if (get_card_details) {
+                    item.card_details = get_card_details;
                 }
+            }
+        }
 
-                if (result && result.length > 0) {
-                    for await (let item of result) {
-                        let get_user = await Users.findOne({ id: `${item.user_id}` });
-                        // console.log(get_user,"--get_user");
-                        let get_card_details = await Services.StripeServices.retrieve_source({
-                            stripe_customer_id: get_user.stripe_customer_id,
-                            card_id: item.card_id
-                        })
-                        if (get_card_details) {
-                            item.card_details = get_card_details;
-                        }
-                    }
-                }
+        let resData = {
+            total: totalresult ? totalresult.length : 0,
+            data: result ? result : []
+        }
+        return response.success(resData, constants.CARD.FETCHED, req, res)
 
-                let resData = {
-                    total: totalresult ? totalresult.length : 0,
-                    data: result ? result : []
-                }
-                return response.success(resData, constants.CARD.FETCHED, req, res)
-          
     } catch (err) {
         return response.failed(null, `${err}`, req, res)
     }
@@ -1486,7 +1486,7 @@ exports.webhook = async (request, response) => {
     try {
         const event = request.body;
         // Handle the event
-        
+
         switch (event.type) {
             case 'customer.subscription.updated':
                 var event_object = event.data.object;
@@ -1656,31 +1656,28 @@ exports.webhook = async (request, response) => {
             case 'checkout.session.completed':
 
                 var event_object = event.data.object;
-                
+
                 if (event_object) {
-                    if(event_object.metadata.commission === "paid"){
-                        if(event_object.metadata?.brandIds && Array.isArray(event_object.metadata?.brandIds))
-                        {
+                    if (event_object.metadata.commission === "paid") {
+                        if (event_object.metadata?.brandIds && Array.isArray(event_object.metadata?.brandIds)) {
                             let brandAssociateIds = event_object.metadata?.brandIds;
                             let invoiceId = event_object.invoice;
                             // Get invoice details from invoiceId
                             const invoice = await stripe.invoices.retrieve(invoiceId);
                             // console.log("Invoice = ", invoice);
                             // Iterate through array of ids and update the invoice in transactions collection
-                            for(let brandId of brandAssociateIds)
-                            {
+                            for (let brandId of brandAssociateIds) {
                                 // console.log("Brand id = ", brandId);
-                                await AffiliateLink.updateOne({ id: brandId },{ commission_paid :"paid", invoice: invoice?.hosted_invoice_url });
+                                await AffiliateLink.updateOne({ id: brandId }, { commission_paid: "paid", invoice: invoice?.hosted_invoice_url });
                             }
                         }
-                        else
-                        {
+                        else {
                             // update user
-                            console.log(event_object.metadata?.brandAssociateId,'event_object.metadata.brandAssociateId')
-                            await AffiliateLink.updateOne({id:event_object.metadata.brandAssociateId},{commission_paid :"paid"})
-                            
-                            let get_admin = await Users.findOne({role:"admin"})
-                            console.log(get_admin,'=============amdin details')
+                            console.log(event_object.metadata?.brandAssociateId, 'event_object.metadata.brandAssociateId')
+                            await AffiliateLink.updateOne({ id: event_object.metadata.brandAssociateId }, { commission_paid: "paid" })
+
+                            let get_admin = await Users.findOne({ role: "admin" })
+                            console.log(get_admin, '=============amdin details')
                             let transaction_payload = {
                                 user_id: event_object.metadata.user_id,
                                 paid_to: get_admin.id,
@@ -1692,16 +1689,16 @@ exports.webhook = async (request, response) => {
                                 amount: event_object.amount_subtotal ? event_object.amount_subtotal / 100 : 0,
                                 transaction_status: event_object.payment_status
                             }
-    
+
                             if (event_object.payment_status == "paid") {
                                 transaction_payload.transaction_status = "successful";
                             }
-    
-                             let data = await Transactions.create(transaction_payload).fetch();
-                             console.log(data,'--created transaction')
+
+                            let data = await Transactions.create(transaction_payload).fetch();
+                            console.log(data, '--created transaction')
                         }
-                         break;
-                    }else {
+                        break;
+                    } else {
                         let create_subscription_payload = {
                             user_id: event_object.metadata.user_id,
                             subscription_plan_id: event_object.metadata.plan_id,
@@ -1720,7 +1717,7 @@ exports.webhook = async (request, response) => {
                         let add_subscription = await Subscriptions.create(create_subscription_payload).fetch();
                         // console.log(add_subscription, "---add_subscription");
                         if (add_subscription) {
-                             await Users.updateOne(
+                            await Users.updateOne(
                                 { id: event_object.metadata.user_id },
                                 {
                                     subscription_id: event_object.subscription,
@@ -1749,15 +1746,15 @@ exports.webhook = async (request, response) => {
                             transaction_payload.transaction_status = "successful";
                         }
 
-                         await Transactions.create(transaction_payload).fetch();
+                        await Transactions.create(transaction_payload).fetch();
                     }
-                    
+
                 }
 
                 break;
 
             default:
-                
+
         }
 
         // Return a response to acknowledge receipt of the event
@@ -1830,24 +1827,25 @@ exports.createCheckoutSession = async (req, res) => {
 }
 
 // brand pay affiliate commission to admin
-exports.payToAdmin = async(req,res) =>{ 
+exports.payToAdmin = async (req, res) => {
     try {
         const { commission, brandAssociateId, brandIds } = req.body;
         let user_id = req.identity.id
         if (user_id) {
             var get_user = await Users.findOne({ id: user_id, isDeleted: false });
         }
+        const commissionAmount = Math.round(commission * 100); // 427406
 
         line_items = [{
             // 'price': commission * 100 || 0,
             "price_data": {
                 currency: "usd",
-                unit_amount: commission * 100 || 0,
+                unit_amount: commissionAmount || 0,
                 product_data: {
                     name: "Commission Payment",  // Product name (could be a generic name)
                     description: "Payment for commission"
                 },
-              },
+            },
             'quantity': 1,
         }];
 
@@ -1856,9 +1854,9 @@ exports.payToAdmin = async(req,res) =>{
             lineItems: line_items,
             metadata: {
                 user_id: user_id,
-                commission : "paid",
-                brandAssociateId : brandAssociateId || "",
-                brandIds
+                commission: "paid",
+                brandAssociateId: brandAssociateId || "",
+                brandIds: brandIds.join(",")
             },
             email: get_user.email
         });
@@ -1871,9 +1869,9 @@ exports.payToAdmin = async(req,res) =>{
             return response.success(resData, constants.COMMON.SUCCESS, req, res);
         }
     } catch (error) {
-        console.log(error,'-===========================')
-          // Handle errors and respond with an error message
-          return res.serverError({
+        console.log(error, '-===========================')
+        // Handle errors and respond with an error message
+        return res.serverError({
             success: false,
             message: 'Error creating Checkout Session',
         });
