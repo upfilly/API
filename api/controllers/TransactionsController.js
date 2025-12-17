@@ -24,7 +24,7 @@ exports.getAllTransactions = async (req, res) => {
         let count = req.param('count') || 10;
         let page = req.param('page') || 1;
         let sortBy = req.param("sortBy")
-        let { subscription_plan_id,time_duration,role, isDeleted, export_to_xls, transaction_type, paid_to, user_id, search, transaction_status } = req.query;
+        let { subscription_plan_id, time_duration, role, isDeleted, export_to_xls, transaction_type, paid_to, user_id, search, transaction_status } = req.query;
 
         if (search) {
             query.$or = [
@@ -60,110 +60,110 @@ exports.getAllTransactions = async (req, res) => {
 
         if (time_duration) {
             switch (time_duration) {
-              case "today":
-                var today = new Date();
-                today.setHours(0, 0, 0, 0);
-                query.createdAt = {
-                  $gte: today.toISOString(),
-                  $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000).toISOString(),
-                };
-                break;
-      
-              case "tomorrow":
-                let tomorrow = new Date();
-                tomorrow.setDate(tomorrow.getDate() + 1);
-                tomorrow.setHours(0, 0, 0, 0);
-                query.createdAt = {
-                  $gte: tomorrow.toISOString(),
-                  $lt: new Date(
-                    tomorrow.getTime() + 24 * 60 * 60 * 1000
-                  ).toISOString(),
-                };
-                break;
-      
-              case "this_weekend":
-                var today = new Date();
-                var saturday = new Date(today);
-                saturday.setDate(today.getDate() + ((6 - today.getDay() + 7) % 7));
-                saturday.setHours(0, 0, 0, 0);
-                var sunday = new Date(saturday);
-                sunday.setDate(saturday.getDate() + 1);
-                sunday.setHours(0, 0, 0, 0);
-      
-                query.createdAt = {
-                  $gte: saturday.toISOString(),
-                  $lt: new Date(sunday.getTime() + 24 * 60 * 60 * 1000).toISOString(),
-                };
-                break;
-      
-              case "this_week":
-                today = new Date();
-                var startOfWeek = new Date(today);
-                startOfWeek.setDate(today.getDate() - today.getDay());
-                startOfWeek.setHours(0, 0, 0, 0);
-                var endOfWeek = new Date(startOfWeek);
-                endOfWeek.setDate(startOfWeek.getDate() + 7);
-                endOfWeek.setHours(0, 0, 0, 0);
-      
-                query.createdAt = {
-                  $gte: startOfWeek.toISOString(),
-                  $lt: endOfWeek.toISOString(),
-                };
-                break;
-      
-              case "next_week":
-                var today = new Date();
-                var startOfNextWeek = new Date(today);
-                startOfNextWeek.setDate(
-                  today.getDate() + ((7 - today.getDay() + 1) % 7)
-                );
-                startOfNextWeek.setHours(0, 0, 0, 0);
-                var endOfNextWeek = new Date(startOfNextWeek);
-                endOfNextWeek.setDate(startOfNextWeek.getDate() + 7);
-                endOfNextWeek.setHours(0, 0, 0, 0);
-      
-                query.createdAt = {
-                  $gte: startOfNextWeek.toISOString(),
-                  $lt: endOfNextWeek.toISOString(),
-                };
-                break;
-      
-              case "this_month":
-                var today = new Date();
-                var startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-                var endOfMonth = new Date(
-                  today.getFullYear(),
-                  today.getMonth() + 1,
-                  0
-                );
-                query.createdAt = {
-                  $gte: startOfMonth.toISOString(),
-                  $lt: endOfMonth.toISOString(),
-                };
-                break;
-      
-              case "next_month":
-                var today = new Date();
-                var nextMonth = new Date(
-                  today.getFullYear(),
-                  today.getMonth() + 1,
-                  1
-                );
-                var startOfNextMonth = new Date(nextMonth);
-                var endOfNextMonth = new Date(
-                  nextMonth.getFullYear(),
-                  nextMonth.getMonth() + 1,
-                  0
-                );
-                query.createdAt = {
-                  $gte: startOfNextMonth.toISOString(),
-                  $lt: endOfNextMonth.toISOString(),
-                };
-                break;
-      
-              default:
+                case "today":
+                    var today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    query.createdAt = {
+                        $gte: today.toISOString(),
+                        $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000).toISOString(),
+                    };
+                    break;
+
+                case "tomorrow":
+                    let tomorrow = new Date();
+                    tomorrow.setDate(tomorrow.getDate() + 1);
+                    tomorrow.setHours(0, 0, 0, 0);
+                    query.createdAt = {
+                        $gte: tomorrow.toISOString(),
+                        $lt: new Date(
+                            tomorrow.getTime() + 24 * 60 * 60 * 1000
+                        ).toISOString(),
+                    };
+                    break;
+
+                case "this_weekend":
+                    var today = new Date();
+                    var saturday = new Date(today);
+                    saturday.setDate(today.getDate() + ((6 - today.getDay() + 7) % 7));
+                    saturday.setHours(0, 0, 0, 0);
+                    var sunday = new Date(saturday);
+                    sunday.setDate(saturday.getDate() + 1);
+                    sunday.setHours(0, 0, 0, 0);
+
+                    query.createdAt = {
+                        $gte: saturday.toISOString(),
+                        $lt: new Date(sunday.getTime() + 24 * 60 * 60 * 1000).toISOString(),
+                    };
+                    break;
+
+                case "this_week":
+                    today = new Date();
+                    var startOfWeek = new Date(today);
+                    startOfWeek.setDate(today.getDate() - today.getDay());
+                    startOfWeek.setHours(0, 0, 0, 0);
+                    var endOfWeek = new Date(startOfWeek);
+                    endOfWeek.setDate(startOfWeek.getDate() + 7);
+                    endOfWeek.setHours(0, 0, 0, 0);
+
+                    query.createdAt = {
+                        $gte: startOfWeek.toISOString(),
+                        $lt: endOfWeek.toISOString(),
+                    };
+                    break;
+
+                case "next_week":
+                    var today = new Date();
+                    var startOfNextWeek = new Date(today);
+                    startOfNextWeek.setDate(
+                        today.getDate() + ((7 - today.getDay() + 1) % 7)
+                    );
+                    startOfNextWeek.setHours(0, 0, 0, 0);
+                    var endOfNextWeek = new Date(startOfNextWeek);
+                    endOfNextWeek.setDate(startOfNextWeek.getDate() + 7);
+                    endOfNextWeek.setHours(0, 0, 0, 0);
+
+                    query.createdAt = {
+                        $gte: startOfNextWeek.toISOString(),
+                        $lt: endOfNextWeek.toISOString(),
+                    };
+                    break;
+
+                case "this_month":
+                    var today = new Date();
+                    var startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+                    var endOfMonth = new Date(
+                        today.getFullYear(),
+                        today.getMonth() + 1,
+                        0
+                    );
+                    query.createdAt = {
+                        $gte: startOfMonth.toISOString(),
+                        $lt: endOfMonth.toISOString(),
+                    };
+                    break;
+
+                case "next_month":
+                    var today = new Date();
+                    var nextMonth = new Date(
+                        today.getFullYear(),
+                        today.getMonth() + 1,
+                        1
+                    );
+                    var startOfNextMonth = new Date(nextMonth);
+                    var endOfNextMonth = new Date(
+                        nextMonth.getFullYear(),
+                        nextMonth.getMonth() + 1,
+                        0
+                    );
+                    query.createdAt = {
+                        $gte: startOfNextMonth.toISOString(),
+                        $lt: endOfNextMonth.toISOString(),
+                    };
+                    break;
+
+                default:
             }
-          }
+        }
 
 
         // let sortquery = {};
@@ -176,15 +176,15 @@ exports.getAllTransactions = async (req, res) => {
         // } else {
         //     sortquery = { updatedAt: -1 }
         // }
-         let sortquery = {};
-          if (sortBy && typeof sortBy === "string") {
+        let sortquery = {};
+        if (sortBy && typeof sortBy === "string") {
             const [rawField, rawOrder] = sortBy.trim().split(/\s+/);
             const field = rawField || "createdAt";
             const sortType = rawOrder?.toLowerCase() === "asc" ? 1 : -1;
             sortquery[field] = sortType;
-          } else {
+        } else {
             sortquery = { updatedAt: -1 };
-          }
+        }
 
         if (isDeleted) {
             if (isDeleted === 'true') {
@@ -197,7 +197,7 @@ exports.getAllTransactions = async (req, res) => {
             query.isDeleted = false;
         }
 
-      let  totalresult =await db.collection('transactions').aggregate([
+        let totalresult = await db.collection('transactions').aggregate([
             {
                 $lookup: {
                     from: "subscriptionplans",
@@ -282,7 +282,7 @@ exports.getAllTransactions = async (req, res) => {
                         $cond: [{ $ifNull: ['$trash_details', false] }, "$trash_details.isDeleted", false]
                     },
                     invoice_url: "$invoice_url",
-                    affiliateLinkId : "$affiliateLinkId"
+                    affiliateLinkId: "$affiliateLinkId"
                 }
             },
             {
@@ -292,172 +292,174 @@ exports.getAllTransactions = async (req, res) => {
                 $sort: sortquery
             },
         ]).toArray();
-           
-            let result = await db.collection('transactions').aggregate([
-                {
-                    $lookup: {
-                        from: "subscriptionplans",
-                        localField: "subscription_plan_id",
-                        foreignField: "_id",
-                        as: "subscription_plans_details"
-                    }
-                },
-                {
-                    $unwind: {
-                        path: '$subscription_plans_details',
-                        preserveNullAndEmptyArrays: true
-                    }
-                },
-                {
-                    $lookup: {
-                        from: "subscriptionplans",
-                        localField: "special_plan_id",
-                        foreignField: "_id",
-                        as: "special_plans_details"
-                    }
-                },
-                {
-                    $unwind: {
-                        path: '$special_plans_details',
-                        preserveNullAndEmptyArrays: true
-                    }
-                },
-                {
-                    $lookup: {
-                        from: "users",
-                        localField: "user_id",
-                        foreignField: "_id",
-                        as: "user_id_details"
-                    }
-                },
-                {
-                    $unwind: {
-                        path: '$user_id_details',
-                        preserveNullAndEmptyArrays: true
-                    }
-                },
-                {
-                    $lookup: {
-                        from: "users",
-                        localField: "paid_to",
-                        foreignField: "_id",
-                        as: "paid_to_details"
-                    }
-                },
-                {
-                    $unwind: {
-                        path: '$paid_to_details',
-                        preserveNullAndEmptyArrays: true
-                    }
-                },
-                {
-                    $project: {
-                        id: "$_id",
-                        user_id: "$user_id",
-                        paid_to: "$paid_to",
-                        transaction_type: "$transaction_type",
-                        subscription_plan_id: "$subscription_plan_id",
-                        subscription_id: "$subscription_plan_id",
-                        transaction_id: "$transaction_id",
-                        stripe_charge_id: "$stripe_charge_id",
-                        currency: "$currency",
-                        amount: "$amount",
-                        stripe_subscription_id: "$stripe_subscription_id",
-                        transaction_status: "$transaction_status",
-                        addedBy: "$addedBy",
-                        updatedBy: "$updatedBy",
-                        createdAt: "$createdAt",
-                        updatedAt: "$updatedAt",
-                        subscription_plan_name: "$subscription_plans_details.name",
-                        special_plan_name: "$special_plans_details.name",
-                        user_id_name: "$user_id_details.fullName",
-                        role: "$user_id_details.role",
-                        paid_to_name: "$paid_to_details.fullName",
-                        isDeleted: {
-                            $cond: [{ $ifNull: ['$trash_details', false] }, "$trash_details.isDeleted", false]
-                        }
+
+        let result = await db.collection('transactions').aggregate([
+            {
+                $lookup: {
+                    from: "subscriptionplans",
+                    localField: "subscription_plan_id",
+                    foreignField: "_id",
+                    as: "subscription_plans_details"
+                }
+            },
+            {
+                $unwind: {
+                    path: '$subscription_plans_details',
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
+                $lookup: {
+                    from: "subscriptionplans",
+                    localField: "special_plan_id",
+                    foreignField: "_id",
+                    as: "special_plans_details"
+                }
+            },
+            {
+                $unwind: {
+                    path: '$special_plans_details',
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "user_id",
+                    foreignField: "_id",
+                    as: "user_id_details"
+                }
+            },
+            {
+                $unwind: {
+                    path: '$user_id_details',
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "paid_to",
+                    foreignField: "_id",
+                    as: "paid_to_details"
+                }
+            },
+            {
+                $unwind: {
+                    path: '$paid_to_details',
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
+                $project: {
+                    id: "$_id",
+                    user_id: "$user_id",
+                    paid_to: "$paid_to",
+                    transaction_type: "$transaction_type",
+                    subscription_plan_id: "$subscription_plan_id",
+                    subscription_id: "$subscription_plan_id",
+                    transaction_id: "$transaction_id",
+                    stripe_charge_id: "$stripe_charge_id",
+                    currency: "$currency",
+                    amount: "$amount",
+                    stripe_subscription_id: "$stripe_subscription_id",
+                    transaction_status: "$transaction_status",
+                    addedBy: "$addedBy",
+                    updatedBy: "$updatedBy",
+                    createdAt: "$createdAt",
+                    updatedAt: "$updatedAt",
+                    subscription_plan_name: "$subscription_plans_details.name",
+                    special_plan_name: "$special_plans_details.name",
+                    user_id_name: "$user_id_details.fullName",
+                    role: "$user_id_details.role",
+                    paid_to_name: "$paid_to_details.fullName",
+                    isDeleted: {
+                        $cond: [{ $ifNull: ['$trash_details', false] }, "$trash_details.isDeleted", false]
                     },
+                    invoice_url: "$invoice_url",
+                    affiliateLinkId: "$affiliateLinkId"
                 },
-                {
-                    $match: query
-                },
-                {
-                    $sort: sortquery
-                },
-                {
-                    $skip: Number(skipNo)
-                },
-                {
-                    $limit: Number(count)
-                }
+            },
+            {
+                $match: query
+            },
+            {
+                $sort: sortquery
+            },
+            {
+                $skip: Number(skipNo)
+            },
+            {
+                $limit: Number(count)
+            }
 
-            ]).toArray();
-                
-
-                if (export_to_xls == "yes") {
-                    if (totalresult && totalresult.length > 0) {
-                        let workbook = new excel.Workbook();
-                        let worksheet = workbook.addWorksheet("Transactions");
-                        worksheet.columns = [
-                            { header: "S.No", key: "serial_number", width: 10 },
-                            { header: "Client Name", key: "user_id_name", width: 30 },
-                            { header: "Subscription Plan", key: "subscription_plan_name", width: 20 },
-                            { header: "Amount", key: "amount", width: 10 },
-                            { header: "Transaction ID", key: "transaction_id", width: 25 },
-                            { header: "Transaction Status", key: "transaction_status", width: 20 },
-                            { header: "Created At", key: "createdAt", width: 15 },
-                        ];
-                        let counter = 0;
-                        for await (let values of totalresult) {
-                            id = counter;
-                            if (counter) {
-                                values.serial_number = `${1 + counter}`;
-                            } else {
-                                values.serial_number = `${1}`;
-                            }
-
-                            if (values.amount) {
-                                values.amount = `$${values.amount}`;
-                            }
-                            worksheet.addRow(values);
-                            counter++;
-                        }
-
-                        try {
-                            res.setHeader(
-                                "Content-Type",
-                                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                            );
-                            res.setHeader(
-                                "Content-Disposition",
-                                "attachment; filename=" + "transactions.xlsx"
-                            );
+        ]).toArray();
 
 
-                            return workbook.xlsx.write(res).then(function () {
-                                res.status(200).end();
-                            });
-
-                        } catch (err) {
-                            return response.failed(null, `${err}`, req, res);
-                        }
-
+        if (export_to_xls == "yes") {
+            if (totalresult && totalresult.length > 0) {
+                let workbook = new excel.Workbook();
+                let worksheet = workbook.addWorksheet("Transactions");
+                worksheet.columns = [
+                    { header: "S.No", key: "serial_number", width: 10 },
+                    { header: "Client Name", key: "user_id_name", width: 30 },
+                    { header: "Subscription Plan", key: "subscription_plan_name", width: 20 },
+                    { header: "Amount", key: "amount", width: 10 },
+                    { header: "Transaction ID", key: "transaction_id", width: 25 },
+                    { header: "Transaction Status", key: "transaction_status", width: 20 },
+                    { header: "Created At", key: "createdAt", width: 15 },
+                ];
+                let counter = 0;
+                for await (let values of totalresult) {
+                    id = counter;
+                    if (counter) {
+                        values.serial_number = `${1 + counter}`;
                     } else {
-                        return response.failed(null, `No data found to export`, req, res)
-                    }
-                } else {
-                    let resData = {
-                        total: totalresult ? totalresult.length : 0,
-                        data: result ? result : []
-                    }
-                    if (!req.param('page') && !req.param('count')) {
-                        resData.data = totalresult ? totalresult : [];
+                        values.serial_number = `${1}`;
                     }
 
-                    return response.success(resData, constants.TRANSACTION.FETCHED_ALL, req, res)
+                    if (values.amount) {
+                        values.amount = `$${values.amount}`;
+                    }
+                    worksheet.addRow(values);
+                    counter++;
                 }
 
-          
+                try {
+                    res.setHeader(
+                        "Content-Type",
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    );
+                    res.setHeader(
+                        "Content-Disposition",
+                        "attachment; filename=" + "transactions.xlsx"
+                    );
+
+
+                    return workbook.xlsx.write(res).then(function () {
+                        res.status(200).end();
+                    });
+
+                } catch (err) {
+                    return response.failed(null, `${err}`, req, res);
+                }
+
+            } else {
+                return response.failed(null, `No data found to export`, req, res)
+            }
+        } else {
+            let resData = {
+                total: totalresult ? totalresult.length : 0,
+                data: result ? result : []
+            }
+            if (!req.param('page') && !req.param('count')) {
+                resData.data = totalresult ? totalresult : [];
+            }
+
+            return response.success(resData, constants.TRANSACTION.FETCHED_ALL, req, res)
+        }
+
+
 
     } catch (err) {
         return response.failed(null, `${err}`, req, res)
@@ -621,14 +623,14 @@ exports.getAllTransactionsContracts = async (req, res) => {
         //     sortquery = { createdAt: -1 }
         // }
         let sortquery = {};
-          if (sortBy && typeof sortBy === "string") {
+        if (sortBy && typeof sortBy === "string") {
             const [rawField, rawOrder] = sortBy.trim().split(/\s+/);
             const field = rawField || "createdAt";
             const sortType = rawOrder?.toLowerCase() === "asc" ? 1 : -1;
             sortquery[field] = sortType;
-          } else {
+        } else {
             sortquery = { updatedAt: -1 };
-          }
+        }
 
         if (user_id) {
             query.user_id = new ObjectId(user_id);
@@ -721,22 +723,22 @@ exports.getAllTransactionsContracts = async (req, res) => {
         pipeline.push(group_stage);
 
         // Pipeline Stages
-        let totalresult= db.collection('transactions').aggregate(pipeline).toArray();
-            pipeline.push({
-                $skip: Number(skipNo)
-            });
-            pipeline.push({
-                $limit: Number(count)
-            });
-            let result=await db.collection("transactions").aggregate(pipeline).toArray();
-                let resData = {
-                    total_count: totalresult ? totalresult.length : 0,
-                    data: result ? result : [],
-                }
-                if (!req.param('page') && !req.param('count')) {
-                    resData.data = totalresult ? totalresult : [];
-                }
-                return response.success(resData, constants.CONTRACT.USERS_FETCHED, req, res);
+        let totalresult = db.collection('transactions').aggregate(pipeline).toArray();
+        pipeline.push({
+            $skip: Number(skipNo)
+        });
+        pipeline.push({
+            $limit: Number(count)
+        });
+        let result = await db.collection("transactions").aggregate(pipeline).toArray();
+        let resData = {
+            total_count: totalresult ? totalresult.length : 0,
+            data: result ? result : [],
+        }
+        if (!req.param('page') && !req.param('count')) {
+            resData.data = totalresult ? totalresult : [];
+        }
+        return response.success(resData, constants.CONTRACT.USERS_FETCHED, req, res);
 
     } catch (err) {
         return response.failed(null, `${err}`, req, res);
@@ -994,11 +996,11 @@ exports.getTransactionsGraphData = async (req, res) => {
 // exports.transactionGraph= async function (req, res) {
 //     try {
 //       const { startDate, endDate, filter } = req.query;
-  
+
 //       const moment = require('moment');
 //       let start, end;
 //       let filterType = filter || "this_month";
-  
+
 //       if (startDate && endDate) {
 //         start = moment(startDate, "YYYY-MM-DD").startOf("day").toDate();
 //         end = moment(endDate, "YYYY-MM-DD").endOf("day").toDate();
@@ -1053,9 +1055,9 @@ exports.getTransactionsGraphData = async (req, res) => {
 //           $sort: { totalAmount: -1 },
 //         },
 //       ]).toArray();
-  
+
 //       return res.status(200).json({ success: true, data: result });
-  
+
 //     } catch (err) {
 //       sails.log.error("Transaction graph error:", err);
 //       return res.serverError({ success: false, message: err.message });
@@ -1063,117 +1065,114 @@ exports.getTransactionsGraphData = async (req, res) => {
 //   }
 exports.transactionGraph = async function (req, res) {
     try {
-      const { startDate, endDate, filter, brand_id, affiliate_id } = req.query;
-  
-      const moment = require('moment');
-      let start, end;
-      let filterType = filter || "this_month";
-  
-      if (startDate && endDate) {
-        start = moment(startDate, "YYYY-MM-DD").startOf("day").toDate();
-        end = moment(endDate, "YYYY-MM-DD").endOf("day").toDate();
-      } else {
-        switch (filterType) {
-          case "this_week":
-            start = moment().startOf("week").toDate();
-            end = moment().endOf("week").toDate();
-            break;
-          case "last_week":
-            start = moment().subtract(1, "week").startOf("week").toDate();
-            end = moment().subtract(1, "week").endOf("week").toDate();
-            break;
-          case "this_month":
-            start = moment().startOf("month").toDate();
-            end = moment().endOf("month").toDate();
-            break;
-          case "last_month":
-            start = moment().subtract(1, "month").startOf("month").toDate();
-            end = moment().subtract(1, "month").endOf("month").toDate();
-            break;
-          case "this_year":
-            start = moment().startOf("year").toDate();
-            end = moment().endOf("year").toDate();
-            break;
-          case "last_year":
-            start = moment().subtract(1, "year").startOf("year").toDate();
-            end = moment().subtract(1, "year").endOf("year").toDate();
-            break;
-          default:
-            start = moment().startOf("month").toDate();
-            end = moment().endOf("month").toDate();
-        }
-      }
+        const { startDate, endDate, filter, brand_id, affiliate_id } = req.query;
 
-      const matchConditions = {
-        createdAt: { $gte: start, $lte: end }
-      };
+        const moment = require('moment');
+        let start, end;
+        let filterType = filter || "this_month";
 
-      if (brand_id || affiliate_id) {
-        matchConditions.$or = [];
-        
-        if (brand_id) {
-          matchConditions.$or.push({ user_id: new ObjectId(brand_id) });
+        if (startDate && endDate) {
+            start = moment(startDate, "YYYY-MM-DD").startOf("day").toDate();
+            end = moment(endDate, "YYYY-MM-DD").endOf("day").toDate();
+        } else {
+            switch (filterType) {
+                case "this_week":
+                    start = moment().startOf("week").toDate();
+                    end = moment().endOf("week").toDate();
+                    break;
+                case "last_week":
+                    start = moment().subtract(1, "week").startOf("week").toDate();
+                    end = moment().subtract(1, "week").endOf("week").toDate();
+                    break;
+                case "this_month":
+                    start = moment().startOf("month").toDate();
+                    end = moment().endOf("month").toDate();
+                    break;
+                case "last_month":
+                    start = moment().subtract(1, "month").startOf("month").toDate();
+                    end = moment().subtract(1, "month").endOf("month").toDate();
+                    break;
+                case "this_year":
+                    start = moment().startOf("year").toDate();
+                    end = moment().endOf("year").toDate();
+                    break;
+                case "last_year":
+                    start = moment().subtract(1, "year").startOf("year").toDate();
+                    end = moment().subtract(1, "year").endOf("year").toDate();
+                    break;
+                default:
+                    start = moment().startOf("month").toDate();
+                    end = moment().endOf("month").toDate();
+            }
         }
-        
-        if (affiliate_id) {
-          matchConditions.$or.push({ user_id: affiliate_id });
+
+        const matchConditions = {
+            createdAt: { $gte: start, $lte: end }
+        };
+
+        if (brand_id || affiliate_id) {
+            matchConditions.$or = [];
+
+            if (brand_id) {
+                matchConditions.$or.push({ user_id: new ObjectId(brand_id) });
+            }
+
+            if (affiliate_id) {
+                matchConditions.$or.push({ user_id: affiliate_id });
+            }
         }
-      }
-      console.log(matchConditions,'matchConditions')
-      const result = await db.collection("transactions").aggregate([
-        {
-          $match: matchConditions
-        },
-        {
-          $group: {
-            _id: "$transaction_type",
-            totalAmount: { $sum: "$amount" },
-             firstCreatedAt: { $first: "$createdAt"},
-            count: { $sum: 1 },
-          },
-        },
-        {
-          $project: {
-            transaction_type: "$_id",
-            totalAmount: 1,
-            count: 1,
-            createdAt: "$firstCreatedAt",
-            _id: 0,
-          },
-        },
-        {
-          $sort: { totalAmount: -1 },
-        },
-      ]).toArray();
-  
-      return res.status(200).json({ success: true, data: result });
-  
+        console.log(matchConditions, 'matchConditions')
+        const result = await db.collection("transactions").aggregate([
+            {
+                $match: matchConditions
+            },
+            {
+                $group: {
+                    _id: "$transaction_type",
+                    totalAmount: { $sum: "$amount" },
+                    firstCreatedAt: { $first: "$createdAt" },
+                    count: { $sum: 1 },
+                },
+            },
+            {
+                $project: {
+                    transaction_type: "$_id",
+                    totalAmount: 1,
+                    count: 1,
+                    createdAt: "$firstCreatedAt",
+                    _id: 0,
+                },
+            },
+            {
+                $sort: { totalAmount: -1 },
+            },
+        ]).toArray();
+
+        return res.status(200).json({ success: true, data: result });
+
     } catch (err) {
-      sails.log.error("Transaction graph error:", err);
-      return res.serverError({ success: false, message: err.message });
+        sails.log.error("Transaction graph error:", err);
+        return res.serverError({ success: false, message: err.message });
     }
 }
 
 exports.monthlyPendingTransactions = async function (req, res) {
-    try
-    {
+    try {
         const date = new Date();
         const startDate = new Date(Date.UTC(date.getFullYear(), date.getMonth(), 1));
-        const endDate = new Date(Date.UTC(date.getFullYear(), date.getMonth() + 1,  0, 23, 59, 59, 999));
+        const endDate = new Date(Date.UTC(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59, 999));
         // console.log("Start date  = ", startDate, "End Date = ", endDate);
         let monthlyData = {}; // Object containing response
 
-        const getTransactions = await Transactions.find({ createdAt: { '>=': startDate, '<=': endDate}, user_id: req.identity?.id, transaction_type: "pay_commission", transaction_status: "pending" });
-        if(!getTransactions)
-        {
-            return res.status(400).json({ success: false, message: "No pending transactions found within the month"});
+        const getTransactions = await Transactions.find({ createdAt: { '>=': startDate, '<=': endDate }, user_id: req.identity?.id, transaction_type: "pay_commission", transaction_status: "pending" });
+        if (!getTransactions) {
+            return res.status(400).json({ success: false, message: "No pending transactions found within the month" });
         }
 
         monthlyData.totalPendingTransactions = getTransactions.length;
 
         let totalAmount = 0, arr = [];
-        for(let obj of getTransactions)
-        {
+        for (let obj of getTransactions) {
             arr.push(obj.id);
             totalAmount += obj.amount;
         }
@@ -1183,8 +1182,7 @@ exports.monthlyPendingTransactions = async function (req, res) {
         return res.status(200).json({ success: true, data: monthlyData });
     }
     catch (err) {
-      sails.log.error("Payable Monthly Pending Transactions error:", err);
-      return res.serverError({ success: false, message: err.message });
+        sails.log.error("Payable Monthly Pending Transactions error:", err);
+        return res.serverError({ success: false, message: err.message });
     }
 }
-  
