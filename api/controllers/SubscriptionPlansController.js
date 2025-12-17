@@ -1790,6 +1790,7 @@ exports.webhook = async (request, response) => {
                                 // Iterate through array of ids and update the invoice in transactions collection
                                 for (let transaction_id of transaction_ids) {
                                     const get_transaction = await Transactions.findOne({ id: transaction_id, invoice_url: get_invoice?.invoice_pdf || "" })
+                                    console.log(get_transaction,'get_transaction')
                                     if (!get_transaction?.affiliateLinkId) {
                                         continue
                                     }
