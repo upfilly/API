@@ -1785,6 +1785,7 @@ exports.webhook = async (request, response) => {
                                 let get_invoice
                                 if (event_object.invoice) {
                                     get_invoice = await stripe.invoices.retrieve(event_object.invoice);
+                                    console.log(get_invoice,'get_invoice')
                                 }
                                 // Iterate through array of ids and update the invoice in transactions collection
                                 for (let transaction_id of transaction_ids) {
