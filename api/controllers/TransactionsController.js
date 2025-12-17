@@ -281,6 +281,8 @@ exports.getAllTransactions = async (req, res) => {
                     isDeleted: {
                         $cond: [{ $ifNull: ['$trash_details', false] }, "$trash_details.isDeleted", false]
                     },
+                    invoice_url: "$invoice_url",
+                    affiliateLinkId : "$affiliateLinkId"
                 }
             },
             {
