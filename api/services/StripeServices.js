@@ -284,21 +284,24 @@ exports.one_time_payment = async (options) => {
 }
 // service of pay only commission 
 exports.one_time_payment_for_commission = async (options) => {
-    
+
     const session = await stripe.checkout.sessions.create({
         line_items: options.lineItems,
         mode: 'payment',
         success_url: `${credentials.FRONT_WEB_URL}/paymentSuccess?id=${options.metadata.user_id}`,
         cancel_url: `${credentials.FRONT_WEB_URL}/cancel?id=${options.metadata.user_id}`,
         metadata: options.metadata,
-        customer_email: options.email
+        customer_email: options.email,
+        invoice_creation: {
+            enabled: true
+        }
     });
     return session;
 }
 
 // exports.one_time_payment = async (options) => {
 //     const session = await stripe.checkout.sessions.create({
-       
+
 //         line_items: options.line_items,
 //         mode: 'subscription',
 //         success_url: `${credentials.FRONT_WEB_URL}active-plan?payment=success`,
@@ -361,7 +364,7 @@ exports.transfer_fund = async (options) => {
     return createPayout
 }
 
-exports.retrieve_balance = async() => {
+exports.retrieve_balance = async () => {
     const balance = await stripe.balance.retrieve();
     return balance
 }

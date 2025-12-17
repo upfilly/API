@@ -1782,10 +1782,13 @@ exports.webhook = async (request, response) => {
                             if (event_object.metadata?.transaction_ids) {
                                 let transaction_ids = event_object.metadata?.transaction_ids;
                                 transaction_ids = transaction_ids.split(",")
-                                
+                                let get_invoice
+                                if (event_object.invoice) {
+                                    get_invoice = await stripe.invoices.retrieve(event_object.invoice);
+                                }
                                 // Iterate through array of ids and update the invoice in transactions collection
                                 for (let transaction_id of transaction_ids) {
-                                    const get_transaction = await Transactions.findOne({ id: transaction_id })
+                                    const get_transaction = await Transactions.findOne({ id: transaction_id, invoice_url: get_invoice?.invoice_pdf || "" })
                                     if (!get_transaction.affiliateLinkId) {
                                         continue
                                     }

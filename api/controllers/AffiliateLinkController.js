@@ -843,7 +843,7 @@ exports.report = async function (req, res) {
 
 exports.updateCommission = async (req, res) => {
   try {
-    const { commission_status, commission_paid, id } = req.body
+    const { commission_status, commission_paid, id,campaignId } = req.body
     if ((commission_status || commission_paid) && !id) {
       return res
         .status(400)
@@ -853,10 +853,26 @@ exports.updateCommission = async (req, res) => {
       id: id,
       isDeleted: false,
     }).set(req.body);
-    
+    let amount = 0
     if (commission_status == 'accepted') {
-      let total_amount = calculateStripeFee(updatedAffiliateLink?.amount_of_commission)
-      // let total_amount = Number(updatedAffiliateLink?.amount_of_commission) + (stripe_transaction_fee / 100);
+      const get_campaign = await Campaign.findOne({id:campaignId})
+      if(!get_campaign){
+        throw "Campaigin not found"
+      }
+
+      const commission_type = get_campaign.commission_type
+
+      if(commission_type == "percentage"){
+        const percentage_value = (get_campaign.commission/100)*+updatedAffiliateLink.price
+        amount = percentage_value
+      }else{
+        amount = get_campaign.commission
+      }
+
+
+      let total_amount = calculateStripeFee(amount)
+      total_amount += amount
+      
       // Find user acitve subscription plan
       const user_active_subscription = await Subscriptions.findOne({ user_id: req.identity?.id, status: "active" }).populate("subscription_plan_id");
       let commission_override = 0;
@@ -865,13 +881,9 @@ exports.updateCommission = async (req, res) => {
       } else {
         return response.failed(null, "You don't have any active plan", req, res);
       }
-      // Find commission from campaigns table 
-      let brandAssociation = await BrandAffiliateAssociation.findOne({ affiliate_id: updatedAffiliateLink?.affiliate_id, brand_id: updatedAffiliateLink?.brand_id, isActive: true }).populate("campaign_id");
+      
 
-      let commission = brandAssociation?.campaign_id?.commission || 0;
-      // Calculate total amount by adding final commission
-      total_amount += Number(calculatetotalCommission(brandAssociation?.campaign_id?.commission_type, updatedAffiliateLink?.price, commission, commission_override).split("$")[1]);
-
+      total_amount += +commission_override
       // Get Admin Details
       let get_admin = await Users.findOne({ role: "admin" });
       let data = {
@@ -893,7 +905,7 @@ exports.updateCommission = async (req, res) => {
         affiliateLinkId: id
       };
 
-      await Transactions.create(data);
+      // await Transactions.create(data);
     }
 
 

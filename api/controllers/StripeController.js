@@ -1862,9 +1862,6 @@ exports.payToAdmin = async (req, res) => {
                 transaction_ids: transaction_ids.join(",")
             },
             email: get_user.email,
-            invoice_creation: {
-                enabled: true
-            }
 
         });
 
