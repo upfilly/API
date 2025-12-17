@@ -1785,16 +1785,15 @@ exports.webhook = async (request, response) => {
                                 let get_invoice
                                 if (event_object.invoice) {
                                     get_invoice = await stripe.invoices.retrieve(event_object.invoice);
-                                    console.log(get_invoice,'get_invoice')
                                 }
                                 // Iterate through array of ids and update the invoice in transactions collection
                                 for (let transaction_id of transaction_ids) {
-                                    const get_transaction = await Transactions.findOne({ id: transaction_id, invoice_url: get_invoice?.invoice_pdf || "" })
-                                    console.log(get_transaction,'get_transaction')
+                                    const get_transaction = await Transactions.findOne({ id: transaction_id })
+                                    
                                     if (!get_transaction?.affiliateLinkId) {
                                         continue
                                     }
-                                    await Transactions.updateOne({ id: transaction_id }, { transaction_status: event_object.payment_status })
+                                    await Transactions.updateOne({ id: transaction_id }, { transaction_status: event_object.payment_status, invoice_url: get_invoice?.invoice_pdf || "" })
                                     await AffiliateLink.updateOne({ id: get_transaction.affiliateLinkId }, { commission_paid: "paid" });
                                 }
                             } else {
