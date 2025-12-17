@@ -852,7 +852,7 @@ exports.updateCommission = async (req, res) => {
     const updatedAffiliateLink = await AffiliateLink.updateOne({
       id: id,
       isDeleted: false,
-    }).set(req.body);
+    }).set({commission_status:commission_status});
     let amount = 0
     if (commission_status == 'accepted') {
       const get_campaign = await Campaign.findOne({id:campaignId})
@@ -905,7 +905,7 @@ exports.updateCommission = async (req, res) => {
         affiliateLinkId: id
       };
 
-      // await Transactions.create(data);
+      await Transactions.create(data);
     }
 
 
