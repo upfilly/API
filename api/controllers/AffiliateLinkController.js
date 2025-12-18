@@ -882,8 +882,8 @@ exports.updateCommission = async (req, res) => {
         return response.failed(null, "You don't have any active plan", req, res);
       }
       
-
-      total_amount += +commission_override
+      const commission_override_amount = (commission_override/100)*total_amount
+      total_amount += +commission_override_amount
       // Get Admin Details
       let get_admin = await Users.findOne({ role: "admin" });
       let data = {
