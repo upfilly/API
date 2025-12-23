@@ -143,7 +143,7 @@ module.exports = {
         });
     },
 
-    sendEmail: ((to, subject, message, next) => {
+    sendEmail: ((to, subject, message,brandName, next) => {
 
         Smtp.find({}).then(smtp => {
             if (smtp.length > 0) {
@@ -162,7 +162,7 @@ module.exports = {
                     }
                 }));
                 transport.sendMail({
-                    from: 'Upfilly  <' + smtp[0].user + '>',
+                    from: `${brandName || "Upfilly"} <' + smtp[0].user + '>'`,
                     to: to,
                     subject: subject,
                     html: message

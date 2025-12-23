@@ -51,7 +51,7 @@ exports.sendEmailMessageTemplate = async (options) => {
 // </body>   
 // `
     
-   SmtpController.sendEmail(affiliateEmail, 'Recieved Email Message', emailTemp)
+   SmtpController.sendEmail(affiliateEmail, 'Recieved Email Message', emailTemp,brandFullName)
 };
  exports.reminderToOpenAccount = async (options) => {
         const {email,fullName} = options

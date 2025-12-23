@@ -1442,6 +1442,7 @@ exports.sendEmailMessage = async (req, res) => {
               await Emails.EmailMessageTemplate.sendEmailMessageTemplate({
                 emailTemp: data.emailTemplate,
                 affiliateEmail: findUser.email,
+                brandFullName
               });
             } else {
               console.log("emailSent is false in newsletter");
@@ -1568,6 +1569,7 @@ exports.sendEmailMessage = async (req, res) => {
               await Emails.EmailMessageTemplate.sendEmailMessageTemplate({
               emailTemp: data.emailTemplate,
               affiliateEmail: findUser.affiliateEmail,
+              brandFullName
             });
             } else {
               console.log("emailSent is false in newsletter");
@@ -1741,6 +1743,7 @@ exports.sendEmailMessage = async (req, res) => {
                await Emails.EmailMessageTemplate.sendEmailMessageTemplate({
               emailTemp: data.emailTemplate,
               affiliateEmail: findUser.affiliateEmail,
+              brandFullName
             });
             } else {
               console.log("emailSent is false in newletter");
