@@ -162,7 +162,7 @@ module.exports = {
                     }
                 }));
                 transport.sendMail({
-                    from: `${brandName || "Upfilly"} <' + smtp[0].user + '>'`,
+                    from: `${brandName || "Upfilly"} ${'<' + smtp[0].user + '>'}`,
                     to: to,
                     subject: subject,
                     html: message
