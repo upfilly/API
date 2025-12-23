@@ -545,8 +545,14 @@ module.exports = {
         email: req.body.email.toLowerCase(),
         isDeleted: false,
       });
+      let updated_new_user
       if (get_user) {
-        throw constants.user.EMAIL_EXIST;
+        const chat_user = await Users.findOne({email: req.body.email.toLowerCase(),isDeleted: false,chat_user:true})
+        if(chat_user){
+          updated_new_user = await Users.updateOne({id:chat_user.id},req.body)
+        }else{
+          throw constants.user.EMAIL_EXIST;
+        }
       }
 
       if (req.body.firstName && req.body.lastName) {
@@ -580,7 +586,12 @@ module.exports = {
       //   }
       // }
 
-      let add_user = await Users.create(req.body).fetch();
+      let add_user
+      if(!updated_new_user){
+        add_user = await Users.create(req.body).fetch();
+      }else{
+        add_user = updated_new_user
+      }
       if (add_user) {
         if (req.body.email) {
           let get_invites = await Invite.findOne({

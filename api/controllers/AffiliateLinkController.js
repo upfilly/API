@@ -892,7 +892,7 @@ exports.updateCommission = async (req, res) => {
         transaction_type: "pay_commission",
         transaction_id: "",
         stripe_charge_id: "",
-        currency: updatedAffiliateLink?.currency,
+        currency: get_campaign?.currencies,
         amount: total_amount.toFixed(2),
         transaction_status: "pending",
         special_plan_id: null,
