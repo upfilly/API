@@ -32,6 +32,7 @@ module.exports = {
         // new key
         affiliateLinkId : {model:"affiliatelink"},
         invoice_url: {type:"string"},
+        custom_invoice_url: {type:"string"},
         // contract_id: { model: "contracts" },
 
 

@@ -11,9 +11,13 @@ const db = sails.getDatastore().manager;
 const excel = require('exceljs');
 const moment = require("moment")
 const ObjectId = require('mongodb').ObjectId;
+const puppeteer = require("puppeteer")
+const fs = require("fs");
+const path = require("path");
 // const {customAlphabet} = require('nanoid');
 // const nanoid = customAlphabet('1234567890abcdef', 6);
 // const baseUrl = 'https://upfilly.com';
+const credentials = require("../../config/local")
 
 function calculatetotalCommission(commission_type, price, commission, commission_override) {
   let CalPrice;
@@ -843,7 +847,7 @@ exports.report = async function (req, res) {
 
 exports.updateCommission = async (req, res) => {
   try {
-    const { commission_status, commission_paid, id,campaignId } = req.body
+    const { commission_status, commission_paid, id, campaignId } = req.body
     if ((commission_status || commission_paid) && !id) {
       return res
         .status(400)
@@ -852,27 +856,27 @@ exports.updateCommission = async (req, res) => {
     const updatedAffiliateLink = await AffiliateLink.updateOne({
       id: id,
       isDeleted: false,
-    }).set({commission_status:commission_status});
+    }).set({ commission_status: commission_status });
     let amount = 0
     if (commission_status == 'accepted') {
-      const get_campaign = await Campaign.findOne({id:campaignId})
-      if(!get_campaign){
+      const get_campaign = await Campaign.findOne({ id: campaignId })
+      if (!get_campaign) {
         throw "Campaigin not found"
       }
 
       const commission_type = get_campaign.commission_type
 
-      if(commission_type == "percentage"){
-        const percentage_value = (get_campaign.commission/100)*+updatedAffiliateLink.price
+      if (commission_type == "percentage") {
+        const percentage_value = (get_campaign.commission / 100) * +updatedAffiliateLink.price
         amount = percentage_value
-      }else{
+      } else {
         amount = get_campaign.commission
       }
 
 
-      let total_amount = calculateStripeFee(amount)
-      total_amount += amount
-      
+      const stripe_fee = calculateStripeFee(amount)
+      let total_amount = stripe_fee + amount
+
       // Find user acitve subscription plan
       const user_active_subscription = await Subscriptions.findOne({ user_id: req.identity?.id, status: "active" }).populate("subscription_plan_id");
       let commission_override = 0;
@@ -881,11 +885,33 @@ exports.updateCommission = async (req, res) => {
       } else {
         return response.failed(null, "You don't have any active plan", req, res);
       }
-      
-      const commission_override_amount = (commission_override/100)*total_amount
+
+      const commission_override_amount = (commission_override / 100) * total_amount
       total_amount += +commission_override_amount
       // Get Admin Details
       let get_admin = await Users.findOne({ role: "admin" });
+
+      // Create invoices directory if it doesn't exist
+      const invoicesDir = path.join(__dirname, '../../assets', 'invoices');
+      if (!fs.existsSync(invoicesDir)) {
+        fs.mkdirSync(invoicesDir, { recursive: true });
+      }
+
+      const filename = `invoice_${id}_${Date.now()}.pdf`;
+      const outputPath = path.join(invoicesDir, filename);
+
+      const payload = {
+        commission: amount,
+        stripe_fees: stripe_fee,
+        platform_fee: commission_override,
+        total_amount
+      }
+      // Generate PDF and wait for it to complete
+      await htmlToPdf(invoice_itm_html(payload), outputPath);
+      const custom_invoice_url = `invoices/${filename}`
+
+      console.log("PDF created:", custom_invoice_url);
+
       let data = {
         user_id: req.identity?.id,
         paid_to: get_admin.id || "654227e78fd3b1018600710d",
@@ -902,7 +928,8 @@ exports.updateCommission = async (req, res) => {
         updatedBy: null,
         paypal_transaction_id: "",
         paypal_transaction_status: "",
-        affiliateLinkId: id
+        affiliateLinkId: id,
+        custom_invoice_url
       };
 
       await Transactions.create(data);
@@ -925,4 +952,174 @@ function calculateStripeFee(amount) {
 
   return (amount * PERCENT_FEE) + FIXED_FEE;
 }
+
+const invoice_itm_html = (payload) => {
+  
+  // const { commission, stripe_fees, platform_fee, total_amount } = payload
+
+    return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Invoice</title>
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f6f8fb;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .invoice-container {
+      max-width: 600px;
+      margin: auto;
+      background: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+      padding: 30px;
+    }
+
+    .invoice-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px solid #eee;
+      padding-bottom: 15px;
+      margin-bottom: 25px;
+    }
+
+    .invoice-header img {
+      height: 40px;
+    }
+
+    .invoice-header h2 {
+      margin: 0;
+      font-size: 22px;
+      color: #333;
+    }
+
+    .invoice-details {
+      margin-bottom: 25px;
+    }
+
+    .invoice-details p {
+      margin: 4px 0;
+      color: #666;
+      font-size: 14px;
+    }
+
+    .invoice-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+
+    .invoice-table th,
+    .invoice-table td {
+      padding: 12px 10px;
+      font-size: 14px;
+    }
+
+    .invoice-table th {
+      text-align: left;
+      color: #555;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .invoice-table td {
+      text-align: right;
+      color: #333;
+    }
+
+    .invoice-table tr:not(:last-child) td {
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .total-row td {
+      font-weight: bold;
+      font-size: 16px;
+      border-top: 2px solid #333;
+      padding-top: 15px;
+    }
+
+    .footer-note {
+      text-align: center;
+      font-size: 12px;
+      color: #888;
+      margin-top: 30px;
+    }
+
+    @page { margin: 0; }
+  </style>
+</head>
+<body>
+  <div class="invoice-container">
+    <div class="invoice-header">
+      <img src=${credentials.BACK_WEB_URL}/images/logo.png alt="Upfilly Logo" />
+      <h2>Invoice</h2>
+    </div>
+
+    <div class="invoice-details">
+      <p><strong>Invoice ID:</strong> #INV-${Date.now()}</p>
+      <p><strong>Date:</strong> ${new Date().toLocaleDateString('en-CA')}</p>
+    </div>
+
+    <table class="invoice-table">
+      <tr>
+        <th>Description</th>
+        <th>Amount</th>
+      </tr>
+      <tr>
+        <td style="text-align:left;">Main Amount</td>
+        <td>${payload.commission}</td>
+      </tr>
+      <tr>
+        <td style="text-align:left;">Stripe Fees</td>
+        <td>-${payload.stripe_fees}</td>
+      </tr>
+      <tr>
+        <td style="text-align:left;">Upfilly Platform Fee</td>
+        <td>-${payload.platform_fee}</td>
+      </tr>
+      <tr class="total-row">
+        <td style="text-align:left;">Total Payout</td>
+        <td>${payload.total_amount}</td>
+      </tr>
+    </table>
+
+    <div class="footer-note">
+      Powered by Upfilly • Payments processed securely via Stripe
+    </div>
+  </div>
+</body>
+</html>
+`;
+console.log(payload,'======')
+}
+
+async function htmlToPdf(html, outputPath) {
+  const browser = await puppeteer.launch({
+    headless: "new",
+    executablePath: process.env.LOCAL ? '/usr/bin/google-chrome': '/usr/bin/chromium-browser',
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+  });
+
+  try {
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: "networkidle0" });
+
+    const pdfBuffer = await page.pdf({
+      format: "A4",
+      printBackground: true,
+      margin: { top: "20px", right: "20px", bottom: "20px", left: "20px" },
+    });
+
+    fs.writeFileSync(outputPath, pdfBuffer);
+    return outputPath;
+  } finally {
+    await browser.close();
+  }
+}
+
 
