@@ -1076,11 +1076,11 @@ const invoice_itm_html = (payload) => {
       </tr>
       <tr>
         <td style="text-align:left;">Stripe Fees</td>
-        <td>-${payload.stripe_fees}</td>
+        <td>${payload.stripe_fees}</td>
       </tr>
       <tr>
         <td style="text-align:left;">Upfilly Platform Fee</td>
-        <td>-${payload.platform_fee}</td>
+        <td>${payload.platform_fee}</td>
       </tr>
       <tr class="total-row">
         <td style="text-align:left;">Total Payout</td>
@@ -1095,7 +1095,6 @@ const invoice_itm_html = (payload) => {
 </body>
 </html>
 `;
-console.log(payload,'======')
 }
 
 async function htmlToPdf(html, outputPath) {
