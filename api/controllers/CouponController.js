@@ -65,8 +65,6 @@ exports.addCoupon = async (req, res) => {
       delete req.body.expirationDate;
     }
 
-
-
     let couponExists = await Coupon.findOne({
       couponCode: req.body.couponCode,
       isDeleted: false,
@@ -89,7 +87,7 @@ exports.addCoupon = async (req, res) => {
     //   }
     // }
 
-     if (expireCheck === false || expireCheck === "false") {
+    if (expireCheck === false || expireCheck === "false") {
       if (new Date(startDate) > new Date(expirationDate)) {
         throw constants.COUPON.START_DATE_OVERLAPED;
       }
@@ -102,7 +100,6 @@ exports.addCoupon = async (req, res) => {
         }
       }
     }
-
 
     if (campaign_id && campaign_id.length > 0) {
       for (let itm of campaign_id) {
@@ -337,9 +334,9 @@ exports.editCoupon = async function (req, res) {
     //     throw constants.user.USER_NOT_FOUND;
     //   }
     // }
-     if (media && media.length > 0) {
+    if (media && media.length > 0) {
       for (let itm of media) {
-        let check = await Users.findOne({ id: itm ,isDeleted: false});
+        let check = await Users.findOne({ id: itm, isDeleted: false });
         if (!check) {
           throw constants.COUPON.MEDIA_ID;
         }
@@ -353,16 +350,15 @@ exports.editCoupon = async function (req, res) {
     // }else{
     //   delete req.body.expirationDate;
     // }
-     if (couponExists.expireCheck == false) {
-     if (expirationDate) {
+    if (couponExists.expireCheck == false) {
+      if (expirationDate) {
+        req.body.expirationDate = new Date(expirationDate);
+      }
+    } else if (req.body?.expireCheck == false) {
       req.body.expirationDate = new Date(expirationDate);
+    } else {
+      delete req.body.expirationDate;
     }
-    }else if (req.body?.expireCheck  == false) {
-      req.body.expirationDate = new Date(expirationDate);
-     }else{
-      delete req.body.expirationDate
-     }
-    
 
     const coupon = await Coupon.updateOne({ id: req.body.id }, req.body);
 
@@ -483,7 +479,6 @@ exports.getAllCoupon = async (req, res) => {
         : false;
     }
 
-  
     let sortquery = {};
     if (sortBy && typeof sortBy === "string") {
       const [rawField, rawOrder] = sortBy.trim().split(/\s+/);
@@ -830,7 +825,12 @@ exports.getByIdCoupon = async (req, res) => {
     }
     const get_Coupon = await Coupon.findOne({ id: id }).populate("addedBy");
     if (!get_Coupon) {
-      return response.success(get_Coupon, constants.COUPON.NOT_EXISTS, req, res);
+      return response.success(
+        get_Coupon,
+        constants.COUPON.NOT_EXISTS,
+        req,
+        res
+      );
     }
     let mediaUsers = [];
     if (get_Coupon.media?.length) {
@@ -841,9 +841,20 @@ exports.getByIdCoupon = async (req, res) => {
         },
       });
     }
+    let campaignDetails = [];
+    // Fetch campaign details
+    if (get_Coupon.campaign_id?.length) {
+      campaignDetails = await Campaign.find({
+        where: {
+          id: { in: get_Coupon.campaign_id },
+          isDeleted: false,
+        },
+      });
+    }
 
-     get_Coupon.mediaDetails = mediaUsers;
-      return response.success(get_Coupon, constants.COUPON.FETCHED, req, res);
+    get_Coupon.mediaDetails = mediaUsers;
+    get_Coupon.campaignDetails = campaignDetails;
+    return response.success(get_Coupon, constants.COUPON.FETCHED, req, res);
   } catch (error) {
     return response.failed(null, `${error}`, req, res);
   }
