@@ -1380,22 +1380,6 @@ exports.monthlyPendingTransactionsAdmin = async function (req, res) {
       totalAdminPendingPrice += item.price || 0;
     }
 
-    // Find user acitve subscription plan
-    const user_active_subscription = await Subscriptions.findOne({
-      user_id: req.identity?.id,
-      status: "active",
-    }).populate("subscription_plan_id");
-    let commission_override = 0;
-    if (user_active_subscription) {
-      commission_override =
-        user_active_subscription?.subscription_plan_id?.commission_override;
-    } else {
-      return response.failed(null, "You don't have any active plan", req, res);
-    }
-
-    const commission_override_amount =
-      (commission_override / 100) * totalAmount;
-    totalAmount += +commission_override_amount;
     const stripe_fee = calculateStripeFee(totalAmount);
 
     monthlyData.admin_pending_total_price = totalAdminPendingPrice;

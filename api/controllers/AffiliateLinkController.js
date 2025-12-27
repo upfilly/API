@@ -878,16 +878,16 @@ exports.updateCommission = async (req, res) => {
       let total_amount =  amount
 
       // Find user acitve subscription plan
-      const user_active_subscription = await Subscriptions.findOne({ user_id: req.identity?.id, status: "active" }).populate("subscription_plan_id");
-      let commission_override = 0;
-      if (user_active_subscription) {
-        commission_override = user_active_subscription?.subscription_plan_id?.commission_override;
-      } else {
-        return response.failed(null, "You don't have any active plan", req, res);
-      }
+      // const user_active_subscription = await Subscriptions.findOne({ user_id: req.identity?.id, status: "active" }).populate("subscription_plan_id");
+      // let commission_override = 0;
+      // if (user_active_subscription) {
+      //   commission_override = user_active_subscription?.subscription_plan_id?.commission_override;
+      // } else {
+      //   return response.failed(null, "You don't have any active plan", req, res);
+      // }
 
-      const commission_override_amount = (commission_override / 100) * total_amount
-      total_amount += +commission_override_amount
+      // const commission_override_amount = (commission_override / 100) * total_amount
+      // total_amount += +commission_override_amount
       // Get Admin Details
       let get_admin = await Users.findOne({ role: "admin" });
 
