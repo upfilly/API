@@ -17,7 +17,11 @@ const pdf = require("html-pdf-phantomjs-included");
 const { start } = require("pm2");
 const { Transaction } = require("mongodb");
 const { getTasks } = require("node-cron");
-// const AffiliateLink = require('../models/AffiliateLink.js');
+const path = require("path");
+const fs = require("fs");
+const puppeteer = require("puppeteer")
+
+
 
 exports.getAllTransactions = async (req, res) => {
   try {
@@ -1395,9 +1399,467 @@ exports.monthlyPendingTransactionsAdmin = async function (req, res) {
   }
 };
 
+
+// exports.payCommissionAdmin = async (req, res) => {
+//   try {
+//     const { affiliateIds } = req.body;
+
+//     if (!Array.isArray(affiliateIds) || !affiliateIds.length) {
+//       return response.failed(null, "affiliateIds is required", req, res);
+//     }
+
+//     // 1️ Find affiliate links (Waterline syntax)
+//     const affiliateLinks = await AffiliateLink.findAll({
+//         id: { in: affiliateIds },
+//         isDeleted: false
+//     });
+
+//     if (!affiliateLinks.length) {
+//       return response.failed(null, "Affiliate links not found", req, res);
+//     }
+
+//     // Get admin
+//     const admin = await Users.findOne({ role: "admin" });
+//     if (!admin) throw "Admin not found";
+
+//     //  Invoice directory
+//     const invoicesDir = path.join(__dirname, "../../assets", "invoices");
+//     if (!fs.existsSync(invoicesDir)) {
+//       fs.mkdirSync(invoicesDir, { recursive: true });
+//     }
+
+//     const transactions = [];
+
+//     // Process each affiliate link
+//     for (const link of affiliateLinks) {
+
+//       // Prevent double payment
+//       if (link.admin_paid === true) continue;
+
+//       const amount = Number(link.amount_of_commission || 0);
+//       if (!amount) continue;
+
+//       const total_amount = Number(amount.toFixed(2));
+
+//       // 5 Generate invoice
+//       const filename = `invoice_${link._id}_${Date.now()}.pdf`;
+//       const outputPath = path.join(invoicesDir, filename);
+
+//       const payload = {
+//         commission: total_amount,
+//         total_amount
+//       };
+
+//       await htmlToPdf(invoice_itm_html(payload), outputPath);
+
+//       const custom_invoice_url_admin = `invoices/${filename}`;
+
+//       //  Create transaction
+//       const transaction = await Transactions.create({
+//         user_id: link.user_id,
+//         paid_to: admin.id,
+//         transaction_type: "pay_commission",
+//         currency: link.currency || "USD",
+//         amount: total_amount,
+//         transaction_status: "pending",
+//         affiliateLinkId: link._id,
+//         custom_invoice_url_admin,
+//         addedBy: req.identity?.id
+//       });
+
+//       transactions.push(transaction);
+
+//       // Update affiliate link (admin paid)
+//       await AffiliateLink.updateOne(
+//         { _id: link._id },
+//         {
+//           $set: {
+//             admin_paid: true,
+//           }
+//         }
+//       );
+//     }
+
+//     return response.success(
+//       { transactions },
+//       "Commission transactions created & invoices generated",
+//       req,
+//       res
+//     );
+
+//   } catch (error) {
+//     console.error(error);
+//     return response.failed(null, error.toString(), req, res);
+//   }
+// };
+
+exports.payCommissionAdmin = async (req, res) => {
+  try {
+    const { affiliateIds } = req.body;
+
+    if (!Array.isArray(affiliateIds) || !affiliateIds.length) {
+      return response.failed(null, "affiliateIds is required", req, res);
+    }
+
+    // Debug: Log what we're looking for
+    console.log("Looking for affiliate IDs:", affiliateIds);
+    
+    // 1️⃣ Find affiliate links using Waterline syntax
+    const affiliateLinks = await AffiliateLink.find({
+      where: {
+        id: affiliateIds,  // Direct array, no $in operator
+        isDeleted: false
+      }
+    });
+
+    console.log("Found affiliate links:", affiliateLinks?.length || 0);
+    
+    if (!affiliateLinks || !affiliateLinks.length) {
+      // Check if any IDs exist at all
+      const anyLinks = await AffiliateLink.find({
+        where:{
+        id: affiliateIds
+        }
+      });
+      
+      console.log("Any links found (including deleted):", anyLinks?.length || 0);
+      
+      if (anyLinks && anyLinks.length) {
+        const deletedLinks = anyLinks.filter(link => link.isDeleted === true);
+        console.log("Deleted links found:", deletedLinks.length);
+      }
+      
+      return response.failed(null, `Affiliate links not found. Checked IDs: ${affiliateIds.join(', ')}`, req, res);
+    }
+
+    // 2️⃣ Get admin
+    const admin = await Users.findOne({ role: "admin" });
+    if (!admin) {
+      return response.failed(null, "Admin not found", req, res);
+    }
+
+    // 3️⃣ Invoice directory
+    const invoicesDir = path.join(__dirname, "../../assets", "invoices");
+    if (!fs.existsSync(invoicesDir)) {
+      fs.mkdirSync(invoicesDir, { recursive: true });
+    }
+
+    const transactions = [];
+    const processedIds = [];
+
+    // 4️⃣ Process each affiliate link
+    for (const link of affiliateLinks) {
+      console.log(`Processing link ID: ${link.id}, Admin paid: ${link.admin_paid}`);
+
+      // Prevent double payment
+      if (link.admin_paid === true) {
+        console.log(`Skipping ${link.id} - already paid`);
+        continue;
+      }
+
+      const amount = Number(link.amount_of_commission || 0);
+      if (!amount || amount <= 0) {
+        console.log(`Skipping ${link.id} - invalid amount: ${amount}`);
+        continue;
+      }
+
+      const total_amount = Number(amount.toFixed(2));
+      console.log(`Processing payment of $${total_amount} for link ${link.id}`);
+
+      // // 5️⃣ Generate invoice
+      // const filename = `invoice_${link.id}_${Date.now()}.pdf`;
+      // const outputPath = path.join(invoicesDir, filename);
+
+      // try {
+      //   await htmlToPdf(
+      //     invoice_itm_html({ 
+      //       commission: total_amount, 
+      //       total_amount,
+      //       linkId: link.id,
+      //       userId: link.user_id,
+      //       date: new Date().toISOString().split('T')[0]
+      //     }),
+      //     outputPath
+      //   );
+      //   console.log(`Invoice generated: ${filename}`);
+      // } catch (invoiceError) {
+      //   console.error(`Failed to generate invoice for ${link.id}:`, invoiceError);
+      //   // Continue with transaction even if invoice fails
+      // }
+
+      // const custom_invoice_url_admin = `invoices/${filename}`;
+
+      // // 6️⃣ Create transaction
+      // try {
+      //   const transaction = await Transaction.create({
+      //     user_id: link.user_id,
+      //     paid_to: admin.id,
+      //     transaction_type: "pay_commission",
+      //     currency: link.currency || "USD",
+      //     amount: total_amount,
+      //     transaction_status: "pending",
+      //     affiliateLinkId: link.id,
+      //     custom_invoice_url_admin,
+      //     addedBy: req.identity?.id || admin.id
+      //   }).fetch(); // 🔑 REQUIRED in Waterline
+
+      //   if (transaction) {
+      //     transactions.push(transaction);
+      //     processedIds.push(link.id);
+      //     console.log(`Transaction created: ${transaction.id}`);
+      //   }
+      // } catch (transactionError) {
+      //   console.error(`Failed to create transaction for ${link.id}:`, transactionError);
+      //   continue; // Skip to next link if transaction fails
+      // }
+    const invoicesDir = path.join(__dirname, '../../assets', 'invoices');
+      if (!fs.existsSync(invoicesDir)) {
+        fs.mkdirSync(invoicesDir, { recursive: true });
+      }
+
+      const filename = `invoice_${link.id}_${Date.now()}.pdf`;
+      const outputPath = path.join(invoicesDir, filename);
+
+      const payload = {
+        commission: amount,
+        // stripe_fees: stripe_fee,
+        // platform_fee: commission_override,
+        total_amount
+      }
+      // Generate PDF and wait for it to complete
+      await htmlToPdf(invoice_itm_html(payload), outputPath);
+      const custom_invoice_url = `invoices/${filename}`
+
+      console.log("PDF created:", custom_invoice_url);
+
+      let data = {
+        user_id: req.identity?.id,
+        paid_to: get_admin.id || "654227e78fd3b1018600710d",
+        transaction_type: "pay_commission",
+        transaction_id: "",
+        stripe_charge_id: "",
+        currency: get_campaign?.currencies,
+        amount: total_amount.toFixed(2),
+        transaction_status: "pending",
+        special_plan_id: null,
+        subscription_id: null,
+        stripe_subscription_id: "",
+        addedBy: req.identity?.id,
+        updatedBy: null,
+        paypal_transaction_id: "",
+        paypal_transaction_status: "",
+        affiliateLinkId: id,
+        custom_invoice_url
+      };
+
+      await Transactions.create(data);
+    }
+      // 7️⃣ Update affiliate link
+      try {
+        const updatedLink = await AffiliateLink.updateOne({ id: link.id })
+          .set({ 
+            admin_paid: true,
+          });
+        
+        if (updatedLink) {
+          console.log(`Marked link ${link.id} as paid`);
+        }
+      } catch (updateError) {
+        console.error(`Failed to update link ${link.id}:`, updateError);
+        // Don't fail the whole process if update fails
+      }
+       return response.success(
+      { 
+        transactions,
+        processedIds,
+        totalAmount: transactions.reduce((sum, t) => sum + t.amount, 0),
+        count: transactions.length
+      },
+      `Successfully processed ${transactions.length} commission payment(s)`,
+      req,
+      res
+    );
+    }
+    
+
+
+  catch (error) {
+    console.error("Pay commission admin error:", error);
+    return response.failed(null, error.message || error.toString(), req, res);
+  }
+};
+
 function calculateStripeFee(amount) {
   const PERCENT_FEE = 0.029; // 2.9%
   const FIXED_FEE = 0.3; // $0.30
 
   return amount * PERCENT_FEE + FIXED_FEE;
+}
+
+const invoice_itm_html = (payload) => {
+  
+  // const { commission, stripe_fees, platform_fee, total_amount } = payload
+
+    return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Invoice</title>
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f6f8fb;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .invoice-container {
+      max-width: 600px;
+      margin: auto;
+      background: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+      padding: 30px;
+    }
+
+    .invoice-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px solid #eee;
+      padding-bottom: 15px;
+      margin-bottom: 25px;
+    }
+
+    .invoice-header img {
+      height: 40px;
+    }
+
+    .invoice-header h2 {
+      margin: 0;
+      font-size: 22px;
+      color: #333;
+    }
+
+    .invoice-details {
+      margin-bottom: 25px;
+    }
+
+    .invoice-details p {
+      margin: 4px 0;
+      color: #666;
+      font-size: 14px;
+    }
+
+    .invoice-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+
+    .invoice-table th,
+    .invoice-table td {
+      padding: 12px 10px;
+      font-size: 14px;
+    }
+
+    .invoice-table th {
+      text-align: left;
+      color: #555;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .invoice-table td {
+      text-align: right;
+      color: #333;
+    }
+
+    .invoice-table tr:not(:last-child) td {
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .total-row td {
+      font-weight: bold;
+      font-size: 16px;
+      border-top: 2px solid #333;
+      padding-top: 15px;
+    }
+
+    .footer-note {
+      text-align: center;
+      font-size: 12px;
+      color: #888;
+      margin-top: 30px;
+    }
+
+    @page { margin: 0; }
+  </style>
+</head>
+<body>
+  <div class="invoice-container">
+    <div class="invoice-header">
+      <img src=${credentials.BACK_WEB_URL}/images/logo.png alt="Upfilly Logo" />
+      <h2>Invoice</h2>
+    </div>
+
+    <div class="invoice-details">
+      <p><strong>Invoice ID:</strong> #INV-${Date.now()}</p>
+      <p><strong>Date:</strong> ${new Date().toLocaleDateString('en-CA')}</p>
+    </div>
+
+    <table class="invoice-table">
+      <tr>
+        <th>Description</th>
+        <th>Amount</th>
+      </tr>
+      <tr>
+        <td style="text-align:left;">Main Amount</td>
+        <td>${payload.commission}</td>
+      </tr>
+      <tr>
+        <td style="text-align:left;">Stripe Fees</td>
+        <td>${payload.stripe_fees}</td>
+      </tr>
+      <tr>
+        <td style="text-align:left;">Upfilly Platform Fee</td>
+        <td>${payload.platform_fee}</td>
+      </tr>
+      <tr class="total-row">
+        <td style="text-align:left;">Total Payout</td>
+        <td>${payload.total_amount}</td>
+      </tr>
+    </table>
+
+    <div class="footer-note">
+      Powered by Upfilly • Payments processed securely via Stripe
+    </div>
+  </div>
+</body>
+</html>
+`;
+}
+
+async function htmlToPdf(html, outputPath) {
+  const browser = await puppeteer.launch({
+    headless: "new",
+    executablePath: process.env.LOCAL ? '/usr/bin/google-chrome': '/usr/bin/chromium-browser',
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+  });
+
+  try {
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: "networkidle0" });
+
+    const pdfBuffer = await page.pdf({
+      format: "A4",
+      printBackground: true,
+      margin: { top: "20px", right: "20px", bottom: "20px", left: "20px" },
+    });
+
+    fs.writeFileSync(outputPath, pdfBuffer);
+    return outputPath;
+  } finally {
+    await browser.close();
+  }
 }

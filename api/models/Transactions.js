@@ -33,6 +33,8 @@ module.exports = {
         affiliateLinkId : {model:"affiliatelink"},
         invoice_url: {type:"string"},
         custom_invoice_url: {type:"string"},
+        custom_invoice_url_admin: {type:"string"},
+    
         // contract_id: { model: "contracts" },
 
 

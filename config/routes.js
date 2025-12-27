@@ -145,6 +145,8 @@ module.exports.routes = {
   "get /transactionGraph": "TransactionsController.transactionGraph",
   "get /payableMonthlyTransactions": "TransactionsController.monthlyPendingTransactions",
   "get /payableMonthlyTransactionsAdmin": "TransactionsController.monthlyPendingTransactionsAdmin",
+  "put /adminCommissionPay": "TransactionsController.payCommissionAdmin",
+
 
 
   /**
