@@ -874,8 +874,8 @@ exports.updateCommission = async (req, res) => {
       }
 
 
-      const stripe_fee = calculateStripeFee(amount)
-      let total_amount = stripe_fee + amount
+      // const stripe_fee = calculateStripeFee(amount)
+      let total_amount =  amount
 
       // Find user acitve subscription plan
       const user_active_subscription = await Subscriptions.findOne({ user_id: req.identity?.id, status: "active" }).populate("subscription_plan_id");
