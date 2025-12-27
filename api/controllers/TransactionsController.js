@@ -1320,6 +1320,7 @@ exports.monthlyPendingTransactions = async function (req, res) {
     sails.log.error("Payable Monthly Pending Transactions error:", err);
     return res.serverError({ success: false, message: err.message });
   }
+  
 };
 
 exports.monthlyPendingTransactionsAdmin = async function (req, res) {
