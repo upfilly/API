@@ -581,6 +581,7 @@ exports.findOne = async function (req, res) {
     }
     return response.success(affiliateLink, constants.AFFILIATELINK.FETCHED, req, res);
   } catch (error) {
+    console.log("error",error)
     return response.failed(null, `${error}`, req, res);
   }
 };
@@ -902,8 +903,8 @@ exports.updateCommission = async (req, res) => {
 
       const payload = {
         commission: amount,
-        stripe_fees: stripe_fee,
-        platform_fee: commission_override,
+        // stripe_fees: stripe_fee,
+        // platform_fee: commission_override,
         total_amount
       }
       // Generate PDF and wait for it to complete
