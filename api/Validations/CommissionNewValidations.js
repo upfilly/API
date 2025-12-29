@@ -17,7 +17,7 @@ exports.addCommission = async (req, res, next) => {
         locality: Joi.string().optional(),
         isContain_headers: Joi.string().optional(),
         commission_status: Joi.string().optional(),
-        campaign_id:  Joi.string().optional().allow(null),
+        campaign_id:  Joi.string().required().allow(null),
     });
     return await Validate(schema, req, res);
 
