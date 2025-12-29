@@ -1379,9 +1379,12 @@ exports.monthlyPendingTransactionsAdmin = async function (req, res) {
     });
 
     let totalAdminPendingPrice = 0;
+    let idArr = []
+    
 
     for (let item of totalPending_PaidCount) {
       totalAdminPendingPrice += item.price || 0;
+      idArr.push(item.id || item._id);
     }
 
     const stripe_fee = calculateStripeFee(totalAmount);
@@ -1389,7 +1392,7 @@ exports.monthlyPendingTransactionsAdmin = async function (req, res) {
     monthlyData.admin_pending_total_price = totalAdminPendingPrice;
     monthlyData.admin_paid_count = totalPending_PaidCount.length;
     monthlyData.totalPayableAmount = totalAmount + stripe_fee;
-    monthlyData.transaction_ids = arr;
+    monthlyData.transaction_ids = idArr;
 
     return res.status(200).json({ success: true, data: monthlyData });
   } catch (err) {
@@ -1398,100 +1401,6 @@ exports.monthlyPendingTransactionsAdmin = async function (req, res) {
     return res.serverError({ success: false, message: err.message });
   }
 };
-
-
-// exports.payCommissionAdmin = async (req, res) => {
-//   try {
-//     const { affiliateIds } = req.body;
-
-//     if (!Array.isArray(affiliateIds) || !affiliateIds.length) {
-//       return response.failed(null, "affiliateIds is required", req, res);
-//     }
-
-//     // 1️ Find affiliate links (Waterline syntax)
-//     const affiliateLinks = await AffiliateLink.findAll({
-//         id: { in: affiliateIds },
-//         isDeleted: false
-//     });
-
-//     if (!affiliateLinks.length) {
-//       return response.failed(null, "Affiliate links not found", req, res);
-//     }
-
-//     // Get admin
-//     const admin = await Users.findOne({ role: "admin" });
-//     if (!admin) throw "Admin not found";
-
-//     //  Invoice directory
-//     const invoicesDir = path.join(__dirname, "../../assets", "invoices");
-//     if (!fs.existsSync(invoicesDir)) {
-//       fs.mkdirSync(invoicesDir, { recursive: true });
-//     }
-
-//     const transactions = [];
-
-//     // Process each affiliate link
-//     for (const link of affiliateLinks) {
-
-//       // Prevent double payment
-//       if (link.admin_paid === true) continue;
-
-//       const amount = Number(link.amount_of_commission || 0);
-//       if (!amount) continue;
-
-//       const total_amount = Number(amount.toFixed(2));
-
-//       // 5 Generate invoice
-//       const filename = `invoice_${link._id}_${Date.now()}.pdf`;
-//       const outputPath = path.join(invoicesDir, filename);
-
-//       const payload = {
-//         commission: total_amount,
-//         total_amount
-//       };
-
-//       await htmlToPdf(invoice_itm_html(payload), outputPath);
-
-//       const custom_invoice_url_admin = `invoices/${filename}`;
-
-//       //  Create transaction
-//       const transaction = await Transactions.create({
-//         user_id: link.user_id,
-//         paid_to: admin.id,
-//         transaction_type: "pay_commission",
-//         currency: link.currency || "USD",
-//         amount: total_amount,
-//         transaction_status: "pending",
-//         affiliateLinkId: link._id,
-//         custom_invoice_url_admin,
-//         addedBy: req.identity?.id
-//       });
-
-//       transactions.push(transaction);
-
-//       // Update affiliate link (admin paid)
-//       await AffiliateLink.updateOne(
-//         { _id: link._id },
-//         {
-//           $set: {
-//             admin_paid: true,
-//           }
-//         }
-//       );
-//     }
-
-//     return response.success(
-//       { transactions },
-//       "Commission transactions created & invoices generated",
-//       req,
-//       res
-//     );
-
-//   } catch (error) {
-//     console.error(error);
-//     return response.failed(null, error.toString(), req, res);
-//   }
-// };
 
 exports.payCommissionAdmin = async (req, res) => {
   try {
