@@ -1411,7 +1411,6 @@ exports.payCommissionAdmin = async (req, res) => {
     }
 
     // Debug: Log what we're looking for
-    console.log("Looking for affiliate IDs:", affiliateIds);
     
     // 1️⃣ Find affiliate links using Waterline syntax
     const affiliateLinks = await AffiliateLink.find({
@@ -1475,52 +1474,6 @@ exports.payCommissionAdmin = async (req, res) => {
       const total_amount = Number(amount.toFixed(2));
       console.log(`Processing payment of $${total_amount} for link ${link.id}`);
 
-      // // 5️⃣ Generate invoice
-      // const filename = `invoice_${link.id}_${Date.now()}.pdf`;
-      // const outputPath = path.join(invoicesDir, filename);
-
-      // try {
-      //   await htmlToPdf(
-      //     invoice_itm_html({ 
-      //       commission: total_amount, 
-      //       total_amount,
-      //       linkId: link.id,
-      //       userId: link.user_id,
-      //       date: new Date().toISOString().split('T')[0]
-      //     }),
-      //     outputPath
-      //   );
-      //   console.log(`Invoice generated: ${filename}`);
-      // } catch (invoiceError) {
-      //   console.error(`Failed to generate invoice for ${link.id}:`, invoiceError);
-      //   // Continue with transaction even if invoice fails
-      // }
-
-      // const custom_invoice_url_admin = `invoices/${filename}`;
-
-      // // 6️⃣ Create transaction
-      // try {
-      //   const transaction = await Transaction.create({
-      //     user_id: link.user_id,
-      //     paid_to: admin.id,
-      //     transaction_type: "pay_commission",
-      //     currency: link.currency || "USD",
-      //     amount: total_amount,
-      //     transaction_status: "pending",
-      //     affiliateLinkId: link.id,
-      //     custom_invoice_url_admin,
-      //     addedBy: req.identity?.id || admin.id
-      //   }).fetch(); // 🔑 REQUIRED in Waterline
-
-      //   if (transaction) {
-      //     transactions.push(transaction);
-      //     processedIds.push(link.id);
-      //     console.log(`Transaction created: ${transaction.id}`);
-      //   }
-      // } catch (transactionError) {
-      //   console.error(`Failed to create transaction for ${link.id}:`, transactionError);
-      //   continue; // Skip to next link if transaction fails
-      // }
     const invoicesDir = path.join(__dirname, '../../assets', 'invoices');
       if (!fs.existsSync(invoicesDir)) {
         fs.mkdirSync(invoicesDir, { recursive: true });
