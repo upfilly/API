@@ -903,8 +903,8 @@ exports.updateCommission = async (req, res) => {
 
       const payload = {
         commission: amount,
-        stripe_fees: stripe_fee,
-        platform_fee: commission_override,
+        // stripe_fees: stripe_fee,
+        // platform_fee: commission_override,
         total_amount
       }
       // Generate PDF and wait for it to complete
@@ -1074,14 +1074,6 @@ const invoice_itm_html = (payload) => {
       <tr>
         <td style="text-align:left;">Main Amount</td>
         <td>${payload.commission}</td>
-      </tr>
-      <tr>
-        <td style="text-align:left;">Stripe Fees</td>
-        <td>${payload.stripe_fees}</td>
-      </tr>
-      <tr>
-        <td style="text-align:left;">Upfilly Platform Fee</td>
-        <td>${payload.platform_fee}</td>
       </tr>
       <tr class="total-row">
         <td style="text-align:left;">Total Payout</td>
