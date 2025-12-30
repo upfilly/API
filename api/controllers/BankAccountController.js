@@ -487,25 +487,27 @@ module.exports = {
     try {
       const { currency, association_id, affiliateLinkIds } = req.body
       let paid_to_emails = new Set([])
-      console.log(affiliateLinkIds,'affiliateLinkIds')
       for await (let itm of affiliateLinkIds) {
         const affiliate_data = await AffiliateLink.findOne(itm)
         
         const userDetail = await Users.findOne({ id: affiliate_data.affiliate_id, isDeleted: false });
-        console.log(userDetail,'userDetail')
         if (!paid_to_emails.has(userDetail.email)) {
           paid_to_emails.add(userDetail.email);
           console.log(`${userDetail.email} has been added.`);
         }
-        const get_campain_from_affiliations = await BrandAffiliateAssociation.findOne({ brand_id: "$brand_id", affiliate_id: "$affiliate_id", isActive: true }).populate("campaign_id")
-
+        const get_campain_from_affiliations = await BrandAffiliateAssociation.findOne({ brand_id: affiliate_data.brand_id, affiliate_id: affiliate_data.affiliate_id, isActive: true }).populate("campaign_id")
+        
+        const campaign_details = get_campain_from_affiliations.campaign_id
         let commission_type = get_campain_from_affiliations.campaign_id.commission_type
         let amount = 0
         if (commission_type == "amount") {
-          amount = itm.commission
+          amount = campaign_details.commission
         } else {
-          amount = (itm.price * itm.commission) / 100
-          // commission_type
+          console.log(affiliate_data.price,'=affiliate_data.price')
+          console.log(campaign_details.commission,'affiliate_data.commission')
+
+          amount = (affiliate_data.price * campaign_details.commission) / 100
+          console.log(amount,'====')
         }
         // let get_user = await Users.findOne({id:get_associate_data})
         const accountDetails = await Account.findOne({
@@ -532,6 +534,7 @@ module.exports = {
         }
 
         // console.log(accountDetails.accountId,'accountDetails.accountId')
+        console.log(amount,'amount')
         const payload = {
           accountId: accountDetails.accountId,
           transferredAmount: amount,
@@ -539,7 +542,7 @@ module.exports = {
           description: `An amount of ${amount / 100} has been transferred from Upfilly to ${userDetail.fullName} on ${moment().format('YYYY-MM-DD HH:mm:ss')}.`,
           paidTo: userDetail.id,
           // scheduleId: transfer._id,
-          // amount: amount
+          amount: amount
         };
         invoice_itm_html({
           commission: amount,
