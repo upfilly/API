@@ -483,338 +483,173 @@ module.exports = {
       return res.status(500).json({ success: false, message: err.message });
     }
   },
-  // transferPayment : async (req,res) => {
-  //     try {
-  //         const {affiliate_id,amount,currency,association_id,affiliateLinkIds} = req.body
-  //         if(!affiliate_id){
-  //             return res.status(400).json({
-  //                 success: false,
-  //                 error: {
-  //                     code: "400",
-  //                     message: "Affiliate Id required."
-  //                 }
-  //             });
-  //         }
-  //         const userDetail = await Users.findOne({ id: affiliate_id, isDeleted: false });
+  transferPayment: async (req, res) => {
+    try {
+      const { currency, association_id, affiliateLinkIds } = req.body
+      let paid_to_emails = new Set([])
+      for await (let itm of affiliateLinkIds) {
 
-  //             // let get_user = await Users.findOne({id:get_associate_data})
-  //             const accountDetails = await Account.findOne({
-  //                 addedBy: affiliate_id,
-  //                 isDeleted: false,
-  //                 isActive: true
-  //             });
+        const userDetail = await Users.findOne({ id: itm.affiliate_id, isDeleted: false });
+        if (!paid_to_emails.has(userDetail.email)) {
+          paid_to_emails.add(userDetail.email);
+          console.log(`${userDetail.email} has been added.`);
+        }
+        const get_campain_from_affiliations = await BrandAffiliateAssociation.findOne({ brand_id: "$brand_id", affiliate_id: "$affiliate_id", isActive: true }).populate("campaign_id")
 
-  //             if (!accountDetails) {
-  //               if (userDetail) {
-  //                 const emailPayload = {
-  //                   fullName: userDetail.fullName,
-  //                   email: userDetail.email,
-  //                 };
-
-  //                   await emails.reminderToOpenAccount(emailPayload);
-  //               }
-  //               return response.failed(
-  //                 null,
-  //                 `${userDetail.fullName} hasn't setup account yet.`,
-  //                 req,
-  //                 res
-  //               );
-  //             }
-
-  //             // console.log(accountDetails.accountId,'accountDetails.accountId')
-  //             const payload = {
-  //                 accountId: accountDetails.accountId,
-  //                 transferredAmount: amount,
-  //                 currency: currency || "usd",
-  //                 description: `An amount of ${amount / 100} has been transferred from Upfilly to ${ userDetail.fullName} on ${moment().format('YYYY-MM-DD HH:mm:ss')}.`,
-  //                 paidTo: userDetail.id,
-  //                 // scheduleId: transfer._id,
-  //                 amount: amount
-  //             };
-
-  //             let paid = await stripeServices.transfer_fund(payload);
-  //             if(paid){
-  //                 await AffiliateLink.updateOne({id:association_id},{admin_paid : "paid"})
-  //                 let email_payload = {
-  //                   fullName: userDetail.fullName,
-  //                   email: userDetail.email,
-  //                   amount: amount,
-  //                 };
-
-  //                   await emails.adminPaid(email_payload);
-
-  //                 return response.success(
-  //                   null,
-  //                   "Payment Transfered successfully",
-  //                   req,
-  //                   res
-  //                 );
-  //             }
-  //     } catch (error) {
-  //         console.error("Error processing transfers:", error.message);
-  //         return response.failed(null,error, req,res)
-
-  //     }
-  // }
-
- transferPayment: async (req, res) => {
-  try {
-    const { affiliate_id, amount, currency, association_id, affiliateLinkIds } = req.body;
-    
-    if (!affiliateLinkIds || !Array.isArray(affiliateLinkIds) || affiliateLinkIds.length === 0) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: "400",
-          message: "Affiliate Link IDs array is required and must contain at least one ID.",
-        },
-      });
-    }
-
-     const transactions = [];
-    const processedIds = [];
-    let totalAmountPaid = 0;
-    let errors = [];
-
-    // Process each affiliate link
-    for (const linkId of affiliateLinkIds) {
-      try {
-        console.log("linkIdlinkId",linkId)
-        // Fetch affiliate link details
-        const affiliateLink = await AffiliateLink.findOne({
-          id: linkId,
+        let commission_type = get_campain_from_affiliations.campaign_id.commission_type
+        let amount = 0
+        if (commission_type == "amount") {
+          amount = itm.commission
+        } else {
+          amount = (itm.price * itm.commission) / 100
+          // commission_type
+        }
+        // let get_user = await Users.findOne({id:get_associate_data})
+        const accountDetails = await Account.findOne({
+          addedBy: itm.affiliate_id,
           isDeleted: false,
+          isActive: true
         });
 
-        if (!affiliateLink) {
-          errors.push(`Affiliate link ${linkId} not found or deleted`);
-          console.warn(`Affiliate link ${linkId} not found or deleted`);
-          continue;
-        }
+        if (!accountDetails) {
+          if (userDetail) {
+            const emailPayload = {
+              fullName: userDetail.fullName,
+              email: userDetail.email,
+            };
 
-
-    // Fetch user details
-    const userDetail = await Users.findOne({
-      id: affiliateLink.affiliate_id,
-      isDeleted: false,
-    });
-console.log("userDetail",userDetail)
-    if (!userDetail) {
-      return response.failed(
-        null,
-        "Affiliate user not found.",
-        req,
-        res
-      );
-    }
-
-     const brandCurrency = await BrandAffiliateAssociation.findOne({
-      affiliate_id: affiliateLink.affiliate_id,
-      isDeleted: false,
-      isActive : true,
-      status : "accepted"
-    }).populate('campaign_id');
-
-    if (!brandCurrency) {
-      return response.failed(
-        null,
-        "Currency for user not found.",
-        req,
-        res
-      );
-    }
-  req.body.currency = brandCurrency.campaign_id.currencies
-    // Check account details
-    const accountDetails = await Account.findOne({
-      addedBy: affiliateLink.affiliate_id,
-      isDeleted: false,
-      isActive: true,
-    });
-
-    if (!accountDetails) {
-      const emailPayload = {
-        fullName: userDetail.fullName,
-        email: userDetail.email,
-      };
-
-      await emails.reminderToOpenAccount(emailPayload);
-      return response.failed(
-        null,
-        `${userDetail.fullName} hasn't setup account yet.`,
-        req,
-        res
-      );
-    }
-
-
-        // Check if already paid
-        if (affiliateLink.admin_paid === "paid" || affiliateLink.admin_paid === true) {
-          errors.push(`Affiliate link ${linkId} is already paid`);
-          console.warn(`Affiliate link ${linkId} is already paid`);
-          continue;
-        }
-
-        // Calculate amount for this link
-        // Note: You might want to get the actual commission amount from the affiliate link
-        const linkAmount = affiliateLink.commission_amount || (amount / affiliateLinkIds.length);
-        totalAmountPaid += linkAmount;
-
-        // Create invoice
-        const invoicesDir = path.join(__dirname, '../../assets', 'invoices');
-        if (!fs.existsSync(invoicesDir)) {
-          fs.mkdirSync(invoicesDir, { recursive: true });
-        }
-
-        const filename = `invoice_${linkId}_${Date.now()}.pdf`;
-        const outputPath = path.join(invoicesDir, filename);
-
-        const invoicePayload = {
-          commission: linkAmount,
-          // stripe_fees: stripe_fee,
-          // platform_fee: commission_override,
-          total_amount: linkAmount
-        };
-
-        // Generate PDF invoice
-
-        // await htmlToPdf(invoice_itm_html(invoicePayload), outputPath);
-        const custom_invoice_url = `invoices/${filename}`;
-        console.log("PDF created:", custom_invoice_url);
-
-        // Prepare Stripe transfer payload
-        const stripePayload = {
-          accountId: accountDetails.accountId,
-          transferredAmount: linkAmount,
-          currency: currency || "usd",
-          description: `Commission payment for affiliate link ${linkId} - ${userDetail.fullName} on ${moment().format("YYYY-MM-DD HH:mm:ss")}`,
-          paidTo: userDetail.id,
-          amount: linkAmount,
-        };
-
-        // Process Stripe transfer
-        const paid = await stripeServices.transfer_fund(stripePayload);
-        
-        if (paid) {
-          // Create transaction record
-          const transactionData = {
-            user_id: req.identity?.id ,
-            paid_to: affiliate_id,
-            transaction_type: "pay_commission",
-            transaction_id: paid.id || "",
-            stripe_charge_id: paid.charge_id || "",
-            currency: currency || "usd",
-            amount: linkAmount.toFixed(2),
-            transaction_status: "completed",
-            special_plan_id: null,
-            subscription_id: null,
-            stripe_subscription_id: "",
-            addedBy: req.identity?.id || "system",
-            updatedBy: null,
-            paypal_transaction_id: "",
-            paypal_transaction_status: "",
-            affiliateLinkId: linkId,
-            custom_invoice_url,
-          };
-
-          // Save transaction
-          const savedTransaction = await Transactions.create(transactionData);
-          transactions.push(savedTransaction);
-
-          // Update affiliate link status
-          await AffiliateLink.updateOne(
-            { id: linkId },
-            { 
-              admin_paid: "paid",
-              last_payment_date: new Date(),
-              total_paid: (affiliateLink.total_paid || 0) + linkAmount
-            }
+            await emails.reminderToOpenAccount(emailPayload);
+          }
+          return response.failed(
+            null,
+            `${userDetail.fullName} hasn't setup account yet.`,
+            req,
+            res
           );
+        }
 
-          processedIds.push(linkId);
-          console.log(`Successfully processed payment for link ${linkId}`);
-        } else {
-          // Create failed transaction record
-          const transactionData = {
-            user_id: req.identity?.id || "system",
-            paid_to: affiliate_id,
-            transaction_type: "pay_commission",
+        // console.log(accountDetails.accountId,'accountDetails.accountId')
+        const payload = {
+          accountId: accountDetails.accountId,
+          transferredAmount: amount,
+          currency: currency || "usd",
+          description: `An amount of ${amount / 100} has been transferred from Upfilly to ${userDetail.fullName} on ${moment().format('YYYY-MM-DD HH:mm:ss')}.`,
+          paidTo: userDetail.id,
+          // scheduleId: transfer._id,
+          // amount: amount
+        };
+        invoice_itm_html({
+          commission: amount,
+        })
+        let paid = await stripeServices.transfer_fund(payload);
+        if (paid) {
+          const invoicesDir = path.join(__dirname, '../../assets', 'invoices');
+          if (!fs.existsSync(invoicesDir)) {
+            fs.mkdirSync(invoicesDir, { recursive: true });
+          }
+
+          const filename = `invoice_${id}_${Date.now()}.pdf`;
+          const outputPath = path.join(invoicesDir, filename);
+
+          const payload = {
+            commission: amount,
+          }
+          // Generate PDF and wait for it to complete
+          await htmlToPdf(invoice_itm_html(payload), outputPath);
+          const custom_invoice_url = `invoices/${filename}`
+
+          let data = {
+            user_id: req.identity?.id,
+            // paid_to: get_admin.id || "654227e78fd3b1018600710d",
+            transaction_type: "bank_account",
             transaction_id: "",
             stripe_charge_id: "",
-            currency: currency || "usd",
-            amount: linkAmount.toFixed(2),
-            transaction_status: "failed",
+            currency: get_campain_from_affiliations?.currencies,
+            amount: amount.toFixed(2),
+            transaction_status: "paid",
             special_plan_id: null,
             subscription_id: null,
             stripe_subscription_id: "",
-            addedBy: req.identity?.id || "system",
+            addedBy: req.identity?.id,
             updatedBy: null,
             paypal_transaction_id: "",
             paypal_transaction_status: "",
-            affiliateLinkId: linkId,
-            custom_invoice_url,
+            affiliateLinkId: id,
+            custom_invoice_url
           };
 
-          await Transactions.create(transactionData);
-          errors.push(`Stripe transfer failed for link ${linkId}`);
+          await Transactions.create(data);
+
+
+          await AffiliateLink.updateOne({ id: association_id }, { admin_paid: "paid" })
+          let email_payload = {
+            fullName: userDetail.fullName,
+            email: userDetail.email,
+            amount: amount,
+          };
+
+          await emails.adminPaid(email_payload);
         }
-
-      } catch (linkError) {
-        console.error(`Error processing link :`, linkError);
-        errors.push(`Error processing link ${linkId}: ${linkError.message}`);
-        continue;
       }
-    }
 
-    // Send payment confirmation email if any payments were processed
-    if (processedIds.length > 0) {
-      const email_payload = {
-        fullName: userDetail.fullName,
-        email: userDetail.email,
-        amount: totalAmountPaid,
-        currency: currency || "usd",
-        processedCount: processedIds.length,
-        processedLinks: processedIds,
+      const invoicesDir = path.join(__dirname, '../../assets', 'invoices');
+      if (!fs.existsSync(invoicesDir)) {
+        fs.mkdirSync(invoicesDir, { recursive: true });
+      }
+
+      const filename = `invoice_${id}_${Date.now()}.pdf`;
+      const outputPath = path.join(invoicesDir, filename);
+
+      const payload = {
+        commission: amount,
+      }
+      // Generate PDF and wait for it to complete
+      await htmlToPdf(invoice_itm_html(payload), outputPath);
+      const custom_invoice_url = `invoices/${filename}`
+
+      let data = {
+        user_id: req.identity?.id,
+        paid_to: null,
+        paid_to: paid_to_emails,
+        transaction_type: "bank_account",
+        transaction_id: "",
+        stripe_charge_id: "",
+        currency: get_campain_from_affiliations?.currencies,
+        amount: amount.toFixed(2),
+        transaction_status: "paid",
+        special_plan_id: null,
+        subscription_id: null,
+        stripe_subscription_id: "",
+        addedBy: req.identity?.id,
+        updatedBy: null,
+        paypal_transaction_id: "",
+        paypal_transaction_status: "",
+        affiliateLinkId: id,
+        custom_invoice_url
       };
 
-      await emails.adminPaid(email_payload);
-    }
+      await Transactions.create(data);
 
-    // Prepare response
-    const responseData = {
-      transactions,
-      processedIds,
-      totalAmount: transactions.reduce((sum, t) => sum + parseFloat(t.amount), 0),
-      count: transactions.length,
-      errors: errors.length > 0 ? errors : undefined,
-    };
-
-    if (processedIds.length === 0) {
-      return response.failed(
-        responseData,
-        "No payments were processed. Check the errors array for details.",
+      return response.success(
+        null,
+        "Payment Transfered successfully",
         req,
         res
       );
+    } catch (error) {
+      console.error("Error processing transfers:", error.message);
+      return response.failed(null, error, req, res)
+
     }
-
-    return response.success(
-      responseData,
-      `Successfully processed ${transactions.length} commission payment(s)`,
-      req,
-      res
-    );
-
-  } catch (error) {
-    console.error("Error processing transfers:", error);
-    return response.failed(null, error.message || error.toString(), req, res);
   }
-},
+
+
 
 };
 
 // Helper function to generate invoice HTML
 const invoice_itm_html = (payload) => {
-  const { commission, stripe_fees, platform_fee, total_amount } = payload;
+  const { commission } = payload;
 
   return `
 <!DOCTYPE html>
@@ -934,22 +769,8 @@ const invoice_itm_html = (payload) => {
         <td style="text-align:left;">Commission Amount</td>
         <td>$${commission}</td>
       </tr>
-      ${stripe_fees ? `
-      <tr>
-        <td style="text-align:left;">Stripe Processing Fee</td>
-        <td>$${stripe_fees}</td>
-      </tr>
-      ` : ''}
-      ${platform_fee ? `
-      <tr>
-        <td style="text-align:left;">Platform Fee</td>
-        <td>$${platform_fee}</td>
-      </tr>
-      ` : ''}
-      <tr class="total-row">
-        <td style="text-align:left;">Total Payout</td>
-        <td>$${total_amount}</td>
-      </tr>
+     
+      
     </table>
 
     <div class="footer-note">
