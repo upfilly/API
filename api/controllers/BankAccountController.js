@@ -580,7 +580,7 @@ module.exports = {
             updatedBy: null,
             paypal_transaction_id: "",
             paypal_transaction_status: "",
-            affiliateLinkId: id,
+            affiliateLinkId: itm,
             custom_invoice_url
           };
 
