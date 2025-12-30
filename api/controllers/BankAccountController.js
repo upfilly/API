@@ -554,7 +554,7 @@ module.exports = {
             fs.mkdirSync(invoicesDir, { recursive: true });
           }
 
-          const filename = `invoice_${id}_${Date.now()}.pdf`;
+          const filename = `invoice_${Date.now()}.pdf`;
           const outputPath = path.join(invoicesDir, filename);
 
           const payload = {
@@ -643,7 +643,7 @@ module.exports = {
         res
       );
     } catch (error) {
-      console.error("Error processing transfers:", error.message);
+      console.error("Error processing transfers:", error);
       return response.failed(null, error, req, res)
 
     }
