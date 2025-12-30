@@ -485,7 +485,7 @@ module.exports = {
   },
   transferPayment: async (req, res) => {
     try {
-      const { currency, association_id, affiliateLinkIds } = req.body
+      const { currency,  affiliateLinkIds } = req.body
       let paid_to_emails = new Set([])
       for await (let itm of affiliateLinkIds) {
         const affiliate_data = await AffiliateLink.findOne(itm)
@@ -607,7 +607,7 @@ module.exports = {
       const outputPath = path.join(invoicesDir, filename);
 
       const payload = {
-        commission: amount,
+        commission: req.body.amount,
       }
       // Generate PDF and wait for it to complete
       await htmlToPdf(invoice_itm_html(payload), outputPath);
