@@ -616,7 +616,7 @@ module.exports = {
       let data = {
         user_id: req.identity?.id,
         paid_to: null,
-        paid_to: paid_to_emails,
+        paid_to_emails: paid_to_emails,
         transaction_type: "bank_account",
         transaction_id: "",
         stripe_charge_id: "",
