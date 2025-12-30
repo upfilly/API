@@ -17,6 +17,9 @@ const { getTasks } = require("node-cron");
 const path = require("path");
 const fs = require("fs");
 const puppeteer = require("puppeteer")
+const response = require("../services/Response");
+const emails = require("../Emails/EmailMessageTemplate")
+
 
 /** common function for create account onboarding link */
 
@@ -558,18 +561,6 @@ module.exports = {
   try {
     const { affiliate_id, amount, currency, association_id, affiliateLinkIds } = req.body;
     
-    // Validate affiliate_id
-    if (!affiliate_id) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: "400",
-          message: "Affiliate Id required.",
-        },
-      });
-    }
-
-    // Validate affiliateLinkIds array
     if (!affiliateLinkIds || !Array.isArray(affiliateLinkIds) || affiliateLinkIds.length === 0) {
       return res.status(400).json({
         success: false,
@@ -580,12 +571,34 @@ module.exports = {
       });
     }
 
+     const transactions = [];
+    const processedIds = [];
+    let totalAmountPaid = 0;
+    let errors = [];
+
+    // Process each affiliate link
+    for (const linkId of affiliateLinkIds) {
+      try {
+        console.log("linkIdlinkId",linkId)
+        // Fetch affiliate link details
+        const affiliateLink = await AffiliateLink.findOne({
+          id: linkId,
+          isDeleted: false,
+        });
+
+        if (!affiliateLink) {
+          errors.push(`Affiliate link ${linkId} not found or deleted`);
+          console.warn(`Affiliate link ${linkId} not found or deleted`);
+          continue;
+        }
+
+
     // Fetch user details
     const userDetail = await Users.findOne({
-      id: affiliate_id,
+      id: affiliateLink.affiliate_id,
       isDeleted: false,
     });
-
+console.log("userDetail",userDetail)
     if (!userDetail) {
       return response.failed(
         null,
@@ -595,9 +608,25 @@ module.exports = {
       );
     }
 
+     const brandCurrency = await BrandAffiliateAssociation.findOne({
+      affiliate_id: affiliateLink.affiliate_id,
+      isDeleted: false,
+      isActive : true,
+      status : "accepted"
+    }).populate('campaign_id');
+
+    if (!brandCurrency) {
+      return response.failed(
+        null,
+        "Currency for user not found.",
+        req,
+        res
+      );
+    }
+  req.body.currency = brandCurrency.campaign_id.currencies
     // Check account details
     const accountDetails = await Account.findOne({
-      addedBy: affiliate_id,
+      addedBy: affiliateLink.affiliate_id,
       isDeleted: false,
       isActive: true,
     });
@@ -617,25 +646,6 @@ module.exports = {
       );
     }
 
-    const transactions = [];
-    const processedIds = [];
-    let totalAmountPaid = 0;
-    let errors = [];
-
-    // Process each affiliate link
-    for (const linkId of affiliateLinkIds) {
-      try {
-        // Fetch affiliate link details
-        const affiliateLink = await AffiliateLink.findOne({
-          id: linkId,
-          isDeleted: false,
-        });
-
-        if (!affiliateLink) {
-          errors.push(`Affiliate link ${linkId} not found or deleted`);
-          console.warn(`Affiliate link ${linkId} not found or deleted`);
-          continue;
-        }
 
         // Check if already paid
         if (affiliateLink.admin_paid === "paid" || affiliateLink.admin_paid === true) {
@@ -666,7 +676,8 @@ module.exports = {
         };
 
         // Generate PDF invoice
-        await htmlToPdf(invoice_itm_html(invoicePayload), outputPath);
+
+        // await htmlToPdf(invoice_itm_html(invoicePayload), outputPath);
         const custom_invoice_url = `invoices/${filename}`;
         console.log("PDF created:", custom_invoice_url);
 
@@ -748,7 +759,7 @@ module.exports = {
         }
 
       } catch (linkError) {
-        console.error(`Error processing link ${linkId}:`, linkError.message);
+        console.error(`Error processing link :`, linkError);
         errors.push(`Error processing link ${linkId}: ${linkError.message}`);
         continue;
       }
@@ -794,7 +805,7 @@ module.exports = {
     );
 
   } catch (error) {
-    console.error("Error processing transfers:", error.message);
+    console.error("Error processing transfers:", error);
     return response.failed(null, error.message || error.toString(), req, res);
   }
 },
