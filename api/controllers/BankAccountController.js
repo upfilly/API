@@ -587,7 +587,7 @@ module.exports = {
           await Transactions.create(data);
 
 
-          await AffiliateLink.updateOne({ id: association_id }, { admin_paid: "paid" })
+          await AffiliateLink.updateOne({ id: itm }, { admin_paid: "paid" })
           let email_payload = {
             fullName: userDetail.fullName,
             email: userDetail.email,
