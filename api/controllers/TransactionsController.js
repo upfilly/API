@@ -575,60 +575,52 @@ exports.downloadInvoice = async (req, res) => {
                     <table style=" border-collapse: collapse; width: 100%;">
                         <tr style="border: 1px solid rgba(237, 237, 237, 1);" >
                             <td style="color:#444647 !important; background:#f5f1f1;; border: 1px solid rgba(237, 237, 237, 1);color: rgba(0, 0, 0, 0.64); padding: 8px; width:25%;font-size: 12px;">Invoice</td>
-                            <td style="color:#444647 !important; background:#f5f1f1;; border: 1px solid rgba(237, 237, 237, 1);color: rgba(0, 0, 0, 0.64);padding: 8px;  width: 75%;font-size: 12px;">#${
-                              get_transactions.transactions_number
-                                ? get_transactions.transactions_number
-                                : ""
-                            }</td>
+                            <td style="color:#444647 !important; background:#f5f1f1;; border: 1px solid rgba(237, 237, 237, 1);color: rgba(0, 0, 0, 0.64);padding: 8px;  width: 75%;font-size: 12px;">#${get_transactions.transactions_number
+        ? get_transactions.transactions_number
+        : ""
+      }</td>
                         </tr>
                         <tr style="border: 1px solid rgba(237, 237, 237, 1);" >
                             <td style="color:#444647 !important;  background:#f5f1f1;; border: 1px solid rgba(237, 237, 237, 1);color: rgba(0, 0, 0, 0.64); padding: 8px; width:25%;font-size: 12px;">Invoice Date</td>
-                            <td style="color:#444647 !important; background:#f5f1f1;; border: 1px solid rgba(237, 237, 237, 1);color: rgba(0, 0, 0, 0.64);padding: 8px;  width: 75%;font-size: 12px;">${
-                              date ? date : ""
-                            }</td>
+                            <td style="color:#444647 !important; background:#f5f1f1;; border: 1px solid rgba(237, 237, 237, 1);color: rgba(0, 0, 0, 0.64);padding: 8px;  width: 75%;font-size: 12px;">${date ? date : ""
+      }</td>
                         </tr>
                     </table>
                     <h1 style="font-size: 16px;margin-top:1rem;color: #09486b;">Customer Detail</h1>
                     <table style=" border-collapse: collapse; width: 100%;">
                         <tr style="border: 1px solid rgba(237, 237, 237, 1);" >
                             <td style="color:#444647 !important; background:#f5f1f1;; border: 1px solid rgba(237, 237, 237, 1);color: rgba(0, 0, 0, 0.64); padding: 8px; width:25%;font-size: 12px;"> Name</td>
-                            <td style="color:#444647 !important; background:#f5f1f1;; border: 1px solid rgba(237, 237, 237, 1);color: rgba(0, 0, 0, 0.64);padding: 8px;  width: 75%;font-size: 12px;">${
-                              user_detail.fullName
-                                ? Services.Utils.title_case(
-                                    user_detail.fullName
-                                  )
-                                : ""
-                            }</td>
+                            <td style="color:#444647 !important; background:#f5f1f1;; border: 1px solid rgba(237, 237, 237, 1);color: rgba(0, 0, 0, 0.64);padding: 8px;  width: 75%;font-size: 12px;">${user_detail.fullName
+        ? Services.Utils.title_case(
+          user_detail.fullName
+        )
+        : ""
+      }</td>
                         </tr>
                         <tr style="border: 1px solid rgba(237, 237, 237, 1);" >
                             <td style="color:#444647 !important;  background:#f5f1f1;; border: 1px solid rgba(237, 237, 237, 1);color: rgba(0, 0, 0, 0.64); padding: 8px; width:25%;font-size: 12px;">Email</td>
-                            <td style="color:#444647 !important; background:#f5f1f1;; border: 1px solid rgba(237, 237, 237, 1);color: rgba(0, 0, 0, 0.64);padding: 8px;  width: 75%;font-size: 12px;">${
-                              user_detail.email ? user_detail.email : ""
-                            }</td>
+                            <td style="color:#444647 !important; background:#f5f1f1;; border: 1px solid rgba(237, 237, 237, 1);color: rgba(0, 0, 0, 0.64);padding: 8px;  width: 75%;font-size: 12px;">${user_detail.email ? user_detail.email : ""
+      }</td>
                         </tr>
                         <tr style="border: 1px solid rgba(237, 237, 237, 1);" >
                             <td style="color:#444647 !important;  background:#f5f1f1;; border: 1px solid rgba(237, 237, 237, 1);color: rgba(0, 0, 0, 0.64); padding: 8px; width:25%;font-size: 12px;">Phone</td>
-                            <td style="color:#444647 !important; background:#f5f1f1;; border: 1px solid rgba(237, 237, 237, 1);color: rgba(0, 0, 0, 0.64);padding: 8px;  width: 75%;font-size: 12px;">${
-                              user_detail
-                                ? `${
-                                    user_detail.dialCode
-                                      ? user_detail.dialCode
-                                      : ""
-                                  } ${
-                                    user_detail.mobileNo
-                                      ? user_detail.mobileNo
-                                      : ""
-                                  }`
-                                : ""
-                            }</td>
+                            <td style="color:#444647 !important; background:#f5f1f1;; border: 1px solid rgba(237, 237, 237, 1);color: rgba(0, 0, 0, 0.64);padding: 8px;  width: 75%;font-size: 12px;">${user_detail
+        ? `${user_detail.dialCode
+          ? user_detail.dialCode
+          : ""
+        } ${user_detail.mobileNo
+          ? user_detail.mobileNo
+          : ""
+        }`
+        : ""
+      }</td>
                         </tr>
                         <tr style="border: 1px solid rgba(237, 237, 237, 1);" >
                             <td style="color:#444647 !important;  background:#f5f1f1;; border: 1px solid rgba(237, 237, 237, 1);color: rgba(0, 0, 0, 0.64); padding: 8px; width:25%;font-size: 12px;">Address</td>
-                            <td style="color:#444647 !important; background:#f5f1f1;; border: 1px solid rgba(237, 237, 237, 1);color: rgba(0, 0, 0, 0.64);padding: 8px;  width: 75%;font-size: 12px;">${
-                              user_detail
-                                ? Services.Utils.title_case(user_detail.address)
-                                : ""
-                            }</td>
+                            <td style="color:#444647 !important; background:#f5f1f1;; border: 1px solid rgba(237, 237, 237, 1);color: rgba(0, 0, 0, 0.64);padding: 8px;  width: 75%;font-size: 12px;">${user_detail
+        ? Services.Utils.title_case(user_detail.address)
+        : ""
+      }</td>
                         </tr>
                     </table>
                     <table style=" border-collapse: collapse; margin-top:1rem; width: 100%;">
@@ -638,21 +630,18 @@ exports.downloadInvoice = async (req, res) => {
                             <td style="font-weight: 600;width:25% !important; color:#444647 !important; background:#f5f1f1;; border: 1px solid rgba(237, 237, 237, 1);color: rgba(0, 0, 0, 0.64);padding: 8px;  width: 75%;font-size: 12px;"> Total Amount</td>
                         </tr>
                         <tr style="border: 1px solid rgba(237, 237, 237, 1);" >
-                            <td style="width: 25% !important; color:#444647 !important; background:#f5f1f1;; border: 1px solid rgba(237, 237, 237, 1);color: rgba(0, 0, 0, 0.64); padding: 8px; width:25%;font-size: 12px;">${
-                              get_subscriptions.name
-                                ? Services.Utils.title_case(
-                                    get_subscriptions.name
-                                  )
-                                : ""
-                            }</td>
-                            <td style="width:30% !important; color:#444647 !important; background:#f5f1f1;; border: 1px solid rgba(237, 237, 237, 1);color: rgba(0, 0, 0, 0.64);padding: 8px;  width: 75%;font-size: 12px;">$${
-                              get_transactions ? get_transactions.amount : 0
-                            }</td>
-                            <td style="width:25% !important; color:#444647 !important; background:#f5f1f1;; border: 1px solid rgba(237, 237, 237, 1);color: rgba(0, 0, 0, 0.64);padding: 8px;  width: 75%;font-size: 12px;">$${
-                              get_transactions.amount
-                                ? get_transactions.amount.toFixed(2)
-                                : 0
-                            }</td>
+                            <td style="width: 25% !important; color:#444647 !important; background:#f5f1f1;; border: 1px solid rgba(237, 237, 237, 1);color: rgba(0, 0, 0, 0.64); padding: 8px; width:25%;font-size: 12px;">${get_subscriptions.name
+        ? Services.Utils.title_case(
+          get_subscriptions.name
+        )
+        : ""
+      }</td>
+                            <td style="width:30% !important; color:#444647 !important; background:#f5f1f1;; border: 1px solid rgba(237, 237, 237, 1);color: rgba(0, 0, 0, 0.64);padding: 8px;  width: 75%;font-size: 12px;">$${get_transactions ? get_transactions.amount : 0
+      }</td>
+                            <td style="width:25% !important; color:#444647 !important; background:#f5f1f1;; border: 1px solid rgba(237, 237, 237, 1);color: rgba(0, 0, 0, 0.64);padding: 8px;  width: 75%;font-size: 12px;">$${get_transactions.amount
+        ? get_transactions.amount.toFixed(2)
+        : 0
+      }</td>
                         </tr>
                        <!--- <tr style="border: 1px solid rgba(237, 237, 237, 1);" >
                             <td style="height: 14px;width: 25% !important; color:#444647 !important; background:#f5f1f1;; border: 1px solid rgba(237, 237, 237, 1);color: rgba(0, 0, 0, 0.64); padding: 8px; width:25%;font-size: 12px;"> </td>
@@ -662,11 +651,10 @@ exports.downloadInvoice = async (req, res) => {
                         <tr style="border: 1px solid rgba(237, 237, 237, 1);" >
                             <td style="font-weight: 600;width: 25% !important; color:#444647 !important; background:#f5f1f1;; border: 1px solid rgba(237, 237, 237, 1);color: rgba(0, 0, 0, 0.64); padding: 8px; width:25%;font-size: 12px;"> Grand Amount</td>
                             <td style="font-weight: 600;width:30% !important; color:#444647 !important; background:#f5f1f1;; border: 1px solid rgba(237, 237, 237, 1);color: rgba(0, 0, 0, 0.64);padding: 8px;  width: 75%;font-size: 12px;"></td>
-                            <td style="font-weight: 600;width:25% !important; color:#444647 !important; background:#f5f1f1;; border: 1px solid rgba(237, 237, 237, 1);color: rgba(0, 0, 0, 0.64);padding: 8px;  width: 75%;font-size: 12px;">$${
-                              get_transactions
-                                ? get_transactions.amount.toFixed(2)
-                                : 0
-                            }</td>
+                            <td style="font-weight: 600;width:25% !important; color:#444647 !important; background:#f5f1f1;; border: 1px solid rgba(237, 237, 237, 1);color: rgba(0, 0, 0, 0.64);padding: 8px;  width: 75%;font-size: 12px;">$${get_transactions
+        ? get_transactions.amount.toFixed(2)
+        : 0
+      }</td>
                         </tr>
                     </table>
                 </div>
@@ -1366,21 +1354,17 @@ exports.monthlyPendingTransactionsAdmin = async function (req, res) {
 
     monthlyData.totalPendingTransactions = getTransactions.length;
 
-    let totalAmount = 0,
-      arr = [];
-    for (let obj of getTransactions) {
-      arr.push(obj.id);
-      totalAmount += obj.amount;
-    }
+    let totalAmount = 0
 
-    totalPending_PaidCount = await AffiliateLink.find({
+
+    let totalPending_PaidCount = await AffiliateLink.find({
       isDeleted: false,
       admin_paid: "pending",
     });
 
     let totalAdminPendingPrice = 0;
     let idArr = []
-    
+
 
     for (let item of totalPending_PaidCount) {
       totalAdminPendingPrice += item.price || 0;
@@ -1391,7 +1375,7 @@ exports.monthlyPendingTransactionsAdmin = async function (req, res) {
 
     monthlyData.admin_pending_total_price = totalAdminPendingPrice;
     monthlyData.admin_paid_count = totalPending_PaidCount.length;
-    monthlyData.totalPayableAmount = totalAmount + stripe_fee;
+    monthlyData.totalPayableAmount = totalAdminPendingPrice + stripe_fee;
     monthlyData.transaction_ids = idArr;
 
     return res.status(200).json({ success: true, data: monthlyData });
@@ -1407,11 +1391,11 @@ exports.payCommissionAdmin = async (req, res) => {
     const { affiliateIds } = req.body;
 
     if (!Array.isArray(affiliateIds) || !affiliateIds.length) {
-      return response.failed(null, "affiliateIds is required", req, res);
+      return response.failed(null, "affiliate Link Ids is required", req, res);
     }
 
     // Debug: Log what we're looking for
-    
+
     // 1️⃣ Find affiliate links using Waterline syntax
     const affiliateLinks = await AffiliateLink.find({
       where: {
@@ -1421,22 +1405,22 @@ exports.payCommissionAdmin = async (req, res) => {
     });
 
     console.log("Found affiliate links:", affiliateLinks?.length || 0);
-    
+
     if (!affiliateLinks || !affiliateLinks.length) {
       // Check if any IDs exist at all
       const anyLinks = await AffiliateLink.find({
-        where:{
-        id: affiliateIds
+        where: {
+          id: affiliateIds
         }
       });
-      
+
       console.log("Any links found (including deleted):", anyLinks?.length || 0);
-      
+
       if (anyLinks && anyLinks.length) {
         const deletedLinks = anyLinks.filter(link => link.isDeleted === true);
         console.log("Deleted links found:", deletedLinks.length);
       }
-      
+
       return response.failed(null, `Affiliate links not found. Checked IDs: ${affiliateIds.join(', ')}`, req, res);
     }
 
@@ -1474,7 +1458,7 @@ exports.payCommissionAdmin = async (req, res) => {
       const total_amount = Number(amount.toFixed(2));
       console.log(`Processing payment of $${total_amount} for link ${link.id}`);
 
-    const invoicesDir = path.join(__dirname, '../../assets', 'invoices');
+      const invoicesDir = path.join(__dirname, '../../assets', 'invoices');
       if (!fs.existsSync(invoicesDir)) {
         fs.mkdirSync(invoicesDir, { recursive: true });
       }
@@ -1494,13 +1478,15 @@ exports.payCommissionAdmin = async (req, res) => {
 
       console.log("PDF created:", custom_invoice_url);
 
+      // const get_campaign = await BrandAffiliateAssociation.findOne({ affiliate_id: link.affiliate_id,  status:"accepted" })
+
       let data = {
         user_id: req.identity?.id,
-        paid_to: get_admin.id || "654227e78fd3b1018600710d",
+        paid_to: admin.id || "654227e78fd3b1018600710d",
         transaction_type: "pay_commission",
         transaction_id: "",
         stripe_charge_id: "",
-        currency: get_campaign?.currencies,
+        // currency: get_campaign?.currencies,
         amount: total_amount.toFixed(2),
         transaction_status: "pending",
         special_plan_id: null,
@@ -1510,19 +1496,18 @@ exports.payCommissionAdmin = async (req, res) => {
         updatedBy: null,
         paypal_transaction_id: "",
         paypal_transaction_status: "",
-        affiliateLinkId: id,
+        affiliateLinkId: link.id || link._id,
         custom_invoice_url
       };
 
       await Transactions.create(data);
-    }
       // 7️⃣ Update affiliate link
       try {
         const updatedLink = await AffiliateLink.updateOne({ id: link.id })
-          .set({ 
-            admin_paid: true,
+          .set({
+            admin_paid: "paid",
           });
-        
+
         if (updatedLink) {
           console.log(`Marked link ${link.id} as paid`);
         }
@@ -1530,8 +1515,9 @@ exports.payCommissionAdmin = async (req, res) => {
         console.error(`Failed to update link ${link.id}:`, updateError);
         // Don't fail the whole process if update fails
       }
-       return response.success(
-      { 
+    }
+    return response.success(
+      {
         transactions,
         processedIds,
         totalAmount: transactions.reduce((sum, t) => sum + t.amount, 0),
@@ -1541,8 +1527,8 @@ exports.payCommissionAdmin = async (req, res) => {
       req,
       res
     );
-    }
-    
+  }
+
 
 
   catch (error) {
@@ -1559,10 +1545,10 @@ function calculateStripeFee(amount) {
 }
 
 const invoice_itm_html = (payload) => {
-  
+
   // const { commission, stripe_fees, platform_fee, total_amount } = payload
 
-    return `
+  return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1705,7 +1691,7 @@ const invoice_itm_html = (payload) => {
 async function htmlToPdf(html, outputPath) {
   const browser = await puppeteer.launch({
     headless: "new",
-    executablePath: process.env.LOCAL ? '/usr/bin/google-chrome': '/usr/bin/chromium-browser',
+    executablePath: credentials.LOCAL ? '/usr/bin/google-chrome' : '/usr/bin/chromium-browser',
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
 
