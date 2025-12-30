@@ -621,7 +621,7 @@ module.exports = {
         transaction_id: "",
         stripe_charge_id: "",
         currency: "usd",
-        amount: amount.toFixed(2),
+        amount: req.body.amount.toFixed(2),
         transaction_status: "paid",
         special_plan_id: null,
         subscription_id: null,
