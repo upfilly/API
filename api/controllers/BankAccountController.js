@@ -487,9 +487,12 @@ module.exports = {
     try {
       const { currency, association_id, affiliateLinkIds } = req.body
       let paid_to_emails = new Set([])
+      console.log(affiliateLinkIds,'affiliateLinkIds')
       for await (let itm of affiliateLinkIds) {
-
-        const userDetail = await Users.findOne({ id: itm.affiliate_id, isDeleted: false });
+        const affiliate_data = await AffiliateLink.findById(itm)
+        
+        const userDetail = await Users.findOne({ id: affiliate_data.affiliate_id, isDeleted: false });
+        console.log(userDetail,'userDetail')
         if (!paid_to_emails.has(userDetail.email)) {
           paid_to_emails.add(userDetail.email);
           console.log(`${userDetail.email} has been added.`);
@@ -506,7 +509,7 @@ module.exports = {
         }
         // let get_user = await Users.findOne({id:get_associate_data})
         const accountDetails = await Account.findOne({
-          addedBy: itm.affiliate_id,
+          addedBy: affiliate_data.affiliate_id,
           isDeleted: false,
           isActive: true
         });
