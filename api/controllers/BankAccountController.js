@@ -620,7 +620,7 @@ module.exports = {
         transaction_type: "bank_account",
         transaction_id: "",
         stripe_charge_id: "",
-        currency: get_campain_from_affiliations?.currencies,
+        currency: "usd",
         amount: amount.toFixed(2),
         transaction_status: "paid",
         special_plan_id: null,
