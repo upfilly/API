@@ -903,8 +903,8 @@ exports.updateCommission = async (req, res) => {
 
       const payload = {
         commission: amount,
-        // stripe_fees: stripe_fee,
-        // platform_fee: commission_override,
+        stripe_fees: stripe_fee,
+        platform_fee: commission_override,
         total_amount
       }
       // Generate PDF and wait for it to complete
