@@ -603,7 +603,7 @@ module.exports = {
         fs.mkdirSync(invoicesDir, { recursive: true });
       }
 
-      const filename = `invoice_${id}_${Date.now()}.pdf`;
+      const filename = `invoice_${Date.now()}.pdf`;
       const outputPath = path.join(invoicesDir, filename);
 
       const payload = {
