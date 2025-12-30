@@ -34,6 +34,7 @@ module.exports = {
         invoice_url: {type:"string"},
         custom_invoice_url: {type:"string"},
         custom_invoice_url_admin: {type:"string"},
+        paid_to_emails: {type:"array"},
     
         // contract_id: { model: "contracts" },
 

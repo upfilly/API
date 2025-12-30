@@ -305,6 +305,7 @@ exports.getAllTransactions = async (req, res) => {
             invoice_url: "$invoice_url",
             affiliateLinkId: "$affiliateLinkId",
             custom_invoice_url: "$custom_invoice_url",
+            paid_to_emails: "$paid_to_emails",
           },
         },
         {
@@ -408,6 +409,7 @@ exports.getAllTransactions = async (req, res) => {
             invoice_url: "$invoice_url",
             affiliateLinkId: "$affiliateLinkId",
             custom_invoice_url: "$custom_invoice_url",
+            paid_to_emails: "$paid_to_emails",
           },
         },
         {
