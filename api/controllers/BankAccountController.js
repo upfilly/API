@@ -489,7 +489,7 @@ module.exports = {
       let paid_to_emails = new Set([])
       console.log(affiliateLinkIds,'affiliateLinkIds')
       for await (let itm of affiliateLinkIds) {
-        const affiliate_data = await AffiliateLink.findById(itm)
+        const affiliate_data = await AffiliateLink.findOne(itm)
         
         const userDetail = await Users.findOne({ id: affiliate_data.affiliate_id, isDeleted: false });
         console.log(userDetail,'userDetail')
