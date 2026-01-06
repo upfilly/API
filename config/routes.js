@@ -655,4 +655,12 @@ module.exports.routes = {
    * @ExportController
    */
   "get /reports/performance/export": "ExportController.exportPerformanceReport",
+
+  /**
+   * @CommissionCronController
+   */
+   // Monthly commission invoice routes
+  "post /commission/generate-monthly-invoices": "CommissionCronController.generateSingleMonthlyInvoice",
+  'get /commission/monthly-invoices': 'CommissionCronController.getMonthlyInvoice',
+  'get /commission/monthly-invoices/list': 'CommissionCronController.listMonthlyInvoices',
 };

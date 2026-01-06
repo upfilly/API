@@ -187,4 +187,9 @@ module.exports.bootstrap = async function () {
     }
   })
 
+   // Initialize cron jobs
+  if (process.env.ENABLE_CRON === 'true') {
+    require('../config/cron').cron.init();
+  }
+
 };
