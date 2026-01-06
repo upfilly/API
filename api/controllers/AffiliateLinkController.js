@@ -1114,4 +1114,358 @@ async function htmlToPdf(html, outputPath) {
   }
 }
 
+exports.find_2 = async function (req, res) {
+  try {
+    let query = {};
+    
+    // Check if pagination parameters are provided
+    let hasPagination = false;
+    
+    // Check both ways (query params and body params)
+    if ((req.query.page && req.query.page !== 'undefined') || 
+        (req.query.count && req.query.count !== 'undefined') ||
+        (req.body.page && req.body.page !== 'undefined') ||
+        (req.body.count && req.body.count !== 'undefined')) {
+      hasPagination = true;
+    }
+    
+    let count = parseInt(req.query.count || req.body.count) || 10;
+    let page = parseInt(req.query.page || req.body.page) || 1;
 
+    let skipNo = (page - 1) * count;
+
+    let { search, sortBy, status, isDeleted, format, addedBy, affiliate_id, brand_id, campaignId, commission_status, commission_paid, admin_paid, export_to_xls, startDate, endDate, couponId } = req.query;
+
+    // Handle search
+    if (search) {
+      search = Services.Utils.remove_special_char_exept_underscores(search);
+      query.$or = [
+        { event: { $regex: search, '$options': 'i' } },
+        { 'urlParams.page': { $regex: search, '$options': 'i' } },
+        { 'data.page': { $regex: search, '$options': 'i' } }
+      ];
+    }
+
+    // Handle isDeleted
+    if (isDeleted) {
+      query.isDeleted = isDeleted === 'true';
+    } else {
+      query.isDeleted = false;
+    }
+
+
+    let sortquery = {};
+    if (sortBy && typeof sortBy === "string") {
+      const [rawField, rawOrder] = sortBy.trim().split(/\s+/);
+      const field = rawField || "createdAt";
+      const sortType = rawOrder?.toLowerCase() === "asc" ? 1 : -1;
+      sortquery[field] = sortType;
+    } else {
+      sortquery = { updatedAt: -1 };
+    }
+
+
+    // Handle status
+    if (status) {
+      query.status = status;
+    }
+
+    if (couponId) {
+      query.couponId = new ObjectId(couponId);
+    }
+
+    // Handle addedBy
+    if (addedBy) {
+      query.addedBy = new ObjectId(addedBy);
+    }
+    if (brand_id) {
+      query.brand_id = new ObjectId(brand_id);
+    }
+    if (affiliate_id) {
+      query.affiliate_id = new ObjectId(affiliate_id);
+    }
+    if (campaignId) {
+      query.campaignId = new ObjectId(campaignId);
+    }
+
+    if (commission_status) {
+      query.commission_status = commission_status
+    }
+
+    if (commission_paid) {
+      query.commission_paid = commission_paid
+    }
+    if (admin_paid) {
+      query.admin_paid = admin_paid
+    }
+
+    // Handle format
+    if (format) {
+      query.format = format;
+    }
+
+    let pipeline = [
+      {
+        $lookup: {
+          from: "users",
+          localField: "affiliate_id",
+          foreignField: "_id",
+          as: "affiliate_details",
+        },
+      },
+      {
+        $unwind: {
+          path: "$affiliate_details",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "brand_id",
+          foreignField: "_id",
+          as: "brand_details",
+        },
+      },
+      {
+        $unwind: {
+          path: "$brand_details",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: "brandaffiliateassociation",
+          let: { brand_id: "$brand_id", affiliate_id: "$affiliate_id", isActive: true },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$brand_id", "$$brand_id"] },
+                    { $eq: ["$affiliate_id", "$$affiliate_id"] },
+                    { $eq: ["$isActive", "$$isActive"] }
+                  ]
+                }
+              }
+            },
+          ],
+          as: "brand_association_details"  // The final result will be stored in "campaign_details"
+        }
+      },
+
+      {
+        $unwind: {
+          path: "$brand_association_details",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: "campaign",
+          localField: "brand_association_details.campaign_id",
+          foreignField: "_id",
+          as: "campaign_details",
+        },
+      },
+      {
+        $unwind: {
+          path: "$campaign_details",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: "subscriptionplans",
+          localField: "brand_details.plan_id",
+          foreignField: "_id",
+          as: "plan_details",
+        },
+      },
+      {
+        $unwind: {
+          path: "$plan_details",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: "coupon",
+          localField: "couponId",
+          foreignField: "_id",
+          as: "coupondetalis",
+        },
+      },
+      {
+        $unwind: {
+          path: "$coupondetalis",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+    ];
+
+    let projection = {
+      $project: {
+        affiliate_id: "$affiliate_id",
+        brand_id: "$brand_id",
+        order_id: "$order_id",
+        currency: "$currency",
+        price: "$price",
+        campaignId: "$brand_association_details.campaign_id",
+        brand_association_details: { _id: "$brand_association_details._id", campaign_id: "$brand_association_details.campaign_id" },
+        campaign_details: "$campaign_details",
+        commission: { $toString: "$campaign_details.commission" },
+        discount: "$discount",
+        event: '$event',
+        timestamp: '$timestamp',
+        urlParams: '$urlParams',
+        data: '$data',
+        affiliate_name: "$affiliate_details.fullName",
+        brand_name: "$brand_details.fullName",
+        brand_details: { _id: "$brand_details._id", plan_id: "$brand_details.plan_id" },
+        plan_details: "$plan_details",
+        isDeleted: '$isDeleted',
+        status: '$status',
+        addedBy: '$addedBy',
+        updatedBy: '$updatedBy',
+        updatedAt: '$updatedAt',
+        createdAt: '$createdAt',
+        commission_status: "$commission_status",
+        commission_paid: "$commission_paid",
+        admin_paid: "$admin_paid",
+        lead_id: "$lead_id",
+        amount_of_commission: "$amount_of_commission",
+        commission_type: "$commission_type",
+        couponId: "$couponId",
+        couponDetails: "$coupondetalis"
+      },
+    };
+
+    pipeline.push(projection);
+    pipeline.push({
+      $match: query
+    });
+
+
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      start.setUTCHours(0, 0, 0, 0);
+
+      const end = new Date(endDate);
+      end.setUTCHours(23, 59, 59, 999);
+
+      pipeline.push({
+        $addFields: {
+          timestampAsDate: {
+            $cond: {
+              if: { $and: [{ $ne: ["$timestamp", null] }, { $ne: ["$timestamp", ""] }] },
+              then: { $toDate: "$timestamp" },
+              else: null
+            }
+          }
+        }
+      });
+
+      pipeline.push({
+        $match: {
+          timestampAsDate: {
+            $gte: start,
+            $lte: end
+          }
+        }
+      });
+    }
+
+
+    pipeline.push({
+      $sort: sortquery
+    });
+
+    let totalresult = await db.collection('affiliatelink').aggregate(pipeline).toArray();
+
+    // Only apply pagination if page/count parameters were provided
+    if (hasPagination) {
+      pipeline.push({
+        $skip: Number(skipNo)
+      });
+      pipeline.push({
+        $limit: Number(count)
+      });
+    }
+
+    let result = await db.collection('affiliatelink').aggregate(pipeline).toArray();
+    const planData = await SubscriptionPlans.findOne({ id: req.identity.plan_id })
+    const commission_override = planData?.commission_override
+    if (export_to_xls === "yes") {
+      let transactionData = [];
+      let counter = 1;
+      for (let obj of result) {
+        transactionData.push({
+          createdAt: obj.timestamp ? moment(obj.timestamp).format("D-MM-YYYY") : moment(obj.createdAt).format("D-MM-YYYY"),
+          affiliate: obj?.affiliate_name,
+          brand_name: obj?.brand_name,
+          currency: obj?.currency || "USD",
+          price: obj?.price,
+          order_id: obj?.order_id,
+          commission: obj?.commission ? obj?.commission_type === "amount" ? `$${obj?.commission}` : `${obj?.commission}%` : "--",
+          // amount_of_commission: obj?.amount_of_commission,
+          amount_of_commission: calculatetotalCommission(obj?.commission_type, obj?.price, obj?.commission, commission_override),
+          commission_paid: obj?.commission_paid,
+          commission_status: obj?.commission_status,
+          counter: counter
+        });
+
+        counter++;
+      }
+
+      let excelFileName = `TransactionData.xlsx`;
+      let workbook = new excel.Workbook();
+      let worksheet = workbook.addWorksheet("Logs");
+
+      worksheet.columns = [
+        { header: "Serial No.", key: "counter", width: 15, style: { alignment: { horizontal: "center" } } },
+        { header: "Affiliate", key: "affiliate", width: 10 },
+        { header: "Brand", key: "brand_name", width: 10, style: { alignment: { horizontal: "center" } } },
+        { header: "Order price", key: "price", width: 25 },
+        { header: "Order Id", key: "order_id", width: 25 },
+        { header: "Transaction Date", key: "createdAt", width: 25 },
+        { header: "Commission", key: "commission", width: 25 },
+        { header: "Commission paid", key: "amount_of_commission", width: 25 },
+        { header: "Commission Status", key: "commission_status", width: 25 },
+        { header: "Payment Status", key: "commission_paid", width: 25 },
+      ];
+      worksheet.addRows(transactionData);
+      // Sending the response as an Excel file
+      try {
+        res.setHeader(
+          "Content-Type",
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        );
+        res.setHeader(
+          "Content-Disposition",
+          `attachment; filename=${excelFileName}`
+        );
+
+        await workbook.xlsx.write(res);
+        return res.status(200).end();
+      } catch (err) {
+        return response.failed(null, err, req, res)
+      }
+    } else {
+      let resData = {
+        total_count: totalresult ? totalresult.length : 0,
+        data: result ? result : []
+      };
+      
+      // If no pagination params, return all data
+      if (!hasPagination) {
+        resData.data = totalresult ? totalresult : [];
+      }
+      
+      return response.success(resData, constants.AFFILIATELINK.FETCHED, req, res);
+    }
+  } catch (error) {
+    console.log(error, '==df')
+    return response.failed(null, `${error}`, req, res);
+  }
+};
