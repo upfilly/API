@@ -149,8 +149,8 @@ module.exports = {
     
     const browser = await puppeteer.launch({
       headless: "new",
-    //   executablePath: process.env.LOCAL ? '/usr/bin/google-chrome' : '/usr/bin/chromium-browser',
-      executablePath: process.env.LOCAL ? '/usr/bin/google-chrome' :'/usr/bin/google-chrome',
+      executablePath: process.env.LOCAL ? '/usr/bin/google-chrome' : '/usr/bin/chromium-browser',
+      // executablePath: process.env.LOCAL ? '/usr/bin/google-chrome' :'/usr/bin/google-chrome',
 
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
