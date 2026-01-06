@@ -1254,81 +1254,111 @@ exports.transactionGraph = async function (req, res) {
   }
 };
 
+// exports.monthlyPendingTransactions = async function (req, res) {
+//   try {
+//     const date = new Date();
+//     const startDate = new Date(
+//       Date.UTC(date.getFullYear(), date.getMonth(), 1)
+//     );
+//     const endDate = new Date(
+//       Date.UTC(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59, 999)
+//     );
+//     // console.log("Start date  = ", startDate, "End Date = ", endDate);
+//     let monthlyData = {}; // Object containing response
+
+//     const getTransactions = await Transactions.find({
+//       createdAt: { ">=": startDate, "<=": endDate },
+//       user_id: req.identity?.id,
+//       transaction_type: "pay_commission",
+//       transaction_status: "pending",
+//     });
+//     if (!getTransactions) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "No pending transactions found within the month",
+//       });
+//     }
+
+//     monthlyData.totalPendingTransactions = getTransactions.length;
+
+//     let totalAmount = 0,
+//       arr = [];
+//     for (let obj of getTransactions) {
+//       arr.push(obj.id);
+//       totalAmount += obj.amount;
+//     }
+
+//     totalPending_PaidCount = await AffiliateLink.find({
+//       isDeleted: false,
+//       admin_paid: "pending",
+//     });
+
+//     let totalAdminPendingPrice = 0;
+
+//     for (let item of totalPending_PaidCount) {
+//       totalAdminPendingPrice += item.price || 0;
+//     }
+
+//     // Find user acitve subscription plan
+//     const user_active_subscription = await Subscriptions.findOne({
+//       user_id: req.identity?.id,
+//       status: "active",
+//     }).populate("subscription_plan_id");
+//     let commission_override = 0;
+//     if (user_active_subscription) {
+//       commission_override =
+//         user_active_subscription?.subscription_plan_id?.commission_override;
+//     } else {
+//       return response.failed(null, "You don't have any active plan", req, res);
+//     }
+
+//     const commission_override_amount =
+//       (commission_override / 100) * totalAmount;
+//     totalAmount += +commission_override_amount;
+//     const stripe_fee = calculateStripeFee(totalAmount);
+
+//     monthlyData.admin_pending_total_price = totalAdminPendingPrice;
+//     monthlyData.admin_paid_count = totalPending_PaidCount.length;
+//     monthlyData.totalPayableAmount = totalAmount + stripe_fee;
+//     monthlyData.transaction_ids = arr;
+
+//     return res.status(200).json({ success: true, data: monthlyData });
+//   } catch (err) {
+//     sails.log.error("Payable Monthly Pending Transactions error:", err);
+//     return res.serverError({ success: false, message: err.message });
+//   }
+// };
+
 exports.monthlyPendingTransactions = async function (req, res) {
   try {
     const date = new Date();
-    const startDate = new Date(
-      Date.UTC(date.getFullYear(), date.getMonth(), 1)
-    );
-    const endDate = new Date(
-      Date.UTC(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59, 999)
-    );
+    const startDate = new Date(Date.UTC(date.getFullYear(), date.getMonth(), 1));
+    const endDate = new Date(Date.UTC(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59, 999));
     // console.log("Start date  = ", startDate, "End Date = ", endDate);
     let monthlyData = {}; // Object containing response
 
-    const getTransactions = await Transactions.find({
-      createdAt: { ">=": startDate, "<=": endDate },
-      user_id: req.identity?.id,
-      transaction_type: "pay_commission",
-      transaction_status: "pending",
-    });
+    const getTransactions = await Transactions.find({ createdAt: { '>=': startDate, '<=': endDate }, user_id: req.identity?.id, transaction_type: "pay_commission", transaction_status: "pending" });
     if (!getTransactions) {
-      return res.status(400).json({
-        success: false,
-        message: "No pending transactions found within the month",
-      });
+      return res.status(400).json({ success: false, message: "No pending transactions found within the month" });
     }
 
     monthlyData.totalPendingTransactions = getTransactions.length;
 
-    let totalAmount = 0,
-      arr = [];
+    let totalAmount = 0, arr = [];
     for (let obj of getTransactions) {
       arr.push(obj.id);
       totalAmount += obj.amount;
     }
-
-    totalPending_PaidCount = await AffiliateLink.find({
-      isDeleted: false,
-      admin_paid: "pending",
-    });
-
-    let totalAdminPendingPrice = 0;
-
-    for (let item of totalPending_PaidCount) {
-      totalAdminPendingPrice += item.price || 0;
-    }
-
-    // Find user acitve subscription plan
-    const user_active_subscription = await Subscriptions.findOne({
-      user_id: req.identity?.id,
-      status: "active",
-    }).populate("subscription_plan_id");
-    let commission_override = 0;
-    if (user_active_subscription) {
-      commission_override =
-        user_active_subscription?.subscription_plan_id?.commission_override;
-    } else {
-      return response.failed(null, "You don't have any active plan", req, res);
-    }
-
-    const commission_override_amount =
-      (commission_override / 100) * totalAmount;
-    totalAmount += +commission_override_amount;
-    const stripe_fee = calculateStripeFee(totalAmount);
-
-    monthlyData.admin_pending_total_price = totalAdminPendingPrice;
-    monthlyData.admin_paid_count = totalPending_PaidCount.length;
-    monthlyData.totalPayableAmount = totalAmount + stripe_fee;
-    monthlyData.transaction_ids = arr;
+    monthlyData.totalPayableAmount = totalAmount;
+    monthlyData.ids = arr;
 
     return res.status(200).json({ success: true, data: monthlyData });
-  } catch (err) {
+  }
+  catch (err) {
     sails.log.error("Payable Monthly Pending Transactions error:", err);
     return res.serverError({ success: false, message: err.message });
   }
-};
-
+}
 exports.monthlyPendingTransactionsAdmin = async function (req, res) {
   try {
     const date = new Date();
