@@ -646,7 +646,7 @@ module.exports = {
       let user = await Users.findOne({
         email: req.body.email.toLowerCase(),
         isDeleted: false,
-        role: { in: ["admin", "team"] },
+        role: { in: ["admin", "team","staff"] },
       });
 
       if (!user) {
