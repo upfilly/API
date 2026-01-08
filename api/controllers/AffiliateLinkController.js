@@ -854,6 +854,8 @@ exports.updateCommission = async (req, res) => {
         .status(400)
         .json({ error: constants.AFFILIATELINK.MISSING_FIELDS });
     }
+    const affiliateLinkCheck = await AffiliateLink.findOne({isDeleted:false,id:id})
+    console.log("affiliateLinkCheck",affiliateLinkCheck)
     const updatedAffiliateLink = await AffiliateLink.updateOne({
       id: id,
       isDeleted: false,
@@ -867,7 +869,9 @@ exports.updateCommission = async (req, res) => {
 
       const commission_type = get_campaign.commission_type
 
-      if (commission_type == "percentage") {
+      if(affiliateLinkCheck.amount_of_commission){
+        amount = affiliateLinkCheck.amount_of_commission
+      }else if (commission_type == "percentage") {
         const percentage_value = (get_campaign.commission / 100) * +updatedAffiliateLink.price
         amount = percentage_value
       } else {
@@ -1117,20 +1121,8 @@ async function htmlToPdf(html, outputPath) {
 exports.find_2 = async function (req, res) {
   try {
     let query = {};
-    
-    // Check if pagination parameters are provided
-    let hasPagination = false;
-    
-    // Check both ways (query params and body params)
-    if ((req.query.page && req.query.page !== 'undefined') || 
-        (req.query.count && req.query.count !== 'undefined') ||
-        (req.body.page && req.body.page !== 'undefined') ||
-        (req.body.count && req.body.count !== 'undefined')) {
-      hasPagination = true;
-    }
-    
-    let count = parseInt(req.query.count || req.body.count) || 10;
-    let page = parseInt(req.query.page || req.body.page) || 1;
+    let count = parseInt(req.query.count) || 10;
+    let page = parseInt(req.query.page) || 1;
 
     let skipNo = (page - 1) * count;
 
@@ -1250,7 +1242,7 @@ exports.find_2 = async function (req, res) {
               }
             },
           ],
-          as: "brand_association_details"  // The final result will be stored in "campaign_details"
+          as: "brand_association_details"
         }
       },
 
@@ -1376,94 +1368,353 @@ exports.find_2 = async function (req, res) {
       });
     }
 
+    // Get plan data for commission calculation
+    const planData = await SubscriptionPlans.findOne({ id: req.identity.plan_id });
+    const commission_override = planData?.commission_override || 0;
+    
+    // Create a separate pipeline for summary counts and amounts
+    let summaryPipeline = [...pipeline];
+    
+    // Remove sort, skip, limit for summary calculation
+    summaryPipeline = summaryPipeline.filter(stage => !stage.$sort && !stage.$skip && !stage.$limit);
+    
+    // First, calculate commission amounts for each document
+    summaryPipeline.push({
+      $addFields: {
+        calculated_commission: {
+          $cond: {
+            if: { $and: [
+              { $ne: ["$amount_of_commission", null] },
+              { $ne: ["$amount_of_commission", undefined] }
+            ]},
+            then: { $toDouble: "$amount_of_commission" },
+            else: {
+              $cond: {
+                if: { $and: [
+                  { $ne: ["$price", null] },
+                  { $ne: ["$commission", null] },
+                  { $ne: ["$commission_type", null] }
+                ]},
+                then: {
+                  $cond: {
+                    if: { $eq: ["$commission_type", "amount"] },
+                    then: { $toDouble: "$commission" },
+                    else: {
+                      $cond: {
+                        if: { $eq: ["$commission_type", "percentage"] },
+                        then: {
+                          $multiply: [
+                            { $divide: [{ $toDouble: "$price" }, 100] },
+                            { $toDouble: "$commission" }
+                          ]
+                        },
+                        else: 0
+                      }
+                    }
+                  }
+                },
+                else: 0
+              }
+            }
+          }
+        }
+      }
+    });
 
+    // Apply commission override if needed
+    if (commission_override > 0) {
+      summaryPipeline.push({
+        $addFields: {
+          calculated_commission: {
+            $multiply: [
+              "$calculated_commission",
+              { $divide: [commission_override, 100] }
+            ]
+          }
+        }
+      });
+    }
+    
+    // Add grouping for summary counts and amounts
+    summaryPipeline.push({
+      $group: {
+        _id: null,
+        total_count: { $sum: 1 },
+        total_commission_amount: { $sum: "$calculated_commission" },
+        
+        // Commission paid status counts and amounts
+        commission_paid_true_count: {
+          $sum: {
+            $cond: [{ $eq: ["$commission_paid", true] }, 1, 0]
+          }
+        },
+        commission_paid_true_amount: {
+          $sum: {
+            $cond: [{ $eq: ["$commission_paid", true] }, "$calculated_commission", 0]
+          }
+        },
+        commission_paid_false_count: {
+          $sum: {
+            $cond: [{ $eq: ["$commission_paid", false] }, 1, 0]
+          }
+        },
+        commission_paid_false_amount: {
+          $sum: {
+            $cond: [{ $eq: ["$commission_paid", false] }, "$calculated_commission", 0]
+          }
+        },
+        commission_paid_null_count: {
+          $sum: {
+            $cond: [{ $eq: [{ $type: "$commission_paid" }, "null"] }, 1, 0]
+          }
+        },
+        commission_paid_null_amount: {
+          $sum: {
+            $cond: [{ $eq: [{ $type: "$commission_paid" }, "null"] }, "$calculated_commission", 0]
+          }
+        },
+        
+        // Admin paid status counts and amounts
+        admin_paid_true_count: {
+          $sum: {
+            $cond: [{ $eq: ["$admin_paid", true] }, 1, 0]
+          }
+        },
+        admin_paid_true_amount: {
+          $sum: {
+            $cond: [{ $eq: ["$admin_paid", true] }, "$calculated_commission", 0]
+          }
+        },
+        admin_paid_false_count: {
+          $sum: {
+            $cond: [{ $eq: ["$admin_paid", false] }, 1, 0]
+          }
+        },
+        admin_paid_false_amount: {
+          $sum: {
+            $cond: [{ $eq: ["$admin_paid", false] }, "$calculated_commission", 0]
+          }
+        },
+        admin_paid_null_count: {
+          $sum: {
+            $cond: [{ $eq: [{ $type: "$admin_paid" }, "null"] }, 1, 0]
+          }
+        },
+        admin_paid_null_amount: {
+          $sum: {
+            $cond: [{ $eq: [{ $type: "$admin_paid" }, "null"] }, "$calculated_commission", 0]
+          }
+        },
+        
+        // Commission status counts and amounts
+        commission_pending_count: {
+          $sum: {
+            $cond: [{ $eq: ["$commission_status", "pending"] }, 1, 0]
+          }
+        },
+        commission_pending_amount: {
+          $sum: {
+            $cond: [{ $eq: ["$commission_status", "pending"] }, "$calculated_commission", 0]
+          }
+        },
+        commission_accepted_count: {
+          $sum: {
+            $cond: [{ $eq: ["$commission_status", "accepted"] }, 1, 0]
+          }
+        },
+        commission_accepted_amount: {
+          $sum: {
+            $cond: [{ $eq: ["$commission_status", "accepted"] }, "$calculated_commission", 0]
+          }
+        },
+        commission_rejected_count: {
+          $sum: {
+            $cond: [{ $eq: ["$commission_status", "rejected"] }, 1, 0]
+          }
+        },
+        commission_rejected_amount: {
+          $sum: {
+            $cond: [{ $eq: ["$commission_status", "rejected"] }, "$calculated_commission", 0]
+          }
+        },
+        commission_status_null_count: {
+          $sum: {
+            $cond: [{ $eq: [{ $type: "$commission_status" }, "null"] }, 1, 0]
+          }
+        },
+        commission_status_null_amount: {
+          $sum: {
+            $cond: [{ $eq: [{ $type: "$commission_status" }, "null"] }, "$calculated_commission", 0]
+          }
+        }
+      }
+    });
+
+    summaryPipeline.push({
+      $project: {
+        _id: 0,
+        total_count: 1,
+        total_commission_amount: { $round: ["$total_commission_amount", 2] },
+        
+        // Commission paid summary with amounts
+        commission_paid_summary: {
+          paid: {
+            count: "$commission_paid_true_count",
+            amount: { $round: ["$commission_paid_true_amount", 2] }
+          },
+          unpaid: {
+            count: "$commission_paid_false_count",
+            amount: { $round: ["$commission_paid_false_amount", 2] }
+          },
+          not_set: {
+            count: "$commission_paid_null_count",
+            amount: { $round: ["$commission_paid_null_amount", 2] }
+          }
+        },
+        
+        // Admin paid summary with amounts
+        admin_paid_summary: {
+          paid: {
+            count: "$admin_paid_true_count",
+            amount: { $round: ["$admin_paid_true_amount", 2] }
+          },
+          unpaid: {
+            count: "$admin_paid_false_count",
+            amount: { $round: ["$admin_paid_false_amount", 2] }
+          },
+          not_set: {
+            count: "$admin_paid_null_count",
+            amount: { $round: ["$admin_paid_null_amount", 2] }
+          }
+        },
+        
+        // Commission status summary with amounts
+        commission_status_summary: {
+          pending: {
+            count: "$commission_pending_count",
+            amount: { $round: ["$commission_pending_amount", 2] }
+          },
+          accepted: {
+            count: "$commission_accepted_count",
+            amount: { $round: ["$commission_accepted_amount", 2] }
+          },
+          rejected: {
+            count: "$commission_rejected_count",
+            amount: { $round: ["$commission_rejected_amount", 2] }
+          },
+          not_set: {
+            count: "$commission_status_null_count",
+            amount: { $round: ["$commission_status_null_amount", 2] }
+          }
+        }
+      }
+    });
+
+    // Get summary data
+    let summaryResult = await db.collection('affiliatelink').aggregate(summaryPipeline).toArray();
+    let summaryData = summaryResult.length > 0 ? summaryResult[0] : {
+      total_count: 0,
+      total_commission_amount: 0,
+      commission_paid_summary: { 
+        paid: { count: 0, amount: 0 }, 
+        unpaid: { count: 0, amount: 0 }, 
+        not_set: { count: 0, amount: 0 } 
+      },
+      admin_paid_summary: { 
+        paid: { count: 0, amount: 0 }, 
+        unpaid: { count: 0, amount: 0 }, 
+        not_set: { count: 0, amount: 0 } 
+      },
+      commission_status_summary: { 
+        pending: { count: 0, amount: 0 }, 
+        accepted: { count: 0, amount: 0 }, 
+        rejected: { count: 0, amount: 0 }, 
+        not_set: { count: 0, amount: 0 } 
+      }
+    };
+
+    // Continue with original pipeline for paginated results
     pipeline.push({
       $sort: sortquery
     });
 
     let totalresult = await db.collection('affiliatelink').aggregate(pipeline).toArray();
 
-    // Only apply pagination if page/count parameters were provided
-    if (hasPagination) {
-      pipeline.push({
-        $skip: Number(skipNo)
-      });
-      pipeline.push({
-        $limit: Number(count)
-      });
-    }
+
+    pipeline.push({
+      $skip: Number(skipNo)
+    });
+    pipeline.push({
+      $limit: Number(count)
+    });
 
     let result = await db.collection('affiliatelink').aggregate(pipeline).toArray();
-    const planData = await SubscriptionPlans.findOne({ id: req.identity.plan_id })
-    const commission_override = planData?.commission_override
-    if (export_to_xls === "yes") {
-      let transactionData = [];
-      let counter = 1;
-      for (let obj of result) {
-        transactionData.push({
-          createdAt: obj.timestamp ? moment(obj.timestamp).format("D-MM-YYYY") : moment(obj.createdAt).format("D-MM-YYYY"),
-          affiliate: obj?.affiliate_name,
-          brand_name: obj?.brand_name,
-          currency: obj?.currency || "USD",
-          price: obj?.price,
-          order_id: obj?.order_id,
-          commission: obj?.commission ? obj?.commission_type === "amount" ? `$${obj?.commission}` : `${obj?.commission}%` : "--",
-          // amount_of_commission: obj?.amount_of_commission,
-          amount_of_commission: calculatetotalCommission(obj?.commission_type, obj?.price, obj?.commission, commission_override),
-          commission_paid: obj?.commission_paid,
-          commission_status: obj?.commission_status,
-          counter: counter
-        });
+    
+    // if (export_to_xls === "yes") {
+    //   let transactionData = [];
+    //   let counter = 1;
+    //   for (let obj of result) {
+    //     transactionData.push({
+    //       createdAt: obj.timestamp ? moment(obj.timestamp).format("D-MM-YYYY") : moment(obj.createdAt).format("D-MM-YYYY"),
+    //       affiliate: obj?.affiliate_name,
+    //       brand_name: obj?.brand_name,
+    //       currency: obj?.currency || "USD",
+    //       price: obj?.price,
+    //       order_id: obj?.order_id,
+    //       commission: obj?.commission ? obj?.commission_type === "amount" ? `$${obj?.commission}` : `${obj?.commission}%` : "--",
+    //       amount_of_commission: calculatetotalCommission(obj?.commission_type, obj?.price, obj?.commission, commission_override),
+    //       commission_paid: obj?.commission_paid,
+    //       commission_status: obj?.commission_status,
+    //       counter: counter
+    //     });
 
-        counter++;
-      }
+    //     counter++;
+    //   }
 
-      let excelFileName = `TransactionData.xlsx`;
-      let workbook = new excel.Workbook();
-      let worksheet = workbook.addWorksheet("Logs");
+    //   let excelFileName = `TransactionData.xlsx`;
+    //   let workbook = new excel.Workbook();
+    //   let worksheet = workbook.addWorksheet("Logs");
 
-      worksheet.columns = [
-        { header: "Serial No.", key: "counter", width: 15, style: { alignment: { horizontal: "center" } } },
-        { header: "Affiliate", key: "affiliate", width: 10 },
-        { header: "Brand", key: "brand_name", width: 10, style: { alignment: { horizontal: "center" } } },
-        { header: "Order price", key: "price", width: 25 },
-        { header: "Order Id", key: "order_id", width: 25 },
-        { header: "Transaction Date", key: "createdAt", width: 25 },
-        { header: "Commission", key: "commission", width: 25 },
-        { header: "Commission paid", key: "amount_of_commission", width: 25 },
-        { header: "Commission Status", key: "commission_status", width: 25 },
-        { header: "Payment Status", key: "commission_paid", width: 25 },
-      ];
-      worksheet.addRows(transactionData);
-      // Sending the response as an Excel file
-      try {
-        res.setHeader(
-          "Content-Type",
-          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        );
-        res.setHeader(
-          "Content-Disposition",
-          `attachment; filename=${excelFileName}`
-        );
+    //   worksheet.columns = [
+    //     { header: "Serial No.", key: "counter", width: 15, style: { alignment: { horizontal: "center" } } },
+    //     { header: "Affiliate", key: "affiliate", width: 10 },
+    //     { header: "Brand", key: "brand_name", width: 10, style: { alignment: { horizontal: "center" } } },
+    //     { header: "Order price", key: "price", width: 25 },
+    //     { header: "Order Id", key: "order_id", width: 25 },
+    //     { header: "Transaction Date", key: "createdAt", width: 25 },
+    //     { header: "Commission", key: "commission", width: 25 },
+    //     { header: "Commission paid", key: "amount_of_commission", width: 25 },
+    //     { header: "Commission Status", key: "commission_status", width: 25 },
+    //     { header: "Payment Status", key: "commission_paid", width: 25 },
+    //   ];
+    //   worksheet.addRows(transactionData);
+    //   // Sending the response as an Excel file
+    //   try {
+    //     res.setHeader(
+    //       "Content-Type",
+    //       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    //     );
+    //     res.setHeader(
+    //       "Content-Disposition",
+    //       `attachment; filename=${excelFileName}`
+    //     );
 
-        await workbook.xlsx.write(res);
-        return res.status(200).end();
-      } catch (err) {
-        return response.failed(null, err, req, res)
-      }
-    } else {
+    //     await workbook.xlsx.write(res);
+    //     return res.status(200).end();
+    //   } catch (err) {
+    //     return response.failed(null, err, req, res)
+    //   }
+    // } else {
       let resData = {
         total_count: totalresult ? totalresult.length : 0,
+        summary: summaryData,
         data: result ? result : []
       };
-      
-      // If no pagination params, return all data
-      if (!hasPagination) {
+      if (!req.param('page') && !req.param('count')) {
         resData.data = totalresult ? totalresult : [];
       }
-      
       return response.success(resData, constants.AFFILIATELINK.FETCHED, req, res);
-    }
+    // }
   } catch (error) {
     console.log(error, '==df')
     return response.failed(null, `${error}`, req, res);
