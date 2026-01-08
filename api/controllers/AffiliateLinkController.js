@@ -1118,7 +1118,7 @@ async function htmlToPdf(html, outputPath) {
   }
 }
 
-exports.find_2 = async function (req, res) {
+exports.find_2_admin = async function (req, res) {
   try {
     let query = {};
     let count = parseInt(req.query.count) || 10;
@@ -1298,18 +1298,27 @@ exports.find_2 = async function (req, res) {
       },
       {
         $project: {
+          // Include affiliatelink document ID
+          affiliatelink_id: "$_id",
+          
           affiliate_id: "$affiliate_id",
           affiliate_name: "$affiliate_details.fullName",
           affiliate_email: "$affiliate_details.email",
+          
           brand_id: "$brand_id",
           brand_name: "$brand_details.fullName",
           brand_email: "$brand_details.email",
           brand_company: "$brand_details.companyName",
+          
           order_id: "$order_id",
           currency: "$currency",
           price: "$price",
+          
           campaignId: "$brand_association_details.campaign_id",
-          brand_association_details: { _id: "$brand_association_details._id", campaign_id: "$brand_association_details.campaign_id" },
+          brand_association_details: { 
+            _id: "$brand_association_details._id", 
+            campaign_id: "$brand_association_details.campaign_id" 
+          },
           campaign_details: "$campaign_details",
           commission: { $toString: "$campaign_details.commission" },
           discount: "$discount",
@@ -1317,7 +1326,12 @@ exports.find_2 = async function (req, res) {
           timestamp: '$timestamp',
           urlParams: '$urlParams',
           data: '$data',
-          brand_details: { _id: "$brand_details._id", plan_id: "$brand_details.plan_id" },
+          brand_details: { 
+            _id: "$brand_details._id", 
+            plan_id: "$brand_details.plan_id",
+            // Include affiliatelink ID in brand details for easy reference
+            affiliatelink_id: "$_id"
+          },
           plan_details: "$plan_details",
           isDeleted: '$isDeleted',
           status: '$status',
@@ -1591,7 +1605,7 @@ exports.find_2 = async function (req, res) {
       $sort: { total_commission_earned: -1 }
     });
 
-    // Create a pipeline for brand-wise summary per affiliate
+    // Create a pipeline for brand-wise summary per affiliate (with affiliatelink IDs)
     let brandPerAffiliatePipeline = [...basePipeline];
     
     brandPerAffiliatePipeline.push({
@@ -1606,6 +1620,9 @@ exports.find_2 = async function (req, res) {
         transaction_count: { $sum: 1 },
         total_order_value: { $sum: { $toDouble: "$price" } },
         total_commission_payable: { $sum: "$calculated_commission" },
+        
+        // Store all affiliatelink IDs for this brand-affiliate relationship
+        affiliatelink_ids: { $push: "$affiliatelink_id" },
         
         // Commission status breakdown
         pending_commission: {
@@ -1681,6 +1698,7 @@ exports.find_2 = async function (req, res) {
             transaction_count: "$transaction_count",
             total_order_value: { $round: ["$total_order_value", 2] },
             total_commission_payable: { $round: ["$total_commission_payable", 2] },
+            affiliatelink_ids: "$affiliatelink_ids", // Include affiliatelink IDs
             
             commission_status_summary: {
               pending: {
@@ -1934,3 +1952,821 @@ exports.find_2 = async function (req, res) {
     return response.failed(null, `${error}`, req, res);
   }
 };
+
+
+// exports.find_2 = async function (req, res) {
+//   try {
+//     let query = {};
+//     let count = parseInt(req.query.count) || 10;
+//     let page = parseInt(req.query.page) || 1;
+
+//     let skipNo = (page - 1) * count;
+
+//     let { search, sortBy, status, isDeleted, format, addedBy, affiliate_id, brand_id, campaignId, commission_status, commission_paid, admin_paid, export_to_xls, startDate, endDate, couponId } = req.query;
+
+//     // Handle search
+//     if (search) {
+//       search = Services.Utils.remove_special_char_exept_underscores(search);
+//       query.$or = [
+//         { event: { $regex: search, '$options': 'i' } },
+//         { 'urlParams.page': { $regex: search, '$options': 'i' } },
+//         { 'data.page': { $regex: search, '$options': 'i' } }
+//       ];
+//     }
+
+//     // Handle isDeleted
+//     if (isDeleted) {
+//       query.isDeleted = isDeleted === 'true';
+//     } else {
+//       query.isDeleted = false;
+//     }
+
+//     let sortquery = {};
+//     if (sortBy && typeof sortBy === "string") {
+//       const [rawField, rawOrder] = sortBy.trim().split(/\s+/);
+//       const field = rawField || "createdAt";
+//       const sortType = rawOrder?.toLowerCase() === "asc" ? 1 : -1;
+//       sortquery[field] = sortType;
+//     } else {
+//       sortquery = { updatedAt: -1 };
+//     }
+
+//     // Handle status
+//     if (status) {
+//       query.status = status;
+//     }
+
+//     if (couponId) {
+//       query.couponId = new ObjectId(couponId);
+//     }
+
+//     // Handle addedBy
+//     if (addedBy) {
+//       query.addedBy = new ObjectId(addedBy);
+//     }
+//     if (brand_id) {
+//       query.brand_id = new ObjectId(brand_id);
+//     }
+//     if (affiliate_id) {
+//       query.affiliate_id = new ObjectId(affiliate_id);
+//     }
+//     if (campaignId) {
+//       query.campaignId = new ObjectId(campaignId);
+//     }
+
+//     if (commission_status) {
+//       query.commission_status = commission_status
+//     }
+
+//     if (commission_paid) {
+//       query.commission_paid = commission_paid
+//     }
+//     if (admin_paid) {
+//       query.admin_paid = admin_paid
+//     }
+
+//     // Handle format
+//     if (format) {
+//       query.format = format;
+//     }
+
+//     // Get plan data for commission calculation
+//     const planData = await SubscriptionPlans.findOne({ id: req.identity.plan_id });
+//     const commission_override = planData?.commission_override || 0;
+
+//     // Base pipeline for all aggregations
+//     let basePipeline = [
+//       {
+//         $lookup: {
+//           from: "users",
+//           localField: "affiliate_id",
+//           foreignField: "_id",
+//           as: "affiliate_details",
+//         },
+//       },
+//       {
+//         $unwind: {
+//           path: "$affiliate_details",
+//           preserveNullAndEmptyArrays: true,
+//         },
+//       },
+//       {
+//         $lookup: {
+//           from: "users",
+//           localField: "brand_id",
+//           foreignField: "_id",
+//           as: "brand_details",
+//         },
+//       },
+//       {
+//         $unwind: {
+//           path: "$brand_details",
+//           preserveNullAndEmptyArrays: true,
+//         },
+//       },
+//       {
+//         $lookup: {
+//           from: "brandaffiliateassociation",
+//           let: { brand_id: "$brand_id", affiliate_id: "$affiliate_id", isActive: true },
+//           pipeline: [
+//             {
+//               $match: {
+//                 $expr: {
+//                   $and: [
+//                     { $eq: ["$brand_id", "$$brand_id"] },
+//                     { $eq: ["$affiliate_id", "$$affiliate_id"] },
+//                     { $eq: ["$isActive", "$$isActive"] }
+//                   ]
+//                 }
+//               }
+//             },
+//           ],
+//           as: "brand_association_details"
+//         }
+//       },
+//       {
+//         $unwind: {
+//           path: "$brand_association_details",
+//           preserveNullAndEmptyArrays: true,
+//         },
+//       },
+//       {
+//         $lookup: {
+//           from: "campaign",
+//           localField: "brand_association_details.campaign_id",
+//           foreignField: "_id",
+//           as: "campaign_details",
+//         },
+//       },
+//       {
+//         $unwind: {
+//           path: "$campaign_details",
+//           preserveNullAndEmptyArrays: true,
+//         },
+//       },
+//       {
+//         $lookup: {
+//           from: "subscriptionplans",
+//           localField: "brand_details.plan_id",
+//           foreignField: "_id",
+//           as: "plan_details",
+//         },
+//       },
+//       {
+//         $unwind: {
+//           path: "$plan_details",
+//           preserveNullAndEmptyArrays: true,
+//         },
+//       },
+//       {
+//         $lookup: {
+//           from: "coupon",
+//           localField: "couponId",
+//           foreignField: "_id",
+//           as: "coupondetalis",
+//         },
+//       },
+//       {
+//         $unwind: {
+//           path: "$coupondetalis",
+//           preserveNullAndEmptyArrays: true,
+//         },
+//       },
+//       {
+//         $project: {
+//           affiliate_id: "$affiliate_id",
+//           affiliate_name: "$affiliate_details.fullName",
+//           affiliate_email: "$affiliate_details.email",
+//           brand_id: "$brand_id",
+//           brand_name: "$brand_details.fullName",
+//           brand_email: "$brand_details.email",
+//           brand_company: "$brand_details.companyName",
+//           order_id: "$order_id",
+//           currency: "$currency",
+//           price: "$price",
+//           campaignId: "$brand_association_details.campaign_id",
+//           brand_association_details: { _id: "$brand_association_details._id", campaign_id: "$brand_association_details.campaign_id" },
+//           campaign_details: "$campaign_details",
+//           commission: { $toString: "$campaign_details.commission" },
+//           discount: "$discount",
+//           event: '$event',
+//           timestamp: '$timestamp',
+//           urlParams: '$urlParams',
+//           data: '$data',
+//           brand_details: { _id: "$brand_details._id", plan_id: "$brand_details.plan_id" },
+//           plan_details: "$plan_details",
+//           isDeleted: '$isDeleted',
+//           status: '$status',
+//           addedBy: '$addedBy',
+//           updatedBy: '$updatedBy',
+//           updatedAt: '$updatedAt',
+//           createdAt: '$createdAt',
+//           commission_status: "$commission_status",
+//           commission_paid: "$commission_paid",
+//           admin_paid: "$admin_paid",
+//           lead_id: "$lead_id",
+//           amount_of_commission: "$amount_of_commission",
+//           commission_type: "$commission_type",
+//           couponId: "$couponId",
+//           couponDetails: "$coupondetalis"
+//         },
+//       },
+//       {
+//         $match: query
+//       }
+//     ];
+
+//     // Add date filtering if provided
+//     if (startDate && endDate) {
+//       const start = new Date(startDate);
+//       start.setUTCHours(0, 0, 0, 0);
+
+//       const end = new Date(endDate);
+//       end.setUTCHours(23, 59, 59, 999);
+
+//       basePipeline.push({
+//         $addFields: {
+//           timestampAsDate: {
+//             $cond: {
+//               if: { $and: [{ $ne: ["$timestamp", null] }, { $ne: ["$timestamp", ""] }] },
+//               then: { $toDate: "$timestamp" },
+//               else: null
+//             }
+//           }
+//         }
+//       });
+
+//       basePipeline.push({
+//         $match: {
+//           timestampAsDate: {
+//             $gte: start,
+//             $lte: end
+//           }
+//         }
+//       });
+//     }
+
+//     // Add commission calculation to base pipeline
+//     basePipeline.push({
+//       $addFields: {
+//         calculated_commission: {
+//           $cond: {
+//             if: { $and: [
+//               { $ne: ["$amount_of_commission", null] },
+//               { $ne: ["$amount_of_commission", undefined] }
+//             ]},
+//             then: { $toDouble: "$amount_of_commission" },
+//             else: {
+//               $cond: {
+//                 if: { $and: [
+//                   { $ne: ["$price", null] },
+//                   { $ne: ["$commission", null] },
+//                   { $ne: ["$commission_type", null] }
+//                 ]},
+//                 then: {
+//                   $cond: {
+//                     if: { $eq: ["$commission_type", "amount"] },
+//                     then: { $toDouble: "$commission" },
+//                     else: {
+//                       $cond: {
+//                         if: { $eq: ["$commission_type", "percentage"] },
+//                         then: {
+//                           $multiply: [
+//                             { $divide: [{ $toDouble: "$price" }, 100] },
+//                             { $toDouble: "$commission" }
+//                           ]
+//                         },
+//                         else: 0
+//                       }
+//                     }
+//                   }
+//                 },
+//                 else: 0
+//               }
+//             }
+//           }
+//         }
+//       }
+//     });
+
+//     // Apply commission override if needed
+//     if (commission_override > 0) {
+//       basePipeline.push({
+//         $addFields: {
+//           calculated_commission: {
+//             $multiply: [
+//               "$calculated_commission",
+//               { $divide: [commission_override, 100] }
+//             ]
+//           }
+//         }
+//       });
+//     }
+
+//     // Create a pipeline for affiliate-wise summary
+//     let affiliateSummaryPipeline = [...basePipeline];
+    
+//     affiliateSummaryPipeline.push({
+//       $group: {
+//         _id: {
+//           affiliate_id: "$affiliate_id",
+//           affiliate_name: "$affiliate_name",
+//           affiliate_email: "$affiliate_email"
+//         },
+//         total_transactions: { $sum: 1 },
+//         total_order_value: { $sum: { $toDouble: "$price" } },
+//         total_commission_earned: { $sum: "$calculated_commission" },
+        
+//         // Commission status breakdown
+//         pending_commission: {
+//           $sum: {
+//             $cond: [{ $eq: ["$commission_status", "pending"] }, "$calculated_commission", 0]
+//           }
+//         },
+//         pending_count: {
+//           $sum: {
+//             $cond: [{ $eq: ["$commission_status", "pending"] }, 1, 0]
+//           }
+//         },
+        
+//         accepted_commission: {
+//           $sum: {
+//             $cond: [{ $eq: ["$commission_status", "accepted"] }, "$calculated_commission", 0]
+//           }
+//         },
+//         accepted_count: {
+//           $sum: {
+//             $cond: [{ $eq: ["$commission_status", "accepted"] }, 1, 0]
+//           }
+//         },
+        
+//         rejected_commission: {
+//           $sum: {
+//             $cond: [{ $eq: ["$commission_status", "rejected"] }, "$calculated_commission", 0]
+//           }
+//         },
+//         rejected_count: {
+//           $sum: {
+//             $cond: [{ $eq: ["$commission_status", "rejected"] }, 1, 0]
+//           }
+//         },
+        
+//         // Commission paid status
+//         commission_paid_amount: {
+//           $sum: {
+//             $cond: [{ $eq: ["$commission_paid", true] }, "$calculated_commission", 0]
+//           }
+//         },
+//         commission_paid_count: {
+//           $sum: {
+//             $cond: [{ $eq: ["$commission_paid", true] }, 1, 0]
+//           }
+//         },
+        
+//         commission_unpaid_amount: {
+//           $sum: {
+//             $cond: [{ $eq: ["$commission_paid", false] }, "$calculated_commission", 0]
+//           }
+//         },
+//         commission_unpaid_count: {
+//           $sum: {
+//             $cond: [{ $eq: ["$commission_paid", false] }, 1, 0]
+//           }
+//         },
+        
+//         // Admin paid status
+//         admin_paid_amount: {
+//           $sum: {
+//             $cond: [{ $eq: ["$admin_paid", true] }, "$calculated_commission", 0]
+//           }
+//         },
+//         admin_paid_count: {
+//           $sum: {
+//             $cond: [{ $eq: ["$admin_paid", true] }, 1, 0]
+//           }
+//         },
+        
+//         admin_unpaid_amount: {
+//           $sum: {
+//             $cond: [{ $eq: ["$admin_paid", false] }, "$calculated_commission", 0]
+//           }
+//         },
+//         admin_unpaid_count: {
+//           $sum: {
+//             $cond: [{ $eq: ["$admin_paid", false] }, 1, 0]
+//           }
+//         },
+        
+//         // First and last transaction
+//         first_transaction_date: { $min: "$timestampAsDate" },
+//         last_transaction_date: { $max: "$timestampAsDate" },
+        
+//         // Store all brands for this affiliate
+//         brands: { $addToSet: {
+//           brand_id: "$brand_id",
+//           brand_name: "$brand_name"
+//         }}
+//       }
+//     });
+
+//     affiliateSummaryPipeline.push({
+//       $project: {
+//         affiliate_id: "$_id.affiliate_id",
+//         affiliate_name: "$_id.affiliate_name",
+//         affiliate_email: "$_id.affiliate_email",
+//         total_transactions: 1,
+//         total_order_value: { $round: ["$total_order_value", 2] },
+//         total_commission_earned: { $round: ["$total_commission_earned", 2] },
+        
+//         commission_status_summary: {
+//           pending: {
+//             count: "$pending_count",
+//             amount: { $round: ["$pending_commission", 2] }
+//           },
+//           accepted: {
+//             count: "$accepted_count",
+//             amount: { $round: ["$accepted_commission", 2] }
+//           },
+//           rejected: {
+//             count: "$rejected_count",
+//             amount: { $round: ["$rejected_commission", 2] }
+//           }
+//         },
+        
+//         commission_paid_summary: {
+//           paid: {
+//             count: "$commission_paid_count",
+//             amount: { $round: ["$commission_paid_amount", 2] }
+//           },
+//           unpaid: {
+//             count: "$commission_unpaid_count",
+//             amount: { $round: ["$commission_unpaid_amount", 2] }
+//           }
+//         },
+        
+//         admin_paid_summary: {
+//           paid: {
+//             count: "$admin_paid_count",
+//             amount: { $round: ["$admin_paid_amount", 2] }
+//           },
+//           unpaid: {
+//             count: "$admin_unpaid_count",
+//             amount: { $round: ["$admin_unpaid_amount", 2] }
+//           }
+//         },
+        
+//         first_transaction_date: 1,
+//         last_transaction_date: 1,
+//         brands_count: { $size: "$brands" },
+//         brands: 1,
+//         _id: 0
+//       }
+//     });
+
+//     affiliateSummaryPipeline.push({
+//       $sort: { total_commission_earned: -1 }
+//     });
+
+//     // Create a pipeline for brand-wise summary per affiliate
+//     let brandPerAffiliatePipeline = [...basePipeline];
+    
+//     brandPerAffiliatePipeline.push({
+//       $group: {
+//         _id: {
+//           affiliate_id: "$affiliate_id",
+//           affiliate_name: "$affiliate_name",
+//           brand_id: "$brand_id",
+//           brand_name: "$brand_name",
+//           brand_company: "$brand_company"
+//         },
+//         transaction_count: { $sum: 1 },
+//         total_order_value: { $sum: { $toDouble: "$price" } },
+//         total_commission_payable: { $sum: "$calculated_commission" },
+        
+//         // Commission status breakdown
+//         pending_commission: {
+//           $sum: {
+//             $cond: [{ $eq: ["$commission_status", "pending"] }, "$calculated_commission", 0]
+//           }
+//         },
+//         pending_count: {
+//           $sum: {
+//             $cond: [{ $eq: ["$commission_status", "pending"] }, 1, 0]
+//           }
+//         },
+        
+//         accepted_commission: {
+//           $sum: {
+//             $cond: [{ $eq: ["$commission_status", "accepted"] }, "$calculated_commission", 0]
+//           }
+//         },
+//         accepted_count: {
+//           $sum: {
+//             $cond: [{ $eq: ["$commission_status", "accepted"] }, 1, 0]
+//           }
+//         },
+        
+//         rejected_commission: {
+//           $sum: {
+//             $cond: [{ $eq: ["$commission_status", "rejected"] }, "$calculated_commission", 0]
+//           }
+//         },
+//         rejected_count: {
+//           $sum: {
+//             $cond: [{ $eq: ["$commission_status", "rejected"] }, 1, 0]
+//           }
+//         },
+        
+//         // Commission paid status
+//         commission_paid_amount: {
+//           $sum: {
+//             $cond: [{ $eq: ["$commission_paid", true] }, "$calculated_commission", 0]
+//           }
+//         },
+//         commission_unpaid_amount: {
+//           $sum: {
+//             $cond: [{ $eq: ["$commission_paid", false] }, "$calculated_commission", 0]
+//           }
+//         },
+        
+//         // Admin paid status
+//         admin_paid_amount: {
+//           $sum: {
+//             $cond: [{ $eq: ["$admin_paid", true] }, "$calculated_commission", 0]
+//           }
+//         },
+//         admin_unpaid_amount: {
+//           $sum: {
+//             $cond: [{ $eq: ["$admin_paid", false] }, "$calculated_commission", 0]
+//           }
+//         }
+//       }
+//     });
+
+//     brandPerAffiliatePipeline.push({
+//       $group: {
+//         _id: {
+//           affiliate_id: "$_id.affiliate_id",
+//           affiliate_name: "$_id.affiliate_name"
+//         },
+//         brand_details: {
+//           $push: {
+//             brand_id: "$_id.brand_id",
+//             brand_name: "$_id.brand_name",
+//             brand_company: "$_id.brand_company",
+//             transaction_count: "$transaction_count",
+//             total_order_value: { $round: ["$total_order_value", 2] },
+//             total_commission_payable: { $round: ["$total_commission_payable", 2] },
+            
+//             commission_status_summary: {
+//               pending: {
+//                 count: "$pending_count",
+//                 amount: { $round: ["$pending_commission", 2] }
+//               },
+//               accepted: {
+//                 count: "$accepted_count",
+//                 amount: { $round: ["$accepted_commission", 2] }
+//               },
+//               rejected: {
+//                 count: "$rejected_count",
+//                 amount: { $round: ["$rejected_commission", 2] }
+//               }
+//             },
+            
+//             commission_paid_summary: {
+//               paid: {
+//                 amount: { $round: ["$commission_paid_amount", 2] }
+//               },
+//               unpaid: {
+//                 amount: { $round: ["$commission_unpaid_amount", 2] }
+//               }
+//             },
+            
+//             admin_paid_summary: {
+//               paid: {
+//                 amount: { $round: ["$admin_paid_amount", 2] }
+//               },
+//               unpaid: {
+//                 amount: { $round: ["$admin_unpaid_amount", 2] }
+//               }
+//             }
+//           }
+//         }
+//       }
+//     });
+
+//     brandPerAffiliatePipeline.push({
+//       $project: {
+//         affiliate_id: "$_id.affiliate_id",
+//         affiliate_name: "$_id.affiliate_name",
+//         brand_details: 1,
+//         _id: 0
+//       }
+//     });
+
+//     // Run both summary pipelines in parallel
+//     const [affiliateSummary, brandPerAffiliateSummary] = await Promise.all([
+//       db.collection('affiliatelink').aggregate(affiliateSummaryPipeline).toArray(),
+//       db.collection('affiliatelink').aggregate(brandPerAffiliatePipeline).toArray()
+//     ]);
+
+//     // Merge affiliate summary with brand details
+//     const combinedAffiliateSummary = affiliateSummary.map(affiliate => {
+//       const brandDetails = brandPerAffiliateSummary.find(b => 
+//         b.affiliate_id.toString() === affiliate.affiliate_id.toString()
+//       );
+      
+//       return {
+//         ...affiliate,
+//         brand_details: brandDetails ? brandDetails.brand_details : []
+//       };
+//     });
+
+//     // Create overall summary
+//     let overallSummaryPipeline = [...basePipeline];
+    
+//     overallSummaryPipeline.push({
+//       $group: {
+//         _id: null,
+//         total_transactions: { $sum: 1 },
+//         total_order_value: { $sum: { $toDouble: "$price" } },
+//         total_commission: { $sum: "$calculated_commission" },
+        
+//         // Overall commission status
+//         pending_total: {
+//           $sum: {
+//             $cond: [{ $eq: ["$commission_status", "pending"] }, "$calculated_commission", 0]
+//           }
+//         },
+//         accepted_total: {
+//           $sum: {
+//             $cond: [{ $eq: ["$commission_status", "accepted"] }, "$calculated_commission", 0]
+//           }
+//         },
+//         rejected_total: {
+//           $sum: {
+//             $cond: [{ $eq: ["$commission_status", "rejected"] }, "$calculated_commission", 0]
+//           }
+//         },
+        
+//         // Overall paid status
+//         commission_paid_total: {
+//           $sum: {
+//             $cond: [{ $eq: ["$commission_paid", true] }, "$calculated_commission", 0]
+//           }
+//         },
+//         admin_paid_total: {
+//           $sum: {
+//             $cond: [{ $eq: ["$admin_paid", true] }, "$calculated_commission", 0]
+//           }
+//         }
+//       }
+//     });
+
+//     overallSummaryPipeline.push({
+//       $project: {
+//         _id: 0,
+//         total_transactions: 1,
+//         total_order_value: { $round: ["$total_order_value", 2] },
+//         total_commission: { $round: ["$total_commission", 2] },
+        
+//         commission_status_summary: {
+//           pending: { $round: ["$pending_total", 2] },
+//           accepted: { $round: ["$accepted_total", 2] },
+//           rejected: { $round: ["$rejected_total", 2] }
+//         },
+        
+//         commission_paid_summary: {
+//           paid: { $round: ["$commission_paid_total", 2] },
+//           unpaid: {
+//             $round: [{
+//               $subtract: [
+//                 "$total_commission",
+//                 "$commission_paid_total"
+//               ]
+//             }, 2]
+//           }
+//         },
+        
+//         admin_paid_summary: {
+//           paid: { $round: ["$admin_paid_total", 2] },
+//           unpaid: {
+//             $round: [{
+//               $subtract: [
+//                 "$total_commission",
+//                 "$admin_paid_total"
+//               ]
+//             }, 2]
+//           }
+//         }
+//       }
+//     });
+
+//     const overallSummaryResult = await db.collection('affiliatelink').aggregate(overallSummaryPipeline).toArray();
+//     const overallSummary = overallSummaryResult.length > 0 ? overallSummaryResult[0] : {
+//       total_transactions: 0,
+//       total_order_value: 0,
+//       total_commission: 0,
+//       commission_status_summary: { pending: 0, accepted: 0, rejected: 0 },
+//       commission_paid_summary: { paid: 0, unpaid: 0 },
+//       admin_paid_summary: { paid: 0, unpaid: 0 }
+//     };
+
+//     // Get paginated transaction data
+//     let dataPipeline = [...basePipeline];
+    
+//     dataPipeline.push({
+//       $sort: sortquery
+//     });
+
+//     // Get total count
+//     let countPipeline = [...basePipeline];
+//     countPipeline.push({ $count: "total_count" });
+//     const totalCountResult = await db.collection('affiliatelink').aggregate(countPipeline).toArray();
+//     const totalCount = totalCountResult.length > 0 ? totalCountResult[0].total_count : 0;
+
+//     // Apply pagination only if page and count are provided
+//     if (req.query.page && req.query.count) {
+//       dataPipeline.push({
+//         $skip: Number(skipNo)
+//       });
+//       dataPipeline.push({
+//         $limit: Number(count)
+//       });
+//     }
+
+//     let result = await db.collection('affiliatelink').aggregate(dataPipeline).toArray();
+
+//     if (export_to_xls === "yes") {
+//       let transactionData = [];
+//       let counter = 1;
+//       for (let obj of result) {
+//         transactionData.push({
+//           createdAt: obj.timestamp ? moment(obj.timestamp).format("D-MM-YYYY") : moment(obj.createdAt).format("D-MM-YYYY"),
+//           affiliate: obj?.affiliate_name,
+//           brand_name: obj?.brand_name,
+//           currency: obj?.currency || "USD",
+//           price: obj?.price,
+//           order_id: obj?.order_id,
+//           commission: obj?.commission ? obj?.commission_type === "amount" ? `$${obj?.commission}` : `${obj?.commission}%` : "--",
+//           amount_of_commission: calculatetotalCommission(obj?.commission_type, obj?.price, obj?.commission, commission_override),
+//           commission_paid: obj?.commission_paid,
+//           commission_status: obj?.commission_status,
+//           counter: counter
+//         });
+
+//         counter++;
+//       }
+
+//       let excelFileName = `TransactionData.xlsx`;
+//       let workbook = new excel.Workbook();
+//       let worksheet = workbook.addWorksheet("Logs");
+
+//       worksheet.columns = [
+//         { header: "Serial No.", key: "counter", width: 15, style: { alignment: { horizontal: "center" } } },
+//         { header: "Affiliate", key: "affiliate", width: 10 },
+//         { header: "Brand", key: "brand_name", width: 10, style: { alignment: { horizontal: "center" } } },
+//         { header: "Order price", key: "price", width: 25 },
+//         { header: "Order Id", key: "order_id", width: 25 },
+//         { header: "Transaction Date", key: "createdAt", width: 25 },
+//         { header: "Commission", key: "commission", width: 25 },
+//         { header: "Commission paid", key: "amount_of_commission", width: 25 },
+//         { header: "Commission Status", key: "commission_status", width: 25 },
+//         { header: "Payment Status", key: "commission_paid", width: 25 },
+//       ];
+//       worksheet.addRows(transactionData);
+      
+//       try {
+//         res.setHeader(
+//           "Content-Type",
+//           "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+//         );
+//         res.setHeader(
+//           "Content-Disposition",
+//           `attachment; filename=${excelFileName}`
+//         );
+
+//         await workbook.xlsx.write(res);
+//         return res.status(200).end();
+//       } catch (err) {
+//         return response.failed(null, err, req, res)
+//       }
+//     } else {
+//       let resData = {
+//         total_count: totalCount,
+//         overall_summary: overallSummary,
+//         affiliate_summary: combinedAffiliateSummary,
+//         data: result || []
+//       };
+      
+//       if (!req.param('page') && !req.param('count')) {
+//         resData.data = await db.collection('affiliatelink').aggregate([...basePipeline, { $sort: sortquery }]).toArray();
+//       }
+      
+//       return response.success(resData, constants.AFFILIATELINK.FETCHED, req, res);
+//     }
+//   } catch (error) {
+//     console.log(error, '==df')
+//     return response.failed(null, `${error}`, req, res);
+//   }
+// };
