@@ -566,7 +566,7 @@ module.exports = {
 
           let data = {
             user_id: req.identity?.id,
-            // paid_to: get_admin.id || "654227e78fd3b1018600710d",
+            paid_to: get_campain_from_affiliations.affiliate_id ,
             transaction_type: "bank_account",
             transaction_id: "",
             stripe_charge_id: "",
@@ -613,28 +613,28 @@ module.exports = {
       await htmlToPdf(invoice_itm_html(payload), outputPath);
       const custom_invoice_url = `invoices/${filename}`
 
-      let data = {
-        user_id: req.identity?.id,
-        paid_to: null,
-        paid_to_emails: paid_to_emails,
-        transaction_type: "bank_account",
-        transaction_id: "",
-        stripe_charge_id: "",
-        currency: "usd",
-        amount: req.body.amount.toFixed(2),
-        transaction_status: "paid",
-        special_plan_id: null,
-        subscription_id: null,
-        stripe_subscription_id: "",
-        addedBy: req.identity?.id,
-        updatedBy: null,
-        paypal_transaction_id: "",
-        paypal_transaction_status: "",
-        // affiliateLinkId: id,
-        custom_invoice_url
-      };
+      // let data = {
+      //   user_id: req.identity?.id,
+      //   paid_to: null,
+      //   paid_to_emails: paid_to_emails,
+      //   transaction_type: "bank_account",
+      //   transaction_id: "",
+      //   stripe_charge_id: "",
+      //   currency: "usd",
+      //   amount: req.body.amount.toFixed(2),
+      //   transaction_status: "paid",
+      //   special_plan_id: null,
+      //   subscription_id: null,
+      //   stripe_subscription_id: "",
+      //   addedBy: req.identity?.id,
+      //   updatedBy: null,
+      //   paypal_transaction_id: "",
+      //   paypal_transaction_status: "",
+      //   // affiliateLinkId: id,
+      //   custom_invoice_url
+      // };
 
-      await Transactions.create(data);
+      // await Transactions.create(data);
 
       return response.success(
         null,
