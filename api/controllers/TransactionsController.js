@@ -1428,7 +1428,6 @@ exports.payCommissionAdmin = async (req, res) => {
 
     // Debug: Log what we're looking for
 
-    // 1️⃣ Find affiliate links using Waterline syntax
     const affiliateLinks = await AffiliateLink.find({
       where: {
         id: affiliateIds,  // Direct array, no $in operator
