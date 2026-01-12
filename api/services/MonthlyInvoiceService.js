@@ -17,10 +17,10 @@ module.exports = {
       
       // Calculate previous month
       const now = new Date();
-      let previousMonth = now.getMonth(); // 0-based
-      let previousYear = now.getFullYear();
-//       let previousMonth = 10; // November
-// let previousYear = 2025;
+      // let previousMonth = now.getMonth(); // 0-based
+      // let previousYear = now.getFullYear();
+      let previousMonth = 1; // November
+let previousYear = 2026;
 
       if (previousMonth === 0) {
         previousMonth = 12;
@@ -177,8 +177,256 @@ module.exports = {
   /**
    * Generate HTML for aggregated invoice
    */
-  generateAggregatedInvoiceHTML: function (data, invoiceNumber) {
+//   generateAggregatedInvoiceHTML: function (data, invoiceNumber) {
+//     const now = new Date();
+    
+//     return `
+// <!DOCTYPE html>
+// <html lang="en">
+// <head>
+//   <meta charset="UTF-8" />
+//   <title>Monthly Commission Summary - ${data.month_name} ${data.year}</title>
+//   <style>
+//     body {
+//       font-family: Arial, Helvetica, sans-serif;
+//       margin: 0;
+//       padding: 20px;
+//       background: #f5f7fa;
+//     }
+    
+//     .container {
+//       max-width: 1000px;
+//       margin: 0 auto;
+//       background: white;
+//       border-radius: 10px;
+//       box-shadow: 0 0 20px rgba(0,0,0,0.1);
+//       padding: 30px;
+//     }
+    
+//     .header {
+//       text-align: center;
+//       border-bottom: 2px solid #eaeaea;
+//       padding-bottom: 20px;
+//       margin-bottom: 30px;
+//     }
+    
+//     .header h1 {
+//       color: #333;
+//       margin: 10px 0;
+//       font-size: 28px;
+//     }
+    
+//     .header h2 {
+//       color: #666;
+//       margin: 5px 0;
+//       font-weight: normal;
+//     }
+    
+//     .meta-info {
+//       display: flex;
+//       justify-content: space-between;
+//       background: #f8f9fa;
+//       padding: 15px 20px;
+//       border-radius: 8px;
+//       margin-bottom: 30px;
+//     }
+    
+//     .meta-item {
+//       text-align: center;
+//     }
+    
+//     .meta-label {
+//       font-size: 12px;
+//       color: #666;
+//       text-transform: uppercase;
+//       margin-bottom: 5px;
+//     }
+    
+//     .meta-value {
+//       font-size: 18px;
+//       font-weight: bold;
+//       color: #2c5282;
+//     }
+    
+//     .summary-section {
+//       margin-bottom: 30px;
+//     }
+    
+//     .summary-section h3 {
+//       color: #333;
+//       border-bottom: 1px solid #eaeaea;
+//       padding-bottom: 10px;
+//       margin-bottom: 15px;
+//     }
+    
+//     .affiliates-table {
+//       width: 100%;
+//       border-collapse: collapse;
+//       margin-top: 20px;
+//     }
+    
+//     .affiliates-table th {
+//       background: #2c5282;
+//       color: white;
+//       padding: 12px 15px;
+//       text-align: left;
+//       font-weight: 600;
+//     }
+    
+//     .affiliates-table td {
+//       padding: 12px 15px;
+//       border-bottom: 1px solid #eaeaea;
+//     }
+    
+//     .affiliates-table tr:hover {
+//       background: #f8f9fa;
+//     }
+    
+//     .amount {
+//       text-align: right;
+//       font-weight: 500;
+//     }
+    
+//     .rank {
+//       text-align: center;
+//       font-weight: bold;
+//       color: #666;
+//       width: 50px;
+//     }
+    
+//     .grand-total {
+//       background: linear-gradient(135deg, #2c5282, #4299e1);
+//       color: white;
+//       padding: 25px;
+//       border-radius: 10px;
+//       text-align: center;
+//       margin-top: 40px;
+//     }
+    
+//     .grand-total h3 {
+//       margin: 0 0 10px 0;
+//       font-size: 16px;
+//       text-transform: uppercase;
+//       letter-spacing: 1px;
+//       opacity: 0.9;
+//     }
+    
+//     .grand-amount {
+//       font-size: 42px;
+//       font-weight: bold;
+//       margin: 10px 0;
+//     }
+    
+//     .footer {
+//       text-align: center;
+//       margin-top: 40px;
+//       padding-top: 20px;
+//       border-top: 1px solid #eaeaea;
+//       color: #666;
+//       font-size: 12px;
+//     }
+    
+//     .logo {
+//       height: 40px;
+//       margin-bottom: 10px;
+//     }
+//   </style>
+// </head>
+// <body>
+//   <div class="container">
+//     <div class="header">
+//       <img src="${credentials.BACK_WEB_URL}/images/logo.png" alt="Logo" class="logo" />
+//       <h1>Monthly Commission Summary</h1>
+//       <h2>${data.month_name} ${data.year} • All Affiliates</h2>
+//     </div>
+    
+//     <div class="meta-info">
+//       <div class="meta-item">
+//         <div class="meta-label">Invoice Number</div>
+//         <div class="meta-value">${invoiceNumber}</div>
+//       </div>
+//       <div class="meta-item">
+//         <div class="meta-label">Period</div>
+//         <div class="meta-value">${data.month_name} ${data.year}</div>
+//       </div>
+//       <div class="meta-item">
+//         <div class="meta-label">Generated Date</div>
+//         <div class="meta-value">${now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+//       </div>
+//     </div>
+    
+//     <div class="summary-section">
+//       <h3>Affiliate Performance Summary</h3>
+      
+//       <table class="affiliates-table">
+//         <thead>
+//           <tr>
+//             <th class="rank">#</th>
+//             <th>Affiliate</th>
+//             <th>Email</th>
+//             <th>Commissions</th>
+//             <th class="amount">Total Amount</th>
+//           </tr>
+//         </thead>
+//         <tbody>
+//           ${data.commission_details.map((affiliate, index) => `
+//             <tr>
+//               <td class="rank">${index + 1}</td>
+//               <td>${affiliate.affiliate_name}</td>
+//               <td>${affiliate.affiliate_email}</td>
+//               <td>${affiliate.commission_count}</td>
+//               <td class="amount">$${affiliate.amount.toFixed(2)}</td>
+//             </tr>
+//           `).join('')}
+//         </tbody>
+//       </table>
+//     </div>
+    
+//     <div class="grand-total">
+//       <h3>Total Commission Payout for ${data.month_name} ${data.year}</h3>
+//       <div class="grand-amount">$${data.total_amount.toFixed(2)}</div>
+//       <div>Across ${data.total_commissions} commissions from ${data.affiliate_count} affiliates</div>
+//     </div>
+    
+//     <div class="footer">
+//       <p>This is a consolidated monthly commission report for all affiliates.</p>
+//       <p>Generated by Upfilly Commission System • ${now.toLocaleDateString()} ${now.toLocaleTimeString()}</p>
+//     </div>
+//   </div>
+// </body>
+// </html>
+//     `;
+//   },
+  
+generateAggregatedInvoiceHTML: function (data, invoiceNumber) {
     const now = new Date();
+    
+    // Consolidate affiliate data - combine duplicates
+    const consolidatedAffiliates = [];
+    const affiliateMap = new Map();
+    
+    data.commission_details.forEach(affiliate => {
+        const key = `${affiliate.affiliate_id || affiliate.affiliate_email}_${affiliate.affiliate_name}`;
+        
+        if (affiliateMap.has(key)) {
+            // Update existing affiliate data
+            const existing = affiliateMap.get(key);
+            existing.commission_count += affiliate.commission_count;
+            existing.amount += affiliate.amount;
+        } else {
+            // Add new affiliate
+            const consolidatedAffiliate = {
+                ...affiliate,
+                commission_count: affiliate.commission_count,
+                amount: affiliate.amount
+            };
+            affiliateMap.set(key, consolidatedAffiliate);
+            consolidatedAffiliates.push(consolidatedAffiliate);
+        }
+    });
+    
+    // Sort affiliates by total amount (descending)
+    consolidatedAffiliates.sort((a, b) => b.amount - a.amount);
     
     return `
 <!DOCTYPE html>
@@ -294,6 +542,20 @@ module.exports = {
       width: 50px;
     }
     
+    .unique-count {
+      background: #f0f9ff;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      text-align: center;
+      border-left: 4px solid #2c5282;
+    }
+    
+    .unique-count span {
+      font-weight: bold;
+      color: #2c5282;
+    }
+    
     .grand-total {
       background: linear-gradient(135deg, #2c5282, #4299e1);
       color: white;
@@ -330,6 +592,14 @@ module.exports = {
       height: 40px;
       margin-bottom: 10px;
     }
+    
+    .consolidated-note {
+      font-size: 12px;
+      color: #666;
+      font-style: italic;
+      margin-top: 10px;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
@@ -355,6 +625,10 @@ module.exports = {
       </div>
     </div>
     
+    <div class="unique-count">
+      Showing <span>${consolidatedAffiliates.length} unique affiliates</span> (consolidated from ${data.commission_details.length} commission records)
+    </div>
+    
     <div class="summary-section">
       <h3>Affiliate Performance Summary</h3>
       
@@ -364,12 +638,12 @@ module.exports = {
             <th class="rank">#</th>
             <th>Affiliate</th>
             <th>Email</th>
-            <th>Commissions</th>
+            <th>Total Commissions</th>
             <th class="amount">Total Amount</th>
           </tr>
         </thead>
         <tbody>
-          ${data.commission_details.map((affiliate, index) => `
+          ${consolidatedAffiliates.map((affiliate, index) => `
             <tr>
               <td class="rank">${index + 1}</td>
               <td>${affiliate.affiliate_name}</td>
@@ -380,12 +654,18 @@ module.exports = {
           `).join('')}
         </tbody>
       </table>
+      <div class="consolidated-note">
+        * Duplicate affiliate entries have been consolidated with commissions and amounts summed
+      </div>
     </div>
     
     <div class="grand-total">
       <h3>Total Commission Payout for ${data.month_name} ${data.year}</h3>
       <div class="grand-amount">$${data.total_amount.toFixed(2)}</div>
-      <div>Across ${data.total_commissions} commissions from ${data.affiliate_count} affiliates</div>
+      <div>
+        ${data.total_commissions} total commissions from ${consolidatedAffiliates.length} unique affiliates
+        ${consolidatedAffiliates.length !== data.affiliate_count ? `<br><small>(Originally ${data.affiliate_count} affiliate records before consolidation)</small>` : ''}
+      </div>
     </div>
     
     <div class="footer">
@@ -397,7 +677,6 @@ module.exports = {
 </html>
     `;
   },
-  
   /**
    * Send notifications to all affiliates
    */
