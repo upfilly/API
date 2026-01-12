@@ -180,7 +180,7 @@ getAggregatedMonthlyCommissions: async function (month, year) {
       }).set({
         commission_invoiced: true,
         monthly_invoice_id: monthlyInvoiceId,
-        transaction_status: "invoiced",
+        // transaction_status: "invoiced",
       });
 
       console.log(`Marked ${commissionIds.length} commissions as invoiced`);
