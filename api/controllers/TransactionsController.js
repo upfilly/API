@@ -1542,7 +1542,8 @@ exports.payCommissionAdmin = async (req, res) => {
 
       let data = {
         user_id: req.identity?.id,
-        paid_to: admin.id || "654227e78fd3b1018600710d",
+        // paid_to: admin.id || "654227e78fd3b1018600710d",
+        paid_to: link.affiliate_id ,
         transaction_type: "pay_commission",
         transaction_id: "",
         stripe_charge_id: "",
@@ -1580,10 +1581,10 @@ exports.payCommissionAdmin = async (req, res) => {
     }
     return response.success(
       {
-        transactions,
-        processedIds,
-        totalAmount: transactions.reduce((sum, t) => sum + t.amount, 0),
-        count: transactions.length
+        // transactions,
+        // processedIds,
+        // totalAmount: transactions.reduce((sum, t) => sum + t.amount, 0),
+        // count: transactions.length
       },
       `Successfully processed ${transactions.length} commission payment(s)`,
       req,
