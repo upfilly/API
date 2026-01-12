@@ -500,7 +500,9 @@ module.exports = {
         const campaign_details = get_campain_from_affiliations.campaign_id
         let commission_type = get_campain_from_affiliations.campaign_id.commission_type
         let amount = 0
-        if (commission_type == "amount") {
+        if(affiliate_data.amount_of_commission){
+        amount = affiliate_data.amount_of_commission
+      }else if (commission_type == "amount") {
           amount = campaign_details.commission
         } else {
           console.log(affiliate_data.price,'=affiliate_data.price')
