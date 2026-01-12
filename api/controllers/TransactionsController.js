@@ -1504,7 +1504,7 @@ exports.payCommissionAdmin = async (req, res) => {
       console.log(`Processing link ID: ${link.id}, Admin paid: ${link.admin_paid}`);
 
       // Prevent double payment
-      if (link.admin_paid === true) {
+      if (link.admin_paid == "paid") {
         console.log(`Skipping ${link.id} - already paid`);
         continue;
       }
@@ -1560,7 +1560,8 @@ exports.payCommissionAdmin = async (req, res) => {
         custom_invoice_url
       };
 
-      await Transactions.create(data);
+      let transaction = await Transactions.create(data);
+      transactions.push(transaction)
       // 7️⃣ Update affiliate link
       try {
         const updatedLink = await AffiliateLink.updateOne({ id: link.id })
@@ -1569,6 +1570,7 @@ exports.payCommissionAdmin = async (req, res) => {
           });
 
         if (updatedLink) {
+          processedIds.push(updatedLink.id || updatedLink._id)
           console.log(`Marked link ${link.id} as paid`);
         }
       } catch (updateError) {
