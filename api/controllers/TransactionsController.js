@@ -1341,16 +1341,45 @@ exports.monthlyPendingTransactions = async function (req, res) {
     if (!getTransactions) {
       return res.status(400).json({ success: false, message: "No pending transactions found within the month" });
     }
+    // console.log("getTransactions",getTransactions)
 
     monthlyData.totalPendingTransactions = getTransactions.length;
 
-    let totalAmount = 0, arr = [];
+    let totalAmount = 0;
+    let first_total = 0;
+     arr = [];
     for (let obj of getTransactions) {
       arr.push(obj.id);
       totalAmount += obj.amount;
+      first_total += obj.amount;
     }
-    monthlyData.totalPayableAmount = totalAmount;
+
+     // Find user acitve subscription plan
+    const user_active_subscription = await Subscriptions.findOne({
+      user_id: req.identity?.id,
+      status: "active",
+    }).populate("subscription_plan_id");
+    // console.log("user_active_subscription",user_active_subscription)
+    let commission_override = 0;
+    if (user_active_subscription) {
+      commission_override =
+        user_active_subscription?.subscription_plan_id?.commission_override;
+        console.log("commission_override",commission_override)
+    } else {
+      return response.failed(null, "You don't have any active plan", req, res);
+    }
+console.log("totalAmount",totalAmount)
+    const commission_override_amount =
+      (commission_override / 100) * totalAmount;
+    totalAmount += +commission_override_amount;
+    const stripe_fee = calculateStripeFee(totalAmount);
+    console.log("stripe_fee",stripe_fee)
+console.log("totalAmount",totalAmount)
+
+    monthlyData.totalPayableAmount = totalAmount + stripe_fee;
     monthlyData.ids = arr;
+    monthlyData.affiliate_commission = first_total;
+
 
     return res.status(200).json({ success: true, data: monthlyData });
   }

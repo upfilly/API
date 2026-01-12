@@ -598,20 +598,20 @@ module.exports = {
         }
       }
 
-      const invoicesDir = path.join(__dirname, '../../assets', 'invoices');
-      if (!fs.existsSync(invoicesDir)) {
-        fs.mkdirSync(invoicesDir, { recursive: true });
-      }
+      // const invoicesDir = path.join(__dirname, '../../assets', 'invoices');
+      // if (!fs.existsSync(invoicesDir)) {
+      //   fs.mkdirSync(invoicesDir, { recursive: true });
+      // }
 
-      const filename = `invoice_${Date.now()}.pdf`;
-      const outputPath = path.join(invoicesDir, filename);
+      // const filename = `invoice_${Date.now()}.pdf`;
+      // const outputPath = path.join(invoicesDir, filename);
 
-      const payload = {
-        commission: req.body.amount,
-      }
-      // Generate PDF and wait for it to complete
-      await htmlToPdf(invoice_itm_html(payload), outputPath);
-      const custom_invoice_url = `invoices/${filename}`
+      // const payload = {
+      //   commission: req.body.amount,
+      // }
+      // // Generate PDF and wait for it to complete
+      // await htmlToPdf(invoice_itm_html(payload), outputPath);
+      // const custom_invoice_url = `invoices/${filename}`
 
       // let data = {
       //   user_id: req.identity?.id,
