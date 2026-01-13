@@ -11,126 +11,233 @@ module.exports = {
   /**
    * Generate ONE SINGLE monthly invoice for ALL affiliates
    */
+//   generateSingleMonthlyInvoice: async function () {
+//     try {
+//       console.log('Generating SINGLE monthly invoice for ALL affiliates...');
+      
+//       // Calculate previous month
+//       const now = new Date();
+//       let previousMonth = now.getMonth(); // 0-based
+//       let previousYear = now.getFullYear();
+// //       let previousMonth = 1; // November
+// // let previousYear = 2026;
+
+//       if (previousMonth === 0) {
+//         previousMonth = 12;
+//         previousYear = previousYear - 1;
+//       }
+      
+//       console.log(` Processing: ${previousMonth}/${previousYear}`);
+      
+//       // Check if already processed
+//     //   const existingInvoice = await MonthlyCommissionInvoice.findOne({
+//     //     where: {
+//     //       month: previousMonth,
+//     //       year: previousYear,
+//     //       isDeleted: false
+//     //     }
+//     //   });
+      
+//     //   if (existingInvoice) {
+//     //     console.log(` Monthly invoice for ${previousMonth}/${previousYear} already exists`);
+//     //     return {
+//     //       success: false,
+//     //       message: `Monthly invoice for ${previousMonth}/${previousYear} already generated`,
+//     //       existing_invoice: existingInvoice
+//     //     };
+//     //   }
+      
+//       // Get aggregated data for ALL affiliates
+//       const aggregatedData = await CommissionService.getAggregatedMonthlyCommissions(previousMonth, previousYear);
+      
+//       if (aggregatedData.total_commissions === 0) {
+//         return {
+//           success: true,
+//           message: 'No commissions to invoice for this period',
+//           month: previousMonth,
+//           year: previousYear
+//         };
+//       }
+      
+//       console.log(` Data: ${aggregatedData.total_commissions} commissions, $${aggregatedData.total_amount} total, ${aggregatedData.affiliate_count} affiliates,aggregatedData`,aggregatedData);
+      
+//       // Generate single invoice number
+//       const invoiceNumber = `MONTHLY-INV-${previousYear}${previousMonth.toString().padStart(2, '0')}`;
+      
+//       // Generate SINGLE PDF with all data
+//       const invoiceUrl = await this.generateAggregatedInvoicePDF(aggregatedData, invoiceNumber);
+//       console.log("aggregatedData.affiliates+++++++++++++++++",aggregatedData.affiliates.map(aff => aff))
+
+//       // Create SINGLE invoice record
+//       const monthlyInvoice = await MonthlyCommissionInvoice.create({
+//         invoice_number: invoiceNumber,
+//         month: previousMonth,
+//         year: previousYear,
+//         total_commission: aggregatedData.total_amount,
+//         total_amount: aggregatedData.total_amount,
+//         invoice_url: invoiceUrl,
+//         status: 'pending',
+//         details: {
+//           affiliates: aggregatedData.affiliates.map(aff => ({
+//             affiliate_id: aff.affiliate_id,
+//             affiliate_email: aff.affiliate_email,
+//             affiliate_name: aff.affiliate_name,
+//             total_amount: aff.total_amount,
+//             commission_count: aff.commission_count
+//           })),
+//           commission_ids: aggregatedData.all_commissions.map(c => c.id)
+//         },
+//         commission_count: aggregatedData.total_commissions,
+//         affiliate_count: aggregatedData.affiliate_count,
+//         isDeleted: false
+//       }).fetch();
+      
+//       // Mark ALL commissions as invoiced
+//       const commissionIds = aggregatedData.all_commissions.map(c => c.id);
+//       await CommissionService.markCommissionsAsInvoiced(commissionIds, monthlyInvoice.id);
+      
+//       // Send notifications
+//       await this.sendMonthlySummaryNotifications(aggregatedData.affiliates, monthlyInvoice);
+      
+//       return {
+//         success: true,
+//         message: `Generated SINGLE monthly invoice for ${previousMonth}/${previousYear}`,
+//         invoice: {
+//           invoice_id: monthlyInvoice.id,
+//           invoice_number: invoiceNumber,
+//           invoice_url: invoiceUrl,
+//           month: previousMonth,
+//           year: previousYear,
+//           total_amount: aggregatedData.total_amount,
+//           total_commissions: aggregatedData.total_commissions,
+//           total_affiliates: aggregatedData.affiliate_count
+//         },
+//         summary: {
+//           grand_total: aggregatedData.total_amount,
+//           commission_count: aggregatedData.total_commissions,
+//           affiliate_count: aggregatedData.affiliate_count,
+//           affiliates: aggregatedData.all_commissions.map(aff => ({
+//             name: aff.affiliate_name,
+//             email: aff.affiliate_email,
+//             amount: aff.total_amount,
+//             commissions: aff.commission_count
+//           }))
+//         }
+//       };
+      
+//     } catch (error) {
+//       console.error(' Error generating single monthly invoice:', error);
+//       throw error;
+//     }
+//   },
   generateSingleMonthlyInvoice: async function () {
-    try {
-      console.log('Generating SINGLE monthly invoice for ALL affiliates...');
-      
-      // Calculate previous month
-      const now = new Date();
-      let previousMonth = now.getMonth(); // 0-based
-      let previousYear = now.getFullYear();
-//       let previousMonth = 1; // November
-// let previousYear = 2026;
-
-      if (previousMonth === 0) {
-        previousMonth = 12;
-        previousYear = previousYear - 1;
-      }
-      
-      console.log(` Processing: ${previousMonth}/${previousYear}`);
-      
-      // Check if already processed
-    //   const existingInvoice = await MonthlyCommissionInvoice.findOne({
-    //     where: {
-    //       month: previousMonth,
-    //       year: previousYear,
-    //       isDeleted: false
-    //     }
-    //   });
-      
-    //   if (existingInvoice) {
-    //     console.log(` Monthly invoice for ${previousMonth}/${previousYear} already exists`);
-    //     return {
-    //       success: false,
-    //       message: `Monthly invoice for ${previousMonth}/${previousYear} already generated`,
-    //       existing_invoice: existingInvoice
-    //     };
-    //   }
-      
-      // Get aggregated data for ALL affiliates
-      const aggregatedData = await CommissionService.getAggregatedMonthlyCommissions(previousMonth, previousYear);
-      
-      if (aggregatedData.total_commissions === 0) {
-        return {
-          success: true,
-          message: 'No commissions to invoice for this period',
-          month: previousMonth,
-          year: previousYear
-        };
-      }
-      
-      console.log(` Data: ${aggregatedData.total_commissions} commissions, $${aggregatedData.total_amount} total, ${aggregatedData.affiliate_count} affiliates,aggregatedData`,aggregatedData);
-      
-      // Generate single invoice number
-      const invoiceNumber = `MONTHLY-INV-${previousYear}${previousMonth.toString().padStart(2, '0')}`;
-      
-      // Generate SINGLE PDF with all data
-      const invoiceUrl = await this.generateAggregatedInvoicePDF(aggregatedData, invoiceNumber);
-      console.log("aggregatedData.affiliates+++++++++++++++++",aggregatedData.affiliates.map(aff => aff))
-
-      // Create SINGLE invoice record
-      const monthlyInvoice = await MonthlyCommissionInvoice.create({
-        invoice_number: invoiceNumber,
+  try {
+    console.log('Generating SINGLE monthly invoice for ALL brands...');
+    
+    // Calculate previous month
+    const now = new Date();
+    // let previousMonth = now.getMonth(); // 0-based
+    // let previousYear = now.getFullYear();
+     let previousYear = now.getFullYear();
+    let previousMonth = 1; // jan
+    
+    if (previousMonth === 0) {
+      previousMonth = 12;
+      previousYear = previousYear - 1;
+    }
+    
+    console.log(`Processing: ${previousMonth}/${previousYear}`);
+    
+    // Get aggregated data for ALL brands
+    const aggregatedData = await CommissionService.getAggregatedMonthlyCommissions(previousMonth, previousYear);
+    
+    if (aggregatedData.total_commissions === 0) {
+      return {
+        success: true,
+        message: 'No commissions to invoice for this period',
         month: previousMonth,
-        year: previousYear,
-        total_commission: aggregatedData.total_amount,
-        total_amount: aggregatedData.total_amount,
-        invoice_url: invoiceUrl,
-        status: 'pending',
-        details: {
-          affiliates: aggregatedData.affiliates.map(aff => ({
+        year: previousYear
+      };
+    }
+    
+    // console.log(`Data: ${aggregatedData.total_commissions} commissions, $${aggregatedData.total_amount} total, ${aggregatedData.brand_count} brands`);
+    
+    // Generate single invoice number
+    const invoiceNumber = `MONTHLY-INV-${previousYear}${previousMonth.toString().padStart(2, '0')}`;
+    
+    // Generate SINGLE PDF with all data
+    const invoiceUrl = await this.generateAggregatedInvoicePDF(aggregatedData, invoiceNumber);
+    
+    // Create SINGLE invoice record
+    const monthlyInvoice = await MonthlyCommissionInvoice.create({
+      invoice_number: invoiceNumber,
+      month: previousMonth,
+      year: previousYear,
+      total_commission: aggregatedData.total_amount,
+      total_amount: aggregatedData.total_amount,
+      invoice_url: invoiceUrl,
+      status: 'pending',
+      details: {
+        brands: aggregatedData.brands.map(brand => ({
+          brand_id: brand.brand_id,
+          brand_email: brand.brand_email,
+          brand_name: brand.brand_name,
+          total_amount: brand.total_amount,
+          commission_count: brand.commission_count,
+          // Include affiliate details
+          affiliates: brand.affiliates?.map(aff => ({
             affiliate_id: aff.affiliate_id,
             affiliate_email: aff.affiliate_email,
             affiliate_name: aff.affiliate_name,
             total_amount: aff.total_amount,
             commission_count: aff.commission_count
-          })),
-          commission_ids: aggregatedData.all_commissions.map(c => c.id)
-        },
+          })) || []
+        })),
+        commission_ids: aggregatedData.all_commissions.map(c => c.id)
+      },
+      commission_count: aggregatedData.total_commissions,
+      brand_count: aggregatedData.brand_count, // Changed from affiliate_count
+      isDeleted: false
+    }).fetch();
+    
+    // Mark ALL commissions as invoiced
+    const commissionIds = aggregatedData.all_commissions.map(c => c.id);
+    await CommissionService.markCommissionsAsInvoiced(commissionIds, monthlyInvoice.id);
+    
+    // Send notifications (you might want to update this to notify brands)
+    await this.sendMonthlySummaryNotifications(aggregatedData.brands, monthlyInvoice);
+    
+    return {
+      success: true,
+      message: `Generated SINGLE monthly invoice for ${previousMonth}/${previousYear}`,
+      invoice: {
+        invoice_id: monthlyInvoice.id,
+        invoice_number: invoiceNumber,
+        invoice_url: invoiceUrl,
+        month: previousMonth,
+        year: previousYear,
+        total_amount: aggregatedData.total_amount,
+        total_commissions: aggregatedData.total_commissions,
+        total_brands: aggregatedData.brand_count // Changed from total_affiliates
+      },
+      summary: {
+        grand_total: aggregatedData.total_amount,
         commission_count: aggregatedData.total_commissions,
-        affiliate_count: aggregatedData.affiliate_count,
-        isDeleted: false
-      }).fetch();
-      
-      // Mark ALL commissions as invoiced
-      const commissionIds = aggregatedData.all_commissions.map(c => c.id);
-      await CommissionService.markCommissionsAsInvoiced(commissionIds, monthlyInvoice.id);
-      
-      // Send notifications
-      await this.sendMonthlySummaryNotifications(aggregatedData.affiliates, monthlyInvoice);
-      
-      return {
-        success: true,
-        message: `Generated SINGLE monthly invoice for ${previousMonth}/${previousYear}`,
-        invoice: {
-          invoice_id: monthlyInvoice.id,
-          invoice_number: invoiceNumber,
-          invoice_url: invoiceUrl,
-          month: previousMonth,
-          year: previousYear,
-          total_amount: aggregatedData.total_amount,
-          total_commissions: aggregatedData.total_commissions,
-          total_affiliates: aggregatedData.affiliate_count
-        },
-        summary: {
-          grand_total: aggregatedData.total_amount,
-          commission_count: aggregatedData.total_commissions,
-          affiliate_count: aggregatedData.affiliate_count,
-          affiliates: aggregatedData.all_commissions.map(aff => ({
-            name: aff.affiliate_name,
-            email: aff.affiliate_email,
-            amount: aff.total_amount,
-            commissions: aff.commission_count
-          }))
-        }
-      };
-      
-    } catch (error) {
-      console.error(' Error generating single monthly invoice:', error);
-      throw error;
-    }
-  },
-  
+        brand_count: aggregatedData.brand_count, // Changed from affiliate_count
+        brands: aggregatedData.brands.map(brand => ({
+          name: brand.brand_name,
+          email: brand.brand_email,
+          amount: brand.total_amount,
+          commissions: brand.commission_count
+        }))
+      }
+    };
+    
+  } catch (error) {
+    console.error('Error generating single monthly invoice:', error);
+    throw error;
+  }
+},
   /**
    * Generate SINGLE PDF with all affiliate data
    */
@@ -177,8 +284,36 @@ module.exports = {
   /**
    * Generate HTML for aggregated invoice
    */
-//   generateAggregatedInvoiceHTML: function (data, invoiceNumber) {
+
+// generateAggregatedInvoiceHTML: function (data, invoiceNumber) {
 //     const now = new Date();
+    
+//     // Consolidate affiliate data - combine duplicates
+//     const consolidatedAffiliates = [];
+//     const affiliateMap = new Map();
+    
+//     data.commission_details.forEach(affiliate => {
+//         const key = `${affiliate.affiliate_id || affiliate.affiliate_email}_${affiliate.affiliate_name}`;
+        
+//         if (affiliateMap.has(key)) {
+//             // Update existing affiliate data
+//             const existing = affiliateMap.get(key);
+//             existing.commission_count += affiliate.commission_count;
+//             existing.amount += affiliate.amount;
+//         } else {
+//             // Add new affiliate
+//             const consolidatedAffiliate = {
+//                 ...affiliate,
+//                 commission_count: affiliate.commission_count,
+//                 amount: affiliate.amount
+//             };
+//             affiliateMap.set(key, consolidatedAffiliate);
+//             consolidatedAffiliates.push(consolidatedAffiliate);
+//         }
+//     });
+    
+//     // Sort affiliates by total amount (descending)
+//     consolidatedAffiliates.sort((a, b) => b.amount - a.amount);
     
 //     return `
 // <!DOCTYPE html>
@@ -294,6 +429,20 @@ module.exports = {
 //       width: 50px;
 //     }
     
+//     .unique-count {
+//       background: #f0f9ff;
+//       padding: 15px;
+//       border-radius: 8px;
+//       margin-bottom: 20px;
+//       text-align: center;
+//       border-left: 4px solid #2c5282;
+//     }
+    
+//     .unique-count span {
+//       font-weight: bold;
+//       color: #2c5282;
+//     }
+    
 //     .grand-total {
 //       background: linear-gradient(135deg, #2c5282, #4299e1);
 //       color: white;
@@ -330,6 +479,14 @@ module.exports = {
 //       height: 40px;
 //       margin-bottom: 10px;
 //     }
+    
+//     .consolidated-note {
+//       font-size: 12px;
+//       color: #666;
+//       font-style: italic;
+//       margin-top: 10px;
+//       text-align: center;
+//     }
 //   </style>
 // </head>
 // <body>
@@ -355,6 +512,10 @@ module.exports = {
 //       </div>
 //     </div>
     
+//     <div class="unique-count">
+//       Showing <span>${consolidatedAffiliates.length} unique affiliates</span> (consolidated from ${data.commission_details.length} commission records)
+//     </div>
+    
 //     <div class="summary-section">
 //       <h3>Affiliate Performance Summary</h3>
       
@@ -364,12 +525,12 @@ module.exports = {
 //             <th class="rank">#</th>
 //             <th>Affiliate</th>
 //             <th>Email</th>
-//             <th>Commissions</th>
+//             <th>Total Commissions</th>
 //             <th class="amount">Total Amount</th>
 //           </tr>
 //         </thead>
 //         <tbody>
-//           ${data.commission_details.map((affiliate, index) => `
+//           ${consolidatedAffiliates.map((affiliate, index) => `
 //             <tr>
 //               <td class="rank">${index + 1}</td>
 //               <td>${affiliate.affiliate_name}</td>
@@ -380,12 +541,18 @@ module.exports = {
 //           `).join('')}
 //         </tbody>
 //       </table>
+//       <div class="consolidated-note">
+//         * Duplicate affiliate entries have been consolidated with commissions and amounts summed
+//       </div>
 //     </div>
     
 //     <div class="grand-total">
 //       <h3>Total Commission Payout for ${data.month_name} ${data.year}</h3>
 //       <div class="grand-amount">$${data.total_amount.toFixed(2)}</div>
-//       <div>Across ${data.total_commissions} commissions from ${data.affiliate_count} affiliates</div>
+//       <div>
+//         ${data.total_commissions} total commissions from ${consolidatedAffiliates.length} unique affiliates
+//         ${consolidatedAffiliates.length !== data.affiliate_count ? `<br><small>(Originally ${data.affiliate_count} affiliate records before consolidation)</small>` : ''}
+//       </div>
 //     </div>
     
 //     <div class="footer">
@@ -397,38 +564,11 @@ module.exports = {
 // </html>
 //     `;
 //   },
-  
+
 generateAggregatedInvoiceHTML: function (data, invoiceNumber) {
-    const now = new Date();
-    
-    // Consolidate affiliate data - combine duplicates
-    const consolidatedAffiliates = [];
-    const affiliateMap = new Map();
-    
-    data.commission_details.forEach(affiliate => {
-        const key = `${affiliate.affiliate_id || affiliate.affiliate_email}_${affiliate.affiliate_name}`;
-        
-        if (affiliateMap.has(key)) {
-            // Update existing affiliate data
-            const existing = affiliateMap.get(key);
-            existing.commission_count += affiliate.commission_count;
-            existing.amount += affiliate.amount;
-        } else {
-            // Add new affiliate
-            const consolidatedAffiliate = {
-                ...affiliate,
-                commission_count: affiliate.commission_count,
-                amount: affiliate.amount
-            };
-            affiliateMap.set(key, consolidatedAffiliate);
-            consolidatedAffiliates.push(consolidatedAffiliate);
-        }
-    });
-    
-    // Sort affiliates by total amount (descending)
-    consolidatedAffiliates.sort((a, b) => b.amount - a.amount);
-    
-    return `
+  const now = new Date();
+  
+  return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -443,7 +583,7 @@ generateAggregatedInvoiceHTML: function (data, invoiceNumber) {
     }
     
     .container {
-      max-width: 1000px;
+      max-width: 1200px;
       margin: 0 auto;
       background: white;
       border-radius: 10px;
@@ -470,28 +610,44 @@ generateAggregatedInvoiceHTML: function (data, invoiceNumber) {
       font-weight: normal;
     }
     
-    .meta-info {
-      display: flex;
-      justify-content: space-between;
-      background: #f8f9fa;
-      padding: 15px 20px;
-      border-radius: 8px;
+    .summary-cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
       margin-bottom: 30px;
     }
     
-    .meta-item {
+    .summary-card {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
       text-align: center;
+      border-top: 4px solid #2c5282;
     }
     
-    .meta-label {
-      font-size: 12px;
+    .summary-card.highlight {
+      background: linear-gradient(135deg, #2c5282, #4299e1);
+      color: white;
+    }
+    
+    .summary-card.highlight .card-label {
+      color: rgba(255,255,255,0.9);
+    }
+    
+    .summary-card.highlight .card-value {
+      color: white;
+    }
+    
+    .card-label {
+      font-size: 14px;
       color: #666;
       text-transform: uppercase;
-      margin-bottom: 5px;
+      margin-bottom: 10px;
+      font-weight: 600;
     }
     
-    .meta-value {
-      font-size: 18px;
+    .card-value {
+      font-size: 24px;
       font-weight: bold;
       color: #2c5282;
     }
@@ -507,13 +663,13 @@ generateAggregatedInvoiceHTML: function (data, invoiceNumber) {
       margin-bottom: 15px;
     }
     
-    .affiliates-table {
+    .brands-table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 20px;
     }
     
-    .affiliates-table th {
+    .brands-table th {
       background: #2c5282;
       color: white;
       padding: 12px 15px;
@@ -521,18 +677,31 @@ generateAggregatedInvoiceHTML: function (data, invoiceNumber) {
       font-weight: 600;
     }
     
-    .affiliates-table td {
+    .brands-table td {
       padding: 12px 15px;
       border-bottom: 1px solid #eaeaea;
     }
     
-    .affiliates-table tr:hover {
+    .brands-table tr:hover {
       background: #f8f9fa;
     }
     
-    .amount {
+    .amount, .fee, .total {
       text-align: right;
       font-weight: 500;
+    }
+    
+    .amount {
+      color: #2c5282;
+    }
+    
+    .fee {
+      color: #d69e2e;
+    }
+    
+    .total {
+      color: #38a169;
+      font-weight: bold;
     }
     
     .rank {
@@ -542,30 +711,25 @@ generateAggregatedInvoiceHTML: function (data, invoiceNumber) {
       width: 50px;
     }
     
-    .unique-count {
-      background: #f0f9ff;
-      padding: 15px;
-      border-radius: 8px;
-      margin-bottom: 20px;
+    .orders {
       text-align: center;
-      border-left: 4px solid #2c5282;
     }
     
-    .unique-count span {
-      font-weight: bold;
-      color: #2c5282;
+    .percentage {
+      font-size: 12px;
+      color: #666;
     }
     
-    .grand-total {
+    .grand-total-section {
       background: linear-gradient(135deg, #2c5282, #4299e1);
       color: white;
-      padding: 25px;
+      padding: 30px;
       border-radius: 10px;
       text-align: center;
       margin-top: 40px;
     }
     
-    .grand-total h3 {
+    .grand-total-section h3 {
       margin: 0 0 10px 0;
       font-size: 16px;
       text-transform: uppercase;
@@ -577,6 +741,28 @@ generateAggregatedInvoiceHTML: function (data, invoiceNumber) {
       font-size: 42px;
       font-weight: bold;
       margin: 10px 0;
+    }
+    
+    .breakdown {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      margin-top: 20px;
+      font-size: 14px;
+    }
+    
+    .breakdown-item {
+      text-align: center;
+    }
+    
+    .breakdown-label {
+      opacity: 0.9;
+      margin-bottom: 5px;
+    }
+    
+    .breakdown-value {
+      font-weight: bold;
+      font-size: 18px;
     }
     
     .footer {
@@ -593,12 +779,15 @@ generateAggregatedInvoiceHTML: function (data, invoiceNumber) {
       margin-bottom: 10px;
     }
     
-    .consolidated-note {
+    .brand-details {
       font-size: 12px;
       color: #666;
-      font-style: italic;
-      margin-top: 10px;
-      text-align: center;
+      margin-top: 5px;
+    }
+    
+    .commission-rate {
+      font-size: 12px;
+      color: #666;
     }
   </style>
 </head>
@@ -607,69 +796,67 @@ generateAggregatedInvoiceHTML: function (data, invoiceNumber) {
     <div class="header">
       <img src="${credentials.BACK_WEB_URL}/images/logo.png" alt="Logo" class="logo" />
       <h1>Monthly Commission Summary</h1>
-      <h2>${data.month_name} ${data.year} • All Affiliates</h2>
-    </div>
-    
-    <div class="meta-info">
-      <div class="meta-item">
-        <div class="meta-label">Invoice Number</div>
-        <div class="meta-value">${invoiceNumber}</div>
-      </div>
-      <div class="meta-item">
-        <div class="meta-label">Period</div>
-        <div class="meta-value">${data.month_name} ${data.year}</div>
-      </div>
-      <div class="meta-item">
-        <div class="meta-label">Generated Date</div>
-        <div class="meta-value">${now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
-      </div>
-    </div>
-    
-    <div class="unique-count">
-      Showing <span>${consolidatedAffiliates.length} unique affiliates</span> (consolidated from ${data.commission_details.length} commission records)
+      <h2>${data.month_name} ${data.year}</h2>
     </div>
     
     <div class="summary-section">
-      <h3>Affiliate Performance Summary</h3>
       
-      <table class="affiliates-table">
+      <table class="brands-table">
         <thead>
           <tr>
             <th class="rank">#</th>
-            <th>Affiliate</th>
-            <th>Email</th>
-            <th>Total Commissions</th>
-            <th class="amount">Total Amount</th>
+            <th class="orders">Orders</th>
+            <th class="amount">Amount</th>
+            <th class="fee">Upfilly Fee</th>
+            <th class="total">Grand Total</th>
           </tr>
         </thead>
         <tbody>
-          ${consolidatedAffiliates.map((affiliate, index) => `
+          ${data.brands.map((brand, index) => {
+            const affiliateCount = brand.affiliates?.length || 0;
+            
+            return `
             <tr>
               <td class="rank">${index + 1}</td>
-              <td>${affiliate.affiliate_name}</td>
-              <td>${affiliate.affiliate_email}</td>
-              <td>${affiliate.commission_count}</td>
-              <td class="amount">$${affiliate.amount.toFixed(2)}</td>
+              <td class="orders">${brand.total_orders}</td>
+              <td class="amount">$${brand.total_amount.toFixed(2)}</td>
+              <td class="fee">
+                $${brand.upfilly_fee.toFixed(2)}
+                ${brand.commission_override > 0 ?
+                  `<div class="percentage">(${brand.commission_override}%)</div>` :
+                  ''
+                }
+              </td>
+              <td class="total">$${brand.brand_total.toFixed(2)}</td>
             </tr>
-          `).join('')}
+          `}).join('')}
         </tbody>
       </table>
-      <div class="consolidated-note">
-        * Duplicate affiliate entries have been consolidated with commissions and amounts summed
-      </div>
     </div>
     
-    <div class="grand-total">
-      <h3>Total Commission Payout for ${data.month_name} ${data.year}</h3>
-      <div class="grand-amount">$${data.total_amount.toFixed(2)}</div>
-      <div>
-        ${data.total_commissions} total commissions from ${consolidatedAffiliates.length} unique affiliates
-        ${consolidatedAffiliates.length !== data.affiliate_count ? `<br><small>(Originally ${data.affiliate_count} affiliate records before consolidation)</small>` : ''}
+    <div class="grand-total-section">
+      <h3>Grand Total Commission Payout</h3>
+      <div class="grand-amount">$${data.grand_total.toFixed(2)}</div>
+      <div class="breakdown">
+        <div class="breakdown-item">
+          <div class="breakdown-label">Total Amount</div>
+          <div class="breakdown-value">$${data.total_amount.toFixed(2)}</div>
+        </div>
+        <div class="breakdown-item">
+          <div class="breakdown-label">+ Upfilly Fee</div>
+          <div class="breakdown-value">$${data.total_upfilly_fee.toFixed(2)}</div>
+        </div>
+        <div class="breakdown-item">
+          <div class="breakdown-label">= Grand Total</div>
+          <div class="breakdown-value">$${data.grand_total.toFixed(2)}</div>
+        </div>
+      </div>
+      <div style="margin-top: 20px; font-size: 14px; opacity: 0.9;">
+        Summary: ${data.total_orders} orders from ${data.brand_count} brands
       </div>
     </div>
     
     <div class="footer">
-      <p>This is a consolidated monthly commission report for all affiliates.</p>
       <p>Generated by Upfilly Commission System • ${now.toLocaleDateString()} ${now.toLocaleTimeString()}</p>
     </div>
   </div>
@@ -677,7 +864,7 @@ generateAggregatedInvoiceHTML: function (data, invoiceNumber) {
 </html>
     `;
   },
-  /**
+/**
    * Send notifications to all affiliates
    */
   sendMonthlySummaryNotifications: async function (affiliates, invoice) {

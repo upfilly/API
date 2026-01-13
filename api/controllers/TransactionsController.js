@@ -1331,6 +1331,7 @@ exports.transactionGraph = async function (req, res) {
 
 exports.monthlyPendingTransactions = async function (req, res) {
   try {
+    console.log("check")
     const date = new Date();
     const startDate = new Date(Date.UTC(date.getFullYear(), date.getMonth(), 1));
     const endDate = new Date(Date.UTC(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59, 999));
