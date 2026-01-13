@@ -17,10 +17,10 @@ module.exports = {
 
       // Calculate previous month
       const now = new Date();
-      // let previousMonth = now.getMonth(); // 0-based
-      // let previousYear = now.getFullYear();
-       let previousYear = now.getFullYear();
-      let previousMonth = 1; // jan
+      let previousMonth = now.getMonth(); // 0-based
+      let previousYear = now.getFullYear();
+      //  let previousYear = now.getFullYear();
+      // let previousMonth = 1; // jan
 
       if (previousMonth === 0) {
         previousMonth = 12;
