@@ -74,5 +74,17 @@ module.exports = {
       type: "ref",
       autoCreatedAt: true,
     },
+     report_url: {
+      type: 'string',
+      required: true
+    },
+     total_brands: {
+      type: 'number',
+      defaultsTo: 0
+    },
+    total_transactions: {
+      type: 'number',
+      defaultsTo: 0
+    },
   },
 };
