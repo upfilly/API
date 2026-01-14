@@ -378,13 +378,11 @@ generateReportHTML: function (data, reportNumber) {
         <table class="transaction-table">
           <thead>
             <tr>
+            <th>Date</th>
               <th>Order ID</th>
-              <th>Date</th>
-              <th>Affiliate</th>
               <th>Period</th>
               <th class="text-right">Order Amount</th>
               <th class="text-right">Commission</th>
-              <th>Status</th>
               <th class="text-right">Upfilly Fee</th>
             </tr>
           </thead>
@@ -414,20 +412,15 @@ generateReportHTML: function (data, reportNumber) {
                 
                 return `
                 <tr>
+                <td class="date">${new Date(commission.createdAt).toLocaleDateString('en-US', { 
+                  year: 'numeric', 
+                  month: 'short', 
+                  day: 'numeric' 
+                })}</td>
                   <td class="order-id">${orderId}</td>
-                  <td class="date">${new Date(commission.createdAt).toLocaleDateString('en-US', { 
-                    year: 'numeric', 
-                    month: 'short', 
-                    day: 'numeric' 
-                  })}</td>
-                  <td class="affiliate-info">
-                    ${affiliate ? affiliate.affiliate_name : 'Unknown'}
-                    <div class="commission-info">${affiliate ? affiliate.affiliate_email : ''}</div>
-                  </td>
                   <td class="period">${period}</td>
                   <td class="text-right order-amount">$${parseFloat(orderAmount).toFixed(2)}</td>
                   <td class="text-right amount">$${parseFloat(commissionAmount).toFixed(2)}</td>
-                  <td><span class="${statusClass}">${statusText}</span></td>
                   <td class="text-right commission-info">$${upfillyFee.toFixed(2)}</td>
                 </tr>
               `}).join('') : 
