@@ -665,6 +665,6 @@ module.exports.routes = {
    */
    // Monthly commission invoice routes
   "post /commission/generate-monthly-invoices": "CommissionCronController.generateSingleMonthlyInvoice",
-  'get /commission/monthly-invoices': 'CommissionCronController.getMonthlyInvoice',
-  'get /commission/monthly-invoices/list': 'CommissionCronController.listMonthlyInvoices',
+  'get /commission/monthly-invoices/admin/list': 'CommissionCronController.listMonthlyInvoices',
+  'get /commission/monthly-invoices/list': 'CommissionCronController.getMonthlyInvoice',
 };

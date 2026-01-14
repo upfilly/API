@@ -14,6 +14,8 @@ const Services = require('../api/services/index');
 const cron = require('node-cron');
 const moment = require('moment');
 const Emails = require('../api/Emails/index');
+const MonthlyInvoiceService = require("../api/services/MonthlyInvoiceService")
+
 
 module.exports.bootstrap = async function () {
   // By convention, this is a good place to set up fake data during development.
@@ -188,8 +190,21 @@ module.exports.bootstrap = async function () {
   })
 
    // Initialize cron jobs
-  if (process.env.ENABLE_CRON === 'true') {
-    require('../config/cron').cron.init();
-  }
+  // if (process.env.ENABLE_CRON === 'true') {
+  //   require('../config/cron').cron.init();
+  // }
+
+  cron.schedule('0 2 1 * *', async () => {
+        try {
+          const result = await MonthlyInvoiceService.generateSingleMonthlyInvoice();
+          console.log('Monthly invoice generation completed:', result);
+          
+        } catch (error) {
+          console.error('Cron job failed:', error);
+        }
+      }, {
+        scheduled: true,
+        timezone: "UTC"
+      });
 
 };
