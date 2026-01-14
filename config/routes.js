@@ -554,6 +554,8 @@ module.exports.routes = {
   "get /affiliatelink/report": "AffiliateLinkController.report",
   "put /update/commission/status": "AffiliateLinkController.updateCommission",
   "GET /affiliatelink/all/admin": "AffiliateLinkController.find_2_admin",
+  "GET /admin/affiliate-order/detail": "AffiliateLinkController.affiliateOrderDetail",
+
 
 
   /**
