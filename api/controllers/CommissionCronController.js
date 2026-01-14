@@ -190,4 +190,60 @@ module.exports = {
       return res.serverError(error);
     }
   },
+  
+  getMonthlyInvoiceStatus: async function (req, res) {
+  try {
+    const { id, status } = req.body;
+
+    // Validate ID
+    if (!id) {
+      return res.badRequest({ message: "Invoice id is required" });
+    }
+
+    // Allowed status values
+    const allowedStatus = ["pending", "processing", "paid", "failed"];
+
+    if (!status || !allowedStatus.includes(status)) {
+      return res.badRequest({
+        message: `Invalid status. Allowed values: ${allowedStatus.join(", ")}`
+      });
+    }
+
+    // Find invoice
+    const invoice = await MonthlyCommissionInvoice.findOne({
+      where: {
+        id,
+        isDeleted: false
+      }
+    });
+
+    if (!invoice) {
+      return res.notFound({ message: "Monthly invoice not found" });
+    }
+
+    // Update only status
+    await MonthlyCommissionInvoice.update(
+      { status },
+      {
+        where: { id }
+      }
+    );
+
+    // Fetch updated invoice
+    const updatedInvoice = await MonthlyCommissionInvoice.findOne({
+      where: { id }
+    });
+
+    return res.json({
+      success: true,
+      message: "Monthly invoice status updated successfully",
+      data: updatedInvoice
+    });
+
+  } catch (error) {
+    console.error("Error:", error);
+    return res.serverError(error);
+  }
+},
+
 };
