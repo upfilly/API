@@ -121,7 +121,7 @@ module.exports = {
 
           return res.json({
             success: true,
-            invoice: latestInvoice[0],
+            data: latestInvoice[0],
           });
         }
       }
@@ -143,9 +143,11 @@ module.exports = {
           brand_id
         );
         if (filteredInvoice) {
+          let array = [filteredInvoice];
           return res.json({
             success: true,
-            invoice: filteredInvoice,
+            data: array,
+            total: array.length,
           });
         } else {
           return res.status(404).json({
@@ -155,9 +157,12 @@ module.exports = {
         }
       }
 
+      let array = [];
+      array.push(invoice);
       return res.json({
         success: true,
-        invoice: invoice,
+        data: array,
+        total: invoice.length,
       });
     } catch (error) {
       console.error("Error:", error);
