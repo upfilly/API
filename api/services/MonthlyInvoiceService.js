@@ -6,6 +6,7 @@ const puppeteer = require("puppeteer");
 const CommissionService = require("./CommissionService");
 const credentials = require("../../config/local.js"); //sails.config.env.production;
 const report = require("./reportService.js")
+const newService =require("./commissionNewService.js")
 
 module.exports = {
   /**

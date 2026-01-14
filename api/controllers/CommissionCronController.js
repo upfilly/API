@@ -1,5 +1,7 @@
 // api/controllers/CommissionCronController.js
-const SingleMonthlyInvoiceService = require("../services/MonthlyInvoiceService");
+// const SingleMonthlyInvoiceService = require("../services/MonthlyInvoiceService");
+const SingleMonthlyInvoiceService = require("../services/commissionNewService");
+
 
 // Helper function using MongoDB aggregation for filtering
 async function filterInvoiceByBrandMongo(invoice, brandId) {
@@ -59,8 +61,11 @@ module.exports = {
     try {
       console.log(" API: Generating single monthly invoice...");
 
-      const result =
-        await SingleMonthlyInvoiceService.generateSingleMonthlyInvoice();
+      // const result =
+      //   await SingleMonthlyInvoiceService.generateSingleMonthlyInvoice();
+
+        const result =
+        await SingleMonthlyInvoiceService.generateSeparateBrandInvoices();
 
       return res.json({
         success: true,
