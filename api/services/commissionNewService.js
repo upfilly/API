@@ -315,6 +315,11 @@ module.exports = {
       console.log(
         `Generated invoice for ${brand.brand_name}: ${invoiceNumber}`
       );
+      
+      const commissionIds = (brand.commissions || []).map((c) => c.id);
+    if (commissionIds.length > 0) {
+      await this.markCommissionsAsInvoiced(commissionIds, monthlyInvoice.id);
+    }
 
       return {
         brand_id: brand.brand_id,
@@ -346,9 +351,7 @@ module.exports = {
    */
   generateSeparateBrandInvoices: async function () {
     try {
-      console.log(
-        "\n Generating SEPARATE monthly invoices for EACH brand..."
-      );
+      console.log("\n Generating SEPARATE monthly invoices for EACH brand...");
 
       const now = new Date();
       let previousYear = now.getFullYear();
@@ -421,16 +424,10 @@ module.exports = {
 
         if (invoiceResult) {
           generatedInvoices.push(invoiceResult);
-          const allCommissionIds =
-        aggregatedData.all_commissions?.map((c) => c.id) || [];
-
-      if (allCommissionIds.length > 0) {
-        await this.markCommissionsAsInvoiced(allCommissionIds, invoiceResult.invoice_id);
-      }
         }
       }
 
-      console.log(`\n📈 Invoice Generation Summary:`);
+      console.log(`\n Invoice Generation Summary:`);
       console.log(`Total brands processed: ${aggregatedData.brands.length}`);
       console.log(
         `Brands with invoices generated: ${generatedInvoices.length}`
