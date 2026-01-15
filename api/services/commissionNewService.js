@@ -665,14 +665,17 @@ module.exports = {
     
     .amount {
       color: #2c5282;
+      text-align: left;
     }
     
     .fee {
       color: #d69e2e;
+      text-align: left;
     }
     
     .total {
       color: #38a169;
+      text-align: left;
       font-weight: bold;
     }
     
@@ -824,6 +827,9 @@ module.exports = {
       border-left: 4px solid #d69e2e;
       font-size: 13px;
     }
+      .text-left{
+        text-align: left;
+      }
   </style>
 </head>
 <body>
@@ -849,8 +855,8 @@ module.exports = {
       <table class="brands-table">
         <thead>
           <tr>
-            <th class="rank">#</th>
-            <th class="orders">Orders</th>
+            <th class="text-left">#</th>
+            <th class="text-left">Orders</th>
             <th class="amount">Commission</th>
             <th class="fee">Upfilly Fee</th>
             <th class="total">Grand Total</th>
