@@ -798,6 +798,10 @@ module.exports = {
       color: #666;
       margin-bottom: 5px;
     }
+
+    .total{
+      color: #2c5282;
+    }
     
     .period {
       color: #666;
