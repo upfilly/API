@@ -654,7 +654,7 @@ module.exports = {
       border-bottom: 1px solid #eaeaea;
     }
     
-    
+
     .brands-table tr:hover {
       background: #f8f9fa;
     }
@@ -1062,6 +1062,7 @@ module.exports = {
     .transaction-table td {
       padding: 10px;
       border-bottom: 1px solid #eaeaea;
+      text-align:left;
     }
 
     .transaction-table tbody tr:nth-child(even) {
@@ -1136,6 +1137,7 @@ module.exports = {
     .affiliate-table td {
       padding: 10px;
       border-bottom: 1px solid #eaeaea;
+      text-align:left;
     }
     
     .affiliate-table tbody tr:nth-child(even) {
