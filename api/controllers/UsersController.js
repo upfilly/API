@@ -625,7 +625,6 @@ module.exports = {
   },
 
   /**
-   *
    * @reqBody  : {email,password}
    * @param {*} res
    * @returns
