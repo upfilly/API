@@ -860,7 +860,6 @@ module.exports = {
             <th class="amount">Commission</th>
             <th class="fee">Upfilly Fee</th>
             <th class="total">Grand Total</th>
-            <th class="total">Random Total</th>
 
           </tr>
         </thead>
@@ -878,7 +877,6 @@ module.exports = {
               }
             </td>
             <td class="total" style="text-align:left">$${brand.brand_total.toFixed(2)}</td>
-            <td class="total" style="text-align:left">$random</td>
 
           </tr>
         </tbody>
@@ -990,7 +988,7 @@ module.exports = {
     const brandTotal =
       brand.brand_total || brand.total_amount + (brand.upfilly_fee || 0);
 
-    return `
+      const htmlData = `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1191,8 +1189,6 @@ module.exports = {
           <th class="">Order Amount</th>
           <th class="">Commission</th>
           <th class="">Upfilly Fee</th>
-          <th class="">Dataaaaae</th>
-
         </tr>
       </thead>
 
@@ -1220,8 +1216,6 @@ module.exports = {
                   <td style="text-align:left" class="">$${(link.price || 0).toFixed(2)}</td>
                   <td style="text-align:left" class="">$${(c.amount || 0).toFixed(2)}</td>
                   <td style="text-align:left" class="">$${upfillyFee.toFixed(2)}</td>
-                  <td style="text-align:left" class="">$Random</td>
-
                 </tr>`;
                 })
                 .join("")
@@ -1265,5 +1259,6 @@ module.exports = {
 </body>
 </html>
 `;
+return htmlData;
   },
 };
