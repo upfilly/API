@@ -315,7 +315,7 @@ module.exports = {
       console.log(
         `Generated invoice for ${brand.brand_name}: ${invoiceNumber}`
       );
-      
+
       const commissionIds = (brand.commissions || []).map((c) => c.id);
     if (commissionIds.length > 0) {
       await this.markCommissionsAsInvoiced(commissionIds, monthlyInvoice.id);
