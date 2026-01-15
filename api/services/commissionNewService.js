@@ -914,7 +914,6 @@ module.exports = {
 </body>
 </html>
     `;
-    console.log(htmlData)
     return htmlData
   },
 
