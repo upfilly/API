@@ -175,60 +175,6 @@ getMonthlyInvoice: async function (req, res) {
     }
   },
 
-//   getMonthlyInvoiceStatus: async function (req, res) {
-//   try {
-//     const { id, status } = req.body;
-
-//     // Validate ID
-//     if (!id) {
-//       return res.badRequest({ message: "Invoice id is required" });
-//     }
-
-//     // Allowed status values
-//     const allowedStatus = ["pending", "processing", "paid", "failed"];
-
-//     if (!status || !allowedStatus.includes(status)) {
-//       return res.badRequest({
-//         message: `Invalid status. Allowed values: ${allowedStatus.join(", ")}`
-//       });
-//     }
-
-//     // Find invoice
-//     const invoice = await MonthlyCommissionInvoice.findOne({
-//       where: {
-//         id,
-//         isDeleted: false
-//       }
-//     });
-
-//     if (!invoice) {
-//       return res.notFound({ message: "Monthly invoice not found" });
-//     }
-
-//     // Update only status
-//     await MonthlyCommissionInvoice.update(
-//       { status },
-//       {
-//         where: { id }
-//       }
-//     );
-
-//     // Fetch updated invoice
-//     const updatedInvoice = await MonthlyCommissionInvoice.findOne({
-//       where: { id }
-//     });
-
-//     return res.json({
-//       success: true,
-//       message: "Monthly invoice status updated successfully",
-//       data: updatedInvoice
-//     });
-
-//   } catch (error) {
-//     console.error("Error:", error);
-//     return res.serverError(error);
-//   }
-// },
 getMonthlyInvoiceStatus: async function (req, res) {
   try {
     const { id, status } = req.body;
@@ -270,16 +216,62 @@ getMonthlyInvoiceStatus: async function (req, res) {
     if (status === "paid") {
       const commissionIds = invoice.details?.commission_ids || [];
 
-      if (commissionIds.length > 0) {
+      // if (commissionIds.length > 0) {
+      //   await Transactions.update(
+      //     {
+      //       id: commissionIds,
+      //       // monthly_invoice_id: id
+      //     },
+      //     {
+      //       transaction_status: "paid"
+      //     }
+      //   );
+
+      //     await Affiliatelink.update(
+      //     {
+      //       id: commissionIds,
+      //       monthly_invoice_id: id
+      //     },
+      //     {
+      //       commission_paid: "paid"
+      //     }
+      //   );
+      // }
+        if (commissionIds.length > 0) {
+        // Update Transactions table
         await Transactions.update(
           {
-            id: commissionIds,
-            monthly_invoice_id: id
+            id: commissionIds
           },
           {
             transaction_status: "paid"
           }
         );
+
+        // Get affiliateLinkIds from Transactions to update Affiliatelink table
+        const transactions = await Transactions.find({
+          where: { id: commissionIds },
+          select: ['affiliateLinkId']
+        });
+
+        // Extract unique affiliateLinkIds
+        const affiliateLinkIds = [...new Set(
+          transactions
+            .map(t => t.affiliateLinkId)
+            .filter(id => id) // Remove null/undefined
+        )];
+
+        if (affiliateLinkIds.length > 0) {
+          // Update Affiliatelink table
+          await AffiliateLink.update(
+            {
+              id: affiliateLinkIds
+            },
+            {
+              commission_paid: "paid"
+            }
+          );
+        }
       }
     }
 
