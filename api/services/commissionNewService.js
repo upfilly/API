@@ -421,6 +421,12 @@ module.exports = {
 
         if (invoiceResult) {
           generatedInvoices.push(invoiceResult);
+          const allCommissionIds =
+        aggregatedData.all_commissions?.map((c) => c.id) || [];
+
+      if (allCommissionIds.length > 0) {
+        await this.markCommissionsAsInvoiced(allCommissionIds, invoiceResult.invoice_id);
+      }
         }
       }
 
@@ -433,12 +439,12 @@ module.exports = {
         `Brands skipped (no subscription/commissions): ${skippedBrands}`
       );
 
-      const allCommissionIds =
-        aggregatedData.all_commissions?.map((c) => c.id) || [];
+      // const allCommissionIds =
+      //   aggregatedData.all_commissions?.map((c) => c.id) || [];
 
-      if (allCommissionIds.length > 0) {
-        await this.markCommissionsAsInvoiced(allCommissionIds, null);
-      }
+      // if (allCommissionIds.length > 0) {
+      //   await this.markCommissionsAsInvoiced(allCommissionIds, null);
+      // }
 
       return {
         success: true,
