@@ -404,6 +404,20 @@ exports.getAllTransactions = async (req, res) => {
           },
         },
         {
+          $lookup: {
+            from: "users",
+            localField: "affiliate_link_details.brand_id",
+            foreignField: "_id",
+            as: "brand_details",
+          },
+        },
+        {
+          $unwind: {
+            path: "$brand_details",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
           $project: {
             id: "$_id",
             user_id: "$user_id",
@@ -436,6 +450,7 @@ exports.getAllTransactions = async (req, res) => {
             invoice_url: "$invoice_url",
             affiliateLinkId: "$affiliateLinkId",
             affiliate_link_data: "$affiliate_link_details",
+            brand_details: "$brand_details", // Add brand details to the response
             custom_invoice_url: "$custom_invoice_url",
             paid_to_emails: "$paid_to_emails",
           },
@@ -532,6 +547,134 @@ exports.getAllTransactions = async (req, res) => {
   }
 };
 
+// exports.getTransactionById = async (req, res) => {
+//   try {
+//     let { id } = req.query;
+//     if (!id) {
+//       throw constants.TRANSACTION.ID_REQUIRED;
+//     }
+
+//     // let get_transaction = await Transactions.findOne({ id: id })
+//     //   .populate("subscription_plan_id")
+//     //   .populate("special_plan_id")
+//     //   .populate("paid_to")
+//     //   .populate("user_id")
+//     //   .populate("affiliateLinkId");
+//        const get_transaction = await Transactions.aggregate([
+//       {
+//         $match: { id: id }
+//       },
+//       {
+//         $lookup: {
+//           from: "subscriptionplans",
+//           localField: "subscription_plan_id",
+//           foreignField: "_id",
+//           as: "subscription_plan_id"
+//         }
+//       },
+//       {
+//         $unwind: {
+//           path: "$subscription_plan_id",
+//           preserveNullAndEmptyArrays: true
+//         }
+//       },
+//       {
+//         $lookup: {
+//           from: "subscriptionplans",
+//           localField: "special_plan_id",
+//           foreignField: "_id",
+//           as: "special_plan_id"
+//         }
+//       },
+//       {
+//         $unwind: {
+//           path: "$special_plan_id",
+//           preserveNullAndEmptyArrays: true
+//         }
+//       },
+//       {
+//         $lookup: {
+//           from: "users",
+//           localField: "paid_to",
+//           foreignField: "_id",
+//           as: "paid_to"
+//         }
+//       },
+//       {
+//         $unwind: {
+//           path: "$paid_to",
+//           preserveNullAndEmptyArrays: true
+//         }
+//       },
+//       {
+//         $lookup: {
+//           from: "users",
+//           localField: "user_id",
+//           foreignField: "_id",
+//           as: "user_id"
+//         }
+//       },
+//       {
+//         $unwind: {
+//           path: "$user_id",
+//           preserveNullAndEmptyArrays: true
+//         }
+//       },
+//       {
+//         $lookup: {
+//           from: "affiliatelink", // Your affiliate links collection
+//           localField: "affiliateLinkId",
+//           foreignField: "_id",
+//           as: "affiliateLinkId"
+//         }
+//       },
+//       {
+//         $unwind: {
+//           path: "$affiliateLinkId",
+//           preserveNullAndEmptyArrays: true
+//         }
+//       },
+//       {
+//         $lookup: {
+//           from: "users",
+//           localField: "affiliateLinkId.brand_id",
+//           foreignField: "_id",
+//           as: "affiliateLinkId.brand_id_details"
+//         }
+//       },
+//       {
+//         $unwind: {
+//           path: "$affiliateLinkId.brand_id_details",
+//           preserveNullAndEmptyArrays: true
+//         }
+//       },
+//       {
+//         $addFields: {
+//           "affiliateLinkId.brand_id": "$affiliateLinkId.brand_id_details"
+//         }
+//       },
+//       {
+//         $project: {
+//           "affiliateLinkId.brand_id_details": 0
+//         }
+//       }
+//     ]);
+
+//     if (get_transaction) {
+//       return response.success(
+//         get_transaction,
+//         constants.TRANSACTION.FETCHED,
+//         req,
+//         res
+//       );
+//     }
+//     throw constants.TRANSACTION.INVALID_ID;
+//   } catch (error) {
+//     console.log("error",error)
+//     return response.failed(null, `${error}`, req, res);
+//   }
+// };
+
 exports.getTransactionById = async (req, res) => {
   try {
     let { id } = req.query;
@@ -539,15 +682,141 @@ exports.getTransactionById = async (req, res) => {
       throw constants.TRANSACTION.ID_REQUIRED;
     }
 
-    let get_transaction = await Transactions.findOne({ id: id })
-      .populate("subscription_plan_id")
-      .populate("special_plan_id")
-      .populate("paid_to")
-      .populate("user_id")
-      .populate("affiliateLinkId");
-    if (get_transaction) {
+    const result = await db
+      .collection("transactions")
+      .aggregate([
+        {
+          $match: { _id: new ObjectId(id) },
+        },
+        {
+          $lookup: {
+            from: "subscriptionplans",
+            localField: "subscription_plan_id",
+            foreignField: "_id",
+            as: "subscription_plans_details",
+          },
+        },
+        {
+          $unwind: {
+            path: "$subscription_plans_details",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $lookup: {
+            from: "subscriptionplans",
+            localField: "special_plan_id",
+            foreignField: "_id",
+            as: "special_plans_details",
+          },
+        },
+        {
+          $unwind: {
+            path: "$special_plans_details",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "user_id",
+            foreignField: "_id",
+            as: "user_id_details",
+          },
+        },
+        {
+          $unwind: {
+            path: "$user_id_details",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "paid_to",
+            foreignField: "_id",
+            as: "paid_to_details",
+          },
+        },
+        {
+          $unwind: {
+            path: "$paid_to_details",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $lookup: {
+            from: "affiliatelink",
+            localField: "affiliateLinkId",
+            foreignField: "_id",
+            as: "affiliate_link_details",
+          },
+        },
+        {
+          $unwind: {
+            path: "$affiliate_link_details",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "affiliate_link_details.brand_id",
+            foreignField: "_id",
+            as: "brand_details",
+          },
+        },
+        {
+          $unwind: {
+            path: "$brand_details",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $project: {
+            id: "$_id",
+            user_id: "$user_id",
+            paid_to: "$paid_to",
+            transaction_type: "$transaction_type",
+            subscription_plan_id: "$subscription_plan_id",
+            special_plan_id: "$special_plan_id",
+            subscription_id: "$subscription_plan_id",
+            transaction_id: "$transaction_id",
+            stripe_charge_id: "$stripe_charge_id",
+            currency: "$currency",
+            amount: "$amount",
+            stripe_subscription_id: "$stripe_subscription_id",
+            transaction_status: "$transaction_status",
+            addedBy: "$addedBy",
+            updatedBy: "$updatedBy",
+            createdAt: "$createdAt",
+            updatedAt: "$updatedAt",
+            subscription_plan_name: "$subscription_plans_details.name",
+            special_plan_name: "$special_plans_details.name",
+            user_id_name: "$user_id_details.fullName",
+            role: "$user_id_details.role",
+            paid_to_name: "$paid_to_details.fullName",
+            isDeleted: {
+              $cond: [
+                { $ifNull: ["$trash_details", false] },
+                "$trash_details.isDeleted",
+                false,
+              ],
+            },
+            invoice_url: "$invoice_url",
+            affiliateLinkId: "$affiliateLinkId",
+            affiliate_link_details: "$affiliate_link_details",
+            brand_details: "$brand_details", // Added brand details
+            custom_invoice_url: "$custom_invoice_url",
+            paid_to_emails: "$paid_to_emails",
+          },
+        },
+      ])
+      .toArray();
+
+    if (result && result.length > 0) {
       return response.success(
-        get_transaction,
+        result[0],
         constants.TRANSACTION.FETCHED,
         req,
         res
@@ -555,10 +824,10 @@ exports.getTransactionById = async (req, res) => {
     }
     throw constants.TRANSACTION.INVALID_ID;
   } catch (error) {
+    console.log("error", error);
     return response.failed(null, `${error}`, req, res);
   }
 };
-
 exports.downloadInvoice = async (req, res) => {
   try {
     if (!req.body.id) {
