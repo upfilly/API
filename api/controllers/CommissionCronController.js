@@ -87,101 +87,13 @@ module.exports = {
    * Get monthly invoice details
    */
 
-  // getMonthlyInvoice: async function (req, res) {
-  //   try {
-  //     const { month, year, brand_id } = req.query;
-
-  //     let query = { isDeleted: false };
-
-  //     if (month && year) {
-  //       query.month = parseInt(month);
-  //       query.year = parseInt(year);
-  //     } else {
-  //       // Get latest invoice
-  //       const latestInvoice = await MonthlyCommissionInvoice.find({
-  //         where: { isDeleted: false },
-  //         sort: "createdAt DESC",
-  //         limit: 1,
-  //       });
-
-  //       if (latestInvoice.length > 0) {
-  //         // Apply brand filter if provided
-  //         if (brand_id) {
-  //           const filteredInvoice = await filterInvoiceByBrandMongo(
-  //             latestInvoice[0],
-  //             brand_id
-  //           );
-  //           if (filteredInvoice) {
-  //             return res.json({
-  //               success: true,
-  //               invoice: filteredInvoice,
-  //             });
-  //           } else {
-  //             return res.status(404).json({
-  //               success: false,
-  //               error: "Monthly invoice not found for the specified brand",
-  //             });
-  //           }
-  //         }
-
-  //         return res.json({
-  //           success: true,
-  //           data: latestInvoice[0],
-  //         });
-  //       }
-  //     }
-
-  //     // Find invoice for specific month/year
-  //     const invoice = await MonthlyCommissionInvoice.find(query);
-
-  //     if (!invoice) {
-  //       return res.status(404).json({
-  //         success: false,
-  //         error: "Monthly invoice not found",
-  //       });
-  //     }
-
-  //     // Apply brand filter if provided
-  //     if (brand_id) {
-  //       const filteredInvoice = await filterInvoiceByBrandMongo(
-  //         invoice,
-  //         brand_id
-  //       );
-  //       if (filteredInvoice) {
-  //         let array = [filteredInvoice];
-  //         return res.json({
-  //           success: true,
-  //           data: array,
-  //           total: array.length,
-  //         });
-  //       } else {
-  //         return res.status(404).json({
-  //           success: false,
-  //           error: "Monthly invoice not found for the specified brand",
-  //         });
-  //       }
-  //     }
-
-  //     let array = [];
-  //     array.push(invoice);
-  //     return res.json({
-  //       success: true,
-  //       data: array,
-  //       total: invoice.length,
-  //     });
-  //   } catch (error) {
-  //     console.error("Error:", error);
-  //     return res.serverError(error);
-  //   }
-  // },
-
-  getMonthlyInvoice: async function (req, res) {
+getMonthlyInvoice: async function (req, res) {
   try {
     const { month, year, brand_id } = req.query;
 
+    // First, fetch all invoices based on month/year
     let invoices = [];
 
-    // 🔹 CASE 1: Month & Year provided
     if (month && year) {
       invoices = await MonthlyCommissionInvoice.find({
         where: {
@@ -191,9 +103,8 @@ module.exports = {
         },
         sort: "createdAt DESC"
       });
-    }
-    // 🔹 CASE 2: Get latest invoice
-    else {
+    } else {
+      // Get only the latest invoice if no month/year specified
       invoices = await MonthlyCommissionInvoice.find({
         where: { isDeleted: false },
         sort: "createdAt DESC",
@@ -208,16 +119,14 @@ module.exports = {
       });
     }
 
-    // 🔹 Apply brand filter (IMPORTANT)
+    // 🔹 Apply brand filter if provided
     if (brand_id) {
-      const filteredInvoices = [];
-
-      for (const invoice of invoices) {
-        const filtered = await filterInvoiceByBrandMongo(invoice, brand_id);
-        if (filtered) {
-          filteredInvoices.push(filtered);
-        }
-      }
+      // Filter invoices where brand_id matches in the details.brand.brand_id field
+      const filteredInvoices = invoices.filter(invoice => {
+        return invoice.details && 
+               invoice.details.brand && 
+               invoice.details.brand.brand_id === brand_id;
+      });
 
       if (filteredInvoices.length === 0) {
         return res.status(404).json({
@@ -233,7 +142,7 @@ module.exports = {
       });
     }
 
-    // 🔹 No brand filter → return invoices as-is
+    // 🔹 No brand filter → return all invoices
     return res.json({
       success: true,
       data: invoices,
@@ -245,7 +154,6 @@ module.exports = {
     return res.serverError(error);
   }
 },
-
   /**
    * List all monthly invoices
    */
