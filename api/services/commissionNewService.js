@@ -654,6 +654,7 @@ module.exports = {
       border-bottom: 1px solid #eaeaea;
     }
     
+    
     .brands-table tr:hover {
       background: #f8f9fa;
     }
