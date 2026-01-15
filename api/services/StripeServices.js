@@ -275,7 +275,7 @@ exports.one_time_payment = async (options) => {
         discounts: options.discounts,
         mode: 'subscription',
         subscription_data: options.subscription_data,
-        success_url: `${credentials.FRONT_WEB_URL}/paymentSuccess?id=${options.metadata.user_id}`,
+        success_url: `${credentials.FRONT_WEB_URL}/paymentsuccess?id=${options.metadata.user_id}`,
         cancel_url: `${credentials.FRONT_WEB_URL}/cancel?id=${options.metadata.user_id}`,
         metadata: options.metadata,
         customer_email: options.email
@@ -288,7 +288,7 @@ exports.one_time_payment_for_commission = async (options) => {
     const session = await stripe.checkout.sessions.create({
         line_items: options.lineItems,
         mode: 'payment',
-        success_url: `${credentials.FRONT_WEB_URL}/paymentSuccess?id=${options.metadata.user_id}`,
+        success_url: `${credentials.FRONT_WEB_URL}/paymentsuccess?id=${options.metadata.user_id}`,
         cancel_url: `${credentials.FRONT_WEB_URL}/cancel?id=${options.metadata.user_id}`,
         metadata: options.metadata,
         customer_email: options.email,

@@ -72,19 +72,20 @@ module.exports = {
         // Create brand entry if it doesn't exist
         if (!brandMap.has(brandId)) {
           const brandData = await Users.findOne({ id: brandId });
-          
+
           // Get brand's active subscription for commission override
           let commissionOverride = 0;
           const activeSubscription = await Subscriptions.findOne({
             user_id: brandId,
             status: "active",
           }).populate("subscription_plan_id");
-          console.log("activeSubscription++",activeSubscription)
-          
+          console.log("activeSubscription++", activeSubscription);
+
           if (activeSubscription && activeSubscription.subscription_plan_id) {
-            commissionOverride = activeSubscription.subscription_plan_id.commission_override || 0;
+            commissionOverride =
+              activeSubscription.subscription_plan_id.commission_override || 0;
           }
-          
+
           brandMap.set(brandId, {
             brand_id: brandId,
             brand_email: brandData?.email || "unknown@example.com",
@@ -101,7 +102,7 @@ module.exports = {
 
         const brand = brandMap.get(brandId);
         const amount = Number(commission.amount || 0);
-        
+
         // Update brand totals
         brand.total_orders += 1;
         brand.total_amount += amount;
@@ -120,7 +121,7 @@ module.exports = {
               commission_count: 0,
             });
           }
-          
+
           const affiliate = brand.affiliates.get(affiliateId);
           affiliate.total_amount += amount;
           affiliate.commission_count += 1;
@@ -133,8 +134,10 @@ module.exports = {
           brand_email: brand.brand_email,
           brand_name: brand.brand_name,
           affiliate_id: affiliateId,
-          affiliate_email: brand.affiliates.get(affiliateId)?.affiliate_email || "unknown",
-          affiliate_name: brand.affiliates.get(affiliateId)?.affiliate_name || "Unknown",
+          affiliate_email:
+            brand.affiliates.get(affiliateId)?.affiliate_email || "unknown",
+          affiliate_name:
+            brand.affiliates.get(affiliateId)?.affiliate_name || "Unknown",
           amount,
           date: commission.createdAt,
           affiliate_link_id: commission.affiliateLinkId?.id,
@@ -142,15 +145,16 @@ module.exports = {
       }
 
       // Calculate upfilly fee and totals for each brand
-      const brands = Array.from(brandMap.values()).map(brand => {
+      const brands = Array.from(brandMap.values()).map((brand) => {
         // Calculate upfilly fee based on commission override
-        const upfillyFee = (brand.commission_override / 100) * brand.total_amount;
+        const upfillyFee =
+          (brand.commission_override / 100) * brand.total_amount;
         const brandTotal = brand.total_amount + upfillyFee;
-        
+
         // Update global totals
         totalUpfillyFee += upfillyFee;
         grandTotal += brandTotal;
-        
+
         return {
           brand_id: brand.brand_id,
           brand_email: brand.brand_email,
@@ -161,13 +165,15 @@ module.exports = {
           upfilly_fee: parseFloat(upfillyFee.toFixed(2)),
           brand_total: parseFloat(brandTotal.toFixed(2)),
           commissions: brand.commissions,
-          affiliates: Array.from(brand.affiliates.values()).map(affiliate => ({
-            affiliate_id: affiliate.affiliate_id,
-            affiliate_email: affiliate.affiliate_email,
-            affiliate_name: affiliate.affiliate_name,
-            total_amount: parseFloat(affiliate.total_amount.toFixed(2)),
-            commission_count: affiliate.commission_count,
-          })),
+          affiliates: Array.from(brand.affiliates.values()).map(
+            (affiliate) => ({
+              affiliate_id: affiliate.affiliate_id,
+              affiliate_email: affiliate.affiliate_email,
+              affiliate_name: affiliate.affiliate_name,
+              total_amount: parseFloat(affiliate.total_amount.toFixed(2)),
+              commission_count: affiliate.commission_count,
+            })
+          ),
         };
       });
 
@@ -181,7 +187,9 @@ module.exports = {
         year,
         month_name: this.getMonthName(month),
         total_orders: allCommissions.length,
-        total_amount: parseFloat(brands.reduce((sum, brand) => sum + brand.total_amount, 0).toFixed(2)),
+        total_amount: parseFloat(
+          brands.reduce((sum, brand) => sum + brand.total_amount, 0).toFixed(2)
+        ),
         total_upfilly_fee: parseFloat(totalUpfillyFee.toFixed(2)),
         grand_total: parseFloat(grandTotal.toFixed(2)),
         brand_count: brands.length,
@@ -189,7 +197,6 @@ module.exports = {
         commission_details: commissionDetails,
         all_commissions: allCommissions,
       };
-
     } catch (error) {
       console.error("Error aggregating monthly commissions:", error);
       throw error;
@@ -198,8 +205,18 @@ module.exports = {
 
   getMonthName: function (month) {
     const monthNames = [
-      "January", "February", "March", "April", "May", "June",
-      "July", "August", "September", "October", "November", "December"
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
     ];
     return monthNames[month - 1] || `Month ${month}`;
   },
@@ -226,20 +243,41 @@ module.exports = {
   /**
    * Generate invoice and report for a single brand
    */
-  generateBrandInvoiceAndReport: async function (brand, month, year, monthName) {
+  generateBrandInvoiceAndReport: async function (
+    brand,
+    month,
+    year,
+    monthName
+  ) {
     try {
-      console.log(`\n📋 Generating invoice for brand: ${brand.brand_name}`);
-      
-      const brandIdStr = brand.brand_id ? brand.brand_id.toString() : 'unknown';
-      
-      const invoiceNumber = `INV-${brandIdStr.substring(0, 8)}-${year}${month.toString().padStart(2, "0")}`;
-      const reportNumber = `REP-${brandIdStr.substring(0, 8)}-${year}${month.toString().padStart(2, "0")}`;
+      console.log(`\n Generating invoice for brand: ${brand.brand_name}`);
+
+      const brandIdStr = brand.brand_id ? brand.brand_id.toString() : "unknown";
+
+      const invoiceNumber = `INV-${brandIdStr.substring(0, 8)}-${year}${month
+        .toString()
+        .padStart(2, "0")}`;
+      const reportNumber = `REP-${brandIdStr.substring(0, 8)}-${year}${month
+        .toString()
+        .padStart(2, "0")}`;
 
       console.log(`Invoice #: ${invoiceNumber}`);
       console.log(`Report #: ${reportNumber}`);
 
-      const invoiceUrl = await this.generateBrandInvoicePDF(brand, month, year, monthName, invoiceNumber);
-      const reportUrl = await this.generateBrandReportPDF(brand, month, year, monthName, reportNumber);
+      const invoiceUrl = await this.generateBrandInvoicePDF(
+        brand,
+        month,
+        year,
+        monthName,
+        invoiceNumber
+      );
+      const reportUrl = await this.generateBrandReportPDF(
+        brand,
+        month,
+        year,
+        monthName,
+        reportNumber
+      );
 
       const monthlyInvoice = await MonthlyCommissionInvoice.create({
         invoice_number: invoiceNumber,
@@ -274,7 +312,9 @@ module.exports = {
         isDeleted: false,
       }).fetch();
 
-      console.log(`✅ Generated invoice for ${brand.brand_name}: ${invoiceNumber}`);
+      console.log(
+        `Generated invoice for ${brand.brand_name}: ${invoiceNumber}`
+      );
 
       return {
         brand_id: brand.brand_id,
@@ -293,7 +333,10 @@ module.exports = {
         affiliate_count: (brand.affiliates || []).length,
       };
     } catch (error) {
-      console.error(`❌ Error generating invoice for brand ${brand.brand_name}:`, error);
+      console.error(
+        ` Error generating invoice for brand ${brand.brand_name}:`,
+        error
+      );
       return null;
     }
   },
@@ -303,21 +346,32 @@ module.exports = {
    */
   generateSeparateBrandInvoices: async function () {
     try {
-      console.log("\n🚀 Generating SEPARATE monthly invoices for EACH brand...");
+      console.log(
+        "\n Generating SEPARATE monthly invoices for EACH brand..."
+      );
 
       const now = new Date();
-       let previousYear = now.getFullYear();
+      let previousYear = now.getFullYear();
       let previousMonth = 1; // jan
 
-      console.log(`📅 Processing: ${previousMonth}/${previousYear}`);
+      console.log(` Processing: ${previousMonth}/${previousYear}`);
 
-      const aggregatedData = await this.getAggregatedMonthlyCommissions(previousMonth, previousYear);
+      const aggregatedData = await this.getAggregatedMonthlyCommissions(
+        previousMonth,
+        previousYear
+      );
 
-      console.log(`\n📊 Aggregation Results:`);
-      console.log(`Total brands in data: ${aggregatedData.brands?.length || 0}`);
-      console.log(`Total commissions: ${aggregatedData.total_commissions || 0}`);
+      console.log(`\n Aggregation Results:`);
+      console.log(
+        `Total brands in data: ${aggregatedData.brands?.length || 0}`
+      );
+      console.log(
+        `Total commissions: ${aggregatedData.total_commissions || 0}`
+      );
       console.log(`Month: ${aggregatedData.month_name} ${aggregatedData.year}`);
-      console.log(`Grand Total: $${aggregatedData.grand_total?.toFixed(2) || 0}`);
+      console.log(
+        `Grand Total: $${aggregatedData.grand_total?.toFixed(2) || 0}`
+      );
 
       if (!aggregatedData.brands || aggregatedData.brands.length === 0) {
         return {
@@ -338,29 +392,33 @@ module.exports = {
         console.log(`Total Amount: $${brand.total_amount}`);
         console.log(`Upfilly Fee: $${brand.upfilly_fee}`);
         console.log(`Brand Total: $${brand.brand_total}`);
-        
+
         // Subscription filtering
         if (!brand.commission_override || brand.commission_override <= 0) {
-          console.log(`⏭️  Skipping - No active subscription or zero commission rate`);
+          console.log(
+            ` Skipping - No active subscription or zero commission rate`
+          );
           skippedBrands++;
           continue;
         }
 
         if (!brand.total_amount || brand.total_amount <= 0) {
-          console.log(`⏭️  Skipping - No commissions for this month`);
+          console.log(`  Skipping - No commissions for this month`);
           skippedBrands++;
           continue;
         }
 
-        console.log(`✅ Processing - Has active subscription with ${brand.commission_override}% rate`);
-        
+        console.log(
+          ` Processing - Has active subscription with ${brand.commission_override}% rate`
+        );
+
         const invoiceResult = await this.generateBrandInvoiceAndReport(
           brand,
           previousMonth,
           previousYear,
           aggregatedData.month_name
         );
-        
+
         if (invoiceResult) {
           generatedInvoices.push(invoiceResult);
         }
@@ -368,11 +426,16 @@ module.exports = {
 
       console.log(`\n📈 Invoice Generation Summary:`);
       console.log(`Total brands processed: ${aggregatedData.brands.length}`);
-      console.log(`Brands with invoices generated: ${generatedInvoices.length}`);
-      console.log(`Brands skipped (no subscription/commissions): ${skippedBrands}`);
+      console.log(
+        `Brands with invoices generated: ${generatedInvoices.length}`
+      );
+      console.log(
+        `Brands skipped (no subscription/commissions): ${skippedBrands}`
+      );
 
-      const allCommissionIds = aggregatedData.all_commissions?.map((c) => c.id) || [];
-      
+      const allCommissionIds =
+        aggregatedData.all_commissions?.map((c) => c.id) || [];
+
       if (allCommissionIds.length > 0) {
         await this.markCommissionsAsInvoiced(allCommissionIds, null);
       }
@@ -397,7 +460,7 @@ module.exports = {
         },
       };
     } catch (error) {
-      console.error("❌ Error generating separate brand invoices:", error);
+      console.error("Error generating separate brand invoices:", error);
       throw error;
     }
   },
@@ -405,20 +468,38 @@ module.exports = {
   /**
    * Generate PDF invoice for a single brand
    */
-  generateBrandInvoicePDF: async function (brand, month, year, monthName, invoiceNumber) {
-    const html = this.generateBrandInvoiceHTML(brand, month, year, monthName, invoiceNumber);
+  generateBrandInvoicePDF: async function (
+    brand,
+    month,
+    year,
+    monthName,
+    invoiceNumber
+  ) {
+    const html = this.generateBrandInvoiceHTML(
+      brand,
+      month,
+      year,
+      monthName,
+      invoiceNumber
+    );
 
     const invoicesDir = path.join(__dirname, "../../assets", "brand_invoices");
     if (!fs.existsSync(invoicesDir)) {
       fs.mkdirSync(invoicesDir, { recursive: true });
     }
-    
-    const filename = `invoice_${(brand.brand_name || 'unknown').replace(/[^a-z0-9]/gi, '_')}_${invoiceNumber}.pdf`;
+
+    const filename = `invoice_${(brand.brand_name || "unknown").replace(
+      /[^a-z0-9]/gi,
+      "_"
+    )}_${invoiceNumber}.pdf`;
     const outputPath = path.join(invoicesDir, filename);
 
     const browser = await puppeteer.launch({
       headless: "new",
-      executablePath: process.env.LOCAL ? '/usr/bin/google-chrome' : '/usr/bin/google-chrome',
+      executablePath: process.env.LOCAL
+        ? "/usr/bin/google-chrome"
+        : "/usr/bin/chromium-browser", //live
+      // executablePath: process.env.LOCAL ? '/usr/bin/google-chrome' : '/usr/bin/google-chrome',
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
 
@@ -444,7 +525,13 @@ module.exports = {
   /**
    * Generate HTML for single brand invoice - EXACTLY LIKE BEFORE
    */
-  generateBrandInvoiceHTML: function (brand, month, year, monthName, invoiceNumber) {
+  generateBrandInvoiceHTML: function (
+    brand,
+    month,
+    year,
+    monthName,
+    invoiceNumber
+  ) {
     const now = new Date();
 
     return `
@@ -452,7 +539,9 @@ module.exports = {
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Monthly Commission Summary - ${brand.brand_name} - ${monthName} ${year}</title>
+  <title>Monthly Commission Summary - ${
+    brand.brand_name
+  } - ${monthName} ${year}</title>
   <style>
     body {
       font-family: Arial, Helvetica, sans-serif;
@@ -737,9 +826,11 @@ module.exports = {
 <body>
   <div class="container">
     <div class="header">
-      <img src="${credentials.BACK_WEB_URL}/images/logo.png" alt="Logo" class="logo" />
+      <img src="${
+        credentials.BACK_WEB_URL
+      }/images/logo.png" alt="Logo" class="logo" />
       <h1>Monthly Commission Summary</h1>
-      <h2>${monthName} ${year} • ${brand.brand_name}</h2>
+      <h2>${monthName} ${year}</h2>
     </div>
     
     <div class="invoice-info">
@@ -747,42 +838,10 @@ module.exports = {
         <div class="invoice-number">Invoice #: ${invoiceNumber}</div>
         <div class="period">Invoice Period: ${monthName} ${year}</div>
       </div>
-      <div class="company-info">
-        <div>Upfilly Inc.</div>
-        <div>123 Business Street</div>
-        <div>City, State 12345</div>
-        <div>contact@upfilly.com</div>
-      </div>
     </div>
-    
-    <div class="brand-summary">
-      <div class="brand-name-large">${brand.brand_name}</div>
-      <div class="brand-email">${brand.brand_email}</div>
-      <div>Total Affiliates: ${(brand.affiliates || []).length}</div>
-      <div>Commission Rate: ${brand.commission_override}%</div>
-    </div>
-    
-    <div class="summary-cards">
-      <div class="summary-card">
-        <div class="card-label">Total Orders</div>
-        <div class="card-value">${brand.total_orders}</div>
-      </div>
-      <div class="summary-card">
-        <div class="card-label">Commission</div>
-        <div class="card-value">$${brand.total_amount.toFixed(2)}</div>
-      </div>
-      <div class="summary-card">
-        <div class="card-label">Upfilly Fee</div>
-        <div class="card-value">$${brand.upfilly_fee.toFixed(2)}</div>
-      </div>
-      <div class="summary-card highlight">
-        <div class="card-label">Total Due</div>
-        <div class="card-value">$${brand.brand_total.toFixed(2)}</div>
-      </div>
-    </div>
+  
     
     <div class="summary-section">
-      <h3>Commission Breakdown</h3>
       
       <table class="brands-table">
         <thead>
@@ -791,7 +850,7 @@ module.exports = {
             <th class="orders">Orders</th>
             <th class="amount">Commission</th>
             <th class="fee">Upfilly Fee</th>
-            <th class="total">Total Due</th>
+            <th class="total">Grand Total</th>
           </tr>
         </thead>
         <tbody>
@@ -801,7 +860,11 @@ module.exports = {
             <td class="amount">$${brand.total_amount.toFixed(2)}</td>
             <td class="fee">
               $${brand.upfilly_fee.toFixed(2)}
-              ${brand.commission_override > 0 ? `<div class="percentage">(${brand.commission_override}%)</div>` : ""}
+              ${
+                brand.commission_override > 0
+                  ? `<div class="percentage">(${brand.commission_override}%)</div>`
+                  : ""
+              }
             </td>
             <td class="total">$${brand.brand_total.toFixed(2)}</td>
           </tr>
@@ -827,48 +890,14 @@ module.exports = {
         </div>
       </div>
       <div style="margin-top: 20px; font-size: 14px; opacity: 0.9;">
-        Summary: ${brand.total_orders} orders from ${(brand.affiliates || []).length} affiliates
+        Summary: ${brand.total_orders} orders from ${
+      (brand.affiliates || []).length
+    } affiliates
       </div>
     </div>
-    
-    ${(brand.affiliates || []).length > 0 ? `
-    <div class="summary-section">
-      <h3>Affiliate Performance</h3>
-      <table class="brands-table">
-        <thead>
-          <tr>
-            <th>Affiliate Name</th>
-            <th>Email</th>
-            <th class="orders">Commissions</th>
-            <th class="amount">Amount</th>
-            <th class="fee">Average</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${(brand.affiliates || []).map((affiliate, index) => `
-            <tr>
-              <td>${affiliate.affiliate_name}</td>
-              <td>${affiliate.affiliate_email}</td>
-              <td class="orders">${affiliate.commission_count}</td>
-              <td class="amount">$${affiliate.total_amount.toFixed(2)}</td>
-              <td class="fee">$${(affiliate.total_amount / affiliate.commission_count).toFixed(2)}</td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-    </div>
-    ` : ''}
-    
-    <div class="payment-terms">
-      <p><strong>Payment Terms:</strong> Net 30 days</p>
-      <p><strong>Due Date:</strong> ${new Date(new Date().setDate(new Date().getDate() + 30)).toLocaleDateString()}</p>
-      <p>Please make payment to the account details provided separately.</p>
-      <p>Questions? Contact accounts@upfilly.com</p>
-    </div>
-    
     <div class="footer">
       <p>Generated by Upfilly Commission System • ${now.toLocaleDateString()} ${now.toLocaleTimeString()}</p>
-      <p>Invoice #: ${invoiceNumber} • Brand: ${brand.brand_name}</p>
+      <p>Invoice #: ${invoiceNumber}</p>
     </div>
   </div>
 </body>
@@ -879,20 +908,38 @@ module.exports = {
   /**
    * Generate PDF report for a single brand
    */
-  generateBrandReportPDF: async function (brand, month, year, monthName, reportNumber) {
-    const html = this.generateBrandReportHTML(brand, month, year, monthName, reportNumber);
+  generateBrandReportPDF: async function (
+    brand,
+    month,
+    year,
+    monthName,
+    reportNumber
+  ) {
+    const html = this.generateBrandReportHTML(
+      brand,
+      month,
+      year,
+      monthName,
+      reportNumber
+    );
 
     const reportsDir = path.join(__dirname, "../../assets", "brand_reports");
     if (!fs.existsSync(reportsDir)) {
       fs.mkdirSync(reportsDir, { recursive: true });
     }
-    
-    const filename = `report_${(brand.brand_name || 'unknown').replace(/[^a-z0-9]/gi, '_')}_${reportNumber}.pdf`;
+
+    const filename = `report_${(brand.brand_name || "unknown").replace(
+      /[^a-z0-9]/gi,
+      "_"
+    )}_${reportNumber}.pdf`;
     const outputPath = path.join(reportsDir, filename);
 
     const browser = await puppeteer.launch({
       headless: "new",
-      executablePath: process.env.LOCAL ? '/usr/bin/google-chrome' : '/usr/bin/google-chrome',
+      executablePath: process.env.LOCAL
+        ? "/usr/bin/google-chrome"
+        : "/usr/bin/chromium-browser", //live
+      // executablePath: process.env.LOCAL ? '/usr/bin/google-chrome' : '/usr/bin/google-chrome',
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
 
@@ -918,15 +965,24 @@ module.exports = {
   /**
    * Generate HTML for single brand report - EXACTLY LIKE BEFORE
    */
-  generateBrandReportHTML: function (brand, month, year, monthName, reportNumber) {
-    const brandTotal = brand.brand_total || (brand.total_amount + (brand.upfilly_fee || 0));
-    
+  generateBrandReportHTML: function (
+    brand,
+    month,
+    year,
+    monthName,
+    reportNumber
+  ) {
+    const brandTotal =
+      brand.brand_total || brand.total_amount + (brand.upfilly_fee || 0);
+
     return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Brand Transaction Report - ${brand.brand_name} - ${monthName} ${year}</title>
+  <title>Brand Transaction Report - ${
+    brand.brand_name
+  } - ${monthName} ${year}</title>
   <style>
     body {
       font-family: Arial, Helvetica, sans-serif;
@@ -1105,28 +1161,20 @@ module.exports = {
 <body>
 <div class="container">
   <div class="header">
-    <img src="${credentials.BACK_WEB_URL || 'http://localhost:1337'}/images/logo.png" height="40" />
+    <img src="${
+      credentials.BACK_WEB_URL || "http://localhost:1337"
+    }/images/logo.png" height="40" />
     <h1>Brand Transaction Report</h1>
     <h2>${monthName} ${year} • ${brand.brand_name}</h2>
   </div>
 
   <div class="brand-section">
     <div class="brand-header">
-      <div class="brand-title">${brand.brand_name}</div>
-      <div class="brand-subtitle">
-        ${brand.total_orders || 0} orders • 
-        Total Commission: $${(brand.total_amount || 0).toFixed(2)} • 
-        Upfilly Fee (${brand.commission_override || 0}%): $${(brand.upfilly_fee || 0).toFixed(2)} •
-        Brand Total: $${brandTotal.toFixed(2)}
-      </div>
-    </div>
-
     <table class="transaction-table">
       <thead>
         <tr>
           <th>Date</th>
-          <th>Transaction ID</th>
-          <th>Affiliate</th>
+          <th>Order ID</th>
           <th class="text-right">Order Amount</th>
           <th class="text-right">Commission</th>
           <th class="text-right">Upfilly Fee</th>
@@ -1136,97 +1184,59 @@ module.exports = {
       <tbody>
         ${
           brand.commissions?.length
-            ? brand.commissions.map(c => {
-                const link = c.affiliateLinkId || {};
-                const affiliate = brand.affiliates?.find(a => a.affiliate_id === link.affiliate_id);
-                const upfillyFee = brand.commission_override
-                  ? (brand.commission_override / 100) * (c.amount || 0)
-                  : 0;
+            ? brand.commissions
+                .map((c) => {
+                  const link = c.affiliateLinkId || {};
+                  const affiliate = brand.affiliates?.find(
+                    (a) => a.affiliate_id === link.affiliate_id
+                  );
+                  const upfillyFee = brand.commission_override
+                    ? (brand.commission_override / 100) * (c.amount || 0)
+                    : 0;
 
-                return `
+                  return `
                 <tr>
-                  <td class="date">${new Date(c.createdAt).toLocaleDateString()}</td>
-                  <td class="order-id">${c.id ? c.id.substring(0, 8) + '...' : 'N/A'}</td>
-                  <td>${affiliate?.affiliate_name || 'Unknown'}</td>
+                  <td class="date">${new Date(
+                    c.createdAt
+                  ).toLocaleDateString()}</td>
+                  <td class="order-id">${
+                    link.order_id ? link.order_id : "N/A"
+                  }</td>
                   <td class="text-right">$${(link.price || 0).toFixed(2)}</td>
                   <td class="text-right">$${(c.amount || 0).toFixed(2)}</td>
                   <td class="text-right">$${upfillyFee.toFixed(2)}</td>
                 </tr>`;
-              }).join('')
+                })
+                .join("")
             : `<tr><td colspan="6" style="text-align:center;padding:20px;">No transaction details available</td></tr>`
         }
       </tbody>
 
       <tfoot>
         <tr>
-          <td colspan="3" class="text-right">Brand Totals</td>
-          <td class="text-right">$${brand.commissions?.reduce((s, c) => s + (c.affiliateLinkId?.price || 0), 0).toFixed(2) || '0.00'}</td>
+          <td colspan="2" class="text-right">Brand Totals</td>
+          <td class="text-right">$${
+            brand.commissions
+              ?.reduce((s, c) => s + (c.affiliateLinkId?.price || 0), 0)
+              .toFixed(2) || "0.00"
+          }</td>
           <td class="text-right">$${(brand.total_amount || 0).toFixed(2)}</td>
           <td class="text-right">$${(brand.upfilly_fee || 0).toFixed(2)}</td>
         </tr>
       </tfoot>
     </table>
 
-    ${
-      (brand.affiliates || []).length > 0 ? `
-      <div class="affiliate-section">
-        <div class="affiliate-header">
-          <div class="affiliate-title">Affiliate Performance Summary</div>
-          <div class="brand-subtitle">
-            ${(brand.affiliates || []).length} affiliates • 
-            Total Commission: $${(brand.total_amount || 0).toFixed(2)}
-          </div>
-        </div>
-
-        <table class="affiliate-table">
-          <thead>
-            <tr>
-              <th>Affiliate Name</th>
-              <th>Email</th>
-              <th class="text-right">Orders</th>
-              <th class="text-right">Commission</th>
-              <th class="text-right">Average</th>
-              <th class="text-right">% of Total</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            ${(brand.affiliates || []).map(affiliate => {
-              const percentOfTotal = brand.total_amount > 0 ? ((affiliate.total_amount / brand.total_amount) * 100).toFixed(1) : '0.0';
-              return `
-              <tr>
-                <td>${affiliate.affiliate_name}</td>
-                <td>${affiliate.affiliate_email}</td>
-                <td class="text-right">${affiliate.commission_count}</td>
-                <td class="text-right">$${(affiliate.total_amount || 0).toFixed(2)}</td>
-                <td class="text-right">$${(affiliate.total_amount / (affiliate.commission_count || 1)).toFixed(2)}</td>
-                <td class="text-right">${percentOfTotal}%</td>
-              </tr>`;
-            }).join('')}
-          </tbody>
-        </table>
-      </div>
-      ` : ''
-    }
-
     <div class="summary-section">
-      <div class="summary-title">Report Summary - ${brand.brand_name}</div>
-      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
-        <div>
-          <p><strong>Brand:</strong> ${brand.brand_name}</p>
-          <p><strong>Email:</strong> ${brand.brand_email || 'N/A'}</p>
-          <p><strong>Report Period:</strong> ${monthName} ${year}</p>
-        </div>
-        <div>
-          <p><strong>Total Orders:</strong> ${brand.total_orders || 0}</p>
-          <p><strong>Commission Rate:</strong> ${brand.commission_override || 0}%</p>
-          <p><strong>Affiliates:</strong> ${(brand.affiliates || []).length}</p>
-        </div>
-      </div>
       <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #cbd5e0;">
-        <p><strong>Total Commission Amount:</strong> $${(brand.total_amount || 0).toFixed(2)}</p>
-        <p><strong>Upfilly Fee (${brand.commission_override || 0}%):</strong> $${(brand.upfilly_fee || 0).toFixed(2)}</p>
-        <p><strong style="font-size: 18px;">Brand Total Due:</strong> <span style="font-size: 18px; color: #2c5282; font-weight: bold;">$${brandTotal.toFixed(2)}</span></p>
+        <p><strong>Total Commission Amount:</strong> $${(
+          brand.total_amount || 0
+        ).toFixed(2)}</p>
+        <p><strong>Upfilly Fee (${
+          brand.commission_override || 0
+        }%):</strong> $${(brand.upfilly_fee || 0).toFixed(2)}</p>
+        <p><strong style="font-size: 18px;">Grand Total :</strong> <span style="font-size: 18px; color: #2c5282; font-weight: bold;">$${brandTotal.toFixed(
+          2
+        )}</span></p>
       </div>
     </div>
   </div>
@@ -1238,5 +1248,5 @@ module.exports = {
 </body>
 </html>
 `;
-  }
+  },
 };
