@@ -16,10 +16,9 @@ const { Transaction } = require("mongodb");
 const { getTasks } = require("node-cron");
 const path = require("path");
 const fs = require("fs");
-const puppeteer = require("puppeteer")
+const puppeteer = require("puppeteer");
 const response = require("../services/Response");
-const emails = require("../Emails/EmailMessageTemplate")
-
+const emails = require("../Emails/EmailMessageTemplate");
 
 /** common function for create account onboarding link */
 
@@ -483,92 +482,250 @@ module.exports = {
       return res.status(500).json({ success: false, message: err.message });
     }
   },
+  // transferPayment: async (req, res) => {
+  //   try {
+  //     const { currency,  affiliateLinkIds } = req.body
+  //     let paid_to_emails = new Set([])
+  //         let affiliatesWithoutAccount = []
+  //     for await (let itm of affiliateLinkIds) {
+  //       const affiliate_data = await AffiliateLink.findOne(itm)
+
+  //       const userDetail = await Users.findOne({ id: affiliate_data.affiliate_id, isDeleted: false });
+  //       if (!paid_to_emails.has(userDetail.email)) {
+  //         paid_to_emails.add(userDetail.email);
+  //         console.log(`${userDetail.email} has been added.`);
+  //       }
+  //       const get_campain_from_affiliations = await BrandAffiliateAssociation.findOne({ brand_id: affiliate_data.brand_id, affiliate_id: affiliate_data.affiliate_id, isActive: true }).populate("campaign_id")
+
+  //       const campaign_details = get_campain_from_affiliations.campaign_id
+  //       let commission_type = get_campain_from_affiliations.campaign_id.commission_type
+  //       let amount = 0
+  //       if(affiliate_data.amount_of_commission){
+  //       amount = affiliate_data.amount_of_commission
+  //     }else if (commission_type == "amount") {
+  //         amount = campaign_details.commission
+  //       } else {
+  //         console.log(affiliate_data.price,'=affiliate_data.price')
+  //         console.log(campaign_details.commission,'affiliate_data.commission')
+
+  //         amount = (affiliate_data.price * campaign_details.commission) / 100
+  //         console.log(amount,'====')
+  //       }
+  //       // let get_user = await Users.findOne({id:get_associate_data})
+  //       const accountDetails = await Account.findOne({
+  //         addedBy: affiliate_data.affiliate_id,
+  //         isDeleted: false,
+  //         isActive: true
+  //       });
+
+  //       if (!accountDetails) {
+  //            affiliatesWithoutAccount.push({
+  //           affiliate_id: affiliate_data.affiliate_id,
+  //           user_name: userDetail.fullName,
+  //           user_email: userDetail.email,
+  //           amount: amount
+  //         });
+  //         if (userDetail) {
+  //           const emailPayload = {
+  //             fullName: userDetail.fullName,
+  //             email: userDetail.email,
+  //           };
+
+  //           await emails.reminderToOpenAccount(emailPayload);
+  //         }
+  //         // return response.failed(
+  //         //   null,
+  //         //   `${userDetail.fullName} hasn't setup account yet.`,
+  //         //   req,
+  //         //   res
+  //         // );
+  //          continue;
+  //       }
+
+  //       // console.log(accountDetails.accountId,'accountDetails.accountId')
+  //       console.log(amount,'amount')
+  //       const payload = {
+  //         accountId: accountDetails.accountId,
+  //         transferredAmount: amount,
+  //         currency: currency || "usd",
+  //         description: `An amount of ${amount / 100} has been transferred from Upfilly to ${userDetail.fullName} on ${moment().format('YYYY-MM-DD HH:mm:ss')}.`,
+  //         paidTo: userDetail.id,
+  //         // scheduleId: transfer._id,
+  //         amount: amount
+  //       };
+  //       invoice_itm_html({
+  //         commission: amount,
+  //       })
+  //       let paid = await stripeServices.transfer_fund(payload);
+  //       if (paid) {
+  //         const invoicesDir = path.join(__dirname, '../../assets', 'invoices');
+  //         if (!fs.existsSync(invoicesDir)) {
+  //           fs.mkdirSync(invoicesDir, { recursive: true });
+  //         }
+
+  //         const filename = `invoice_${Date.now()}.pdf`;
+  //         const outputPath = path.join(invoicesDir, filename);
+
+  //         const payload = {
+  //           commission: amount,
+  //         }
+  //         // Generate PDF and wait for it to complete
+  //         await htmlToPdf(invoice_itm_html(payload), outputPath);
+  //         const custom_invoice_url = `invoices/${filename}`
+
+  //         let data = {
+  //           user_id: req.identity?.id,
+  //           paid_to: get_campain_from_affiliations.affiliate_id ,
+  //           transaction_type: "bank_account",
+  //           transaction_id: "",
+  //           stripe_charge_id: "",
+  //           currency: get_campain_from_affiliations?.currencies,
+  //           amount: amount.toFixed(2),
+  //           transaction_status: "paid",
+  //           special_plan_id: null,
+  //           subscription_id: null,
+  //           stripe_subscription_id: "",
+  //           addedBy: req.identity?.id,
+  //           updatedBy: null,
+  //           paypal_transaction_id: "",
+  //           paypal_transaction_status: "",
+  //           affiliateLinkId: itm,
+  //           custom_invoice_url
+  //         };
+
+  //         await Transactions.create(data);
+
+  //         await AffiliateLink.updateOne({ id: itm }, { admin_paid: "paid" })
+  //         let email_payload = {
+  //           fullName: userDetail.fullName,
+  //           email: userDetail.email,
+  //           amount: amount,
+  //         };
+
+  //         await emails.adminPaid(email_payload);
+  //       }
+  //     }
+
+  //     return response.success(
+  //       null,
+  //       "Payment Transfered successfully",
+  //       req,
+  //       res
+  //     );
+  //   } catch (error) {
+  //     console.error("Error processing transfers:", error);
+  //     return response.failed(null, error, req, res)
+
+  //   }
+  // }
+
   transferPayment: async (req, res) => {
     try {
-      const { currency,  affiliateLinkIds } = req.body
-      let paid_to_emails = new Set([])
+      const { currency, affiliateLinkIds } = req.body;
+      let paid_to_emails = new Set([]);
+      let affiliatesWithoutAccount = [];
+      let processedAffiliates = []; // Track processed affiliates
+
       for await (let itm of affiliateLinkIds) {
-        const affiliate_data = await AffiliateLink.findOne(itm)
-        
-        const userDetail = await Users.findOne({ id: affiliate_data.affiliate_id, isDeleted: false });
+        const affiliate_data = await AffiliateLink.findOne(itm);
+
+        const userDetail = await Users.findOne({
+          id: affiliate_data.affiliate_id,
+          isDeleted: false,
+        });
         if (!paid_to_emails.has(userDetail.email)) {
           paid_to_emails.add(userDetail.email);
           console.log(`${userDetail.email} has been added.`);
         }
-        const get_campain_from_affiliations = await BrandAffiliateAssociation.findOne({ brand_id: affiliate_data.brand_id, affiliate_id: affiliate_data.affiliate_id, isActive: true }).populate("campaign_id")
-        
-        const campaign_details = get_campain_from_affiliations.campaign_id
-        let commission_type = get_campain_from_affiliations.campaign_id.commission_type
-        let amount = 0
-        if(affiliate_data.amount_of_commission){
-        amount = affiliate_data.amount_of_commission
-      }else if (commission_type == "amount") {
-          amount = campaign_details.commission
-        } else {
-          console.log(affiliate_data.price,'=affiliate_data.price')
-          console.log(campaign_details.commission,'affiliate_data.commission')
+        const get_campain_from_affiliations =
+          await BrandAffiliateAssociation.findOne({
+            brand_id: affiliate_data.brand_id,
+            affiliate_id: affiliate_data.affiliate_id,
+            isActive: true,
+          }).populate("campaign_id");
 
-          amount = (affiliate_data.price * campaign_details.commission) / 100
-          console.log(amount,'====')
+        const campaign_details = get_campain_from_affiliations.campaign_id;
+        let commission_type =
+          get_campain_from_affiliations.campaign_id.commission_type;
+        let amount = 0;
+
+        if (affiliate_data.amount_of_commission) {
+          amount = affiliate_data.amount_of_commission;
+        } else if (commission_type == "amount") {
+          amount = campaign_details.commission;
+        } else {
+          console.log(affiliate_data.price, "=affiliate_data.price");
+          console.log(campaign_details.commission, "affiliate_data.commission");
+          amount = (affiliate_data.price * campaign_details.commission) / 100;
+          console.log(amount, "====");
         }
-        // let get_user = await Users.findOne({id:get_associate_data})
+
         const accountDetails = await Account.findOne({
           addedBy: affiliate_data.affiliate_id,
           isDeleted: false,
-          isActive: true
+          isActive: true,
         });
 
         if (!accountDetails) {
+          affiliatesWithoutAccount.push({
+            affiliate_id: affiliate_data.affiliate_id,
+            user_name: userDetail.fullName,
+            user_email: userDetail.email,
+            amount: amount,
+            affiliateLinkId: itm,
+          });
+
           if (userDetail) {
             const emailPayload = {
               fullName: userDetail.fullName,
               email: userDetail.email,
             };
-
             await emails.reminderToOpenAccount(emailPayload);
           }
-          return response.failed(
-            null,
-            `${userDetail.fullName} hasn't setup account yet.`,
-            req,
-            res
-          );
+          continue; // Skip payment for this affiliate
         }
 
-        // console.log(accountDetails.accountId,'accountDetails.accountId')
-        console.log(amount,'amount')
+        // Process payment for affiliate with account
+        console.log(amount, "amount");
         const payload = {
           accountId: accountDetails.accountId,
           transferredAmount: amount,
           currency: currency || "usd",
-          description: `An amount of ${amount / 100} has been transferred from Upfilly to ${userDetail.fullName} on ${moment().format('YYYY-MM-DD HH:mm:ss')}.`,
+          description: `An amount of ${
+            amount / 100
+          } has been transferred from Upfilly to ${
+            userDetail.fullName
+          } on ${moment().format("YYYY-MM-DD HH:mm:ss")}.`,
           paidTo: userDetail.id,
-          // scheduleId: transfer._id,
-          amount: amount
+          amount: amount,
         };
+
         invoice_itm_html({
           commission: amount,
-        })
+        });
+
         let paid = await stripeServices.transfer_fund(payload);
         if (paid) {
-          const invoicesDir = path.join(__dirname, '../../assets', 'invoices');
+          const invoicesDir = path.join(__dirname, "../../assets", "invoices");
           if (!fs.existsSync(invoicesDir)) {
             fs.mkdirSync(invoicesDir, { recursive: true });
           }
 
-          const filename = `invoice_${Date.now()}.pdf`;
+          const filename = `invoice_${Date.now()}_${
+            affiliate_data.affiliate_id
+          }.pdf`;
           const outputPath = path.join(invoicesDir, filename);
 
-          const payload = {
+          const pdfPayload = {
             commission: amount,
-          }
+          };
           // Generate PDF and wait for it to complete
-          await htmlToPdf(invoice_itm_html(payload), outputPath);
-          const custom_invoice_url = `invoices/${filename}`
+          await htmlToPdf(invoice_itm_html(pdfPayload), outputPath);
+          const custom_invoice_url = `invoices/${filename}`;
 
           let data = {
             user_id: req.identity?.id,
-            paid_to: get_campain_from_affiliations.affiliate_id ,
+            paid_to: get_campain_from_affiliations.affiliate_id,
             transaction_type: "bank_account",
             transaction_id: "",
             stripe_charge_id: "",
@@ -583,76 +740,67 @@ module.exports = {
             paypal_transaction_id: "",
             paypal_transaction_status: "",
             affiliateLinkId: itm,
-            custom_invoice_url
+            custom_invoice_url,
           };
 
           await Transactions.create(data);
+          await AffiliateLink.updateOne({ id: itm }, { admin_paid: "paid" });
 
-
-          await AffiliateLink.updateOne({ id: itm }, { admin_paid: "paid" })
           let email_payload = {
             fullName: userDetail.fullName,
             email: userDetail.email,
             amount: amount,
           };
-
           await emails.adminPaid(email_payload);
+
+          // Track processed affiliate
+          processedAffiliates.push({
+            affiliate_id: affiliate_data.affiliate_id,
+            user_name: userDetail.fullName,
+            user_email: userDetail.email,
+            amount: amount,
+            affiliateLinkId: itm,
+            status: "paid",
+          });
         }
       }
 
-      // const invoicesDir = path.join(__dirname, '../../assets', 'invoices');
-      // if (!fs.existsSync(invoicesDir)) {
-      //   fs.mkdirSync(invoicesDir, { recursive: true });
-      // }
+      // Prepare response based on what was processed
+      let responseData = {
+        processed_count: processedAffiliates.length,
+        processed_affiliates: processedAffiliates,
+        without_account_count: affiliatesWithoutAccount.length,
+        affiliates_without_account: affiliatesWithoutAccount,
+      };
 
-      // const filename = `invoice_${Date.now()}.pdf`;
-      // const outputPath = path.join(invoicesDir, filename);
+      let message = "";
 
-      // const payload = {
-      //   commission: req.body.amount,
-      // }
-      // // Generate PDF and wait for it to complete
-      // await htmlToPdf(invoice_itm_html(payload), outputPath);
-      // const custom_invoice_url = `invoices/${filename}`
+      if (
+        processedAffiliates.length === 0 &&
+        affiliatesWithoutAccount.length > 0
+      ) {
+        message = `No payments processed. ${affiliatesWithoutAccount.length} affiliate(s) need to set up their accounts.`;
+        return response.success(responseData, message, req, res);
+      } else if (
+        processedAffiliates.length > 0 &&
+        affiliatesWithoutAccount.length > 0
+      ) {
+        message = `Payments processed for ${processedAffiliates.length} affiliate(s). ${affiliatesWithoutAccount.length} affiliate(s) need to set up their accounts.`;
+      } else if (
+        processedAffiliates.length > 0 &&
+        affiliatesWithoutAccount.length === 0
+      ) {
+        message = `Payments transferred successfully for all ${processedAffiliates.length} affiliate(s).`;
+      } else {
+        message = "No payments were processed.";
+      }
 
-      // let data = {
-      //   user_id: req.identity?.id,
-      //   paid_to: null,
-      //   paid_to_emails: paid_to_emails,
-      //   transaction_type: "bank_account",
-      //   transaction_id: "",
-      //   stripe_charge_id: "",
-      //   currency: "usd",
-      //   amount: req.body.amount.toFixed(2),
-      //   transaction_status: "paid",
-      //   special_plan_id: null,
-      //   subscription_id: null,
-      //   stripe_subscription_id: "",
-      //   addedBy: req.identity?.id,
-      //   updatedBy: null,
-      //   paypal_transaction_id: "",
-      //   paypal_transaction_status: "",
-      //   // affiliateLinkId: id,
-      //   custom_invoice_url
-      // };
-
-      // await Transactions.create(data);
-
-      return response.success(
-        null,
-        "Payment Transfered successfully",
-        req,
-        res
-      );
+      return response.success(responseData, message, req, res);
     } catch (error) {
       console.error("Error processing transfers:", error);
-      return response.failed(null, error, req, res)
-
+      return response.failed(null, error, req, res);
     }
-  }
-
-
-
+  },
 };
 
 // Helper function to generate invoice HTML
@@ -758,13 +906,15 @@ const invoice_itm_html = (payload) => {
 <body>
   <div class="invoice-container">
     <div class="invoice-header">
-      <img src="${credentials.BACK_WEB_URL || 'https://your-domain.com'}/images/logo.png" alt="Upfilly Logo" />
+      <img src="${
+        credentials.BACK_WEB_URL || "https://your-domain.com"
+      }/images/logo.png" alt="Upfilly Logo" />
       <h2>Invoice</h2>
     </div>
 
     <div class="invoice-details">
       <p><strong>Invoice ID:</strong> #INV-${Date.now()}</p>
-      <p><strong>Date:</strong> ${new Date().toLocaleDateString('en-CA')}</p>
+      <p><strong>Date:</strong> ${new Date().toLocaleDateString("en-CA")}</p>
       <p><strong>Payment Method:</strong> Stripe Transfer</p>
     </div>
 
@@ -788,13 +938,15 @@ const invoice_itm_html = (payload) => {
 </body>
 </html>
 `;
-}
+};
 
 // HTML to PDF function
 async function htmlToPdf(html, outputPath) {
   const browser = await puppeteer.launch({
     headless: "new",
-    executablePath: process.env.LOCAL ? '/usr/bin/google-chrome' : '/usr/bin/chromium-browser',
+    executablePath: process.env.LOCAL
+      ? "/usr/bin/google-chrome"
+      : "/usr/bin/chromium-browser",
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
 
