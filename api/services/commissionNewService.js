@@ -650,7 +650,7 @@ module.exports = {
     
     .brands-table td {
       padding: 12px 15px;
-      text-align: left;
+      text-align: left !important;
       border-bottom: 1px solid #eaeaea;
     }
     
@@ -1062,7 +1062,7 @@ module.exports = {
     .transaction-table td {
       padding: 10px;
       border-bottom: 1px solid #eaeaea;
-      text-align:left;
+      text-align:left !important;
     }
 
     .transaction-table tbody tr:nth-child(even) {
@@ -1209,26 +1209,26 @@ module.exports = {
                   <td class="order-id">${
                     link.order_id ? link.order_id : "N/A"
                   }</td>
-                  <td class="text-right">$${(link.price || 0).toFixed(2)}</td>
-                  <td class="text-right">$${(c.amount || 0).toFixed(2)}</td>
-                  <td class="text-right">$${upfillyFee.toFixed(2)}</td>
+                  <td class="">$${(link.price || 0).toFixed(2)}</td>
+                  <td class="">$${(c.amount || 0).toFixed(2)}</td>
+                  <td class="">$${upfillyFee.toFixed(2)}</td>
                 </tr>`;
                 })
                 .join("")
-            : `<tr><td colspan="6" style="text-align:center;padding:20px;">No transaction details available</td></tr>`
+            : `<tr><td colspan="6" style="text-align:left;padding:20px;">No transaction details available</td></tr>`
         }
       </tbody>
 
       <tfoot>
         <tr>
-          <td colspan="2" class="text-right">Brand Totals</td>
-          <td class="text-right">$${
+          <td colspan="2" class="">Brand Totals</td>
+          <td class="">$${
             brand.commissions
               ?.reduce((s, c) => s + (c.affiliateLinkId?.price || 0), 0)
               .toFixed(2) || "0.00"
           }</td>
-          <td class="text-right">$${(brand.total_amount || 0).toFixed(2)}</td>
-          <td class="text-right">$${(brand.upfilly_fee || 0).toFixed(2)}</td>
+          <td class="">$${(brand.total_amount || 0).toFixed(2)}</td>
+          <td class="">$${(brand.upfilly_fee || 0).toFixed(2)}</td>
         </tr>
       </tfoot>
     </table>
