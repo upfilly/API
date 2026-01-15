@@ -660,7 +660,6 @@ module.exports = {
     }
     
     .amount, .fee, .total {
-      text-align: right;
       font-weight: 500;
     }
     
@@ -678,14 +677,9 @@ module.exports = {
     }
     
     .rank {
-      text-align: center;
       font-weight: bold;
       color: #666;
       width: 50px;
-    }
-    
-    .orders {
-      text-align: center;
     }
     
     .percentage {
@@ -1069,10 +1063,6 @@ module.exports = {
       background: #f9fafb;
     }
 
-    .text-right {
-      text-align: right;
-    }
-
     .order-id {
       font-family: monospace;
       font-size: 12px;
@@ -1182,9 +1172,9 @@ module.exports = {
         <tr>
           <th>Date</th>
           <th>Order ID</th>
-          <th class="text-right">Order Amount</th>
-          <th class="text-right">Commission</th>
-          <th class="text-right">Upfilly Fee</th>
+          <th class="">Order Amount</th>
+          <th class="">Commission</th>
+          <th class="">Upfilly Fee</th>
         </tr>
       </thead>
 
