@@ -537,7 +537,7 @@ module.exports = {
   ) {
     const now = new Date();
 
-    return `
+    const htmlData= `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -916,6 +916,8 @@ module.exports = {
 </body>
 </html>
     `;
+    console.log(htmlData)
+    return htmlData
   },
 
   /**
