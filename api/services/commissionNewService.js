@@ -914,6 +914,7 @@ module.exports = {
 </body>
 </html>
     `;
+    // console.log(htmlData)
     return htmlData
   },
 
@@ -987,7 +988,7 @@ module.exports = {
     const brandTotal =
       brand.brand_total || brand.total_amount + (brand.upfilly_fee || 0);
 
-      const htmlData = `
+    return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1215,6 +1216,7 @@ module.exports = {
                   <td style="text-align:left" class="">$${(link.price || 0).toFixed(2)}</td>
                   <td style="text-align:left" class="">$${(c.amount || 0).toFixed(2)}</td>
                   <td style="text-align:left" class="">$${upfillyFee.toFixed(2)}</td>
+
                 </tr>`;
                 })
                 .join("")
@@ -1258,6 +1260,5 @@ module.exports = {
 </body>
 </html>
 `;
-return htmlData;
   },
 };
