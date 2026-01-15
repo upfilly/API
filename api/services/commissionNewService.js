@@ -864,10 +864,10 @@ module.exports = {
         </thead>
         <tbody>
           <tr>
-            <td class="rank">1</td>
-            <td class="orders">${brand.total_orders}</td>
-            <td class="amount">$${brand.total_amount.toFixed(2)}</td>
-            <td class="fee">
+            <td class="rank" style="text-align:left">1</td>
+            <td class="orders" style="text-align:left">${brand.total_orders}</td>
+            <td class="amount" style="text-align:left">$${brand.total_amount.toFixed(2)}</td>
+            <td class="fee" style="text-align:left">
               $${brand.upfilly_fee.toFixed(2)}
               ${
                 brand.commission_override > 0
@@ -875,7 +875,7 @@ module.exports = {
                   : ""
               }
             </td>
-            <td class="total">$${brand.brand_total.toFixed(2)}</td>
+            <td class="total" style="text-align:left">$${brand.brand_total.toFixed(2)}</td>
           </tr>
         </tbody>
       </table>
@@ -1203,15 +1203,15 @@ module.exports = {
 
                   return `
                 <tr>
-                  <td class="date">${new Date(
+                  <td style="text-align:left" class="date">${new Date(
                     c.createdAt
                   ).toLocaleDateString()}</td>
-                  <td class="order-id">${
+                  <td style="text-align:left" class="order-id">${
                     link.order_id ? link.order_id : "N/A"
                   }</td>
-                  <td class="">$${(link.price || 0).toFixed(2)}</td>
-                  <td class="">$${(c.amount || 0).toFixed(2)}</td>
-                  <td class="">$${upfillyFee.toFixed(2)}</td>
+                  <td style="text-align:left" class="">$${(link.price || 0).toFixed(2)}</td>
+                  <td style="text-align:left" class="">$${(c.amount || 0).toFixed(2)}</td>
+                  <td style="text-align:left" class="">$${upfillyFee.toFixed(2)}</td>
                 </tr>`;
                 })
                 .join("")
