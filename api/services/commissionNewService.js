@@ -914,7 +914,7 @@ module.exports = {
 </body>
 </html>
     `;
-    // console.log(htmlData)
+    // console.log("invoice",htmlData)
     return htmlData
   },
 
@@ -988,7 +988,7 @@ module.exports = {
     const brandTotal =
       brand.brand_total || brand.total_amount + (brand.upfilly_fee || 0);
 
-    return `
+  const htmlData = `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1260,5 +1260,7 @@ module.exports = {
 </body>
 </html>
 `;
+// console.log("htmlData",htmlData)
+return htmlData;
   },
 };
