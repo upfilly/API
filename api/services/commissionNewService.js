@@ -354,17 +354,17 @@ module.exports = {
       console.log("\n Generating SEPARATE monthly invoices for EACH brand...");
 
       const now = new Date();
-      let previousMonth = now.getMonth() - 1; // 0-based
-      let previousYear = now.getFullYear();
+      // let previousMonth = now.getMonth() - 1; // 0-based
+      // let previousYear = now.getFullYear();
 
-      if (previousMonth < 0) {
-        previousMonth = 11; // December
-          previousYear -= 1;         // Go back a year
-      }
+      // if (previousMonth < 0) {
+      //   previousMonth = 11; // December
+      //     previousYear -= 1;         // Go back a year
+      // }
 
       //this is only for testing
-      // let previousYear = now.getFullYear();
-      // let previousMonth = 1; // jan
+      let previousYear = now.getFullYear();
+      let previousMonth = 1; // jan
 
       console.log(` Processing: ${previousMonth}/${previousYear}`);
 
