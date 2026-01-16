@@ -317,9 +317,9 @@ module.exports = {
       );
 
       const commissionIds = (brand.commissions || []).map((c) => c.id);
-    if (commissionIds.length > 0) {
-      await this.markCommissionsAsInvoiced(commissionIds, monthlyInvoice.id);
-    }
+      if (commissionIds.length > 0) {
+        await this.markCommissionsAsInvoiced(commissionIds, monthlyInvoice.id);
+      }
 
       return {
         brand_id: brand.brand_id,
@@ -354,8 +354,17 @@ module.exports = {
       console.log("\n Generating SEPARATE monthly invoices for EACH brand...");
 
       const now = new Date();
+      let previousMonth = now.getMonth() - 1; // 0-based
       let previousYear = now.getFullYear();
-      let previousMonth = 1; // jan
+
+      if (previousMonth < 0) {
+        previousMonth = 11; // December
+          previousYear -= 1;         // Go back a year
+      }
+
+      //this is only for testing
+      // let previousYear = now.getFullYear();
+      // let previousMonth = 1; // jan
 
       console.log(` Processing: ${previousMonth}/${previousYear}`);
 
@@ -537,7 +546,7 @@ module.exports = {
   ) {
     const now = new Date();
 
-    const htmlData= `
+    const htmlData = `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -866,8 +875,12 @@ module.exports = {
         <tbody>
           <tr>
             <td class="rank" style="text-align:left">1</td>
-            <td class="orders" style="text-align:left">${brand.total_orders}</td>
-            <td class="amount" style="text-align:left">$${brand.total_amount.toFixed(2)}</td>
+            <td class="orders" style="text-align:left">${
+              brand.total_orders
+            }</td>
+            <td class="amount" style="text-align:left">$${brand.total_amount.toFixed(
+              2
+            )}</td>
             <td class="fee" style="text-align:left">
               $${brand.upfilly_fee.toFixed(2)}
               ${
@@ -876,7 +889,9 @@ module.exports = {
                   : ""
               }
             </td>
-            <td class="total" style="text-align:left">$${brand.brand_total.toFixed(2)}</td>
+            <td class="total" style="text-align:left">$${brand.brand_total.toFixed(
+              2
+            )}</td>
 
           </tr>
         </tbody>
@@ -915,7 +930,7 @@ module.exports = {
 </html>
     `;
     // console.log("invoice",htmlData)
-    return htmlData
+    return htmlData;
   },
 
   /**
@@ -988,7 +1003,7 @@ module.exports = {
     const brandTotal =
       brand.brand_total || brand.total_amount + (brand.upfilly_fee || 0);
 
-  const htmlData = `
+    const htmlData = `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1213,9 +1228,15 @@ module.exports = {
                   <td style="text-align:left" class="order-id">${
                     link.order_id ? link.order_id : "N/A"
                   }</td>
-                  <td style="text-align:left" class="">$${(link.price || 0).toFixed(2)}</td>
-                  <td style="text-align:left" class="">$${(c.amount || 0).toFixed(2)}</td>
-                  <td style="text-align:left" class="">$${upfillyFee.toFixed(2)}</td>
+                  <td style="text-align:left" class="">$${(
+                    link.price || 0
+                  ).toFixed(2)}</td>
+                  <td style="text-align:left" class="">$${(
+                    c.amount || 0
+                  ).toFixed(2)}</td>
+                  <td style="text-align:left" class="">$${upfillyFee.toFixed(
+                    2
+                  )}</td>
 
                 </tr>`;
                 })
@@ -1260,7 +1281,7 @@ module.exports = {
 </body>
 </html>
 `;
-// console.log("htmlData",htmlData)
-return htmlData;
+    // console.log("htmlData",htmlData)
+    return htmlData;
   },
 };
