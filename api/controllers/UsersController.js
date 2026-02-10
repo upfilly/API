@@ -1677,7 +1677,9 @@ module.exports = {
           affiliates_active_count: 1,
           campaign_id: "$campaign_details._id",
           logo1 : "$logo1",
-          affiliateSignupText : "$affiliateSignupText"
+          affiliateSignupText : "$affiliateSignupText",
+          payout_amount : "$payout_amount",
+
         },
       };
       pipeline.push(projection);
@@ -2072,6 +2074,7 @@ module.exports = {
           request_status: "$request_status",
           logo1 : "$logo1",
           affiliateSignupText : "$affiliateSignupText",
+          payout_amount : "$payout_amount",
         },
       };
       pipeline.push(projection);
@@ -2311,6 +2314,7 @@ module.exports = {
           userName: "$userName",
           logo1 : "$logo1",
           affiliateSignupText : "$affiliateSignupText",
+          payout_amount : "$payout_amount",
         },
       };
       pipeline.push(projection);

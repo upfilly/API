@@ -40,6 +40,7 @@ exports.register = async (req, res, next) => {
         brand_id : Joi.string().optional().allow("",null),
         logo1 : Joi.string().optional().allow("",null),
         affiliateSignupText : Joi.string().optional().allow("",null),
+        payout_amount : Joi.string().optional().allow("",null),
     });
     return await Validate(schema, req, res);
 
@@ -89,6 +90,8 @@ exports.registerBrandWithPlan = async (req, res, next) => {
         userName: Joi.string().optional(),
          logo1 : Joi.string().optional().allow("",null),
         affiliateSignupText : Joi.string().optional().allow("",null),
+        payout_amount : Joi.string().optional().allow("",null),
+
     }).options({ allowUnknown: true });
     return await Validate(schema, req, res);
 
@@ -229,6 +232,9 @@ exports.addUser = async (req, res, next) => {
         userName: Joi.string().optional(),
          logo1 : Joi.string().optional().allow("",null),
         affiliateSignupText : Joi.string().optional().allow("",null),
+
+        payout_amount : Joi.string().optional().allow("",null),
+
 
 
     });
@@ -390,6 +396,8 @@ exports.editProfile = async (req, res, next) => {
         userName: Joi.string().optional(),
          logo1 : Joi.string().optional().allow("",null),
         affiliateSignupText : Joi.string().optional().allow("",null),
+        payout_amount : Joi.string().optional().allow("",null),
+
 
     });
     return await Validate(schema, req, res);

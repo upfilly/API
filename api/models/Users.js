@@ -201,9 +201,7 @@ module.exports = {
     //new keys 
     logo1: { type: 'string' },
     affiliateSignupText: { type: 'string' },
-
-    
-
+    payout_amount: { type: 'string', allowNull: true },
   },
 
   beforeCreate: function (user, next) {
