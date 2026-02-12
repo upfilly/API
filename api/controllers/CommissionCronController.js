@@ -330,7 +330,7 @@ module.exports = {
         if (affiliateLinkIds.length > 0) {
           await AffiliateLink.update(
             { id: affiliateLinkIds },
-            { commission_paid: status }
+            { commission_paid: status,admin_paid: status}
           );
         }
       }
