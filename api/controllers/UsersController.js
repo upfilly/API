@@ -2408,6 +2408,258 @@ module.exports = {
     });
   },
 
+//   userDetail: async (req, res, next) => {
+//   try {
+//     let id = req.param("id");
+
+//     let listOfOtherUsers = [];
+//     let get_user = await Users.findOne({ id: id })
+//       .populate("activeUser")
+//       .populate("plan_id");
+
+//     if (get_user) {
+//       if (get_user.role === "brand" || get_user.role === "affiliate") {
+//         let active_user = get_user;
+        
+//         // FIXED: Correct Waterline updateOne syntax
+//         await Users.updateOne({ id: get_user.id }).set({ activeUser: id });
+        
+//         listOfOtherUsers = await InviteUsers.find({
+//           addedBy: get_user.id,
+//           isDeleted: false,
+//         });
+        
+//         let current_user = {};
+//         current_user.createdAt = get_user.createdAt;
+//         current_user.updatedAt = get_user.updatedAt;
+//         current_user.id = get_user.id;
+//         current_user.firstName = get_user.firstName;
+//         current_user.lastName = get_user.lastName;
+//         current_user.email = get_user.email;
+//         current_user.role = get_user.role;
+//         current_user.isDeleted = get_user.isDeleted;
+//         current_user.user_id = get_user.id;
+//         current_user.addedBy = get_user.addedBy;
+//         current_user.updatedBy = get_user.updatedBy;
+        
+//         get_user.listOfOtherUsers = listOfOtherUsers;
+//         get_user.listOfOtherUsers.push(current_user);
+        
+//       } else {
+//         // Handle sub-users (operator, analyzer, publisher, super_user)
+//         let listOfUsers = await InviteUsers.find({
+//           email: get_user.email,
+//           isDeleted: false,
+//         });
+        
+//         for (let otherUsers of listOfUsers) {
+//           let parentUser = await Users.findOne({
+//             id: otherUsers.addedBy,
+//             isDeleted: false,
+//           });
+          
+//           if (parentUser) {
+//             let currentparentUser = {};
+//             currentparentUser.createdAt = parentUser.createdAt;
+//             currentparentUser.updatedAt = parentUser.updatedAt;
+//             currentparentUser.id = parentUser.id;
+//             currentparentUser.firstName = parentUser.firstName;
+//             currentparentUser.lastName = parentUser.lastName;
+//             currentparentUser.email = parentUser.email;
+//             currentparentUser.role = parentUser.role;
+//             currentparentUser.isDeleted = parentUser.isDeleted;
+//             currentparentUser.user_id = parentUser.id;
+//             currentparentUser.addedBy = parentUser.addedBy;
+//             currentparentUser.updatedBy = parentUser.updatedBy;
+
+//             listOfOtherUsers.push(currentparentUser);
+//           }
+//         }
+
+//         let current_user = {};
+//         current_user.createdAt = get_user.createdAt;
+//         current_user.updatedAt = get_user.updatedAt;
+//         current_user.id = get_user.id;
+//         current_user.firstName = get_user.firstName;
+//         current_user.lastName = get_user.lastName;
+//         current_user.email = get_user.email;
+//         current_user.role = get_user.role;
+//         current_user.isDeleted = get_user.isDeleted;
+//         current_user.user_id = get_user.id;
+//         current_user.addedBy = get_user.addedBy;
+//         current_user.updatedBy = get_user.updatedBy;
+
+//         get_user.listOfOtherUsers = listOfOtherUsers ? listOfOtherUsers : [];
+//         get_user.listOfOtherUsers.push(current_user);
+//       }
+
+//       let all_category = [];
+//       let all_sub_category = [];
+//       let all_sub_child_category = [];
+      
+//       // Get all categories
+//       if (
+//         get_user &&
+//         get_user.category_id &&
+//         get_user.category_id != "" &&
+//         get_user.category_id.length > 0
+//       ) {
+//         for (let category of get_user.category_id) {
+//           // FIXED: Remove .select() and get full object
+//           let get_category = await CommonCategories.findOne({
+//             id: category,
+//           });
+//           if (get_category) {
+//             all_category.push({
+//               id: get_category.id,
+//               name: get_category.name
+//             });
+//           }
+//         }
+//       }
+
+//       // Get sub categories
+//       if (
+//         get_user &&
+//         get_user.sub_category_id &&
+//         get_user.sub_category_id.length > 0
+//       ) {
+//         for (let category of get_user.sub_category_id) {
+//           // FIXED: Remove .select() and get full object
+//           let get_category = await CommonCategories.findOne({
+//             id: category,
+//           });
+//           if (get_category) {
+//             all_sub_category.push({
+//               id: get_category.id,
+//               name: get_category.name
+//             });
+//           }
+//         }
+//       }
+
+//       // Get sub child categories
+//       if (
+//         get_user &&
+//         get_user.sub_child_category_id &&
+//         get_user.sub_child_category_id.length > 0
+//       ) {
+//         for (let category of get_user.sub_child_category_id) {
+//           // FIXED: Remove .select() and get full object
+//           let get_category = await SubChildCategory.findOne({
+//             id: category,
+//           });
+//           if (get_category) {
+//             all_sub_child_category.push({
+//               id: get_category.id,
+//               name: get_category.name
+//             });
+//           }
+//         }
+//       }
+
+//       get_user.all_category = all_category;
+//       get_user.all_sub_category = all_sub_category;
+//       get_user.all_sub_child_category = all_sub_child_category;
+
+//       // Get affiliate group details
+//       if (
+//         get_user &&
+//         get_user.affiliate_group &&
+//         get_user.affiliate_group != ""
+//       ) {
+//         let get_affiliate_group = await AffiliateManagement.findOne({
+//           id: get_user.affiliate_group,
+//         });
+//         if (get_affiliate_group) {
+//           get_user.affiliate_group_name = get_affiliate_group.group_name;
+//         }
+//       }
+
+//       // Get brand details
+//       if (
+//         get_user &&
+//         get_user.createdByBrand &&
+//         get_user.createdByBrand != ""
+//       ) {
+//         let get_brand = await Users.findOne({ 
+//           id: get_user.createdByBrand,
+//           isDeleted: false 
+//         });
+//         if (get_brand) {
+//           get_user.brand_name = get_brand.fullName;
+//         }
+//       }
+
+//       // Get tax details
+//       let get_tax = await Tax.findOne({ user_id: get_user.id });
+//       if (get_tax) {
+//         get_user.tax_detail = get_tax;
+//       }
+
+//       // Get permission details
+//       let permission_query = {};
+
+//       if (["affiliate", "brand", "staff"].includes(get_user.role)) {
+//         permission_query.role = get_user.role;
+//       } else if (
+//         ["operator", "analyzer", "publisher", "super_user"].includes(
+//           get_user.role
+//         )
+//       ) {
+//         if (get_user.addedBy) {
+//           let get_account_manager_detail = await Users.findOne({
+//             id: get_user.addedBy,
+//             isDeleted: false,
+//           });
+//           if (get_account_manager_detail && get_account_manager_detail.role) {
+//             permission_query.role = get_user.role;
+//             permission_query.account_manager = get_account_manager_detail.role;
+//           }
+//         }
+//       }
+
+//       if (get_user.role != "admin") {
+//         let get_permission = await Permissions.findOne(permission_query);
+//         if (get_permission) {
+//           get_user.permission_detail = get_permission;
+//         }
+//       } else {
+//         delete get_user.listOfOtherUsers;
+//       }
+
+//       // Get Stripe balance for admin
+//       if (get_user.role === "admin") {
+//         try {
+//           let balance = await Services.StripeServices.retrieve_balance();
+//           get_user.stripe_account_balance = balance.available[0].amount;
+//           get_user.pending_balance = balance.pending[0].amount;
+//         } catch (error) {
+//           console.error("Error fetching Stripe balance:", error);
+//           get_user.stripe_account_balance = 0;
+//           get_user.pending_balance = 0;
+//         }
+//       }
+
+//       // Get total campaigns for brand
+//       if (get_user.role === "brand") {
+//         get_user.total_campaign = await Campaign.count({
+//           brand_id: id,
+//           isDeleted: false,
+//         });
+//       }
+
+//       return response.success(get_user, constants.user.FETCHED, req, res);
+//     }
+    
+//     throw constants.user.INVALID_ID;
+    
+//   } catch (error) {
+//     console.log(error, "====eer");
+//     return response.failed(null, error.message || error, req, res);
+//   }
+// },
+
   userDetail: async (req, res, next) => {
     try {
       let id = req.param("id");
@@ -2416,7 +2668,12 @@ module.exports = {
       let get_user = await Users.findOne({ id: id })
         .populate("activeUser")
         .populate("plan_id");
-      // console.log(get_user,'=====')
+      // console.log(get_user.addedBy,'=====')
+
+        let addedByData =  await Users.findOne({ id: get_user.addedBy })
+        get_user.addedByDetail = addedByData
+        // console.log("get_user.addedByDetail",get_user.addedByDetail)
+      // console.log(addedBy11111,'=====')
       // return
       if (get_user) {
         // console.log(get_user.role);
@@ -2651,6 +2908,7 @@ module.exports = {
       return response.failed(null, `${error}`, req, res);
     }
   },
+  
   affiliateDetail: async (req, res, next) => {
     try {
       let id = req.param("id");
