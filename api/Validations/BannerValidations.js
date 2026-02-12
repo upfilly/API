@@ -36,13 +36,15 @@ const Validate = require("./Validate").validate;
 //   return await Validate(schema, req, res);
 // };
 
-
 exports.addBanner = async (req, res, next) => {
   const schema = Joi.object({
     addType: Joi.string().required().valid("banner", "link"),
 
     // Common fields
-    access_type: Joi.string().optional().valid("public", "private").allow("", null),
+    access_type: Joi.string()
+      .optional()
+      .valid("public", "private")
+      .allow("", null),
     activation_date: Joi.date().optional().allow(""),
     availability_date: Joi.date().optional().allow(""),
     expiration_date: Joi.date().optional().allow(""),
@@ -65,7 +67,7 @@ exports.addBanner = async (req, res, next) => {
       otherwise: Joi.forbidden(),
     }),
     description: Joi.when("addType", {
-      is: "banner",
+      is: Joi.valid("banner", "link"),
       then: Joi.string().optional().allow(""),
       otherwise: Joi.forbidden(),
     }),
@@ -151,14 +153,16 @@ exports.addBanner = async (req, res, next) => {
   return await Validate(schema, req, res);
 };
 
-
 exports.editBanner = async (req, res, next) => {
   const schema = Joi.object({
     id: Joi.string().required(),
     addType: Joi.string().required().valid("banner", "link"),
 
     // Common fields
-    access_type: Joi.string().optional().valid("public", "private").allow("", null),
+    access_type: Joi.string()
+      .optional()
+      .valid("public", "private")
+      .allow("", null),
     activation_date: Joi.date().optional().allow(""),
     availability_date: Joi.date().optional().allow(""),
     expiration_date: Joi.date().optional().allow(""),
@@ -181,8 +185,13 @@ exports.editBanner = async (req, res, next) => {
       then: Joi.string().optional().allow(""),
       otherwise: Joi.forbidden(),
     }),
+    // description: Joi.when("addType", {
+    //   is: "banner",
+    //   then: Joi.string().optional().allow(""),
+    //   otherwise: Joi.forbidden(),
+    // }),
     description: Joi.when("addType", {
-      is: "banner",
+      is: Joi.valid("banner", "link"),
       then: Joi.string().optional().allow(""),
       otherwise: Joi.forbidden(),
     }),
@@ -267,7 +276,6 @@ exports.editBanner = async (req, res, next) => {
 
   return await Validate(schema, req, res);
 };
-
 
 // exports.editBanner = async (req, res, next) => {
 //   const schema = Joi.object({
