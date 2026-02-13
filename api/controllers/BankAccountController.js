@@ -110,6 +110,7 @@ module.exports = {
   webhook: async (request, response) => {
     try {
       const eventObject = request.body.data.object;
+      console.log("eventObject", eventObject);
       switch (request.body.type) {
         case "account.updated":
           const findAccount = await Account.findOne({
@@ -631,7 +632,6 @@ module.exports = {
     let i = 0;
 
     for await (let itm of affiliateLinkIds) {
-      console.log("222222222222222222222222", i++);
       const affiliate_data = await AffiliateLink.findOne(itm);
 
       const userDetail = await Users.findOne({
