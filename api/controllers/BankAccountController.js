@@ -164,7 +164,9 @@ module.exports = {
   //     });
   //   }
   // },
-  webhook: async (request, response) => {
+  
+  
+webhook: async (request, response) => {
   try {
     const eventObject = request.body.data.object;
     switch (request.body.type) {
@@ -179,37 +181,44 @@ module.exports = {
         });
         
         if (findAccount) {
+          // Fetch full account details from Stripe
+          const stripe = require('stripe')(process.env.stripe); // or however you initialize Stripe
+          const fullAccount = await stripe.accounts.retrieve(eventObject.id);
+          
+          console.log("Full Account Data:", fullAccount);
+          
           // Extract legal name (business or individual)
-          const legalName = eventObject.business_profile?.name || 
-                           eventObject.individual?.first_name 
-                             ? `${eventObject.individual.first_name} ${eventObject.individual.last_name || ''}`.trim()
-                             : eventObject.company?.name || "";
-
+          const legalName = fullAccount.business_profile?.name || 
+            (fullAccount.individual?.first_name 
+              ? `${fullAccount.individual.first_name} ${fullAccount.individual.last_name || ''}`.trim()
+              : fullAccount.company?.name || "");
+          
           // Extract address (business or individual)
-          const address = eventObject.company?.address || 
-                         eventObject.individual?.address || 
-                         eventObject.business_profile?.support_address || 
-                         {};
-
+          const address = fullAccount.company?.address || 
+            fullAccount.individual?.address || 
+            fullAccount.business_profile?.support_address || 
+            {};
+          
           // Extract VAT/EIN
-          const vatOrEin = eventObject.company?.tax_id || 
-                          eventObject.individual?.ssn_last_4 || 
-                          eventObject.company?.vat_id || "";
-
+          const vatOrEin = fullAccount.company?.tax_id || 
+            fullAccount.individual?.id_number || 
+            fullAccount.company?.vat_id || 
+            fullAccount.business_tax_id?.value || "";
+          
           const updateObject = {
-            transfer: eventObject.capabilities?.transfers || "",
+            transfer: fullAccount.capabilities?.transfers || "",
             account_holder_name:
-              eventObject.external_accounts?.data[0]?.account_holder_name || "",
+              fullAccount.external_accounts?.data[0]?.account_holder_name || "",
             bank_name:
-              eventObject.external_accounts?.data[0]?.bank_name || "",
-            country: eventObject.external_accounts?.data[0]?.country || "",
-            currency: eventObject.external_accounts?.data[0]?.currency || "",
+              fullAccount.external_accounts?.data[0]?.bank_name || "",
+            country: fullAccount.external_accounts?.data[0]?.country || "",
+            currency: fullAccount.external_accounts?.data[0]?.currency || "",
             accountStatus:
-              eventObject.external_accounts?.data[0]?.status || "",
+              fullAccount.external_accounts?.data[0]?.status || "",
             routingNumber:
-              eventObject.external_accounts?.data[0]?.routing_number || "",
+              fullAccount.external_accounts?.data[0]?.routing_number || "",
             bankAccountNumber:
-              eventObject.external_accounts?.data[0]?.last4 || "",
+              fullAccount.external_accounts?.data[0]?.last4 || "",
             
             // New fields
             legalName: legalName,
@@ -223,6 +232,8 @@ module.exports = {
             },
             vatOrEin: vatOrEin,
           };
+          
+          console.log("Update Object:", updateObject);
           
           await Account.updateOne({ accountId: eventObject.id }).set(
             updateObject
