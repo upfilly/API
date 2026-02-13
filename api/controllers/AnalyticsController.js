@@ -698,10 +698,15 @@ exports.reportAnalytics = async (req, res) => {
       };
     }
 
+    // if (brand_id) {
+    //   brand_id = await Services.Utils.string_to_array(brand_id);
+    //   query.brand_id = { $in: brand_id };
+    // }
     if (brand_id) {
-      brand_id = await Services.Utils.string_to_array(brand_id);
-      query.brand_id = { $in: brand_id };
-    }
+  brand_id = await Services.Utils.string_to_array(brand_id);
+  brand_id = brand_id.map(id => new ObjectId(id));  
+  query.brand_id = { $in: brand_id };
+}
 
     if (affiliate_id) {
       affiliate_id = await Services.Utils.string_to_array(affiliate_id);
@@ -714,6 +719,8 @@ exports.reportAnalytics = async (req, res) => {
     }
 
     new_query = { ...query };
+// console.log("new_query",new_query)
+// console.log("query",query)
 
     const baseStages = [
       {
@@ -795,8 +802,8 @@ exports.reportAnalytics = async (req, res) => {
     };
 
     const pipeline = [
-      ...baseStages,
       { $match: query },
+      ...baseStages,
       facetBlock,
       {
         $addFields: {
@@ -881,6 +888,7 @@ exports.clickAnalytics = async (req, res) => {
             query.isDeleted = false;
         }
         const filterType = filter
+        console.log("filterType",filterType)
 
         if (startDate && endDate) {
             startDate = new Date(startDate);
@@ -918,6 +926,7 @@ exports.clickAnalytics = async (req, res) => {
             }
             query.createdAt = { $gte: startDate, $lte: endDate };
         }
+        console.log("query",query)
 
         if (affiliate_id) {
             affiliate_id = await Services.Utils.string_to_array(affiliate_id)
@@ -972,8 +981,8 @@ exports.clickAnalytics = async (req, res) => {
             }
             query.createdAt = { $gte: startDate2, $lte: endDate2 };
         }
-        // console.log(query,'query')
-        // console.log(new_query,'new_query')
+        console.log(query,'query')
+        console.log(new_query,'new_query')
 
         let pipeline = [
             {
