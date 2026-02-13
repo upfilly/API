@@ -110,9 +110,10 @@ module.exports = {
   webhook: async (request, response) => {
     try {
       const eventObject = request.body.data.object;
-      console.log("eventObject", eventObject);
       switch (request.body.type) {
         case "account.updated":
+          console.log("eventObject", eventObject);
+        console.log("MAIN OUTER ", request.body);
           const findAccount = await Account.findOne({
             accountId: eventObject.id,
           });
