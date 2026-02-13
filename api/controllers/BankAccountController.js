@@ -114,6 +114,8 @@ module.exports = {
         case "account.updated":
           console.log("eventObject", eventObject);
         console.log("MAIN OUTER ", request.body);
+        console.log("eventObject_requirements ", eventObject.requirements?.currently_due);
+        console.log("eventObject_requirements_length ", eventObject.requirements?.currently_due?.length);
           const findAccount = await Account.findOne({
             accountId: eventObject.id,
           });
