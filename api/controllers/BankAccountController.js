@@ -107,63 +107,150 @@ module.exports = {
     }
   },
   /** Update Account Details */
+  // webhook: async (request, response) => {
+  //   try {
+  //     const eventObject = request.body.data.object;
+  //     switch (request.body.type) {
+  //       case "account.updated":
+  //         console.log("eventObject", eventObject);
+  //       console.log("MAIN OUTER ", request.body);
+  //       console.log("eventObject_requirements ", eventObject.requirements?.currently_due);
+  //       console.log("eventObject_requirements_length ", eventObject.requirements?.currently_due?.length);
+  //         const findAccount = await Account.findOne({
+  //           accountId: eventObject.id,
+  //         });
+
+  //         if (findAccount) {
+  //           const updateObject = {
+  //             transfer: eventObject.capabilities.transfers || "",
+  //             account_holder_name:
+  //               eventObject.external_accounts?.data[0]?.account_holder_name ||
+  //               "",
+  //             bank_name:
+  //               eventObject.external_accounts?.data[0]?.bank_name || "",
+  //             country: eventObject.external_accounts?.data[0]?.country || "",
+  //             currency: eventObject.external_accounts?.data[0]?.currency || "",
+  //             accountStatus:
+  //               eventObject.external_accounts?.data[0]?.status || "",
+  //             routingNumber:
+  //               eventObject.external_accounts?.data[0]?.routing_number || "",
+  //             bankAccountNumber:
+  //               eventObject.external_accounts?.data[0]?.last4 || "",
+  //           };
+
+  //           await Account.updateOne({ accountId: eventObject.id }).set(
+  //             updateObject
+  //           );
+  //         } else {
+  //           console.log("Account not found");
+  //         }
+  //         break;
+  //       case "balance.available":
+  //         console.log("handle balance availiable webhook");
+  //         break;
+
+  //       default:
+  //         // Log unhandled event types
+  //         console.log(`Unhandled event type ${request.body.type}`);
+  //         break;
+  //     }
+
+  //     // Send a response to Stripe acknowledging receipt of the webhook
+  //     response.json({ received: true });
+  //   } catch (error) {
+  //     console.log("Error handling webhook:", error);
+  //     return response.status(200).json({
+  //       success: false,
+  //     });
+  //   }
+  // },
   webhook: async (request, response) => {
-    try {
-      const eventObject = request.body.data.object;
-      switch (request.body.type) {
-        case "account.updated":
-          console.log("eventObject", eventObject);
+  try {
+    const eventObject = request.body.data.object;
+    switch (request.body.type) {
+      case "account.updated":
+        console.log("eventObject", eventObject);
         console.log("MAIN OUTER ", request.body);
         console.log("eventObject_requirements ", eventObject.requirements?.currently_due);
         console.log("eventObject_requirements_length ", eventObject.requirements?.currently_due?.length);
-          const findAccount = await Account.findOne({
-            accountId: eventObject.id,
-          });
+        
+        const findAccount = await Account.findOne({
+          accountId: eventObject.id,
+        });
+        
+        if (findAccount) {
+          // Extract legal name (business or individual)
+          const legalName = eventObject.business_profile?.name || 
+                           eventObject.individual?.first_name 
+                             ? `${eventObject.individual.first_name} ${eventObject.individual.last_name || ''}`.trim()
+                             : eventObject.company?.name || "";
 
-          if (findAccount) {
-            const updateObject = {
-              transfer: eventObject.capabilities.transfers || "",
-              account_holder_name:
-                eventObject.external_accounts?.data[0]?.account_holder_name ||
-                "",
-              bank_name:
-                eventObject.external_accounts?.data[0]?.bank_name || "",
-              country: eventObject.external_accounts?.data[0]?.country || "",
-              currency: eventObject.external_accounts?.data[0]?.currency || "",
-              accountStatus:
-                eventObject.external_accounts?.data[0]?.status || "",
-              routingNumber:
-                eventObject.external_accounts?.data[0]?.routing_number || "",
-              bankAccountNumber:
-                eventObject.external_accounts?.data[0]?.last4 || "",
-            };
+          // Extract address (business or individual)
+          const address = eventObject.company?.address || 
+                         eventObject.individual?.address || 
+                         eventObject.business_profile?.support_address || 
+                         {};
 
-            await Account.updateOne({ accountId: eventObject.id }).set(
-              updateObject
-            );
-          } else {
-            console.log("Account not found");
-          }
-          break;
-        case "balance.available":
-          console.log("handle balance availiable webhook");
-          break;
+          // Extract VAT/EIN
+          const vatOrEin = eventObject.company?.tax_id || 
+                          eventObject.individual?.ssn_last_4 || 
+                          eventObject.company?.vat_id || "";
 
-        default:
-          // Log unhandled event types
-          console.log(`Unhandled event type ${request.body.type}`);
-          break;
-      }
-
-      // Send a response to Stripe acknowledging receipt of the webhook
-      response.json({ received: true });
-    } catch (error) {
-      console.log("Error handling webhook:", error);
-      return response.status(200).json({
-        success: false,
-      });
+          const updateObject = {
+            transfer: eventObject.capabilities?.transfers || "",
+            account_holder_name:
+              eventObject.external_accounts?.data[0]?.account_holder_name || "",
+            bank_name:
+              eventObject.external_accounts?.data[0]?.bank_name || "",
+            country: eventObject.external_accounts?.data[0]?.country || "",
+            currency: eventObject.external_accounts?.data[0]?.currency || "",
+            accountStatus:
+              eventObject.external_accounts?.data[0]?.status || "",
+            routingNumber:
+              eventObject.external_accounts?.data[0]?.routing_number || "",
+            bankAccountNumber:
+              eventObject.external_accounts?.data[0]?.last4 || "",
+            
+            // New fields
+            legalName: legalName,
+            address: {
+              line1: address.line1 || "",
+              line2: address.line2 || "",
+              city: address.city || "",
+              state: address.state || "",
+              postal_code: address.postal_code || "",
+              country: address.country || "",
+            },
+            vatOrEin: vatOrEin,
+          };
+          
+          await Account.updateOne({ accountId: eventObject.id }).set(
+            updateObject
+          );
+        } else {
+          console.log("Account not found");
+        }
+        break;
+        
+      case "balance.available":
+        console.log("handle balance available webhook");
+        break;
+        
+      default:
+        // Log unhandled event types
+        console.log(`Unhandled event type ${request.body.type}`);
+        break;
     }
-  },
+    
+    // Send a response to Stripe acknowledging receipt of the webhook
+    response.json({ received: true });
+  } catch (error) {
+    console.log("Error handling webhook:", error);
+    return response.status(200).json({
+      success: false,
+    });
+  }
+},
   /*** update active and inactive account */
   regenrateOnBoardingLink: async (req, res) => {
     try {
