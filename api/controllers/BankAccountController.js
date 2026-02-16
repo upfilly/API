@@ -776,7 +776,8 @@ webhook: async (request, response) => {
       } else {
         amount = (affiliate_data.price * campaign_details.commission) / 100;
       }
-
+      console.log("amount",amount)
+      console.log("userDetail.payout_amount",userDetail.payout_amount)
       // CHECK: Validate payout amount against user's payout limit
       if (userDetail.payout_amount && amount >= userDetail.payout_amount) {
         affiliatesWithInvalidPayout.push({
