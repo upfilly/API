@@ -753,14 +753,16 @@ module.exports = {
               fs.mkdirSync(invoicesDir, { recursive: true });
             }
 
-            const filename = `invoice_${Date.now()}_${
-              affiliate_data.affiliate_id
-            }.pdf`;
+            const filename = `invoice_${Date.now()}_${affiliate_data.affiliate_id}.pdf`;
             const outputPath = path.join(invoicesDir, filename);
 
             const pdfPayload = {
               commission: amount,
+              fullName: userDetail.fullName,
+              stripeTransferId: paid.id,
+              invoiceDate: moment().format("YYYY-MM-DD"),
             };
+
             await htmlToPdf(invoice_itm_html(pdfPayload), outputPath);
             const custom_invoice_url = `invoices/${filename}`;
 
@@ -769,7 +771,7 @@ module.exports = {
               paid_to: get_campain_from_affiliations.affiliate_id,
               transaction_type: "bank_account",
               transaction_id: paid.id,
-              stripe_charge_id: "",
+              stripe_charge_id: paid.id,
               currency: get_campain_from_affiliations?.currencies,
               amount: amount.toFixed(2),
               transaction_status: "paid",
@@ -788,13 +790,9 @@ module.exports = {
             await AffiliateLink.updateOne({ id: itm }, { admin_paid: "paid" });
 
             let email_payload = {
-              // fullName: userDetail.fullName,
-              // email: userDetail.email,
-              // amount: amount,
-              commission: amount,
               fullName: userDetail.fullName,
-              stripeTransferId: paid.id, // Stripe transfer ID
-              invoiceDate: moment().format("YYYY-MM-DD"),
+              email: userDetail.email,
+              amount: amount,
             };
             await emails.adminPaid(email_payload);
 
@@ -805,12 +803,13 @@ module.exports = {
               amount: amount,
               affiliateLinkId: itm,
               status: "paid",
+              stripe_transfer_id: paid.id,
             });
           }
         } catch (stripeError) {
           console.error("Stripe transfer error:", stripeError);
 
-          // Check if error is due to insufficient balance
+          // Check for insufficient balance error
           if (
             stripeError.code === "balance_insufficient" ||
             (stripeError.raw && stripeError.raw.code === "balance_insufficient")
@@ -821,9 +820,29 @@ module.exports = {
               user_email: userDetail.email,
               amount: amount,
               affiliateLinkId: itm,
+              error_code: "balance_insufficient",
               error_message: "Platform has insufficient balance for transfer",
             });
-            continue; // Skip to next affiliate
+            continue;
+          }
+
+          // Check for insufficient capabilities error - NEW
+          if (
+            stripeError.code === "insufficient_capabilities_for_transfer" ||
+            (stripeError.raw &&
+              stripeError.raw.code === "insufficient_capabilities_for_transfer")
+          ) {
+            affiliatesWithInactiveTransfer.push({
+              affiliate_id: affiliate_data.affiliate_id,
+              user_name: userDetail.fullName,
+              user_email: userDetail.email,
+              amount: amount,
+              affiliateLinkId: itm,
+              error_code: "insufficient_capabilities",
+              error_message:
+                "Affiliate account lacks required transfer capabilities (transfers, crypto_transfers, or legacy_payments)",
+            });
+            continue;
           }
 
           // Re-throw if it's a different error
