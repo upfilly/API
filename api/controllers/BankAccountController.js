@@ -71,9 +71,8 @@ module.exports = {
       }
 
       const dataObject = { email, businessName, country };
-      const createBankAccount = await stripeServices.add_bank_account(
-        dataObject
-      );
+      const createBankAccount =
+        await stripeServices.add_bank_account(dataObject);
 
       const findAndUpdate = await Account.update({
         addedBy: req.identity.id,
@@ -164,104 +163,129 @@ module.exports = {
   //     });
   //   }
   // },
-  
-  
-webhook: async (request, response) => {
-  try {
-    const eventObject = request.body.data.object;
-    switch (request.body.type) {
-      case "account.updated":
-        console.log("eventObject", eventObject);
-        console.log("MAIN OUTER ", request.body);
-        console.log("eventObject_requirements ", eventObject.requirements?.currently_due);
-        console.log("eventObject_requirements_length ", eventObject.requirements?.currently_due?.length);
-        
-        const findAccount = await Account.findOne({
-          accountId: eventObject.id,
-        });
-        
-        if (findAccount) {
-          // Fetch full account details from Stripe
-          const stripe = require('stripe')(process.env.stripe); // or however you initialize Stripe
-          const fullAccount = await stripe.accounts.retrieve(eventObject.id);
-          
-          console.log("Full Account Data:", fullAccount);
-          
-          // Extract legal name (business or individual)
-          const legalName = fullAccount.business_profile?.name || 
-            (fullAccount.individual?.first_name 
-              ? `${fullAccount.individual.first_name} ${fullAccount.individual.last_name || ''}`.trim()
-              : fullAccount.company?.name || "");
-          
-          // Extract address (business or individual)
-          const address = fullAccount.company?.address || 
-            fullAccount.individual?.address || 
-            fullAccount.business_profile?.support_address || 
-            {};
-          
-          // Extract VAT/EIN
-          const vatOrEin = fullAccount.company?.tax_id || 
-            fullAccount.individual?.id_number || 
-            fullAccount.company?.vat_id || 
-            fullAccount.business_tax_id?.value || "";
-          
-          const updateObject = {
-            transfer: fullAccount.capabilities?.transfers || "",
-            account_holder_name:
-              fullAccount.external_accounts?.data[0]?.account_holder_name || "",
-            bank_name:
-              fullAccount.external_accounts?.data[0]?.bank_name || "",
-            country: fullAccount.external_accounts?.data[0]?.country || "",
-            currency: fullAccount.external_accounts?.data[0]?.currency || "",
-            accountStatus:
-              fullAccount.external_accounts?.data[0]?.status || "",
-            routingNumber:
-              fullAccount.external_accounts?.data[0]?.routing_number || "",
-            bankAccountNumber:
-              fullAccount.external_accounts?.data[0]?.last4 || "",
-            
-            // New fields
-            legalName: legalName,
-            address: {
-              line1: address.line1 || "",
-              line2: address.line2 || "",
-              city: address.city || "",
-              state: address.state || "",
-              postal_code: address.postal_code || "",
-              country: address.country || "",
-            },
-            vatOrEin: vatOrEin,
-          };
-          
-          console.log("Update Object:", updateObject);
-          
-          await Account.updateOne({ accountId: eventObject.id }).set(
-            updateObject
+
+  webhook: async (request, response) => {
+    try {
+      const eventObject = request.body.data.object;
+      switch (request.body.type) {
+        case "account.updated":
+          console.log("request.body", request.body);
+          console.log("request.data", request.body.data);
+          console.log("request.body.data.object ", request.body.data.object);
+          console.log(
+            "All console object data  ",
+            eventObject.business_profile,
+            "eventObject.capabilities",
+            eventObject.capabilities,
+            "eventObject.controller",
+            eventObject.controller,
+            "eventObject.future_requirements",
+            eventObject.future_requirements,
+            "eventObject.individual",
+            eventObject.individual,
+            "eventObject.requirements",
+            eventObject.requirements,
+            "eventObject.settings",
+            eventObject.settings,
+            "eventObject.external_accounts",
+            eventObject.external_accounts,
+            "eventObject.login_links",
+            eventObject.login_links,
+            "eventObject.tos_acceptance",
+            eventObject.tos_acceptance,
           );
-        } else {
-          console.log("Account not found");
-        }
-        break;
-        
-      case "balance.available":
-        console.log("handle balance available webhook");
-        break;
-        
-      default:
-        // Log unhandled event types
-        console.log(`Unhandled event type ${request.body.type}`);
-        break;
+
+          const findAccount = await Account.findOne({
+            accountId: eventObject.id,
+          });
+
+          if (findAccount) {
+            // Fetch full account details from Stripe
+            const stripe = require("stripe")(process.env.stripe); // or however you initialize Stripe
+            const fullAccount = await stripe.accounts.retrieve(eventObject.id);
+
+            console.log("Full Account Data:", fullAccount);
+
+            // Extract legal name (business or individual)
+            const legalName =
+              fullAccount.business_profile?.name ||
+              (fullAccount.individual?.first_name
+                ? `${fullAccount.individual.first_name} ${fullAccount.individual.last_name || ""}`.trim()
+                : fullAccount.company?.name || "");
+
+            // Extract address (business or individual)
+            const address =
+              fullAccount.company?.address ||
+              fullAccount.individual?.address ||
+              fullAccount.business_profile?.support_address ||
+              {};
+
+            // Extract VAT/EIN
+            const vatOrEin =
+              fullAccount.company?.tax_id ||
+              fullAccount.individual?.id_number ||
+              fullAccount.company?.vat_id ||
+              fullAccount.business_tax_id?.value ||
+              "";
+
+            const updateObject = {
+              transfer: fullAccount.capabilities?.transfers || "",
+              account_holder_name:
+                fullAccount.external_accounts?.data[0]?.account_holder_name ||
+                "",
+              bank_name:
+                fullAccount.external_accounts?.data[0]?.bank_name || "",
+              country: fullAccount.external_accounts?.data[0]?.country || "",
+              currency: fullAccount.external_accounts?.data[0]?.currency || "",
+              accountStatus:
+                fullAccount.external_accounts?.data[0]?.status || "",
+              routingNumber:
+                fullAccount.external_accounts?.data[0]?.routing_number || "",
+              bankAccountNumber:
+                fullAccount.external_accounts?.data[0]?.last4 || "",
+
+              // New fields
+              legalName: legalName,
+              address: {
+                line1: address.line1 || "",
+                line2: address.line2 || "",
+                city: address.city || "",
+                state: address.state || "",
+                postal_code: address.postal_code || "",
+                country: address.country || "",
+              },
+              vatOrEin: vatOrEin,
+            };
+
+            console.log("Update Object:", updateObject);
+
+            await Account.updateOne({ accountId: eventObject.id }).set(
+              updateObject,
+            );
+          } else {
+            console.log("Account not found");
+          }
+          break;
+
+        case "balance.available":
+          console.log("handle balance available webhook");
+          break;
+
+        default:
+          // Log unhandled event types
+          console.log(`Unhandled event type ${request.body.type}`);
+          break;
+      }
+
+      // Send a response to Stripe acknowledging receipt of the webhook
+      response.json({ received: true });
+    } catch (error) {
+      console.log("Error handling webhook:", error);
+      return response.status(200).json({
+        success: false,
+      });
     }
-    
-    // Send a response to Stripe acknowledging receipt of the webhook
-    response.json({ received: true });
-  } catch (error) {
-    console.log("Error handling webhook:", error);
-    return response.status(200).json({
-      success: false,
-    });
-  }
-},
+  },
   /*** update active and inactive account */
   regenrateOnBoardingLink: async (req, res) => {
     try {
@@ -316,7 +340,7 @@ webhook: async (request, response) => {
 
         const updateAccountStatus = await Account.updateOne(
           { accountId: accountId, userId: userId },
-          { isActive: true }
+          { isActive: true },
         );
 
         if (updateAccountStatus.modifiedCount > 0) {
@@ -447,7 +471,7 @@ webhook: async (request, response) => {
           },
           {
             $limit: Number(count),
-          }
+          },
         );
       }
 
@@ -480,7 +504,7 @@ webhook: async (request, response) => {
       }
 
       const transferDetail = await Transfer.findOne({ _id: id }).populate(
-        "paidTo"
+        "paidTo",
       );
       if (transferDetail) {
         return res.status(200).json({
@@ -565,7 +589,7 @@ webhook: async (request, response) => {
         });
       }
       const deletedAccount = await stripe.accounts.del(
-        connectedAccount.accountId
+        connectedAccount.accountId,
       );
       await Account.updateOne({ id: accountId }).set({
         isActive: false,
@@ -722,519 +746,527 @@ webhook: async (request, response) => {
   // }
 
   transferPayment: async (req, res) => {
-  try {
-    const { currency, affiliateLinkIds } = req.body;
-    let paid_to_emails = new Set([]);
-    let affiliatesWithoutAccount = [];
-    let affiliatesWithInactiveTransfer = [];
-    let affiliatesWithInvalidPayout = [];
-    let affiliatesWithoutCampaign = [];
-    let affiliatesWithInsufficientBalance = []; // NEW array for insufficient balance
-    let processedAffiliates = [];
-    let i = 0;
+    try {
+      const { currency, affiliateLinkIds } = req.body;
+      let paid_to_emails = new Set([]);
+      let affiliatesWithoutAccount = [];
+      let affiliatesWithInactiveTransfer = [];
+      let affiliatesWithInvalidPayout = [];
+      let affiliatesWithoutCampaign = [];
+      let affiliatesWithInsufficientBalance = []; // NEW array for insufficient balance
+      let processedAffiliates = [];
+      let i = 0;
 
-    for await (let itm of affiliateLinkIds) {
-      const affiliate_data = await AffiliateLink.findOne(itm);
+      for await (let itm of affiliateLinkIds) {
+        const affiliate_data = await AffiliateLink.findOne(itm);
 
-      const userDetail = await Users.findOne({
-        id: affiliate_data.affiliate_id,
-        isDeleted: false,
-      });
-
-      if (!paid_to_emails.has(userDetail.email)) {
-        paid_to_emails.add(userDetail.email);
-      }
-
-      let get_campain_from_affiliations =
-        await BrandAffiliateAssociation.findOne({
-          brand_id: affiliate_data.brand_id,
-          affiliate_id: affiliate_data.affiliate_id,
-          isActive: true,
-        }).populate("campaign_id");
-
-      console.log("get_campain_from_affiliations", get_campain_from_affiliations);
-
-      // Check: Validate campaign exists
-      if (!get_campain_from_affiliations || !get_campain_from_affiliations.campaign_id) {
-        affiliatesWithoutCampaign.push({
-          affiliate_id: affiliate_data.affiliate_id,
-          user_name: userDetail.fullName,
-          user_email: userDetail.email,
-          brand_id: affiliate_data.brand_id,
-          affiliateLinkId: itm,
-        });
-        continue;
-      }
-
-      const campaign_details = get_campain_from_affiliations.campaign_id;
-      let commission_type = campaign_details.commission_type;
-      let amount = 0;
-
-      if (affiliate_data.amount_of_commission) {
-        amount = affiliate_data.amount_of_commission;
-      } else if (commission_type == "amount") {
-        amount = campaign_details.commission;
-      } else {
-        amount = (affiliate_data.price * campaign_details.commission) / 100;
-      }
-      
-      console.log("amount", amount);
-      console.log("userDetail.payout_amount", userDetail.payout_amount);
-      
-      // Check: Validate payout amount against user's payout limit
-      if (userDetail.payout_amount && amount >= userDetail.payout_amount) {
-        affiliatesWithInvalidPayout.push({
-          affiliate_id: affiliate_data.affiliate_id,
-          user_name: userDetail.fullName,
-          user_email: userDetail.email,
-          payout_limit: userDetail.payout_amount,
-          attempted_amount: amount,
-          affiliateLinkId: itm,
-        });
-        continue;
-      }
-
-      const accountDetails = await Account.findOne({
-        addedBy: affiliate_data.affiliate_id,
-        isDeleted: false,
-        isActive: true,
-      });
-
-      if (!accountDetails) {
-        affiliatesWithoutAccount.push({
-          affiliate_id: affiliate_data.affiliate_id,
-          user_name: userDetail.fullName,
-          user_email: userDetail.email,
-          amount: amount,
-          affiliateLinkId: itm,
+        const userDetail = await Users.findOne({
+          id: affiliate_data.affiliate_id,
+          isDeleted: false,
         });
 
-        if (userDetail) {
-          const emailPayload = {
-            fullName: userDetail.fullName,
-            email: userDetail.email,
-          };
-          await emails.reminderToOpenAccount(emailPayload);
+        if (!paid_to_emails.has(userDetail.email)) {
+          paid_to_emails.add(userDetail.email);
         }
-        continue;
-      }
 
-      // Check if account exists but transfer is inactive
-      if (accountDetails.transfer === "inactive") {
-        affiliatesWithInactiveTransfer.push({
-          affiliate_id: affiliate_data.affiliate_id,
-          user_name: userDetail.fullName,
-          user_email: userDetail.email,
-          amount: amount,
-          affiliateLinkId: itm,
+        let get_campain_from_affiliations =
+          await BrandAffiliateAssociation.findOne({
+            brand_id: affiliate_data.brand_id,
+            affiliate_id: affiliate_data.affiliate_id,
+            isActive: true,
+          }).populate("campaign_id");
+
+        console.log(
+          "get_campain_from_affiliations",
+          get_campain_from_affiliations,
+        );
+
+        // Check: Validate campaign exists
+        if (
+          !get_campain_from_affiliations ||
+          !get_campain_from_affiliations.campaign_id
+        ) {
+          affiliatesWithoutCampaign.push({
+            affiliate_id: affiliate_data.affiliate_id,
+            user_name: userDetail.fullName,
+            user_email: userDetail.email,
+            brand_id: affiliate_data.brand_id,
+            affiliateLinkId: itm,
+          });
+          continue;
+        }
+
+        const campaign_details = get_campain_from_affiliations.campaign_id;
+        let commission_type = campaign_details.commission_type;
+        let amount = 0;
+
+        if (affiliate_data.amount_of_commission) {
+          amount = affiliate_data.amount_of_commission;
+        } else if (commission_type == "amount") {
+          amount = campaign_details.commission;
+        } else {
+          amount = (affiliate_data.price * campaign_details.commission) / 100;
+        }
+
+        console.log("amount", amount);
+        console.log("userDetail.payout_amount", userDetail.payout_amount);
+
+        // Check: Validate payout amount against user's payout limit
+        if (userDetail.payout_amount && amount >= userDetail.payout_amount) {
+          affiliatesWithInvalidPayout.push({
+            affiliate_id: affiliate_data.affiliate_id,
+            user_name: userDetail.fullName,
+            user_email: userDetail.email,
+            payout_limit: userDetail.payout_amount,
+            attempted_amount: amount,
+            affiliateLinkId: itm,
+          });
+          continue;
+        }
+
+        const accountDetails = await Account.findOne({
+          addedBy: affiliate_data.affiliate_id,
+          isDeleted: false,
+          isActive: true,
         });
-        continue;
-      }
 
-      // Only reach here if account exists AND transfer is NOT inactive
-      const payload = {
-        accountId: accountDetails.accountId,
-        transferredAmount: amount,
-        currency: currency || "usd",
-        description: `An amount of ${
-          amount / 100
-        } has been transferred from Upfilly to ${
-          userDetail.fullName
-        } on ${moment().format("YYYY-MM-DD HH:mm:ss")}.`,
-        paidTo: userDetail.id,
-        amount: amount,
-      };
+        if (!accountDetails) {
+          affiliatesWithoutAccount.push({
+            affiliate_id: affiliate_data.affiliate_id,
+            user_name: userDetail.fullName,
+            user_email: userDetail.email,
+            amount: amount,
+            affiliateLinkId: itm,
+          });
 
-      // Wrap the stripe transfer in try-catch to handle insufficient balance
-      try {
-        let paid = await stripeServices.transfer_fund(payload);
-        
-        if (paid) {
-          const invoicesDir = path.join(__dirname, "../../assets", "invoices");
-          if (!fs.existsSync(invoicesDir)) {
-            fs.mkdirSync(invoicesDir, { recursive: true });
+          if (userDetail) {
+            const emailPayload = {
+              fullName: userDetail.fullName,
+              email: userDetail.email,
+            };
+            await emails.reminderToOpenAccount(emailPayload);
+          }
+          continue;
+        }
+
+        // Check if account exists but transfer is inactive
+        if (accountDetails.transfer === "inactive") {
+          affiliatesWithInactiveTransfer.push({
+            affiliate_id: affiliate_data.affiliate_id,
+            user_name: userDetail.fullName,
+            user_email: userDetail.email,
+            amount: amount,
+            affiliateLinkId: itm,
+          });
+          continue;
+        }
+
+        // Only reach here if account exists AND transfer is NOT inactive
+        const payload = {
+          accountId: accountDetails.accountId,
+          transferredAmount: amount,
+          currency: currency || "usd",
+          description: `An amount of ${
+            amount / 100
+          } has been transferred from Upfilly to ${
+            userDetail.fullName
+          } on ${moment().format("YYYY-MM-DD HH:mm:ss")}.`,
+          paidTo: userDetail.id,
+          amount: amount,
+        };
+
+        // Wrap the stripe transfer in try-catch to handle insufficient balance
+        try {
+          let paid = await stripeServices.transfer_fund(payload);
+
+          if (paid) {
+            const invoicesDir = path.join(
+              __dirname,
+              "../../assets",
+              "invoices",
+            );
+            if (!fs.existsSync(invoicesDir)) {
+              fs.mkdirSync(invoicesDir, { recursive: true });
+            }
+
+            const filename = `invoice_${Date.now()}_${
+              affiliate_data.affiliate_id
+            }.pdf`;
+            const outputPath = path.join(invoicesDir, filename);
+
+            const pdfPayload = {
+              commission: amount,
+            };
+            await htmlToPdf(invoice_itm_html(pdfPayload), outputPath);
+            const custom_invoice_url = `invoices/${filename}`;
+
+            let data = {
+              user_id: req.identity?.id,
+              paid_to: get_campain_from_affiliations.affiliate_id,
+              transaction_type: "bank_account",
+              transaction_id: "",
+              stripe_charge_id: "",
+              currency: get_campain_from_affiliations?.currencies,
+              amount: amount.toFixed(2),
+              transaction_status: "paid",
+              special_plan_id: null,
+              subscription_id: null,
+              stripe_subscription_id: "",
+              addedBy: req.identity?.id,
+              updatedBy: null,
+              paypal_transaction_id: "",
+              paypal_transaction_status: "",
+              affiliateLinkId: itm,
+              custom_invoice_url,
+            };
+
+            await Transactions.create(data);
+            await AffiliateLink.updateOne({ id: itm }, { admin_paid: "paid" });
+
+            let email_payload = {
+              fullName: userDetail.fullName,
+              email: userDetail.email,
+              amount: amount,
+            };
+            await emails.adminPaid(email_payload);
+
+            processedAffiliates.push({
+              affiliate_id: affiliate_data.affiliate_id,
+              user_name: userDetail.fullName,
+              user_email: userDetail.email,
+              amount: amount,
+              affiliateLinkId: itm,
+              status: "paid",
+            });
+          }
+        } catch (stripeError) {
+          console.error("Stripe transfer error:", stripeError);
+
+          // Check if error is due to insufficient balance
+          if (
+            stripeError.code === "balance_insufficient" ||
+            (stripeError.raw && stripeError.raw.code === "balance_insufficient")
+          ) {
+            affiliatesWithInsufficientBalance.push({
+              affiliate_id: affiliate_data.affiliate_id,
+              user_name: userDetail.fullName,
+              user_email: userDetail.email,
+              amount: amount,
+              affiliateLinkId: itm,
+              error_message: "Platform has insufficient balance for transfer",
+            });
+            continue; // Skip to next affiliate
           }
 
-          const filename = `invoice_${Date.now()}_${
-            affiliate_data.affiliate_id
-          }.pdf`;
-          const outputPath = path.join(invoicesDir, filename);
-
-          const pdfPayload = {
-            commission: amount,
-          };
-          await htmlToPdf(invoice_itm_html(pdfPayload), outputPath);
-          const custom_invoice_url = `invoices/${filename}`;
-
-          let data = {
-            user_id: req.identity?.id,
-            paid_to: get_campain_from_affiliations.affiliate_id,
-            transaction_type: "bank_account",
-            transaction_id: "",
-            stripe_charge_id: "",
-            currency: get_campain_from_affiliations?.currencies,
-            amount: amount.toFixed(2),
-            transaction_status: "paid",
-            special_plan_id: null,
-            subscription_id: null,
-            stripe_subscription_id: "",
-            addedBy: req.identity?.id,
-            updatedBy: null,
-            paypal_transaction_id: "",
-            paypal_transaction_status: "",
-            affiliateLinkId: itm,
-            custom_invoice_url,
-          };
-
-          await Transactions.create(data);
-          await AffiliateLink.updateOne({ id: itm }, { admin_paid: "paid" });
-
-          let email_payload = {
-            fullName: userDetail.fullName,
-            email: userDetail.email,
-            amount: amount,
-          };
-          await emails.adminPaid(email_payload);
-
-          processedAffiliates.push({
-            affiliate_id: affiliate_data.affiliate_id,
-            user_name: userDetail.fullName,
-            user_email: userDetail.email,
-            amount: amount,
-            affiliateLinkId: itm,
-            status: "paid",
-          });
+          // Re-throw if it's a different error
+          throw stripeError;
         }
-      } catch (stripeError) {
-        console.error("Stripe transfer error:", stripeError);
-        
-        // Check if error is due to insufficient balance
+      }
+
+      // Updated response with insufficient balance array
+      let responseData = {
+        processed_count: processedAffiliates.length,
+        processed_affiliates: processedAffiliates,
+        without_account_count: affiliatesWithoutAccount.length,
+        affiliates_without_account: affiliatesWithoutAccount,
+        inactive_transfer_count: affiliatesWithInactiveTransfer.length,
+        affiliates_inactive_transfer: affiliatesWithInactiveTransfer,
+        invalid_payout_count: affiliatesWithInvalidPayout.length,
+        affiliates_invalid_payout: affiliatesWithInvalidPayout,
+        without_campaign_count: affiliatesWithoutCampaign.length,
+        affiliates_without_campaign: affiliatesWithoutCampaign,
+        insufficient_balance_count: affiliatesWithInsufficientBalance.length, // NEW
+        affiliates_insufficient_balance: affiliatesWithInsufficientBalance, // NEW
+      };
+
+      let message = "";
+
+      if (processedAffiliates.length === 0) {
         if (
-          stripeError.code === "balance_insufficient" ||
-          (stripeError.raw && stripeError.raw.code === "balance_insufficient")
+          affiliatesWithoutAccount.length > 0 ||
+          affiliatesWithInactiveTransfer.length > 0 ||
+          affiliatesWithInvalidPayout.length > 0 ||
+          affiliatesWithoutCampaign.length > 0 ||
+          affiliatesWithInsufficientBalance.length > 0
         ) {
-          affiliatesWithInsufficientBalance.push({
-            affiliate_id: affiliate_data.affiliate_id,
-            user_name: userDetail.fullName,
-            user_email: userDetail.email,
-            amount: amount,
-            affiliateLinkId: itm,
-            error_message: "Platform has insufficient balance for transfer",
-          });
-          continue; // Skip to next affiliate
+          message = `No payments processed. ${affiliatesWithoutAccount.length} affiliate(s) need to set up their accounts, ${affiliatesWithInactiveTransfer.length} affiliate(s) have inactive transfer capability, ${affiliatesWithInvalidPayout.length} affiliate(s) have invalid payout amounts, ${affiliatesWithoutCampaign.length} affiliate(s) have no active campaign, ${affiliatesWithInsufficientBalance.length} affiliate(s) could not be paid due to insufficient platform balance.`;
+        } else {
+          message = "No payments were processed.";
         }
-        
-        // Re-throw if it's a different error
-        throw stripeError;
+        return response.success(responseData, message, req, res);
       }
-    }
 
-    // Updated response with insufficient balance array
-    let responseData = {
-      processed_count: processedAffiliates.length,
-      processed_affiliates: processedAffiliates,
-      without_account_count: affiliatesWithoutAccount.length,
-      affiliates_without_account: affiliatesWithoutAccount,
-      inactive_transfer_count: affiliatesWithInactiveTransfer.length,
-      affiliates_inactive_transfer: affiliatesWithInactiveTransfer,
-      invalid_payout_count: affiliatesWithInvalidPayout.length,
-      affiliates_invalid_payout: affiliatesWithInvalidPayout,
-      without_campaign_count: affiliatesWithoutCampaign.length,
-      affiliates_without_campaign: affiliatesWithoutCampaign,
-      insufficient_balance_count: affiliatesWithInsufficientBalance.length, // NEW
-      affiliates_insufficient_balance: affiliatesWithInsufficientBalance, // NEW
-    };
+      if (processedAffiliates.length > 0) {
+        message = `Payments processed for ${processedAffiliates.length} affiliate(s).`;
 
-    let message = "";
+        if (affiliatesWithoutAccount.length > 0) {
+          message += ` ${affiliatesWithoutAccount.length} affiliate(s) need to set up their accounts.`;
+        }
 
-    if (processedAffiliates.length === 0) {
-      if (
-        affiliatesWithoutAccount.length > 0 ||
-        affiliatesWithInactiveTransfer.length > 0 ||
-        affiliatesWithInvalidPayout.length > 0 ||
-        affiliatesWithoutCampaign.length > 0 ||
-        affiliatesWithInsufficientBalance.length > 0
-      ) {
-        message = `No payments processed. ${affiliatesWithoutAccount.length} affiliate(s) need to set up their accounts, ${affiliatesWithInactiveTransfer.length} affiliate(s) have inactive transfer capability, ${affiliatesWithInvalidPayout.length} affiliate(s) have invalid payout amounts, ${affiliatesWithoutCampaign.length} affiliate(s) have no active campaign, ${affiliatesWithInsufficientBalance.length} affiliate(s) could not be paid due to insufficient platform balance.`;
-      } else {
-        message = "No payments were processed.";
+        if (affiliatesWithInactiveTransfer.length > 0) {
+          message += ` ${affiliatesWithInactiveTransfer.length} affiliate(s) have inactive transfer capability.`;
+        }
+
+        if (affiliatesWithInvalidPayout.length > 0) {
+          message += ` ${affiliatesWithInvalidPayout.length} affiliate(s) have invalid payout amounts.`;
+        }
+
+        if (affiliatesWithoutCampaign.length > 0) {
+          message += ` ${affiliatesWithoutCampaign.length} affiliate(s) have no active campaign.`;
+        }
+
+        if (affiliatesWithInsufficientBalance.length > 0) {
+          message += ` ${affiliatesWithInsufficientBalance.length} affiliate(s) could not be paid due to insufficient platform balance.`;
+        }
       }
+
       return response.success(responseData, message, req, res);
+    } catch (error) {
+      console.error("Error processing transfers:", error);
+      return response.failed(null, error, req, res);
     }
+  },
 
-    if (processedAffiliates.length > 0) {
-      message = `Payments processed for ${processedAffiliates.length} affiliate(s).`;
+  //   transferPayment: async (req, res) => {
+  //   try {
+  //     const { currency, affiliateLinkIds } = req.body;
+  //     let paid_to_emails = new Set([]);
+  //     let affiliatesWithoutAccount = [];
+  //     let affiliatesWithInactiveTransfer = [];
+  //     let affiliatesWithInvalidPayout = [];
+  //     let affiliatesWithoutCampaign = []; // NEW array for missing campaigns
+  //     let processedAffiliates = [];
+  //     let i = 0;
 
-      if (affiliatesWithoutAccount.length > 0) {
-        message += ` ${affiliatesWithoutAccount.length} affiliate(s) need to set up their accounts.`;
-      }
+  //     for await (let itm of affiliateLinkIds) {
+  //       const affiliate_data = await AffiliateLink.findOne(itm);
 
-      if (affiliatesWithInactiveTransfer.length > 0) {
-        message += ` ${affiliatesWithInactiveTransfer.length} affiliate(s) have inactive transfer capability.`;
-      }
+  //       const userDetail = await Users.findOne({
+  //         id: affiliate_data.affiliate_id,
+  //         isDeleted: false,
+  //       });
 
-      if (affiliatesWithInvalidPayout.length > 0) {
-        message += ` ${affiliatesWithInvalidPayout.length} affiliate(s) have invalid payout amounts.`;
-      }
+  //       if (!paid_to_emails.has(userDetail.email)) {
+  //         paid_to_emails.add(userDetail.email);
+  //       }
 
-      if (affiliatesWithoutCampaign.length > 0) {
-        message += ` ${affiliatesWithoutCampaign.length} affiliate(s) have no active campaign.`;
-      }
+  //       let get_campain_from_affiliations =
+  //         await BrandAffiliateAssociation.findOne({
+  //           brand_id: affiliate_data.brand_id,
+  //           affiliate_id: affiliate_data.affiliate_id,
+  //           isActive: true,
+  //         }).populate("campaign_id");
 
-      if (affiliatesWithInsufficientBalance.length > 0) {
-        message += ` ${affiliatesWithInsufficientBalance.length} affiliate(s) could not be paid due to insufficient platform balance.`;
-      }
-    }
+  //       console.log("get_campain_from_affiliations", get_campain_from_affiliations);
 
-    return response.success(responseData, message, req, res);
-  } catch (error) {
-    console.error("Error processing transfers:", error);
-    return response.failed(null, error, req, res);
-  }
-},
+  //       // NEW CHECK: Validate campaign exists
+  //       if (!get_campain_from_affiliations || !get_campain_from_affiliations.campaign_id) {
+  //         affiliatesWithoutCampaign.push({
+  //           affiliate_id: affiliate_data.affiliate_id,
+  //           user_name: userDetail.fullName,
+  //           user_email: userDetail.email,
+  //           brand_id: affiliate_data.brand_id,
+  //           affiliateLinkId: itm,
+  //         });
+  //         continue; // Skip to next affiliate
+  //       }
 
-//   transferPayment: async (req, res) => {
-//   try {
-//     const { currency, affiliateLinkIds } = req.body;
-//     let paid_to_emails = new Set([]);
-//     let affiliatesWithoutAccount = [];
-//     let affiliatesWithInactiveTransfer = [];
-//     let affiliatesWithInvalidPayout = [];
-//     let affiliatesWithoutCampaign = []; // NEW array for missing campaigns
-//     let processedAffiliates = [];
-//     let i = 0;
+  //       const campaign_details = get_campain_from_affiliations.campaign_id;
+  //       let commission_type = campaign_details.commission_type;
+  //       let amount = 0;
 
-//     for await (let itm of affiliateLinkIds) {
-//       const affiliate_data = await AffiliateLink.findOne(itm);
+  //       if (affiliate_data.amount_of_commission) {
+  //         amount = affiliate_data.amount_of_commission;
+  //       } else if (commission_type == "amount") {
+  //         amount = campaign_details.commission;
+  //       } else {
+  //         amount = (affiliate_data.price * campaign_details.commission) / 100;
+  //       }
+  //       console.log("amount",amount)
+  //       console.log("userDetail.payout_amount",userDetail.payout_amount)
+  //       // CHECK: Validate payout amount against user's payout limit
+  //       if (userDetail.payout_amount && amount >= userDetail.payout_amount) {
+  //         affiliatesWithInvalidPayout.push({
+  //           affiliate_id: affiliate_data.affiliate_id,
+  //           user_name: userDetail.fullName,
+  //           user_email: userDetail.email,
+  //           payout_limit: userDetail.payout_amount,
+  //           attempted_amount: amount,
+  //           affiliateLinkId: itm,
+  //         });
+  //         continue; // Skip to next affiliate
+  //       }
 
-//       const userDetail = await Users.findOne({
-//         id: affiliate_data.affiliate_id,
-//         isDeleted: false,
-//       });
+  //       const accountDetails = await Account.findOne({
+  //         addedBy: affiliate_data.affiliate_id,
+  //         isDeleted: false,
+  //         isActive: true,
+  //       });
 
-//       if (!paid_to_emails.has(userDetail.email)) {
-//         paid_to_emails.add(userDetail.email);
-//       }
+  //       if (!accountDetails) {
+  //         affiliatesWithoutAccount.push({
+  //           affiliate_id: affiliate_data.affiliate_id,
+  //           user_name: userDetail.fullName,
+  //           user_email: userDetail.email,
+  //           amount: amount,
+  //           affiliateLinkId: itm,
+  //         });
 
-//       let get_campain_from_affiliations =
-//         await BrandAffiliateAssociation.findOne({
-//           brand_id: affiliate_data.brand_id,
-//           affiliate_id: affiliate_data.affiliate_id,
-//           isActive: true,
-//         }).populate("campaign_id");
+  //         if (userDetail) {
+  //           const emailPayload = {
+  //             fullName: userDetail.fullName,
+  //             email: userDetail.email,
+  //           };
+  //           await emails.reminderToOpenAccount(emailPayload);
+  //         }
+  //         continue;
+  //       }
 
-//       console.log("get_campain_from_affiliations", get_campain_from_affiliations);
+  //       // Check if account exists but transfer is inactive
+  //       if (accountDetails.transfer === "inactive") {
+  //         affiliatesWithInactiveTransfer.push({
+  //           affiliate_id: affiliate_data.affiliate_id,
+  //           user_name: userDetail.fullName,
+  //           user_email: userDetail.email,
+  //           amount: amount,
+  //           affiliateLinkId: itm,
+  //         });
+  //         continue;
+  //       }
 
-//       // NEW CHECK: Validate campaign exists
-//       if (!get_campain_from_affiliations || !get_campain_from_affiliations.campaign_id) {
-//         affiliatesWithoutCampaign.push({
-//           affiliate_id: affiliate_data.affiliate_id,
-//           user_name: userDetail.fullName,
-//           user_email: userDetail.email,
-//           brand_id: affiliate_data.brand_id,
-//           affiliateLinkId: itm,
-//         });
-//         continue; // Skip to next affiliate
-//       }
+  //       // Only reach here if account exists AND transfer is NOT inactive
+  //       const payload = {
+  //         accountId: accountDetails.accountId,
+  //         transferredAmount: amount,
+  //         currency: currency || "usd",
+  //         description: `An amount of ${
+  //           amount / 100
+  //         } has been transferred from Upfilly to ${
+  //           userDetail.fullName
+  //         } on ${moment().format("YYYY-MM-DD HH:mm:ss")}.`,
+  //         paidTo: userDetail.id,
+  //         amount: amount,
+  //       };
 
-//       const campaign_details = get_campain_from_affiliations.campaign_id;
-//       let commission_type = campaign_details.commission_type;
-//       let amount = 0;
+  //       invoice_itm_html({
+  //         commission: amount,
+  //       });
 
-//       if (affiliate_data.amount_of_commission) {
-//         amount = affiliate_data.amount_of_commission;
-//       } else if (commission_type == "amount") {
-//         amount = campaign_details.commission;
-//       } else {
-//         amount = (affiliate_data.price * campaign_details.commission) / 100;
-//       }
-//       console.log("amount",amount)
-//       console.log("userDetail.payout_amount",userDetail.payout_amount)
-//       // CHECK: Validate payout amount against user's payout limit
-//       if (userDetail.payout_amount && amount >= userDetail.payout_amount) {
-//         affiliatesWithInvalidPayout.push({
-//           affiliate_id: affiliate_data.affiliate_id,
-//           user_name: userDetail.fullName,
-//           user_email: userDetail.email,
-//           payout_limit: userDetail.payout_amount,
-//           attempted_amount: amount,
-//           affiliateLinkId: itm,
-//         });
-//         continue; // Skip to next affiliate
-//       }
+  //       let paid = await stripeServices.transfer_fund(payload);
+  //       if (paid) {
+  //         const invoicesDir = path.join(__dirname, "../../assets", "invoices");
+  //         if (!fs.existsSync(invoicesDir)) {
+  //           fs.mkdirSync(invoicesDir, { recursive: true });
+  //         }
 
-//       const accountDetails = await Account.findOne({
-//         addedBy: affiliate_data.affiliate_id,
-//         isDeleted: false,
-//         isActive: true,
-//       });
+  //         const filename = `invoice_${Date.now()}_${
+  //           affiliate_data.affiliate_id
+  //         }.pdf`;
+  //         const outputPath = path.join(invoicesDir, filename);
 
-//       if (!accountDetails) {
-//         affiliatesWithoutAccount.push({
-//           affiliate_id: affiliate_data.affiliate_id,
-//           user_name: userDetail.fullName,
-//           user_email: userDetail.email,
-//           amount: amount,
-//           affiliateLinkId: itm,
-//         });
+  //         const pdfPayload = {
+  //           commission: amount,
+  //         };
+  //         await htmlToPdf(invoice_itm_html(pdfPayload), outputPath);
+  //         const custom_invoice_url = `invoices/${filename}`;
 
-//         if (userDetail) {
-//           const emailPayload = {
-//             fullName: userDetail.fullName,
-//             email: userDetail.email,
-//           };
-//           await emails.reminderToOpenAccount(emailPayload);
-//         }
-//         continue;
-//       }
+  //         let data = {
+  //           user_id: req.identity?.id,
+  //           paid_to: get_campain_from_affiliations.affiliate_id,
+  //           transaction_type: "bank_account",
+  //           transaction_id: "",
+  //           stripe_charge_id: "",
+  //           currency: get_campain_from_affiliations?.currencies,
+  //           amount: amount.toFixed(2),
+  //           transaction_status: "paid",
+  //           special_plan_id: null,
+  //           subscription_id: null,
+  //           stripe_subscription_id: "",
+  //           addedBy: req.identity?.id,
+  //           updatedBy: null,
+  //           paypal_transaction_id: "",
+  //           paypal_transaction_status: "",
+  //           affiliateLinkId: itm,
+  //           custom_invoice_url,
+  //         };
 
-//       // Check if account exists but transfer is inactive
-//       if (accountDetails.transfer === "inactive") {
-//         affiliatesWithInactiveTransfer.push({
-//           affiliate_id: affiliate_data.affiliate_id,
-//           user_name: userDetail.fullName,
-//           user_email: userDetail.email,
-//           amount: amount,
-//           affiliateLinkId: itm,
-//         });
-//         continue;
-//       }
+  //         await Transactions.create(data);
+  //         await AffiliateLink.updateOne({ id: itm }, { admin_paid: "paid" });
 
-//       // Only reach here if account exists AND transfer is NOT inactive
-//       const payload = {
-//         accountId: accountDetails.accountId,
-//         transferredAmount: amount,
-//         currency: currency || "usd",
-//         description: `An amount of ${
-//           amount / 100
-//         } has been transferred from Upfilly to ${
-//           userDetail.fullName
-//         } on ${moment().format("YYYY-MM-DD HH:mm:ss")}.`,
-//         paidTo: userDetail.id,
-//         amount: amount,
-//       };
+  //         let email_payload = {
+  //           fullName: userDetail.fullName,
+  //           email: userDetail.email,
+  //           amount: amount,
+  //         };
+  //         await emails.adminPaid(email_payload);
 
-//       invoice_itm_html({
-//         commission: amount,
-//       });
+  //         processedAffiliates.push({
+  //           affiliate_id: affiliate_data.affiliate_id,
+  //           user_name: userDetail.fullName,
+  //           user_email: userDetail.email,
+  //           amount: amount,
+  //           affiliateLinkId: itm,
+  //           status: "paid",
+  //         });
+  //       }
+  //     }
 
-//       let paid = await stripeServices.transfer_fund(payload);
-//       if (paid) {
-//         const invoicesDir = path.join(__dirname, "../../assets", "invoices");
-//         if (!fs.existsSync(invoicesDir)) {
-//           fs.mkdirSync(invoicesDir, { recursive: true });
-//         }
+  //     // Updated response with campaign check array
+  //     let responseData = {
+  //       processed_count: processedAffiliates.length,
+  //       processed_affiliates: processedAffiliates,
+  //       without_account_count: affiliatesWithoutAccount.length,
+  //       affiliates_without_account: affiliatesWithoutAccount,
+  //       inactive_transfer_count: affiliatesWithInactiveTransfer.length,
+  //       affiliates_inactive_transfer: affiliatesWithInactiveTransfer,
+  //       invalid_payout_count: affiliatesWithInvalidPayout.length,
+  //       affiliates_invalid_payout: affiliatesWithInvalidPayout,
+  //       without_campaign_count: affiliatesWithoutCampaign.length, // NEW
+  //       affiliates_without_campaign: affiliatesWithoutCampaign, // NEW
+  //     };
 
-//         const filename = `invoice_${Date.now()}_${
-//           affiliate_data.affiliate_id
-//         }.pdf`;
-//         const outputPath = path.join(invoicesDir, filename);
+  //     let message = "";
 
-//         const pdfPayload = {
-//           commission: amount,
-//         };
-//         await htmlToPdf(invoice_itm_html(pdfPayload), outputPath);
-//         const custom_invoice_url = `invoices/${filename}`;
+  //     if (processedAffiliates.length === 0) {
+  //       if (
+  //         affiliatesWithoutAccount.length > 0 ||
+  //         affiliatesWithInactiveTransfer.length > 0 ||
+  //         affiliatesWithInvalidPayout.length > 0 ||
+  //         affiliatesWithoutCampaign.length > 0
+  //       ) {
+  //         message = `No payments processed. ${affiliatesWithoutAccount.length} affiliate(s) need to set up their accounts, ${affiliatesWithInactiveTransfer.length} affiliate(s) have inactive transfer capability, ${affiliatesWithInvalidPayout.length} affiliate(s) have invalid payout amounts, ${affiliatesWithoutCampaign.length} affiliate(s) have no active campaign.`;
+  //       } else {
+  //         message = "No payments were processed.";
+  //       }
+  //       return response.success(responseData, message, req, res);
+  //     }
 
-//         let data = {
-//           user_id: req.identity?.id,
-//           paid_to: get_campain_from_affiliations.affiliate_id,
-//           transaction_type: "bank_account",
-//           transaction_id: "",
-//           stripe_charge_id: "",
-//           currency: get_campain_from_affiliations?.currencies,
-//           amount: amount.toFixed(2),
-//           transaction_status: "paid",
-//           special_plan_id: null,
-//           subscription_id: null,
-//           stripe_subscription_id: "",
-//           addedBy: req.identity?.id,
-//           updatedBy: null,
-//           paypal_transaction_id: "",
-//           paypal_transaction_status: "",
-//           affiliateLinkId: itm,
-//           custom_invoice_url,
-//         };
+  //     if (processedAffiliates.length > 0) {
+  //       message = `Payments processed for ${processedAffiliates.length} affiliate(s).`;
 
-//         await Transactions.create(data);
-//         await AffiliateLink.updateOne({ id: itm }, { admin_paid: "paid" });
+  //       if (affiliatesWithoutAccount.length > 0) {
+  //         message += ` ${affiliatesWithoutAccount.length} affiliate(s) need to set up their accounts.`;
+  //       }
 
-//         let email_payload = {
-//           fullName: userDetail.fullName,
-//           email: userDetail.email,
-//           amount: amount,
-//         };
-//         await emails.adminPaid(email_payload);
+  //       if (affiliatesWithInactiveTransfer.length > 0) {
+  //         message += ` ${affiliatesWithInactiveTransfer.length} affiliate(s) have inactive transfer capability.`;
+  //       }
 
-//         processedAffiliates.push({
-//           affiliate_id: affiliate_data.affiliate_id,
-//           user_name: userDetail.fullName,
-//           user_email: userDetail.email,
-//           amount: amount,
-//           affiliateLinkId: itm,
-//           status: "paid",
-//         });
-//       }
-//     }
+  //       if (affiliatesWithInvalidPayout.length > 0) {
+  //         message += ` ${affiliatesWithInvalidPayout.length} affiliate(s) have invalid payout amounts.`;
+  //       }
 
-//     // Updated response with campaign check array
-//     let responseData = {
-//       processed_count: processedAffiliates.length,
-//       processed_affiliates: processedAffiliates,
-//       without_account_count: affiliatesWithoutAccount.length,
-//       affiliates_without_account: affiliatesWithoutAccount,
-//       inactive_transfer_count: affiliatesWithInactiveTransfer.length,
-//       affiliates_inactive_transfer: affiliatesWithInactiveTransfer,
-//       invalid_payout_count: affiliatesWithInvalidPayout.length,
-//       affiliates_invalid_payout: affiliatesWithInvalidPayout,
-//       without_campaign_count: affiliatesWithoutCampaign.length, // NEW
-//       affiliates_without_campaign: affiliatesWithoutCampaign, // NEW
-//     };
+  //       if (affiliatesWithoutCampaign.length > 0) {
+  //         message += ` ${affiliatesWithoutCampaign.length} affiliate(s) have no active campaign.`;
+  //       }
+  //     }
 
-//     let message = "";
-
-//     if (processedAffiliates.length === 0) {
-//       if (
-//         affiliatesWithoutAccount.length > 0 ||
-//         affiliatesWithInactiveTransfer.length > 0 ||
-//         affiliatesWithInvalidPayout.length > 0 ||
-//         affiliatesWithoutCampaign.length > 0
-//       ) {
-//         message = `No payments processed. ${affiliatesWithoutAccount.length} affiliate(s) need to set up their accounts, ${affiliatesWithInactiveTransfer.length} affiliate(s) have inactive transfer capability, ${affiliatesWithInvalidPayout.length} affiliate(s) have invalid payout amounts, ${affiliatesWithoutCampaign.length} affiliate(s) have no active campaign.`;
-//       } else {
-//         message = "No payments were processed.";
-//       }
-//       return response.success(responseData, message, req, res);
-//     }
-
-//     if (processedAffiliates.length > 0) {
-//       message = `Payments processed for ${processedAffiliates.length} affiliate(s).`;
-
-//       if (affiliatesWithoutAccount.length > 0) {
-//         message += ` ${affiliatesWithoutAccount.length} affiliate(s) need to set up their accounts.`;
-//       }
-
-//       if (affiliatesWithInactiveTransfer.length > 0) {
-//         message += ` ${affiliatesWithInactiveTransfer.length} affiliate(s) have inactive transfer capability.`;
-//       }
-
-//       if (affiliatesWithInvalidPayout.length > 0) {
-//         message += ` ${affiliatesWithInvalidPayout.length} affiliate(s) have invalid payout amounts.`;
-//       }
-
-//       if (affiliatesWithoutCampaign.length > 0) {
-//         message += ` ${affiliatesWithoutCampaign.length} affiliate(s) have no active campaign.`;
-//       }
-//     }
-
-//     return response.success(responseData, message, req, res);
-//   } catch (error) {
-//     console.error("Error processing transfers:", error);
-//     return response.failed(null, error, req, res);
-//   }
-// },
-
-
+  //     return response.success(responseData, message, req, res);
+  //   } catch (error) {
+  //     console.error("Error processing transfers:", error);
+  //     return response.failed(null, error, req, res);
+  //   }
+  // },
 };
 
 // Helper function to generate invoice HTML
