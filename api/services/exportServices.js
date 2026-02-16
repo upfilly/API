@@ -1376,72 +1376,78 @@ exportToExcel: async function (res, data, startDate, endDate, filter) {
 exportToCSV: async function (res, data, startDate, endDate, filter) {
   try {
     const timestamp = moment().format("YYYY-MM-DD");
-
     let csvData = [];
 
-    // Add report header
-    const reportPeriod =
-      startDate && endDate
-        ? `${moment(startDate).format("YYYY-MM-DD")} to ${moment(endDate).format("YYYY-MM-DD")}`
-        : "Current Month";
+    // Format dates
+    const start = startDate ? moment(startDate).format("YYYY-MM-DD") : "";
+    const end = endDate ? moment(endDate).format("YYYY-MM-DD") : "";
+    const reportPeriod = start && end ? `${start} to ${end}` : "Current Month";
 
-    // Simple, clean CSV header
-    csvData.push("DAILY PERFORMANCE REPORT");
-    csvData.push("");
-    csvData.push(`Report Period: ${reportPeriod}`);
-    csvData.push(`Report Generated: ${moment().format("YYYY-MM-DD HH:mm:ss")}`);
-    csvData.push("");
+    // === HEADER SECTION - Clean and minimal ===
+    csvData.push('"Daily Performance Report"');
+    csvData.push(`"Period: ${reportPeriod}"`);
+    csvData.push(`"Generated: ${moment().format("YYYY-MM-DD HH:mm")}"`);
+    csvData.push('""'); // Empty line
+    
+    // === COLUMN HEADERS ===
+    csvData.push('"Date","Clicks","Sales","Conv. Rate"');
 
-    // Define fields for CSV
-    const fields = ["Date", "Clicks", "Sales", "Conversion Rate"];
-    const parser = new Parser({ 
-      fields,
-      header: true,
-      delimiter: ',',
-      quote: '"'
-    });
-
-    // Parse data to CSV
+    // === DATA ROWS ===
     if (data && data.length > 0) {
-      csvData.push(parser.parse(data));
-
-      // Add separator
-      csvData.push("");
+      // Track max values for formatting (optional)
+      let maxClicks = 0;
+      let maxSales = 0;
       
-      // Add total row
-      const totalClicks = data.reduce((sum, row) => sum + row["Clicks"], 0);
-      const totalSales = data.reduce((sum, row) => sum + row["Sales"], 0);
-      const totalConversionRate =
-        totalClicks > 0 ? (totalSales / totalClicks) * 100 : 0;
+      data.forEach((row) => {
+        const clicks = row["Clicks"] || 0;
+        const sales = row["Sales"] || 0;
+        maxClicks = Math.max(maxClicks, clicks);
+        maxSales = Math.max(maxSales, sales);
+      });
 
-      csvData.push(`TOTAL,${totalClicks},${totalSales},${totalConversionRate.toFixed(2)}%`);
+      data.forEach((row) => {
+        const date = row["Date"] ? moment(row["Date"]).format("YYYY-MM-DD") : "";
+        const clicks = row["Clicks"] || 0;
+        const sales = row["Sales"] || 0;
+        
+        // Calculate conversion rate
+        let conversionRate = "0.00%";
+        if (row["Conversion Rate"]) {
+          conversionRate = row["Conversion Rate"].toString().includes('%') 
+            ? row["Conversion Rate"] 
+            : parseFloat(row["Conversion Rate"]).toFixed(2) + '%';
+        } else if (clicks > 0) {
+          conversionRate = ((sales / clicks) * 100).toFixed(2) + '%';
+        }
+        
+        csvData.push(`"${date}",${clicks},${sales},"${conversionRate}"`);
+      });
+
+      // Calculate totals
+      const totalClicks = data.reduce((sum, row) => sum + (row["Clicks"] || 0), 0);
+      const totalSales = data.reduce((sum, row) => sum + (row["Sales"] || 0), 0);
+      const totalConversionRate = totalClicks > 0 
+        ? ((totalSales / totalClicks) * 100).toFixed(2) + '%' 
+        : "0.00%";
+
+      // Empty line before totals
+      csvData.push('""');
       
-      // Add summary statistics
-      csvData.push("");
-      csvData.push("SUMMARY STATISTICS");
-      csvData.push(`Total Days,${data.length}`);
-      csvData.push(`Average Clicks per Day,${(totalClicks / data.length).toFixed(2)}`);
-      csvData.push(`Average Sales per Day,${(totalSales / data.length).toFixed(2)}`);
-      csvData.push(`Overall Conversion Rate,${totalConversionRate.toFixed(2)}%`);
+      // Totals row
+      csvData.push(`"TOTAL",${totalClicks},${totalSales},"${totalConversionRate}"`);
+      
     } else {
-      csvData.push(parser.parse([
-        {
-          Date: "No data available",
-          Clicks: "0",
-          Sales: "0",
-          "Conversion Rate": "0%",
-        },
-      ]));
+      csvData.push('"No data available for the selected period"');
     }
 
-    // Join with \r\n for better cross-platform compatibility
+    // Join with proper line endings
     const finalCSV = csvData.join("\r\n");
 
-    // Add UTF-8 BOM for Excel/Mac compatibility
+    // Add UTF-8 BOM for Excel compatibility
     const BOM = "\uFEFF";
     const csvWithBOM = BOM + finalCSV;
 
-    // Set response headers with proper charset
+    // Set response headers
     res.setHeader("Content-Type", "text/csv; charset=utf-8");
     res.setHeader(
       "Content-Disposition",
@@ -1449,6 +1455,7 @@ exportToCSV: async function (res, data, startDate, endDate, filter) {
     );
 
     return res.send(csvWithBOM);
+    
   } catch (error) {
     console.error("CSV export error:", error);
     throw new Error("CSV export failed: " + error.message);
@@ -1471,7 +1478,7 @@ exportToXML: async function (res, data, startDate, endDate, filter) {
     const totalConversionRate =
       totalClicks > 0 ? (totalSales / totalClicks) * 100 : 0;
     
-    // Convert data to XML structure with daily data
+    // Convert data to XML structure with daily data (no summary section)
     const xmlData = {
       _declaration: {
         _attributes: {
@@ -1547,7 +1554,7 @@ exportToXML: async function (res, data, startDate, endDate, filter) {
                 },
               ],
         },
-        Summary: {
+        Total: {
           TotalClicks: {
             _text: totalClicks
           },
@@ -1556,13 +1563,7 @@ exportToXML: async function (res, data, startDate, endDate, filter) {
           },
           TotalConversionRate: {
             _text: `${totalConversionRate.toFixed(2)}%`
-          },
-          AverageClicksPerDay: {
-            _text: data && data.length > 0 ? (totalClicks / data.length).toFixed(2) : "0"
-          },
-          AverageSalesPerDay: {
-            _text: data && data.length > 0 ? (totalSales / data.length).toFixed(2) : "0"
-          },
+          }
         },
       },
     };
