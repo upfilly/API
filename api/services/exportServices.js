@@ -394,378 +394,29 @@ module.exports = {
   //     const workbook = new ExcelJS.Workbook();
 
   //     // Set workbook properties for better compatibility
-  //     workbook.creator = 'Performance Report System';
-  //     workbook.lastModifiedBy = 'System';
-  //     workbook.created = new Date();
-  //     workbook.modified = new Date();
-
-  //     const worksheet = workbook.addWorksheet("Daily Performance Report");
-
-  //     // Add report header with date information
-  //     const reportPeriod =
-  //       startDate && endDate
-  //         ? `${moment(startDate).format("YYYY-MM-DD")} to ${moment(
-  //             endDate
-  //           ).format("YYYY-MM-DD")}`
-  //         : "Current Month";
-
-  //     const reportPeriodRow = worksheet.addRow(["Report Period:", reportPeriod]);
-  //     reportPeriodRow.eachCell((cell) => {
-  //       cell.alignment = { vertical: 'middle', horizontal: 'center' };
-  //     });
-
-  //     const reportGeneratedRow = worksheet.addRow([
-  //       "Report Generated:",
-  //       moment().format("YYYY-MM-DD HH:mm:ss"),
-  //     ]);
-  //     reportGeneratedRow.eachCell((cell) => {
-  //       cell.alignment = { vertical: 'middle', horizontal: 'center' };
-  //     });
-
-  //     worksheet.addRow([]); // Empty row
-
-  //     // Add headers
-  //     const headers = ["Date", "Clicks", "Sales", "Conversion Rate"];
-  //     const headerRow = worksheet.addRow(headers);
-
-  //     // Style header row with center alignment
-  //     headerRow.eachCell((cell) => {
-  //       cell.fill = {
-  //         type: "pattern",
-  //         pattern: "solid",
-  //         fgColor: { argb: "FF4472C4" },
-  //       };
-  //       cell.font = {
-  //         color: { argb: "FFFFFFFF" },
-  //         bold: true,
-  //       };
-  //       cell.border = {
-  //         top: { style: "thin" },
-  //         left: { style: "thin" },
-  //         bottom: { style: "thin" },
-  //         right: { style: "thin" },
-  //       };
-  //       cell.alignment = { vertical: 'middle', horizontal: 'center' };
-  //     });
-
-  //     // Add data rows
-  //     if (data && data.length > 0) {
-  //       data.forEach((row) => {
-  //         const rowData = [
-  //           row["Date"],
-  //           row["Clicks"],
-  //           row["Sales"],
-  //           row["Conversion Rate"],
-  //         ];
-  //         const dataRow = worksheet.addRow(rowData);
-
-  //         // Add light border and center alignment to data rows
-  //         dataRow.eachCell((cell) => {
-  //           cell.border = {
-  //             top: { style: "thin" },
-  //             left: { style: "thin" },
-  //             bottom: { style: "thin" },
-  //             right: { style: "thin" },
-  //           };
-  //           cell.alignment = { vertical: 'middle', horizontal: 'center' };
-  //         });
-  //       });
-
-  //       // Add total row
-  //       const totalClicks = data.reduce((sum, row) => sum + row["Clicks"], 0);
-  //       const totalSales = data.reduce((sum, row) => sum + row["Sales"], 0);
-  //       const totalConversionRate =
-  //         totalClicks > 0 ? (totalSales / totalClicks) * 100 : 0;
-
-  //       worksheet.addRow([]); // Empty row
-  //       const totalRow = worksheet.addRow([
-  //         "TOTAL",
-  //         totalClicks,
-  //         totalSales,
-  //         `${totalConversionRate.toFixed(2)}%`,
-  //       ]);
-
-  //       // Style total row with center alignment
-  //       totalRow.eachCell((cell) => {
-  //         cell.font = { bold: true };
-  //         cell.fill = {
-  //           type: "pattern",
-  //           pattern: "solid",
-  //           fgColor: { argb: "FFF2F2F2" },
-  //         };
-  //         cell.border = {
-  //           top: { style: "thin" },
-  //           left: { style: "thin" },
-  //           bottom: { style: "thin" },
-  //           right: { style: "thin" },
-  //         };
-  //         cell.alignment = { vertical: 'middle', horizontal: 'center' };
-  //       });
-  //     } else {
-  //       const noDataRow = worksheet.addRow(["No data available", "", "", ""]);
-  //       noDataRow.eachCell((cell) => {
-  //         cell.alignment = { vertical: 'middle', horizontal: 'center' };
-  //       });
-  //     }
-
-  //     // Auto-fit columns
-  //     worksheet.columns.forEach((column) => {
-  //       column.width = 20; // Increased width for better readability
-  //     });
-
-  //     // Set response headers with proper MIME type
-  //     const timestamp = moment().format("YYYY-MM-DD");
-  //     res.setHeader(
-  //       "Content-Type",
-  //       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-  //     );
-  //     res.setHeader(
-  //       "Content-Disposition",
-  //       `attachment; filename="daily_performance_${timestamp}.xlsx"`
-  //     );
-
-  //     // Prevent caching
-  //     res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-  //     res.setHeader("Pragma", "no-cache");
-  //     res.setHeader("Expires", "0");
-
-  //     // Write to buffer first, then send
-  //     const buffer = await workbook.xlsx.writeBuffer();
-  //     res.send(buffer);
-
-  //   } catch (error) {
-  //     console.error("Excel export error:", error);
-  //     throw new Error("Excel export failed: " + error.message);
-  //   }
-  // },
-
-  // exportToCSV: async function (res, data, startDate, endDate, filter) {
-  //   try {
-  //     const timestamp = moment().format("YYYY-MM-DD");
-
-  //     let csvData = [];
-
-  //     // Add report header
-  //     const reportPeriod =
-  //       startDate && endDate
-  //         ? `${moment(startDate).format("YYYY-MM-DD")} to ${moment(
-  //             endDate
-  //           ).format("YYYY-MM-DD")}`
-  //         : "Current Month";
-
-  //     csvData.push("DAILY PERFORMANCE REPORT");
-  //     csvData.push(`Report Period: ${reportPeriod}`);
-  //     csvData.push(
-  //       `Report Generated: ${moment().format("YYYY-MM-DD HH:mm:ss")}`
-  //     );
-  //     csvData.push("");
-
-  //     // Define fields for CSV
-  //     const fields = ["Date", "Clicks", "Sales", "Conversion Rate"];
-  //     const parser = new Parser({ fields });
-
-  //     // Parse data to CSV
-  //     if (data && data.length > 0) {
-  //       csvData.push(parser.parse(data));
-
-  //       // Add total row
-  //       const totalClicks = data.reduce((sum, row) => sum + row["Clicks"], 0);
-  //       const totalSales = data.reduce((sum, row) => sum + row["Sales"], 0);
-  //       const totalConversionRate =
-  //         totalClicks > 0 ? (totalSales / totalClicks) * 100 : 0;
-
-  //       csvData.push("");
-  //       csvData.push(
-  //         `TOTAL,${totalClicks},${totalSales},${totalConversionRate.toFixed(
-  //           2
-  //         )}%`
-  //       );
-  //     } else {
-  //       csvData.push(
-  //         parser.parse([
-  //           {
-  //             Date: "No data available",
-  //             Clicks: "",
-  //             Sales: "",
-  //             "Conversion Rate": "",
-  //           },
-  //         ])
-  //       );
-  //     }
-
-  //     // Join with \r\n for better cross-platform compatibility
-  //     const finalCSV = csvData.join("\r\n");
-
-  //     // Add UTF-8 BOM for Excel/Mac compatibility
-  //     const BOM = "\uFEFF";
-  //     const csvWithBOM = BOM + finalCSV;
-
-  //     // Set response headers with proper charset
-  //     res.setHeader("Content-Type", "text/csv; charset=utf-8");
-  //     res.setHeader(
-  //       "Content-Disposition",
-  //       `attachment; filename="daily_performance_${timestamp}.csv"`
-  //     );
-
-  //     return res.send(csvWithBOM);
-  //   } catch (error) {
-  //     console.error("CSV export error:", error);
-  //     throw new Error("CSV export failed: " + error.message);
-  //   }
-  // },
-
-  // exportToXML: async function (res, data, startDate, endDate, filter) {
-  //   try {
-  //     const timestamp = moment().format("YYYY-MM-DD");
-
-  //     // Calculate totals
-  //     let totalClicks = 0;
-  //     let totalSales = 0;
-
-  //     if (data && data.length > 0) {
-  //       totalClicks = data.reduce((sum, row) => sum + row["Clicks"], 0);
-  //       totalSales = data.reduce((sum, row) => sum + row["Sales"], 0);
-  //     }
-
-  //     const totalConversionRate =
-  //       totalClicks > 0 ? (totalSales / totalClicks) * 100 : 0;
-
-  //     // Convert data to XML structure with daily data
-  //     const xmlData = {
-  //       _declaration: {
-  //         _attributes: {
-  //           version: '1.0',
-  //           encoding: 'UTF-8',
-  //           standalone: 'yes'
-  //         }
-  //       },
-  //       DailyPerformanceReport: {
-  //         _attributes: {
-  //           generatedBy: 'Performance Report System',
-  //           timestamp: moment().format("YYYY-MM-DD HH:mm:ss")
-  //         },
-  //         ReportInfo: {
-  //           ExportDate: {
-  //             _text: moment().format("YYYY-MM-DD")
-  //           },
-  //           ExportTime: {
-  //             _text: moment().format("HH:mm:ss")
-  //           },
-  //           Period: {
-  //             _text: startDate && endDate
-  //               ? `${moment(startDate).format("YYYY-MM-DD")} to ${moment(endDate).format("YYYY-MM-DD")}`
-  //               : "Current Month"
-  //           },
-  //         },
-  //         DailyData: {
-  //           Day: data && data.length > 0
-  //             ? data.map((item) => ({
-  //                 _attributes: {
-  //                   date: item["Date"]
-  //                 },
-  //                 Date: {
-  //                   _text: item["Date"]
-  //                 },
-  //                 Clicks: {
-  //                   _text: item["Clicks"]
-  //                 },
-  //                 Sales: {
-  //                   _text: item["Sales"]
-  //                 },
-  //                 ConversionRate: {
-  //                   _text: item["Conversion Rate"]
-  //                 },
-  //               }))
-  //             : [
-  //                 {
-  //                   Date: {
-  //                     _text: "No data available"
-  //                   },
-  //                   Clicks: {
-  //                     _text: "0"
-  //                   },
-  //                   Sales: {
-  //                     _text: "0"
-  //                   },
-  //                   ConversionRate: {
-  //                     _text: "0%"
-  //                   },
-  //                 },
-  //               ],
-  //         },
-  //         Summary: {
-  //           TotalClicks: {
-  //             _text: totalClicks
-  //           },
-  //           TotalSales: {
-  //             _text: totalSales
-  //           },
-  //           TotalConversionRate: {
-  //             _text: `${totalConversionRate.toFixed(2)}%`
-  //           },
-  //           AverageClicksPerDay: {
-  //             _text: data && data.length > 0 ? (totalClicks / data.length).toFixed(2) : "0"
-  //           },
-  //           AverageSalesPerDay: {
-  //             _text: data && data.length > 0 ? (totalSales / data.length).toFixed(2) : "0"
-  //           },
-  //         },
-  //       },
-  //     };
-
-  //     // Convert to XML with proper formatting (well-structured and indented)
-  //     const xml = js2xml(xmlData, {
-  //       compact: true,
-  //       spaces: 4, // Increased indentation for better readability
-  //       ignoreComment: true,
-  //       fullTagEmptyElement: true,
-  //       textFn: (value) => {
-  //         // Ensure proper text encoding
-  //         return value;
-  //       }
-  //     });
-
-  //     // Set response headers with proper charset
-  //     res.setHeader("Content-Type", "application/xml; charset=utf-8");
-  //     res.setHeader(
-  //       "Content-Disposition",
-  //       `attachment; filename="daily_performance_${timestamp}.xml"`
-  //     );
-
-  //     // Prevent caching
-  //     res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-  //     res.setHeader("Pragma", "no-cache");
-  //     res.setHeader("Expires", "0");
-
-  //     return res.send(xml);
-  //   } catch (error) {
-  //     console.error("XML export error:", error);
-  //     throw new Error("XML export failed: " + error.message);
-  //   }
-  // },
-  // exportToExcel: async function (res, data, startDate, endDate, filter) {
-  //   try {
-  //     const workbook = new ExcelJS.Workbook();
-
-  //     // Set workbook properties for better compatibility
-  //     workbook.creator = 'Performance Report System';
-  //     workbook.lastModifiedBy = 'System';
+  //     workbook.creator = "Performance Report System";
+  //     workbook.lastModifiedBy = "System";
   //     workbook.created = new Date();
   //     workbook.modified = new Date();
 
   //     const worksheet = workbook.addWorksheet("Daily Performance Report");
 
   //     // Merge cells for title
-  //     worksheet.mergeCells('A1:D1');
-  //     const titleCell = worksheet.getCell('A1');
-  //     titleCell.value = 'DAILY PERFORMANCE REPORT';
-  //     titleCell.font = { bold: true, size: 16, color: { argb: 'FF000000' } };
-  //     titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
-  //     titleCell.fill = {
-  //       type: 'pattern',
-  //       pattern: 'solid',
-  //       fgColor: { argb: 'FFE7E6E6' }
+  //     worksheet.mergeCells("A1:D1");
+  //     const titleCell = worksheet.getCell("A1");
+  //     titleCell.value = "DAILY PERFORMANCE REPORT";
+  //     titleCell.font = { bold: true, size: 14 };
+  //     titleCell.alignment = {
+  //       vertical: "middle",
+  //       horizontal: "center",
+  //       wrapText: true,
   //     };
+  //     titleCell.fill = {
+  //       type: "pattern",
+  //       pattern: "solid",
+  //       fgColor: { argb: "FFE7E6E6" },
+  //     };
+  //     worksheet.getRow(1).height = 25;
 
   //     // Add report period
   //     const reportPeriod =
@@ -773,18 +424,28 @@ module.exports = {
   //         ? `${moment(startDate).format("YYYY-MM-DD")} to ${moment(endDate).format("YYYY-MM-DD")}`
   //         : "Current Month";
 
-  //     worksheet.mergeCells('A2:D2');
-  //     const periodCell = worksheet.getCell('A2');
+  //     worksheet.mergeCells("A2:D2");
+  //     const periodCell = worksheet.getCell("A2");
   //     periodCell.value = `Report Period: ${reportPeriod}`;
-  //     periodCell.font = { bold: true, size: 12 };
-  //     periodCell.alignment = { vertical: 'middle', horizontal: 'center' };
+  //     periodCell.font = { bold: true, size: 11 };
+  //     periodCell.alignment = {
+  //       vertical: "middle",
+  //       horizontal: "center",
+  //       wrapText: true,
+  //     };
+  //     worksheet.getRow(2).height = 20;
 
   //     // Add report generated timestamp
-  //     worksheet.mergeCells('A3:D3');
-  //     const timestampCell = worksheet.getCell('A3');
+  //     worksheet.mergeCells("A3:D3");
+  //     const timestampCell = worksheet.getCell("A3");
   //     timestampCell.value = `Report Generated: ${moment().format("YYYY-MM-DD HH:mm:ss")}`;
-  //     timestampCell.font = { size: 10, italic: true };
-  //     timestampCell.alignment = { vertical: 'middle', horizontal: 'center' };
+  //     timestampCell.font = { size: 10 };
+  //     timestampCell.alignment = {
+  //       vertical: "middle",
+  //       horizontal: "center",
+  //       wrapText: true,
+  //     };
+  //     worksheet.getRow(3).height = 20;
 
   //     worksheet.addRow([]); // Empty row
 
@@ -792,7 +453,7 @@ module.exports = {
   //     const headers = ["Date", "Clicks", "Sales", "Conversion Rate"];
   //     const headerRow = worksheet.addRow(headers);
 
-  //     // Style header row
+  //     // Style header row with consistent height
   //     headerRow.height = 25;
   //     headerRow.eachCell((cell) => {
   //       cell.fill = {
@@ -803,18 +464,22 @@ module.exports = {
   //       cell.font = {
   //         color: { argb: "FFFFFFFF" },
   //         bold: true,
-  //         size: 12
+  //         size: 11,
   //       };
   //       cell.border = {
-  //         top: { style: "medium", color: { argb: "FF000000" } },
-  //         left: { style: "medium", color: { argb: "FF000000" } },
-  //         bottom: { style: "medium", color: { argb: "FF000000" } },
-  //         right: { style: "medium", color: { argb: "FF000000" } },
+  //         top: { style: "thin" },
+  //         left: { style: "thin" },
+  //         bottom: { style: "thin" },
+  //         right: { style: "thin" },
   //       };
-  //       cell.alignment = { vertical: 'middle', horizontal: 'center' };
+  //       cell.alignment = {
+  //         vertical: "middle",
+  //         horizontal: "center",
+  //         wrapText: true,
+  //       };
   //     });
 
-  //     // Add data rows with alternating colors
+  //     // Add data rows with consistent formatting
   //     if (data && data.length > 0) {
   //       data.forEach((row, index) => {
   //         const rowData = [
@@ -824,27 +489,35 @@ module.exports = {
   //           row["Conversion Rate"],
   //         ];
   //         const dataRow = worksheet.addRow(rowData);
+
+  //         // Set consistent row height
   //         dataRow.height = 20;
 
-  //         // Alternate row colors for better readability
-  //         const isEvenRow = index % 2 === 0;
-
+  //         // Apply consistent styling to all cells
   //         dataRow.eachCell((cell) => {
-  //           if (isEvenRow) {
+  //           // Alternating row colors for better readability
+  //           if (index % 2 === 0) {
   //             cell.fill = {
   //               type: "pattern",
   //               pattern: "solid",
-  //               fgColor: { argb: "FFF9F9F9" },
+  //               fgColor: { argb: "FFF5F5F5" },
   //             };
   //           }
+
   //           cell.border = {
-  //             top: { style: "thin", color: { argb: "FFD3D3D3" } },
-  //             left: { style: "thin", color: { argb: "FFD3D3D3" } },
-  //             bottom: { style: "thin", color: { argb: "FFD3D3D3" } },
-  //             right: { style: "thin", color: { argb: "FFD3D3D3" } },
+  //             top: { style: "thin" },
+  //             left: { style: "thin" },
+  //             bottom: { style: "thin" },
+  //             right: { style: "thin" },
   //           };
-  //           cell.alignment = { vertical: 'middle', horizontal: 'center' };
-  //           cell.font = { size: 11 };
+
+  //           cell.alignment = {
+  //             vertical: "middle",
+  //             horizontal: "center",
+  //             wrapText: true, // Enable text wrapping for long text
+  //           };
+
+  //           cell.font = { size: 10 };
   //         });
   //       });
 
@@ -862,44 +535,54 @@ module.exports = {
   //         `${totalConversionRate.toFixed(2)}%`,
   //       ]);
 
+  //       // Style total row with consistent height
   //       totalRow.height = 25;
   //       totalRow.eachCell((cell) => {
-  //         cell.font = { bold: true, size: 12 };
+  //         cell.font = { bold: true, size: 11 };
   //         cell.fill = {
   //           type: "pattern",
   //           pattern: "solid",
-  //           fgColor: { argb: "FFFFEB3B" },
+  //           fgColor: { argb: "FFD9D9D9" },
   //         };
   //         cell.border = {
-  //           top: { style: "medium", color: { argb: "FF000000" } },
-  //           left: { style: "medium", color: { argb: "FF000000" } },
-  //           bottom: { style: "medium", color: { argb: "FF000000" } },
-  //           right: { style: "medium", color: { argb: "FF000000" } },
+  //           top: { style: "medium" },
+  //           left: { style: "thin" },
+  //           bottom: { style: "medium" },
+  //           right: { style: "thin" },
   //         };
-  //         cell.alignment = { vertical: 'middle', horizontal: 'center' };
+  //         cell.alignment = {
+  //           vertical: "middle",
+  //           horizontal: "center",
+  //           wrapText: true,
+  //         };
   //       });
   //     } else {
   //       const noDataRow = worksheet.addRow(["No data available", "", "", ""]);
   //       worksheet.mergeCells(`A${noDataRow.number}:D${noDataRow.number}`);
-  //       noDataRow.getCell(1).alignment = { vertical: 'middle', horizontal: 'center' };
-  //       noDataRow.getCell(1).font = { italic: true, color: { argb: 'FF666666' } };
+  //       noDataRow.height = 25;
+  //       noDataRow.getCell(1).alignment = {
+  //         vertical: "middle",
+  //         horizontal: "center",
+  //         wrapText: true,
+  //       };
+  //       noDataRow.getCell(1).font = { italic: true };
   //     }
 
-  //     // Set column widths
-  //     worksheet.getColumn(1).width = 15; // Date
-  //     worksheet.getColumn(2).width = 15; // Clicks
-  //     worksheet.getColumn(3).width = 15; // Sales
-  //     worksheet.getColumn(4).width = 20; // Conversion Rate
+  //     // Set FIXED column widths for consistency across all platforms
+  //     worksheet.getColumn(1).width = 18; // Date
+  //     worksheet.getColumn(2).width = 18; // Clicks
+  //     worksheet.getColumn(3).width = 18; // Sales
+  //     worksheet.getColumn(4).width = 18; // Conversion Rate
 
   //     // Set response headers with proper MIME type
   //     const timestamp = moment().format("YYYY-MM-DD");
   //     res.setHeader(
   //       "Content-Type",
-  //       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  //       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   //     );
   //     res.setHeader(
   //       "Content-Disposition",
-  //       `attachment; filename="daily_performance_${timestamp}.xlsx"`
+  //       `attachment; filename="daily_performance_${timestamp}.xlsx"`,
   //     );
 
   //     // Prevent caching
@@ -910,282 +593,19 @@ module.exports = {
   //     // Write to buffer first, then send
   //     const buffer = await workbook.xlsx.writeBuffer();
   //     res.send(buffer);
-
   //   } catch (error) {
   //     console.error("Excel export error:", error);
   //     throw new Error("Excel export failed: " + error.message);
   //   }
   // },
 
-  // exportToCSV: async function (res, data, startDate, endDate, filter) {
-  //   try {
-  //     const timestamp = moment().format("YYYY-MM-DD");
-
-  //     let csvData = [];
-
-  //     // Add report header
-  //     const reportPeriod =
-  //       startDate && endDate
-  //         ? `${moment(startDate).format("YYYY-MM-DD")} to ${moment(endDate).format("YYYY-MM-DD")}`
-  //         : "Current Month";
-
-  //     // Create a well-formatted CSV header
-  //     csvData.push("═══════════════════════════════════════════════════════════");
-  //     csvData.push("              DAILY PERFORMANCE REPORT");
-  //     csvData.push("═══════════════════════════════════════════════════════════");
-  //     csvData.push("");
-  //     csvData.push(`Report Period: ${reportPeriod}`);
-  //     csvData.push(`Report Generated: ${moment().format("YYYY-MM-DD HH:mm:ss")}`);
-  //     csvData.push("───────────────────────────────────────────────────────────");
-  //     csvData.push("");
-
-  //     // Define fields for CSV
-  //     const fields = ["Date", "Clicks", "Sales", "Conversion Rate"];
-  //     const parser = new Parser({
-  //       fields,
-  //       header: true,
-  //       delimiter: ',',
-  //       quote: '"'
-  //     });
-
-  //     // Parse data to CSV
-  //     if (data && data.length > 0) {
-  //       csvData.push(parser.parse(data));
-
-  //       // Add separator line
-  //       csvData.push("───────────────────────────────────────────────────────────");
-
-  //       // Add total row
-  //       const totalClicks = data.reduce((sum, row) => sum + row["Clicks"], 0);
-  //       const totalSales = data.reduce((sum, row) => sum + row["Sales"], 0);
-  //       const totalConversionRate =
-  //         totalClicks > 0 ? (totalSales / totalClicks) * 100 : 0;
-
-  //       csvData.push("");
-  //       csvData.push(`TOTAL,${totalClicks},${totalSales},${totalConversionRate.toFixed(2)}%`);
-  //       csvData.push("═══════════════════════════════════════════════════════════");
-
-  //       // Add summary statistics
-  //       csvData.push("");
-  //       csvData.push("SUMMARY STATISTICS");
-  //       csvData.push("───────────────────────────────────────────────────────────");
-  //       csvData.push(`Total Days,${data.length}`);
-  //       csvData.push(`Average Clicks per Day,${(totalClicks / data.length).toFixed(2)}`);
-  //       csvData.push(`Average Sales per Day,${(totalSales / data.length).toFixed(2)}`);
-  //       csvData.push(`Overall Conversion Rate,${totalConversionRate.toFixed(2)}%`);
-  //     } else {
-  //       csvData.push(parser.parse([
-  //         {
-  //           Date: "No data available",
-  //           Clicks: "-",
-  //           Sales: "-",
-  //           "Conversion Rate": "-",
-  //         },
-  //       ]));
-  //       csvData.push("═══════════════════════════════════════════════════════════");
-  //     }
-
-  //     // Join with \r\n for better cross-platform compatibility
-  //     const finalCSV = csvData.join("\r\n");
-
-  //     // Add UTF-8 BOM for Excel/Mac compatibility
-  //     const BOM = "\uFEFF";
-  //     const csvWithBOM = BOM + finalCSV;
-
-  //     // Set response headers with proper charset
-  //     res.setHeader("Content-Type", "text/csv; charset=utf-8");
-  //     res.setHeader(
-  //       "Content-Disposition",
-  //       `attachment; filename="daily_performance_${timestamp}.csv"`
-  //     );
-
-  //     return res.send(csvWithBOM);
-  //   } catch (error) {
-  //     console.error("CSV export error:", error);
-  //     throw new Error("CSV export failed: " + error.message);
-  //   }
-  // },
-
-  // exportToXML: async function (res, data, startDate, endDate, filter) {
-  //   try {
-  //     const timestamp = moment().format("YYYY-MM-DD");
-
-  //     // Calculate totals
-  //     let totalClicks = 0;
-  //     let totalSales = 0;
-
-  //     if (data && data.length > 0) {
-  //       totalClicks = data.reduce((sum, row) => sum + row["Clicks"], 0);
-  //       totalSales = data.reduce((sum, row) => sum + row["Sales"], 0);
-  //     }
-
-  //     const totalConversionRate =
-  //       totalClicks > 0 ? (totalSales / totalClicks) * 100 : 0;
-
-  //     // Convert data to XML structure with daily data
-  //     const xmlData = {
-  //       _declaration: {
-  //         _attributes: {
-  //           version: '1.0',
-  //           encoding: 'UTF-8',
-  //           standalone: 'yes'
-  //         }
-  //       },
-  //       _comment: ' Daily Performance Report - Generated by Performance Report System ',
-  //       DailyPerformanceReport: {
-  //         _attributes: {
-  //           version: '1.0',
-  //           generatedBy: 'Performance Report System',
-  //           timestamp: moment().format("YYYY-MM-DD HH:mm:ss"),
-  //           xmlns: 'http://www.example.com/performance-report'
-  //         },
-  //         Metadata: {
-  //           ReportInfo: {
-  //             Title: {
-  //               _text: 'Daily Performance Report'
-  //             },
-  //             ExportDate: {
-  //               _text: moment().format("YYYY-MM-DD")
-  //             },
-  //             ExportTime: {
-  //               _text: moment().format("HH:mm:ss")
-  //             },
-  //             ReportPeriod: {
-  //               _attributes: {
-  //                 start: startDate ? moment(startDate).format("YYYY-MM-DD") : 'N/A',
-  //                 end: endDate ? moment(endDate).format("YYYY-MM-DD") : 'N/A'
-  //               },
-  //               _text: startDate && endDate
-  //                 ? `${moment(startDate).format("YYYY-MM-DD")} to ${moment(endDate).format("YYYY-MM-DD")}`
-  //                 : "Current Month"
-  //             },
-  //           },
-  //         },
-  //         PerformanceData: {
-  //           _attributes: {
-  //             totalDays: data && data.length > 0 ? data.length : 0
-  //           },
-  //           DailyRecords: {
-  //             Day: data && data.length > 0
-  //               ? data.map((item, index) => ({
-  //                   _attributes: {
-  //                     id: index + 1,
-  //                     date: item["Date"]
-  //                   },
-  //                   Date: {
-  //                     _text: item["Date"]
-  //                   },
-  //                   Metrics: {
-  //                     Clicks: {
-  //                       _text: item["Clicks"]
-  //                     },
-  //                     Sales: {
-  //                       _text: item["Sales"]
-  //                     },
-  //                     ConversionRate: {
-  //                       _attributes: {
-  //                         unit: 'percentage'
-  //                       },
-  //                       _text: item["Conversion Rate"]
-  //                     },
-  //                   }
-  //                 }))
-  //               : [
-  //                   {
-  //                     _attributes: {
-  //                       id: 0,
-  //                       status: 'no-data'
-  //                     },
-  //                     Date: {
-  //                       _text: "No data available"
-  //                     },
-  //                     Metrics: {
-  //                       Clicks: {
-  //                         _text: "0"
-  //                       },
-  //                       Sales: {
-  //                         _text: "0"
-  //                       },
-  //                       ConversionRate: {
-  //                         _attributes: {
-  //                           unit: 'percentage'
-  //                         },
-  //                         _text: "0%"
-  //                       },
-  //                     }
-  //                   },
-  //                 ],
-  //           }
-  //         },
-  //         Summary: {
-  //           _attributes: {
-  //             calculatedAt: moment().format("YYYY-MM-DD HH:mm:ss")
-  //           },
-  //           Totals: {
-  //             TotalClicks: {
-  //               _text: totalClicks
-  //             },
-  //             TotalSales: {
-  //               _text: totalSales
-  //             },
-  //             TotalConversionRate: {
-  //               _attributes: {
-  //                 unit: 'percentage'
-  //               },
-  //               _text: `${totalConversionRate.toFixed(2)}%`
-  //             },
-  //           },
-  //           Averages: {
-  //             AverageClicksPerDay: {
-  //               _text: data && data.length > 0 ? (totalClicks / data.length).toFixed(2) : "0"
-  //             },
-  //             AverageSalesPerDay: {
-  //               _text: data && data.length > 0 ? (totalSales / data.length).toFixed(2) : "0"
-  //             },
-  //           }
-  //         },
-  //       },
-  //     };
-
-  //     // Convert to XML with proper formatting
-  //     const xml = js2xml(xmlData, {
-  //       compact: true,
-  //       spaces: 4,
-  //       ignoreComment: false,
-  //       fullTagEmptyElement: true,
-  //     });
-
-  //     // Set response headers with proper charset
-  //     res.setHeader("Content-Type", "application/xml; charset=utf-8");
-  //     res.setHeader(
-  //       "Content-Disposition",
-  //       `attachment; filename="daily_performance_${timestamp}.xml"`
-  //     );
-
-  //     // Prevent caching
-  //     res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-  //     res.setHeader("Pragma", "no-cache");
-  //     res.setHeader("Expires", "0");
-
-  //     return res.send(xml);
-  //   } catch (error) {
-  //     console.error("XML export error:", error);
-  //     throw new Error("XML export failed: " + error.message);
-  //   }
-  // },
   exportToExcel: async function (res, data, startDate, endDate, filter) {
     try {
       const workbook = new ExcelJS.Workbook();
 
-      // Set workbook properties for better compatibility
-      workbook.creator = "Performance Report System";
-      workbook.lastModifiedBy = "System";
-      workbook.created = new Date();
-      workbook.modified = new Date();
-
       const worksheet = workbook.addWorksheet("Daily Performance Report");
 
-      // Merge cells for title
+      // Use RGB instead of ARGB for better compatibility
       worksheet.mergeCells("A1:D1");
       const titleCell = worksheet.getCell("A1");
       titleCell.value = "DAILY PERFORMANCE REPORT";
@@ -1198,11 +618,10 @@ module.exports = {
       titleCell.fill = {
         type: "pattern",
         pattern: "solid",
-        fgColor: { argb: "FFE7E6E6" },
+        fgColor: { argb: "E7E6E6" }, // Removed FF prefix
       };
       worksheet.getRow(1).height = 25;
 
-      // Add report period
       const reportPeriod =
         startDate && endDate
           ? `${moment(startDate).format("YYYY-MM-DD")} to ${moment(endDate).format("YYYY-MM-DD")}`
@@ -1219,7 +638,6 @@ module.exports = {
       };
       worksheet.getRow(2).height = 20;
 
-      // Add report generated timestamp
       worksheet.mergeCells("A3:D3");
       const timestampCell = worksheet.getCell("A3");
       timestampCell.value = `Report Generated: ${moment().format("YYYY-MM-DD HH:mm:ss")}`;
@@ -1231,22 +649,20 @@ module.exports = {
       };
       worksheet.getRow(3).height = 20;
 
-      worksheet.addRow([]); // Empty row
+      worksheet.addRow([]);
 
-      // Add headers with better styling
       const headers = ["Date", "Clicks", "Sales", "Conversion Rate"];
       const headerRow = worksheet.addRow(headers);
 
-      // Style header row with consistent height
       headerRow.height = 25;
       headerRow.eachCell((cell) => {
         cell.fill = {
           type: "pattern",
           pattern: "solid",
-          fgColor: { argb: "FF4472C4" },
+          fgColor: { argb: "4472C4" }, // Removed FF prefix
         };
         cell.font = {
-          color: { argb: "FFFFFFFF" },
+          color: { argb: "FFFFFF" }, // Removed FF prefix
           bold: true,
           size: 11,
         };
@@ -1263,7 +679,6 @@ module.exports = {
         };
       });
 
-      // Add data rows with consistent formatting
       if (data && data.length > 0) {
         data.forEach((row, index) => {
           const rowData = [
@@ -1274,17 +689,14 @@ module.exports = {
           ];
           const dataRow = worksheet.addRow(rowData);
 
-          // Set consistent row height
           dataRow.height = 20;
 
-          // Apply consistent styling to all cells
           dataRow.eachCell((cell) => {
-            // Alternating row colors for better readability
             if (index % 2 === 0) {
               cell.fill = {
                 type: "pattern",
                 pattern: "solid",
-                fgColor: { argb: "FFF5F5F5" },
+                fgColor: { argb: "F5F5F5" }, // Removed FF prefix
               };
             }
 
@@ -1298,20 +710,19 @@ module.exports = {
             cell.alignment = {
               vertical: "middle",
               horizontal: "center",
-              wrapText: true, // Enable text wrapping for long text
+              wrapText: true,
             };
 
             cell.font = { size: 10 };
           });
         });
 
-        // Add total row
         const totalClicks = data.reduce((sum, row) => sum + row["Clicks"], 0);
         const totalSales = data.reduce((sum, row) => sum + row["Sales"], 0);
         const totalConversionRate =
           totalClicks > 0 ? (totalSales / totalClicks) * 100 : 0;
 
-        worksheet.addRow([]); // Empty row
+        worksheet.addRow([]);
         const totalRow = worksheet.addRow([
           "TOTAL",
           totalClicks,
@@ -1319,14 +730,13 @@ module.exports = {
           `${totalConversionRate.toFixed(2)}%`,
         ]);
 
-        // Style total row with consistent height
         totalRow.height = 25;
         totalRow.eachCell((cell) => {
           cell.font = { bold: true, size: 11 };
           cell.fill = {
             type: "pattern",
             pattern: "solid",
-            fgColor: { argb: "FFD9D9D9" },
+            fgColor: { argb: "D9D9D9" }, // Removed FF prefix
           };
           cell.border = {
             top: { style: "medium" },
@@ -1352,13 +762,11 @@ module.exports = {
         noDataRow.getCell(1).font = { italic: true };
       }
 
-      // Set FIXED column widths for consistency across all platforms
-      worksheet.getColumn(1).width = 18; // Date
-      worksheet.getColumn(2).width = 18; // Clicks
-      worksheet.getColumn(3).width = 18; // Sales
-      worksheet.getColumn(4).width = 18; // Conversion Rate
+      worksheet.getColumn(1).width = 18;
+      worksheet.getColumn(2).width = 18;
+      worksheet.getColumn(3).width = 18;
+      worksheet.getColumn(4).width = 18;
 
-      // Set response headers with proper MIME type
       const timestamp = moment().format("YYYY-MM-DD");
       res.setHeader(
         "Content-Type",
@@ -1368,15 +776,13 @@ module.exports = {
         "Content-Disposition",
         `attachment; filename="daily_performance_${timestamp}.xlsx"`,
       );
-
-      // Prevent caching
       res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
       res.setHeader("Pragma", "no-cache");
       res.setHeader("Expires", "0");
 
-      // Write to buffer first, then send
-      const buffer = await workbook.xlsx.writeBuffer();
-      res.send(buffer);
+      // Write directly to response for better LibreOffice compatibility
+      await workbook.xlsx.write(res);
+      res.end();
     } catch (error) {
       console.error("Excel export error:", error);
       throw new Error("Excel export failed: " + error.message);
