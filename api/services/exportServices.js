@@ -393,15 +393,9 @@ module.exports = {
   //   try {
   //     const workbook = new ExcelJS.Workbook();
 
-  //     // Set workbook properties for better compatibility
-  //     workbook.creator = "Performance Report System";
-  //     workbook.lastModifiedBy = "System";
-  //     workbook.created = new Date();
-  //     workbook.modified = new Date();
-
   //     const worksheet = workbook.addWorksheet("Daily Performance Report");
 
-  //     // Merge cells for title
+  //     // Use RGB instead of ARGB for better compatibility
   //     worksheet.mergeCells("A1:D1");
   //     const titleCell = worksheet.getCell("A1");
   //     titleCell.value = "DAILY PERFORMANCE REPORT";
@@ -414,11 +408,10 @@ module.exports = {
   //     titleCell.fill = {
   //       type: "pattern",
   //       pattern: "solid",
-  //       fgColor: { argb: "FFE7E6E6" },
+  //       fgColor: { argb: "E7E6E6" }, // Removed FF prefix
   //     };
   //     worksheet.getRow(1).height = 25;
 
-  //     // Add report period
   //     const reportPeriod =
   //       startDate && endDate
   //         ? `${moment(startDate).format("YYYY-MM-DD")} to ${moment(endDate).format("YYYY-MM-DD")}`
@@ -435,7 +428,6 @@ module.exports = {
   //     };
   //     worksheet.getRow(2).height = 20;
 
-  //     // Add report generated timestamp
   //     worksheet.mergeCells("A3:D3");
   //     const timestampCell = worksheet.getCell("A3");
   //     timestampCell.value = `Report Generated: ${moment().format("YYYY-MM-DD HH:mm:ss")}`;
@@ -447,22 +439,20 @@ module.exports = {
   //     };
   //     worksheet.getRow(3).height = 20;
 
-  //     worksheet.addRow([]); // Empty row
+  //     worksheet.addRow([]);
 
-  //     // Add headers with better styling
   //     const headers = ["Date", "Clicks", "Sales", "Conversion Rate"];
   //     const headerRow = worksheet.addRow(headers);
 
-  //     // Style header row with consistent height
   //     headerRow.height = 25;
   //     headerRow.eachCell((cell) => {
   //       cell.fill = {
   //         type: "pattern",
   //         pattern: "solid",
-  //         fgColor: { argb: "FF4472C4" },
+  //         fgColor: { argb: "4472C4" }, // Removed FF prefix
   //       };
   //       cell.font = {
-  //         color: { argb: "FFFFFFFF" },
+  //         color: { argb: "FFFFFF" }, // Removed FF prefix
   //         bold: true,
   //         size: 11,
   //       };
@@ -479,7 +469,6 @@ module.exports = {
   //       };
   //     });
 
-  //     // Add data rows with consistent formatting
   //     if (data && data.length > 0) {
   //       data.forEach((row, index) => {
   //         const rowData = [
@@ -490,17 +479,14 @@ module.exports = {
   //         ];
   //         const dataRow = worksheet.addRow(rowData);
 
-  //         // Set consistent row height
   //         dataRow.height = 20;
 
-  //         // Apply consistent styling to all cells
   //         dataRow.eachCell((cell) => {
-  //           // Alternating row colors for better readability
   //           if (index % 2 === 0) {
   //             cell.fill = {
   //               type: "pattern",
   //               pattern: "solid",
-  //               fgColor: { argb: "FFF5F5F5" },
+  //               fgColor: { argb: "F5F5F5" }, // Removed FF prefix
   //             };
   //           }
 
@@ -514,20 +500,19 @@ module.exports = {
   //           cell.alignment = {
   //             vertical: "middle",
   //             horizontal: "center",
-  //             wrapText: true, // Enable text wrapping for long text
+  //             wrapText: true,
   //           };
 
   //           cell.font = { size: 10 };
   //         });
   //       });
 
-  //       // Add total row
   //       const totalClicks = data.reduce((sum, row) => sum + row["Clicks"], 0);
   //       const totalSales = data.reduce((sum, row) => sum + row["Sales"], 0);
   //       const totalConversionRate =
   //         totalClicks > 0 ? (totalSales / totalClicks) * 100 : 0;
 
-  //       worksheet.addRow([]); // Empty row
+  //       worksheet.addRow([]);
   //       const totalRow = worksheet.addRow([
   //         "TOTAL",
   //         totalClicks,
@@ -535,14 +520,13 @@ module.exports = {
   //         `${totalConversionRate.toFixed(2)}%`,
   //       ]);
 
-  //       // Style total row with consistent height
   //       totalRow.height = 25;
   //       totalRow.eachCell((cell) => {
   //         cell.font = { bold: true, size: 11 };
   //         cell.fill = {
   //           type: "pattern",
   //           pattern: "solid",
-  //           fgColor: { argb: "FFD9D9D9" },
+  //           fgColor: { argb: "D9D9D9" }, // Removed FF prefix
   //         };
   //         cell.border = {
   //           top: { style: "medium" },
@@ -568,13 +552,11 @@ module.exports = {
   //       noDataRow.getCell(1).font = { italic: true };
   //     }
 
-  //     // Set FIXED column widths for consistency across all platforms
-  //     worksheet.getColumn(1).width = 18; // Date
-  //     worksheet.getColumn(2).width = 18; // Clicks
-  //     worksheet.getColumn(3).width = 18; // Sales
-  //     worksheet.getColumn(4).width = 18; // Conversion Rate
+  //     worksheet.getColumn(1).width = 18;
+  //     worksheet.getColumn(2).width = 18;
+  //     worksheet.getColumn(3).width = 18;
+  //     worksheet.getColumn(4).width = 18;
 
-  //     // Set response headers with proper MIME type
   //     const timestamp = moment().format("YYYY-MM-DD");
   //     res.setHeader(
   //       "Content-Type",
@@ -584,15 +566,13 @@ module.exports = {
   //       "Content-Disposition",
   //       `attachment; filename="daily_performance_${timestamp}.xlsx"`,
   //     );
-
-  //     // Prevent caching
   //     res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
   //     res.setHeader("Pragma", "no-cache");
   //     res.setHeader("Expires", "0");
 
-  //     // Write to buffer first, then send
-  //     const buffer = await workbook.xlsx.writeBuffer();
-  //     res.send(buffer);
+  //     // Write directly to response for better LibreOffice compatibility
+  //     await workbook.xlsx.write(res);
+  //     res.end();
   //   } catch (error) {
   //     console.error("Excel export error:", error);
   //     throw new Error("Excel export failed: " + error.message);
@@ -600,76 +580,146 @@ module.exports = {
   // },
 
   exportToExcel: async function (res, data, startDate, endDate, filter) {
-    try {
-      const workbook = new ExcelJS.Workbook();
+  try {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Daily Performance Report");
+        
+    worksheet.mergeCells("A1:D1");
+    const titleCell = worksheet.getCell("A1");
+    titleCell.value = "DAILY PERFORMANCE REPORT";
+    titleCell.font = { bold: true, size: 14 };
+    titleCell.alignment = {
+      vertical: "middle",
+      horizontal: "center",
+      wrapText: true,
+    };
+    titleCell.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "E7E6E6" },
+    };
+    worksheet.getRow(1).height = 25;
 
-      const worksheet = workbook.addWorksheet("Daily Performance Report");
+    const reportPeriod =
+      startDate && endDate
+        ? `${moment(startDate).format("YYYY-MM-DD")} to ${moment(endDate).format("YYYY-MM-DD")}`
+        : "Current Month";
 
-      // Use RGB instead of ARGB for better compatibility
-      worksheet.mergeCells("A1:D1");
-      const titleCell = worksheet.getCell("A1");
-      titleCell.value = "DAILY PERFORMANCE REPORT";
-      titleCell.font = { bold: true, size: 14 };
-      titleCell.alignment = {
-        vertical: "middle",
-        horizontal: "center",
-        wrapText: true,
-      };
-      titleCell.fill = {
+    worksheet.mergeCells("A2:D2");
+    const periodCell = worksheet.getCell("A2");
+    periodCell.value = `Report Period: ${reportPeriod}`;
+    periodCell.font = { bold: true, size: 11 };
+    periodCell.alignment = {
+      vertical: "middle",
+      horizontal: "center",
+      wrapText: true,
+    };
+    worksheet.getRow(2).height = 20;
+
+    worksheet.mergeCells("A3:D3");
+    const timestampCell = worksheet.getCell("A3");
+    timestampCell.value = `Report Generated: ${moment().format("YYYY-MM-DD HH:mm:ss")}`;
+    timestampCell.font = { size: 10 };
+    timestampCell.alignment = {
+      vertical: "middle",
+      horizontal: "center",
+      wrapText: true,
+    };
+    worksheet.getRow(3).height = 20;
+
+    worksheet.addRow([]);
+
+    const headers = ["Date", "Clicks", "Sales", "Conversion Rate"];
+    const headerRow = worksheet.addRow(headers);
+
+    headerRow.height = 25;
+    headerRow.eachCell((cell) => {
+      cell.fill = {
         type: "pattern",
         pattern: "solid",
-        fgColor: { argb: "E7E6E6" }, // Removed FF prefix
+        fgColor: { argb: "4472C4" },
       };
-      worksheet.getRow(1).height = 25;
-
-      const reportPeriod =
-        startDate && endDate
-          ? `${moment(startDate).format("YYYY-MM-DD")} to ${moment(endDate).format("YYYY-MM-DD")}`
-          : "Current Month";
-
-      worksheet.mergeCells("A2:D2");
-      const periodCell = worksheet.getCell("A2");
-      periodCell.value = `Report Period: ${reportPeriod}`;
-      periodCell.font = { bold: true, size: 11 };
-      periodCell.alignment = {
+      cell.font = {
+        color: { argb: "FFFFFF" },
+        bold: true,
+        size: 11,
+      };
+      cell.border = {
+        top: { style: "thin" },
+        left: { style: "thin" },
+        bottom: { style: "thin" },
+        right: { style: "thin" },
+      };
+      cell.alignment = {
         vertical: "middle",
         horizontal: "center",
         wrapText: true,
       };
-      worksheet.getRow(2).height = 20;
+    });
 
-      worksheet.mergeCells("A3:D3");
-      const timestampCell = worksheet.getCell("A3");
-      timestampCell.value = `Report Generated: ${moment().format("YYYY-MM-DD HH:mm:ss")}`;
-      timestampCell.font = { size: 10 };
-      timestampCell.alignment = {
-        vertical: "middle",
-        horizontal: "center",
-        wrapText: true,
-      };
-      worksheet.getRow(3).height = 20;
+    if (data && data.length > 0) {
+      data.forEach((row, index) => {
+        const rowData = [
+          row["Date"],
+          row["Clicks"],
+          row["Sales"],
+          row["Conversion Rate"],
+        ];
+        const dataRow = worksheet.addRow(rowData);
+
+        dataRow.height = 20;
+
+        dataRow.eachCell((cell) => {
+          if (index % 2 === 0) {
+            cell.fill = {
+              type: "pattern",
+              pattern: "solid",
+              fgColor: { argb: "F5F5F5" },
+            };
+          }
+
+          cell.border = {
+            top: { style: "thin" },
+            left: { style: "thin" },
+            bottom: { style: "thin" },
+            right: { style: "thin" },
+          };
+
+          cell.alignment = {
+            vertical: "middle",
+            horizontal: "center",
+            wrapText: true,
+          };
+
+          cell.font = { size: 10 };
+        });
+      });
+
+      const totalClicks = data.reduce((sum, row) => sum + row["Clicks"], 0);
+      const totalSales = data.reduce((sum, row) => sum + row["Sales"], 0);
+      const totalConversionRate =
+        totalClicks > 0 ? (totalSales / totalClicks) * 100 : 0;
 
       worksheet.addRow([]);
+      const totalRow = worksheet.addRow([
+        "TOTAL",
+        totalClicks,
+        totalSales,
+        `${totalConversionRate.toFixed(2)}%`,
+      ]);
 
-      const headers = ["Date", "Clicks", "Sales", "Conversion Rate"];
-      const headerRow = worksheet.addRow(headers);
-
-      headerRow.height = 25;
-      headerRow.eachCell((cell) => {
+      totalRow.height = 25;
+      totalRow.eachCell((cell) => {
+        cell.font = { bold: true, size: 11 };
         cell.fill = {
           type: "pattern",
           pattern: "solid",
-          fgColor: { argb: "4472C4" }, // Removed FF prefix
-        };
-        cell.font = {
-          color: { argb: "FFFFFF" }, // Removed FF prefix
-          bold: true,
-          size: 11,
+          fgColor: { argb: "D9D9D9" },
         };
         cell.border = {
-          top: { style: "thin" },
+          top: { style: "medium" },
           left: { style: "thin" },
-          bottom: { style: "thin" },
+          bottom: { style: "medium" },
           right: { style: "thin" },
         };
         cell.alignment = {
@@ -678,116 +728,47 @@ module.exports = {
           wrapText: true,
         };
       });
-
-      if (data && data.length > 0) {
-        data.forEach((row, index) => {
-          const rowData = [
-            row["Date"],
-            row["Clicks"],
-            row["Sales"],
-            row["Conversion Rate"],
-          ];
-          const dataRow = worksheet.addRow(rowData);
-
-          dataRow.height = 20;
-
-          dataRow.eachCell((cell) => {
-            if (index % 2 === 0) {
-              cell.fill = {
-                type: "pattern",
-                pattern: "solid",
-                fgColor: { argb: "F5F5F5" }, // Removed FF prefix
-              };
-            }
-
-            cell.border = {
-              top: { style: "thin" },
-              left: { style: "thin" },
-              bottom: { style: "thin" },
-              right: { style: "thin" },
-            };
-
-            cell.alignment = {
-              vertical: "middle",
-              horizontal: "center",
-              wrapText: true,
-            };
-
-            cell.font = { size: 10 };
-          });
-        });
-
-        const totalClicks = data.reduce((sum, row) => sum + row["Clicks"], 0);
-        const totalSales = data.reduce((sum, row) => sum + row["Sales"], 0);
-        const totalConversionRate =
-          totalClicks > 0 ? (totalSales / totalClicks) * 100 : 0;
-
-        worksheet.addRow([]);
-        const totalRow = worksheet.addRow([
-          "TOTAL",
-          totalClicks,
-          totalSales,
-          `${totalConversionRate.toFixed(2)}%`,
-        ]);
-
-        totalRow.height = 25;
-        totalRow.eachCell((cell) => {
-          cell.font = { bold: true, size: 11 };
-          cell.fill = {
-            type: "pattern",
-            pattern: "solid",
-            fgColor: { argb: "D9D9D9" }, // Removed FF prefix
-          };
-          cell.border = {
-            top: { style: "medium" },
-            left: { style: "thin" },
-            bottom: { style: "medium" },
-            right: { style: "thin" },
-          };
-          cell.alignment = {
-            vertical: "middle",
-            horizontal: "center",
-            wrapText: true,
-          };
-        });
-      } else {
-        const noDataRow = worksheet.addRow(["No data available", "", "", ""]);
-        worksheet.mergeCells(`A${noDataRow.number}:D${noDataRow.number}`);
-        noDataRow.height = 25;
-        noDataRow.getCell(1).alignment = {
-          vertical: "middle",
-          horizontal: "center",
-          wrapText: true,
-        };
-        noDataRow.getCell(1).font = { italic: true };
-      }
-
-      worksheet.getColumn(1).width = 18;
-      worksheet.getColumn(2).width = 18;
-      worksheet.getColumn(3).width = 18;
-      worksheet.getColumn(4).width = 18;
-
-      const timestamp = moment().format("YYYY-MM-DD");
-      res.setHeader(
-        "Content-Type",
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      );
-      res.setHeader(
-        "Content-Disposition",
-        `attachment; filename="daily_performance_${timestamp}.xlsx"`,
-      );
-      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-      res.setHeader("Pragma", "no-cache");
-      res.setHeader("Expires", "0");
-
-      // Write directly to response for better LibreOffice compatibility
-      await workbook.xlsx.write(res);
-      res.end();
-    } catch (error) {
-      console.error("Excel export error:", error);
-      throw new Error("Excel export failed: " + error.message);
+    } else {
+      const noDataRow = worksheet.addRow(["No data available", "", "", ""]);
+      worksheet.mergeCells(`A${noDataRow.number}:D${noDataRow.number}`);
+      noDataRow.height = 25;
+      noDataRow.getCell(1).alignment = {
+        vertical: "middle",
+        horizontal: "center",
+        wrapText: true,
+      };
+      noDataRow.getCell(1).font = { italic: true };
     }
-  },
+
+    worksheet.getColumn(1).width = 18;
+    worksheet.getColumn(2).width = 18;
+    worksheet.getColumn(3).width = 18;
+    worksheet.getColumn(4).width = 18;
+
+    const timestamp = moment().format("YYYY-MM-DD");
+    
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="daily_performance_${timestamp}.xlsx"`
+    );
+    
+    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+    res.setHeader("X-Content-Type-Options", "nosniff");
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    res.send(buffer);
+    
+  } catch (error) {
+    console.error("Excel export error:", error);
+    throw new Error("Excel export failed: " + error.message);
+  }
+},
 
   exportToCSV: async function (res, data, startDate, endDate, filter) {
     try {
