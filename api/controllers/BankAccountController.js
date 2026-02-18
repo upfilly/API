@@ -676,7 +676,7 @@ module.exports = {
         console.log("userDetail.payout_amount", userDetail.payout_amount);
 
         // Check: Validate payout amount against user's payout limit
-        if (userDetail.payout_amount && amount >= userDetail.payout_amount) {
+        if (userDetail.payout_amount && amount <= userDetail.payout_amount) {
           affiliatesWithInvalidPayout.push({
             affiliate_id: affiliate_data.affiliate_id,
             user_name: userDetail.fullName,
