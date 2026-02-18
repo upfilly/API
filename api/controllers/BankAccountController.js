@@ -742,6 +742,7 @@ module.exports = {
         // Wrap the stripe transfer in try-catch to handle insufficient balance
         try {
           let paid = await stripeServices.transfer_fund(payload);
+          console.log("paid DAta", paid);
 
           if (paid) {
             const invoicesDir = path.join(
@@ -759,7 +760,8 @@ module.exports = {
             const pdfPayload = {
               commission: amount,
               fullName: userDetail.fullName,
-              stripeTransferId: paid.id,
+              // stripeTransferId: paid.id,
+              stripeTransferId: accountDetails.accountId,
               invoiceDate: moment().format("YYYY-MM-DD"),
             };
 
@@ -1294,6 +1296,148 @@ module.exports = {
 const invoice_itm_html = (payload) => {
   const { commission, fullName, stripeTransferId, invoiceDate } = payload;
 
+  //   return `
+  // <!DOCTYPE html>
+  // <html lang="en">
+  // <head>
+  //   <meta charset="UTF-8" />
+  //   <title>Invoice</title>
+  //   <style>
+  //     body {
+  //       font-family: Arial, Helvetica, sans-serif;
+  //       background: #f6f8fb;
+  //       margin: 0;
+  //       padding: 20px;
+  //     }
+  //     .invoice-container {
+  //       max-width: 600px;
+  //       margin: auto;
+  //       background: #ffffff;
+  //       border-radius: 10px;
+  //       box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+  //       padding: 30px;
+  //     }
+  //     .invoice-header {
+  //       display: flex;
+  //       align-items: center;
+  //       justify-content: space-between;
+  //       border-bottom: 2px solid #eee;
+  //       padding-bottom: 15px;
+  //       margin-bottom: 25px;
+  //     }
+  //     .invoice-header img {
+  //       height: 40px;
+  //     }
+  //     .invoice-header h2 {
+  //       margin: 0;
+  //       font-size: 22px;
+  //       color: #333;
+  //     }
+  //     .invoice-details {
+  //       margin-bottom: 25px;
+  //     }
+  //     .invoice-details p {
+  //       margin: 4px 0;
+  //       color: #666;
+  //       font-size: 14px;
+  //     }
+  //     .recipient-section {
+  //       background: #f8f9fa;
+  //       padding: 15px;
+  //       border-radius: 8px;
+  //       margin-bottom: 25px;
+  //     }
+  //     .recipient-section h3 {
+  //       margin: 0 0 10px 0;
+  //       font-size: 16px;
+  //       color: #333;
+  //     }
+  //     .recipient-section p {
+  //       margin: 4px 0;
+  //       color: #555;
+  //       font-size: 14px;
+  //     }
+  //     .invoice-table {
+  //       width: 100%;
+  //       border-collapse: collapse;
+  //       margin-bottom: 20px;
+  //     }
+  //     .invoice-table th,
+  //     .invoice-table td {
+  //       padding: 12px 10px;
+  //       font-size: 14px;
+  //     }
+  //     .invoice-table th {
+  //       text-align: left;
+  //       color: #555;
+  //       border-bottom: 1px solid #ddd;
+  //     }
+  //     .invoice-table td {
+  //       text-align: right;
+  //       color: #333;
+  //     }
+  //     .invoice-table tr:not(:last-child) td {
+  //       border-bottom: 1px solid #f0f0f0;
+  //     }
+  //     .total-row td {
+  //       font-weight: bold;
+  //       font-size: 16px;
+  //       border-top: 2px solid #333;
+  //       padding-top: 15px;
+  //     }
+  //     .footer-note {
+  //       text-align: center;
+  //       font-size: 12px;
+  //       color: #888;
+  //       margin-top: 30px;
+  //     }
+  //     @page { margin: 0; }
+  //   </style>
+  // </head>
+  // <body>
+  //   <div class="invoice-container">
+  //     <div class="invoice-header">
+  //       <img src="${
+  //         credentials.BACK_WEB_URL || "https://your-domain.com"
+  //       }/images/logo.png" alt="Upfilly Logo" />
+  //       <h2>Invoice</h2>
+  //     </div>
+
+  //     <div class="invoice-details">
+  //       <p><strong>Invoice ID:</strong> #INV-${Date.now()}</p>
+  //       <p><strong>Date:</strong> ${invoiceDate || new Date().toLocaleDateString("en-CA")}</p>
+  //       <p><strong>Payment Method:</strong> Stripe Transfer</p>
+  //       ${stripeTransferId ? `<p><strong>Stripe Transfer ID:</strong> ${stripeTransferId}</p>` : ""}
+  //     </div>
+
+  //     <div class="recipient-section">
+  //       <h3>Paid To</h3>
+  //       <p><strong>Name:</strong> ${fullName || "N/A"}</p>
+  //     </div>
+
+  //     <table class="invoice-table">
+  //       <tr>
+  //         <th>Description</th>
+  //         <th>Amount</th>
+  //       </tr>
+  //       <tr>
+  //         <td style="text-align:left;">Commission Amount</td>
+  //         <td>$${(commission)}</td>
+  //       </tr>
+  //       <tr class="total-row">
+  //         <td style="text-align:left;">Total Amount</td>
+  //         <td>$${(commission)}</td>
+  //       </tr>
+  //     </table>
+
+  //     <div class="footer-note">
+  //       Powered by Upfilly • Payments processed securely via Stripe
+  //     </div>
+  //   </div>
+  // </body>
+  // </html>
+  // `;
+
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -1400,19 +1544,16 @@ const invoice_itm_html = (payload) => {
       }/images/logo.png" alt="Upfilly Logo" />
       <h2>Invoice</h2>
     </div>
-    
     <div class="invoice-details">
       <p><strong>Invoice ID:</strong> #INV-${Date.now()}</p>
       <p><strong>Date:</strong> ${invoiceDate || new Date().toLocaleDateString("en-CA")}</p>
       <p><strong>Payment Method:</strong> Stripe Transfer</p>
-      ${stripeTransferId ? `<p><strong>Stripe Transfer ID:</strong> ${stripeTransferId}</p>` : ""}
+${stripeTransferId ? `<p><strong>Stripe Account ID:</strong> ${stripeTransferId}</p>` : ""}
     </div>
-    
     <div class="recipient-section">
       <h3>Paid To</h3>
       <p><strong>Name:</strong> ${fullName || "N/A"}</p>
     </div>
-    
     <table class="invoice-table">
       <tr>
         <th>Description</th>
@@ -1420,14 +1561,13 @@ const invoice_itm_html = (payload) => {
       </tr>
       <tr>
         <td style="text-align:left;">Commission Amount</td>
-        <td>$${(commission / 100).toFixed(2)}</td>
+        <td>$${commission}</td>
       </tr>
       <tr class="total-row">
         <td style="text-align:left;">Total Amount</td>
-        <td>$${(commission / 100).toFixed(2)}</td>
+        <td>$${commission}</td>
       </tr>
     </table>
-    
     <div class="footer-note">
       Powered by Upfilly • Payments processed securely via Stripe
     </div>
