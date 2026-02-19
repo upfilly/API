@@ -742,8 +742,8 @@ exports.reportAnalytics = async (req, res) => {
     }
 
     new_query = { ...query };
-    console.log("new_query", new_query);
-    console.log("query", query);
+    // console.log("new_query", new_query);
+    // console.log("query", query);
 
     const baseStages = [
       {
