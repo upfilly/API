@@ -167,6 +167,7 @@ module.exports = {
   webhook: async (request, response) => {
     try {
       const eventObject = request.body.data.object;
+      console.log("req.body.type==============================",request.body.type)
       switch (request.body.type) {
         case "account.updated":
           console.log("request.body", request.body);
@@ -201,7 +202,7 @@ module.exports = {
 
           if (findAccount) {
             // Fetch full account details from Stripe
-            const stripe = require("stripe")(process.env.stripe); // or however you initialize Stripe
+            // const stripe = require("stripe")(process.env.stripe); // or however you initialize Stripe
             const fullAccount = await stripe.accounts.retrieve(eventObject.id);
 
             console.log("Full Account Data:", fullAccount);
