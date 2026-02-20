@@ -19,7 +19,7 @@ const fs = require("fs");
 const puppeteer = require("puppeteer");
 const response = require("../services/Response");
 const emails = require("../Emails/EmailMessageTemplate");
-
+console.log("stripe",stripe)
 /** common function for create account onboarding link */
 
 const accountDetailLink = async (userId) => {
@@ -106,170 +106,46 @@ module.exports = {
     }
   },
   /** Update Account Details */
-  // webhook: async (request, response) => {
-  //   try {
-  //     const eventObject = request.body.data.object;
-  //     switch (request.body.type) {
-  //       case "account.updated":
-  //         console.log("eventObject", eventObject);
-  //       console.log("MAIN OUTER ", request.body);
-  //       console.log("eventObject_requirements ", eventObject.requirements?.currently_due);
-  //       console.log("eventObject_requirements_length ", eventObject.requirements?.currently_due?.length);
-  //         const findAccount = await Account.findOne({
-  //           accountId: eventObject.id,
-  //         });
-
-  //         if (findAccount) {
-  //           const updateObject = {
-  //             transfer: eventObject.capabilities.transfers || "",
-  //             account_holder_name:
-  //               eventObject.external_accounts?.data[0]?.account_holder_name ||
-  //               "",
-  //             bank_name:
-  //               eventObject.external_accounts?.data[0]?.bank_name || "",
-  //             country: eventObject.external_accounts?.data[0]?.country || "",
-  //             currency: eventObject.external_accounts?.data[0]?.currency || "",
-  //             accountStatus:
-  //               eventObject.external_accounts?.data[0]?.status || "",
-  //             routingNumber:
-  //               eventObject.external_accounts?.data[0]?.routing_number || "",
-  //             bankAccountNumber:
-  //               eventObject.external_accounts?.data[0]?.last4 || "",
-  //           };
-
-  //           await Account.updateOne({ accountId: eventObject.id }).set(
-  //             updateObject
-  //           );
-  //         } else {
-  //           console.log("Account not found");
-  //         }
-  //         break;
-  //       case "balance.available":
-  //         console.log("handle balance availiable webhook");
-  //         break;
-
-  //       default:
-  //         // Log unhandled event types
-  //         console.log(`Unhandled event type ${request.body.type}`);
-  //         break;
-  //     }
-
-  //     // Send a response to Stripe acknowledging receipt of the webhook
-  //     response.json({ received: true });
-  //   } catch (error) {
-  //     console.log("Error handling webhook:", error);
-  //     return response.status(200).json({
-  //       success: false,
-  //     });
-  //   }
-  // },
-
   webhook: async (request, response) => {
     try {
       const eventObject = request.body.data.object;
-      console.log("req.body.type==============================",request.body.type,"=====================================================")
       switch (request.body.type) {
         case "account.updated":
-          console.log("request.body", request.body);
-          console.log("request.data", request.body.data);
-          console.log("request.body.data.object ", request.body.data.object);
-          console.log(
-            "All console object data  ",
-            eventObject.business_profile,
-            "eventObject.capabilities",
-            eventObject.capabilities,
-            "eventObject.controller",
-            eventObject.controller,
-            "eventObject.future_requirements",
-            eventObject.future_requirements,
-            "eventObject.individual",
-            eventObject.individual,
-            "eventObject.requirements",
-            eventObject.requirements,
-            "eventObject.settings",
-            eventObject.settings,
-            "eventObject.external_accounts",
-            eventObject.external_accounts,
-            "eventObject.login_links",
-            eventObject.login_links,
-            "eventObject.tos_acceptance",
-            eventObject.tos_acceptance,
-          );
-
+          console.log("eventObject", eventObject);
+        console.log("MAIN OUTER ", request.body);
+        console.log("eventObject_requirements ", eventObject.requirements?.currently_due);
+        console.log("eventObject_requirements_length ", eventObject.requirements?.currently_due?.length);
           const findAccount = await Account.findOne({
             accountId: eventObject.id,
           });
 
           if (findAccount) {
-            // Fetch full account details from Stripe
-            // const stripe = require("stripe")(process.env.stripe); // or however you initialize Stripe
-            const fullAccount = await stripe.accounts.retrieve(eventObject.id);
-
-            console.log("Full Account Data:", fullAccount);
-
-            // Extract legal name (business or individual)
-            const legalName =
-              fullAccount.business_profile?.name ||
-              (fullAccount.individual?.first_name
-                ? `${fullAccount.individual.first_name} ${fullAccount.individual.last_name || ""}`.trim()
-                : fullAccount.company?.name || "");
-
-            // Extract address (business or individual)
-            const address =
-              fullAccount.company?.address ||
-              fullAccount.individual?.address ||
-              fullAccount.business_profile?.support_address ||
-              {};
-
-            // Extract VAT/EIN
-            const vatOrEin =
-              fullAccount.company?.tax_id ||
-              fullAccount.individual?.id_number ||
-              fullAccount.company?.vat_id ||
-              fullAccount.business_tax_id?.value ||
-              "";
-
             const updateObject = {
-              transfer: fullAccount.capabilities?.transfers || "",
+              transfer: eventObject.capabilities.transfers || "",
               account_holder_name:
-                fullAccount.external_accounts?.data[0]?.account_holder_name ||
+                eventObject.external_accounts?.data[0]?.account_holder_name ||
                 "",
               bank_name:
-                fullAccount.external_accounts?.data[0]?.bank_name || "",
-              country: fullAccount.external_accounts?.data[0]?.country || "",
-              currency: fullAccount.external_accounts?.data[0]?.currency || "",
+                eventObject.external_accounts?.data[0]?.bank_name || "",
+              country: eventObject.external_accounts?.data[0]?.country || "",
+              currency: eventObject.external_accounts?.data[0]?.currency || "",
               accountStatus:
-                fullAccount.external_accounts?.data[0]?.status || "",
+                eventObject.external_accounts?.data[0]?.status || "",
               routingNumber:
-                fullAccount.external_accounts?.data[0]?.routing_number || "",
+                eventObject.external_accounts?.data[0]?.routing_number || "",
               bankAccountNumber:
-                fullAccount.external_accounts?.data[0]?.last4 || "",
-
-              // New fields
-              legalName: legalName,
-              address: {
-                line1: address.line1 || "",
-                line2: address.line2 || "",
-                city: address.city || "",
-                state: address.state || "",
-                postal_code: address.postal_code || "",
-                country: address.country || "",
-              },
-              vatOrEin: vatOrEin,
+                eventObject.external_accounts?.data[0]?.last4 || "",
             };
 
-            console.log("Update Object:", updateObject);
-
             await Account.updateOne({ accountId: eventObject.id }).set(
-              updateObject,
+              updateObject
             );
           } else {
             console.log("Account not found");
           }
           break;
-
         case "balance.available":
-          console.log("handle balance available webhook");
+          console.log("handle balance availiable webhook");
           break;
 
         default:
@@ -287,6 +163,130 @@ module.exports = {
       });
     }
   },
+
+  // webhook: async (request, response) => {
+  //   try {
+  //     const eventObject = request.body.data.object;
+  //     console.log("req.body.type==============================",request.body.type,"=====================================================")
+  //     switch (request.body.type) {
+  //       case "account.updated":
+  //         console.log("request.body", request.body);
+  //         console.log("request.data", request.body.data);
+  //         console.log("request.body.data.object ", request.body.data.object);
+  //         console.log(
+  //           "All console object data  ",
+  //           eventObject.business_profile,
+  //           "eventObject.capabilities",
+  //           eventObject.capabilities,
+  //           "eventObject.controller",
+  //           eventObject.controller,
+  //           "eventObject.future_requirements",
+  //           eventObject.future_requirements,
+  //           "eventObject.individual",
+  //           eventObject.individual,
+  //           "eventObject.requirements",
+  //           eventObject.requirements,
+  //           "eventObject.settings",
+  //           eventObject.settings,
+  //           "eventObject.external_accounts",
+  //           eventObject.external_accounts,
+  //           "eventObject.login_links",
+  //           eventObject.login_links,
+  //           "eventObject.tos_acceptance",
+  //           eventObject.tos_acceptance,
+  //         );
+
+  //         const findAccount = await Account.findOne({
+  //           accountId: eventObject.id,
+  //         });
+
+  //         if (findAccount) {
+  //           // Fetch full account details from Stripe
+  //           // const stripe = require("stripe")(process.env.stripe); // or however you initialize Stripe
+  //           const fullAccount = await stripe.accounts.retrieve(eventObject.id);
+
+  //           console.log("Full Account Data:", fullAccount);
+
+  //           // Extract legal name (business or individual)
+  //           const legalName =
+  //             fullAccount.business_profile?.name ||
+  //             (fullAccount.individual?.first_name
+  //               ? `${fullAccount.individual.first_name} ${fullAccount.individual.last_name || ""}`.trim()
+  //               : fullAccount.company?.name || "");
+
+  //           // Extract address (business or individual)
+  //           const address =
+  //             fullAccount.company?.address ||
+  //             fullAccount.individual?.address ||
+  //             fullAccount.business_profile?.support_address ||
+  //             {};
+
+  //           // Extract VAT/EIN
+  //           const vatOrEin =
+  //             fullAccount.company?.tax_id ||
+  //             fullAccount.individual?.id_number ||
+  //             fullAccount.company?.vat_id ||
+  //             fullAccount.business_tax_id?.value ||
+  //             "";
+
+  //           const updateObject = {
+  //             transfer: fullAccount.capabilities?.transfers || "",
+  //             account_holder_name:
+  //               fullAccount.external_accounts?.data[0]?.account_holder_name ||
+  //               "",
+  //             bank_name:
+  //               fullAccount.external_accounts?.data[0]?.bank_name || "",
+  //             country: fullAccount.external_accounts?.data[0]?.country || "",
+  //             currency: fullAccount.external_accounts?.data[0]?.currency || "",
+  //             accountStatus:
+  //               fullAccount.external_accounts?.data[0]?.status || "",
+  //             routingNumber:
+  //               fullAccount.external_accounts?.data[0]?.routing_number || "",
+  //             bankAccountNumber:
+  //               fullAccount.external_accounts?.data[0]?.last4 || "",
+
+  //             // New fields
+  //             legalName: legalName,
+  //             address: {
+  //               line1: address.line1 || "",
+  //               line2: address.line2 || "",
+  //               city: address.city || "",
+  //               state: address.state || "",
+  //               postal_code: address.postal_code || "",
+  //               country: address.country || "",
+  //             },
+  //             vatOrEin: vatOrEin,
+  //           };
+
+  //           console.log("Update Object:", updateObject);
+
+  //           await Account.updateOne({ accountId: eventObject.id }).set(
+  //             updateObject,
+  //           );
+  //         } else {
+  //           console.log("Account not found");
+  //         }
+  //         break;
+
+  //       case "balance.available":
+  //         console.log("handle balance available webhook");
+  //         break;
+
+  //       default:
+  //         // Log unhandled event types
+  //         console.log(`Unhandled event type ${request.body.type}`);
+  //         break;
+  //     }
+
+  //     // Send a response to Stripe acknowledging receipt of the webhook
+  //     response.json({ received: true });
+  //   } catch (error) {
+  //     console.log("Error handling webhook:", error);
+  //     return response.status(200).json({
+  //       success: false,
+  //     });
+  //   }
+  // },
   /*** update active and inactive account */
   regenrateOnBoardingLink: async (req, res) => {
     try {
