@@ -178,29 +178,8 @@ webhook: async (request, response) => {
         });
 
         if (findAccount) {
-          // ── Extract legalName directly from eventObject ──────────
-          const legalName =
-            eventObject.business_profile?.name ||
-            (eventObject.individual?.first_name
-              ? `${eventObject.individual.first_name} ${eventObject.individual.last_name || ""}`.trim()
-              : eventObject.company?.name || "");
-
-          // ── Extract address directly from eventObject ─────────────
-          const rawAddress =
-            eventObject.company?.address ||
-            eventObject.individual?.address ||
-            eventObject.business_profile?.support_address ||
-            {};
-
-          // ── Extract VAT/EIN directly from eventObject ─────────────
-          const vatOrEin =
-            eventObject.company?.tax_id ||
-            eventObject.individual?.id_number ||
-            eventObject.company?.vat_id ||
-            "";
-
+          // ── Base update object from eventObject (same as your working version) ──
           const updateObject = {
-            // ── Existing fields (unchanged) ───────────────────────
             transfer: eventObject.capabilities?.transfers || "",
             account_holder_name:
               eventObject.external_accounts?.data[0]?.account_holder_name || "",
@@ -217,24 +196,74 @@ webhook: async (request, response) => {
             bankAccountNumber:
               eventObject.external_accounts?.data[0]?.last4 || "",
 
-            // ── New fields ────────────────────────────────────────
-            legalName: legalName,
+            // ── Default empty values for new fields ─────────────────
+            legalName: "",
             address: {
+              line1: "",
+              line2: "",
+              city: "",
+              state: "",
+              postal_code: "",
+              country: "",
+            },
+            vatOrEin: "",
+          };
+
+          // ── Safely fetch full account to get individual/company/business_profile ──
+          // These fields are NOT present in the webhook payload, so we must retrieve
+          try {
+            const fullAccount = await stripe.accounts.retrieve(eventObject.id);
+            console.log("Full Account Retrieved:", fullAccount.id);
+
+            // Extract legalName
+            const legalName =
+              fullAccount.business_profile?.name ||
+              (fullAccount.individual?.first_name
+                ? `${fullAccount.individual.first_name} ${fullAccount.individual.last_name || ""}`.trim()
+                : fullAccount.company?.name || "");
+
+            // Extract address
+            const rawAddress =
+              fullAccount.company?.address ||
+              fullAccount.individual?.address ||
+              fullAccount.business_profile?.support_address ||
+              {};
+
+            // Extract VAT/EIN
+            const vatOrEin =
+              fullAccount.company?.tax_id ||
+              fullAccount.individual?.id_number ||
+              fullAccount.company?.vat_id ||
+              "";
+
+            // Overwrite the defaults with real values
+            updateObject.legalName = legalName;
+            updateObject.address = {
               line1: rawAddress.line1 || "",
               line2: rawAddress.line2 || "",
               city: rawAddress.city || "",
               state: rawAddress.state || "",
               postal_code: rawAddress.postal_code || "",
               country: rawAddress.country || "",
-            },
-            vatOrEin: vatOrEin,
-          };
+            };
+            updateObject.vatOrEin = vatOrEin;
+
+          } catch (retrieveError) {
+            // ── If retrieve fails, still save the base fields ───────
+            // legalName/address/vatOrEin will remain as empty defaults above
+            console.log(
+              "Warning: Could not retrieve full account details, saving base fields only:",
+              retrieveError.message
+            );
+          }
 
           console.log("Update Object:", updateObject);
 
+          // ── Always runs — even if stripe.retrieve() failed ────────
           await Account.updateOne({ accountId: eventObject.id }).set(
             updateObject
           );
+
         } else {
           console.log("Account not found");
         }
