@@ -167,7 +167,7 @@ module.exports = {
   webhook: async (request, response) => {
     try {
       const eventObject = request.body.data.object;
-      console.log("req.body.type==============================",request.body.type)
+      console.log("req.body.type==============================",request.body.type,"=====================================================")
       switch (request.body.type) {
         case "account.updated":
           console.log("request.body", request.body);
