@@ -165,6 +165,7 @@ module.exports = {
 
 webhook: async (request, response) => {
   try {
+   let stripe = require("stripe")(credentials.PAYMENT_INFO.SECREATKEY);
     const eventObject = request.body.data.object;
     switch (request.body.type) {
       case "account.updated":
