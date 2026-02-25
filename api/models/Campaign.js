@@ -57,6 +57,7 @@ module.exports = {
         legalTerm: {type:'string',defaultsTo:""},
         islegal: {type:'boolean',defaultsTo:false},
         isArchive: {type:'boolean',defaultsTo:false},
+        customparameter : {type:"string"},
     },
 
 };

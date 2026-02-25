@@ -1162,6 +1162,7 @@ exports.getAllCampaignsForBrand = async (req, res) => {
           event_type_length: 1,
           access_type: 1,
           affiliate_data: "$affiliate_data",
+          customparameter :1,
         },
       },
       {

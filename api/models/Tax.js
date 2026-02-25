@@ -25,8 +25,7 @@ module.exports = {
     updatedBy: { model: 'users' },
     createdAt: { type: 'ref', autoCreatedAt: true, },
     updatedAt: { type: 'ref', autoUpdatedAt: true },
-
-
+    address: { type: "string" },
   },
 
 };

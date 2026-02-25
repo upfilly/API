@@ -14,6 +14,7 @@ exports.addTax = async (req, res, next) => {
         consent_agreed: Joi.boolean().optional(),
         signature: Joi.string().optional().allow(""),
         signature_date: Joi.date().optional().allow(""),
+        address : Joi.string().optional().allow(""),
 
     });
     return await Validate(schema, req, res);

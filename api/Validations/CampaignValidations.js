@@ -50,6 +50,7 @@ exports.addCampaign = async (req, res, next) => {
         legalTerm : Joi.string().optional(),
         islegal : Joi.boolean().optional(),
         status : Joi.string().optional().valid("active","deactive"),
+        customparameter : Joi.string().optional().allow(""),
     });
     return await Validate(schema, req, res);
 }
@@ -98,6 +99,7 @@ exports.editCampaign = async (req, res, next) => {
         islegal : Joi.boolean().optional(),
         status : Joi.string().optional().valid("active","deactive"),
         isArchive : Joi.boolean().optional(),
+        customparameter : Joi.string().optional().allow(""),
         
     });
     return await Validate(schema, req, res);
