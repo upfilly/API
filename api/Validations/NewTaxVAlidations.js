@@ -16,6 +16,12 @@ exports.addTax = async (req, res, next) => {
         signature_date: Joi.date().optional().allow(""),
         address : Joi.string().optional().allow(""),
 
+        country : Joi.string().optional().allow(""),
+        city : Joi.string().optional().allow(""),
+        state : Joi.string().optional().allow(""),
+        tax : Joi.string().optional().allow(""),
+
+
     });
     return await Validate(schema, req, res);
 }

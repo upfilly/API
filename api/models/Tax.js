@@ -26,6 +26,11 @@ module.exports = {
     createdAt: { type: 'ref', autoCreatedAt: true, },
     updatedAt: { type: 'ref', autoUpdatedAt: true },
     address: { type: "string" },
+
+    country: { type: "string" },
+    city: { type: "string" },
+    state: { type: "string" },
+    tax: { type: "string" },
   },
 
 };
