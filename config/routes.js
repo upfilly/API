@@ -438,6 +438,8 @@ module.exports.routes = {
 
   /**@NewTax */
   "post /addTax": "NewTaxController.addTax",
+  "put /updateTax": "NewTaxController.updateTax",
+
 
   /**@AffiliateInvite */
 

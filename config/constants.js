@@ -571,6 +571,8 @@ module.exports.constants = {
     ALREADY_EXIST: "Tax Details already exist",
     ADDED: "Tax Details added sucessfully",
     INVALID_ID: "Invaild Id",
+    NOT_FOUND: "Tax data not found",
+    UPDATED: "Tax data updated successfully."
   },
 
   AFFILIATEINVITE: {
