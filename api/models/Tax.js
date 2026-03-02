@@ -27,11 +27,12 @@ module.exports = {
     updatedAt: { type: 'ref', autoUpdatedAt: true },
     address: { type: "string" },
 
-    country: { type: "string" },
-    city: { type: "string" },
-    state: { type: "string" },
+    country: { type: "json" },
+    city: { type: "json" },
+    state: { type: "json" },
     tax: { type: "string" },
   },
 
 };
+
 
