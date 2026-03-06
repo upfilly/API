@@ -69,7 +69,7 @@ module.exports = {
         });
       }
 
-      const dataObject = { email, businessName };//country
+      const dataObject = { email, businessName,country };//country
       const createBankAccount =
         await stripeServices.add_bank_account(dataObject);
 
