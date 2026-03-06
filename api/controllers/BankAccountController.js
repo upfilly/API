@@ -59,7 +59,7 @@ module.exports = {
   createAccount: async (req, res) => {
     try {
       const { email, businessName, country } = req.body;
-      if (!email || !businessName || !country) {
+      if (!email || !businessName ) {//country
         return res.status(400).json({
           success: false,
           error: {
@@ -69,7 +69,7 @@ module.exports = {
         });
       }
 
-      const dataObject = { email, businessName, country };
+      const dataObject = { email, businessName };//country
       const createBankAccount =
         await stripeServices.add_bank_account(dataObject);
 
