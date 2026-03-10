@@ -179,7 +179,6 @@ webhook: async (request, response) => {
         });
 
         if (findAccount) {
-          // ── Base update object from eventObject (same as your working version) ──
           const updateObject = {
             transfer: eventObject.capabilities?.transfers || "",
             account_holder_name:
@@ -197,7 +196,6 @@ webhook: async (request, response) => {
             bankAccountNumber:
               eventObject.external_accounts?.data[0]?.last4 || "",
 
-            // ── Default empty values for new fields ─────────────────
             legalName: "",
             address: {
               line1: "",
@@ -210,34 +208,28 @@ webhook: async (request, response) => {
             vatOrEin: "",
           };
 
-          // ── Safely fetch full account to get individual/company/business_profile ──
-          // These fields are NOT present in the webhook payload, so we must retrieve
           try {
             const fullAccount = await stripe.accounts.retrieve(eventObject.id);
             console.log("Full Account Retrieved:", fullAccount.id);
 
-            // Extract legalName
             const legalName =
               fullAccount.business_profile?.name ||
               (fullAccount.individual?.first_name
                 ? `${fullAccount.individual.first_name} ${fullAccount.individual.last_name || ""}`.trim()
                 : fullAccount.company?.name || "");
 
-            // Extract address
             const rawAddress =
               fullAccount.company?.address ||
               fullAccount.individual?.address ||
               fullAccount.business_profile?.support_address ||
               {};
 
-            // Extract VAT/EIN
             const vatOrEin =
               fullAccount.company?.tax_id ||
               fullAccount.individual?.id_number ||
               fullAccount.company?.vat_id ||
               "";
 
-            // Overwrite the defaults with real values
             updateObject.legalName = legalName;
             updateObject.address = {
               line1: rawAddress.line1 || "",
@@ -250,8 +242,7 @@ webhook: async (request, response) => {
             updateObject.vatOrEin = vatOrEin;
 
           } catch (retrieveError) {
-            // ── If retrieve fails, still save the base fields ───────
-            // legalName/address/vatOrEin will remain as empty defaults above
+           
             console.log(
               "Warning: Could not retrieve full account details, saving base fields only:",
               retrieveError.message
@@ -758,12 +749,15 @@ webhook: async (request, response) => {
             const filename = `invoice_${Date.now()}_${affiliate_data.affiliate_id}.pdf`;
             const outputPath = path.join(invoicesDir, filename);
 
+             const country = accountDetails.country || userDetail.country || 'N/A';
+
             const pdfPayload = {
               commission: amount,
               fullName: userDetail.fullName,
               // stripeTransferId: paid.id,
               stripeTransferId: accountDetails.accountId,
               invoiceDate: moment().format("YYYY-MM-DD"),
+              country: country, 
             };
 
             await htmlToPdf(invoice_itm_html(pdfPayload), outputPath);
@@ -917,528 +911,16 @@ webhook: async (request, response) => {
     }
   },
 
-  //   transferPayment: async (req, res) => {
-  //   try {
-  //     const { currency, affiliateLinkIds } = req.body;
-  //     let paid_to_emails = new Set([]);
-  //     let affiliatesWithoutAccount = [];
-  //     let affiliatesWithInactiveTransfer = [];
-  //     let affiliatesWithInvalidPayout = [];
-  //     let affiliatesWithoutCampaign = []; // NEW array for missing campaigns
-  //     let processedAffiliates = [];
-  //     let i = 0;
-
-  //     for await (let itm of affiliateLinkIds) {
-  //       const affiliate_data = await AffiliateLink.findOne(itm);
-
-  //       const userDetail = await Users.findOne({
-  //         id: affiliate_data.affiliate_id,
-  //         isDeleted: false,
-  //       });
-
-  //       if (!paid_to_emails.has(userDetail.email)) {
-  //         paid_to_emails.add(userDetail.email);
-  //       }
-
-  //       let get_campain_from_affiliations =
-  //         await BrandAffiliateAssociation.findOne({
-  //           brand_id: affiliate_data.brand_id,
-  //           affiliate_id: affiliate_data.affiliate_id,
-  //           isActive: true,
-  //         }).populate("campaign_id");
-
-  //       console.log("get_campain_from_affiliations", get_campain_from_affiliations);
-
-  //       // NEW CHECK: Validate campaign exists
-  //       if (!get_campain_from_affiliations || !get_campain_from_affiliations.campaign_id) {
-  //         affiliatesWithoutCampaign.push({
-  //           affiliate_id: affiliate_data.affiliate_id,
-  //           user_name: userDetail.fullName,
-  //           user_email: userDetail.email,
-  //           brand_id: affiliate_data.brand_id,
-  //           affiliateLinkId: itm,
-  //         });
-  //         continue; // Skip to next affiliate
-  //       }
-
-  //       const campaign_details = get_campain_from_affiliations.campaign_id;
-  //       let commission_type = campaign_details.commission_type;
-  //       let amount = 0;
-
-  //       if (affiliate_data.amount_of_commission) {
-  //         amount = affiliate_data.amount_of_commission;
-  //       } else if (commission_type == "amount") {
-  //         amount = campaign_details.commission;
-  //       } else {
-  //         amount = (affiliate_data.price * campaign_details.commission) / 100;
-  //       }
-  //       console.log("amount",amount)
-  //       console.log("userDetail.payout_amount",userDetail.payout_amount)
-  //       // CHECK: Validate payout amount against user's payout limit
-  //       if (userDetail.payout_amount && amount >= userDetail.payout_amount) {
-  //         affiliatesWithInvalidPayout.push({
-  //           affiliate_id: affiliate_data.affiliate_id,
-  //           user_name: userDetail.fullName,
-  //           user_email: userDetail.email,
-  //           payout_limit: userDetail.payout_amount,
-  //           attempted_amount: amount,
-  //           affiliateLinkId: itm,
-  //         });
-  //         continue; // Skip to next affiliate
-  //       }
-
-  //       const accountDetails = await Account.findOne({
-  //         addedBy: affiliate_data.affiliate_id,
-  //         isDeleted: false,
-  //         isActive: true,
-  //       });
-
-  //       if (!accountDetails) {
-  //         affiliatesWithoutAccount.push({
-  //           affiliate_id: affiliate_data.affiliate_id,
-  //           user_name: userDetail.fullName,
-  //           user_email: userDetail.email,
-  //           amount: amount,
-  //           affiliateLinkId: itm,
-  //         });
-
-  //         if (userDetail) {
-  //           const emailPayload = {
-  //             fullName: userDetail.fullName,
-  //             email: userDetail.email,
-  //           };
-  //           await emails.reminderToOpenAccount(emailPayload);
-  //         }
-  //         continue;
-  //       }
-
-  //       // Check if account exists but transfer is inactive
-  //       if (accountDetails.transfer === "inactive") {
-  //         affiliatesWithInactiveTransfer.push({
-  //           affiliate_id: affiliate_data.affiliate_id,
-  //           user_name: userDetail.fullName,
-  //           user_email: userDetail.email,
-  //           amount: amount,
-  //           affiliateLinkId: itm,
-  //         });
-  //         continue;
-  //       }
-
-  //       // Only reach here if account exists AND transfer is NOT inactive
-  //       const payload = {
-  //         accountId: accountDetails.accountId,
-  //         transferredAmount: amount,
-  //         currency: currency || "usd",
-  //         description: `An amount of ${
-  //           amount / 100
-  //         } has been transferred from Upfilly to ${
-  //           userDetail.fullName
-  //         } on ${moment().format("YYYY-MM-DD HH:mm:ss")}.`,
-  //         paidTo: userDetail.id,
-  //         amount: amount,
-  //       };
-
-  //       invoice_itm_html({
-  //         commission: amount,
-  //       });
-
-  //       let paid = await stripeServices.transfer_fund(payload);
-  //       if (paid) {
-  //         const invoicesDir = path.join(__dirname, "../../assets", "invoices");
-  //         if (!fs.existsSync(invoicesDir)) {
-  //           fs.mkdirSync(invoicesDir, { recursive: true });
-  //         }
-
-  //         const filename = `invoice_${Date.now()}_${
-  //           affiliate_data.affiliate_id
-  //         }.pdf`;
-  //         const outputPath = path.join(invoicesDir, filename);
-
-  //         const pdfPayload = {
-  //           commission: amount,
-  //         };
-  //         await htmlToPdf(invoice_itm_html(pdfPayload), outputPath);
-  //         const custom_invoice_url = `invoices/${filename}`;
-
-  //         let data = {
-  //           user_id: req.identity?.id,
-  //           paid_to: get_campain_from_affiliations.affiliate_id,
-  //           transaction_type: "bank_account",
-  //           transaction_id: "",
-  //           stripe_charge_id: "",
-  //           currency: get_campain_from_affiliations?.currencies,
-  //           amount: amount.toFixed(2),
-  //           transaction_status: "paid",
-  //           special_plan_id: null,
-  //           subscription_id: null,
-  //           stripe_subscription_id: "",
-  //           addedBy: req.identity?.id,
-  //           updatedBy: null,
-  //           paypal_transaction_id: "",
-  //           paypal_transaction_status: "",
-  //           affiliateLinkId: itm,
-  //           custom_invoice_url,
-  //         };
-
-  //         await Transactions.create(data);
-  //         await AffiliateLink.updateOne({ id: itm }, { admin_paid: "paid" });
-
-  //         let email_payload = {
-  //           fullName: userDetail.fullName,
-  //           email: userDetail.email,
-  //           amount: amount,
-  //         };
-  //         await emails.adminPaid(email_payload);
-
-  //         processedAffiliates.push({
-  //           affiliate_id: affiliate_data.affiliate_id,
-  //           user_name: userDetail.fullName,
-  //           user_email: userDetail.email,
-  //           amount: amount,
-  //           affiliateLinkId: itm,
-  //           status: "paid",
-  //         });
-  //       }
-  //     }
-
-  //     // Updated response with campaign check array
-  //     let responseData = {
-  //       processed_count: processedAffiliates.length,
-  //       processed_affiliates: processedAffiliates,
-  //       without_account_count: affiliatesWithoutAccount.length,
-  //       affiliates_without_account: affiliatesWithoutAccount,
-  //       inactive_transfer_count: affiliatesWithInactiveTransfer.length,
-  //       affiliates_inactive_transfer: affiliatesWithInactiveTransfer,
-  //       invalid_payout_count: affiliatesWithInvalidPayout.length,
-  //       affiliates_invalid_payout: affiliatesWithInvalidPayout,
-  //       without_campaign_count: affiliatesWithoutCampaign.length, // NEW
-  //       affiliates_without_campaign: affiliatesWithoutCampaign, // NEW
-  //     };
-
-  //     let message = "";
-
-  //     if (processedAffiliates.length === 0) {
-  //       if (
-  //         affiliatesWithoutAccount.length > 0 ||
-  //         affiliatesWithInactiveTransfer.length > 0 ||
-  //         affiliatesWithInvalidPayout.length > 0 ||
-  //         affiliatesWithoutCampaign.length > 0
-  //       ) {
-  //         message = `No payments processed. ${affiliatesWithoutAccount.length} affiliate(s) need to set up their accounts, ${affiliatesWithInactiveTransfer.length} affiliate(s) have inactive transfer capability, ${affiliatesWithInvalidPayout.length} affiliate(s) have invalid payout amounts, ${affiliatesWithoutCampaign.length} affiliate(s) have no active campaign.`;
-  //       } else {
-  //         message = "No payments were processed.";
-  //       }
-  //       return response.success(responseData, message, req, res);
-  //     }
-
-  //     if (processedAffiliates.length > 0) {
-  //       message = `Payments processed for ${processedAffiliates.length} affiliate(s).`;
-
-  //       if (affiliatesWithoutAccount.length > 0) {
-  //         message += ` ${affiliatesWithoutAccount.length} affiliate(s) need to set up their accounts.`;
-  //       }
-
-  //       if (affiliatesWithInactiveTransfer.length > 0) {
-  //         message += ` ${affiliatesWithInactiveTransfer.length} affiliate(s) have inactive transfer capability.`;
-  //       }
-
-  //       if (affiliatesWithInvalidPayout.length > 0) {
-  //         message += ` ${affiliatesWithInvalidPayout.length} affiliate(s) have invalid payout amounts.`;
-  //       }
-
-  //       if (affiliatesWithoutCampaign.length > 0) {
-  //         message += ` ${affiliatesWithoutCampaign.length} affiliate(s) have no active campaign.`;
-  //       }
-  //     }
-
-  //     return response.success(responseData, message, req, res);
-  //   } catch (error) {
-  //     console.error("Error processing transfers:", error);
-  //     return response.failed(null, error, req, res);
-  //   }
-  // },
 };
 
 // Helper function to generate invoice HTML
-// const invoice_itm_html = (payload) => {
-//   const { commission } = payload;
-
-//   return `
-// <!DOCTYPE html>
-// <html lang="en">
-// <head>
-//   <meta charset="UTF-8" />
-//   <title>Invoice</title>
-//   <style>
-//     body {
-//       font-family: Arial, Helvetica, sans-serif;
-//       background: #f6f8fb;
-//       margin: 0;
-//       padding: 20px;
-//     }
-
-//     .invoice-container {
-//       max-width: 600px;
-//       margin: auto;
-//       background: #ffffff;
-//       border-radius: 10px;
-//       box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-//       padding: 30px;
-//     }
-
-//     .invoice-header {
-//       display: flex;
-//       align-items: center;
-//       justify-content: space-between;
-//       border-bottom: 2px solid #eee;
-//       padding-bottom: 15px;
-//       margin-bottom: 25px;
-//     }
-
-//     .invoice-header img {
-//       height: 40px;
-//     }
-
-//     .invoice-header h2 {
-//       margin: 0;
-//       font-size: 22px;
-//       color: #333;
-//     }
-
-//     .invoice-details {
-//       margin-bottom: 25px;
-//     }
-
-//     .invoice-details p {
-//       margin: 4px 0;
-//       color: #666;
-//       font-size: 14px;
-//     }
-
-//     .invoice-table {
-//       width: 100%;
-//       border-collapse: collapse;
-//       margin-bottom: 20px;
-//     }
-
-//     .invoice-table th,
-//     .invoice-table td {
-//       padding: 12px 10px;
-//       font-size: 14px;
-//     }
-
-//     .invoice-table th {
-//       text-align: left;
-//       color: #555;
-//       border-bottom: 1px solid #ddd;
-//     }
-
-//     .invoice-table td {
-//       text-align: right;
-//       color: #333;
-//     }
-
-//     .invoice-table tr:not(:last-child) td {
-//       border-bottom: 1px solid #f0f0f0;
-//     }
-
-//     .total-row td {
-//       font-weight: bold;
-//       font-size: 16px;
-//       border-top: 2px solid #333;
-//       padding-top: 15px;
-//     }
-
-//     .footer-note {
-//       text-align: center;
-//       font-size: 12px;
-//       color: #888;
-//       margin-top: 30px;
-//     }
-
-//     @page { margin: 0; }
-//   </style>
-// </head>
-// <body>
-//   <div class="invoice-container">
-//     <div class="invoice-header">
-//       <img src="${
-//         credentials.BACK_WEB_URL || "https://your-domain.com"
-//       }/images/logo.png" alt="Upfilly Logo" />
-//       <h2>Invoice</h2>
-//     </div>
-
-//     <div class="invoice-details">
-//       <p><strong>Invoice ID:</strong> #INV-${Date.now()}</p>
-//       <p><strong>Date:</strong> ${new Date().toLocaleDateString("en-CA")}</p>
-//       <p><strong>Payment Method:</strong> Stripe Transfer</p>
-//     </div>
-
-//     <table class="invoice-table">
-//       <tr>
-//         <th>Description</th>
-//         <th>Amount</th>
-//       </tr>
-//       <tr>
-//         <td style="text-align:left;">Commission Amount</td>
-//         <td>$${commission}</td>
-//       </tr>
-
-//     </table>
-
-//     <div class="footer-note">
-//       Powered by Upfilly • Payments processed securely via Stripe
-//     </div>
-//   </div>
-// </body>
-// </html>
-// `;
-// };
 const invoice_itm_html = (payload) => {
   const { commission, fullName, stripeTransferId, invoiceDate } = payload;
 
-  //   return `
-  // <!DOCTYPE html>
-  // <html lang="en">
-  // <head>
-  //   <meta charset="UTF-8" />
-  //   <title>Invoice</title>
-  //   <style>
-  //     body {
-  //       font-family: Arial, Helvetica, sans-serif;
-  //       background: #f6f8fb;
-  //       margin: 0;
-  //       padding: 20px;
-  //     }
-  //     .invoice-container {
-  //       max-width: 600px;
-  //       margin: auto;
-  //       background: #ffffff;
-  //       border-radius: 10px;
-  //       box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-  //       padding: 30px;
-  //     }
-  //     .invoice-header {
-  //       display: flex;
-  //       align-items: center;
-  //       justify-content: space-between;
-  //       border-bottom: 2px solid #eee;
-  //       padding-bottom: 15px;
-  //       margin-bottom: 25px;
-  //     }
-  //     .invoice-header img {
-  //       height: 40px;
-  //     }
-  //     .invoice-header h2 {
-  //       margin: 0;
-  //       font-size: 22px;
-  //       color: #333;
-  //     }
-  //     .invoice-details {
-  //       margin-bottom: 25px;
-  //     }
-  //     .invoice-details p {
-  //       margin: 4px 0;
-  //       color: #666;
-  //       font-size: 14px;
-  //     }
-  //     .recipient-section {
-  //       background: #f8f9fa;
-  //       padding: 15px;
-  //       border-radius: 8px;
-  //       margin-bottom: 25px;
-  //     }
-  //     .recipient-section h3 {
-  //       margin: 0 0 10px 0;
-  //       font-size: 16px;
-  //       color: #333;
-  //     }
-  //     .recipient-section p {
-  //       margin: 4px 0;
-  //       color: #555;
-  //       font-size: 14px;
-  //     }
-  //     .invoice-table {
-  //       width: 100%;
-  //       border-collapse: collapse;
-  //       margin-bottom: 20px;
-  //     }
-  //     .invoice-table th,
-  //     .invoice-table td {
-  //       padding: 12px 10px;
-  //       font-size: 14px;
-  //     }
-  //     .invoice-table th {
-  //       text-align: left;
-  //       color: #555;
-  //       border-bottom: 1px solid #ddd;
-  //     }
-  //     .invoice-table td {
-  //       text-align: right;
-  //       color: #333;
-  //     }
-  //     .invoice-table tr:not(:last-child) td {
-  //       border-bottom: 1px solid #f0f0f0;
-  //     }
-  //     .total-row td {
-  //       font-weight: bold;
-  //       font-size: 16px;
-  //       border-top: 2px solid #333;
-  //       padding-top: 15px;
-  //     }
-  //     .footer-note {
-  //       text-align: center;
-  //       font-size: 12px;
-  //       color: #888;
-  //       margin-top: 30px;
-  //     }
-  //     @page { margin: 0; }
-  //   </style>
-  // </head>
-  // <body>
-  //   <div class="invoice-container">
-  //     <div class="invoice-header">
-  //       <img src="${
-  //         credentials.BACK_WEB_URL || "https://your-domain.com"
-  //       }/images/logo.png" alt="Upfilly Logo" />
-  //       <h2>Invoice</h2>
-  //     </div>
+  const invoice_itm_html = (payload) => {
+  const { commission, fullName, stripeTransferId, invoiceDate, country } = payload; // Added country
 
-  //     <div class="invoice-details">
-  //       <p><strong>Invoice ID:</strong> #INV-${Date.now()}</p>
-  //       <p><strong>Date:</strong> ${invoiceDate || new Date().toLocaleDateString("en-CA")}</p>
-  //       <p><strong>Payment Method:</strong> Stripe Transfer</p>
-  //       ${stripeTransferId ? `<p><strong>Stripe Transfer ID:</strong> ${stripeTransferId}</p>` : ""}
-  //     </div>
-
-  //     <div class="recipient-section">
-  //       <h3>Paid To</h3>
-  //       <p><strong>Name:</strong> ${fullName || "N/A"}</p>
-  //     </div>
-
-  //     <table class="invoice-table">
-  //       <tr>
-  //         <th>Description</th>
-  //         <th>Amount</th>
-  //       </tr>
-  //       <tr>
-  //         <td style="text-align:left;">Commission Amount</td>
-  //         <td>$${(commission)}</td>
-  //       </tr>
-  //       <tr class="total-row">
-  //         <td style="text-align:left;">Total Amount</td>
-  //         <td>$${(commission)}</td>
-  //       </tr>
-  //     </table>
-
-  //     <div class="footer-note">
-  //       Powered by Upfilly • Payments processed securely via Stripe
-  //     </div>
-  //   </div>
-  // </body>
-  // </html>
-  // `;
-return `
+  return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1607,6 +1089,12 @@ return `
       font-weight: 700;
       color: #1e293b;
     }
+    /* NEW: Country info - only addition */
+    .recipient-info .country {
+      font-size: 13px;
+      color: #64748b;
+      margin-top: 4px;
+    }
 
     /* Line Items */
     .items-header {
@@ -1743,12 +1231,14 @@ return `
           </div>` : ""}
         </div>
 
-        <!-- Recipient -->
+        <!-- Recipient with Country -->
         <div class="recipient">
           <div class="avatar">${(fullName || "N").charAt(0).toUpperCase()}</div>
           <div class="recipient-info">
             <div class="label">Paid To</div>
             <div class="name">${fullName || "N/A"}</div>
+            <!-- NEW: Country field - only addition -->
+            <div class="country">${country || "N/A"}</div>
           </div>
         </div>
 
@@ -1786,6 +1276,355 @@ return `
 </body>
 </html>
 `;
+};
+//   return `
+// <!DOCTYPE html>
+// <html lang="en">
+// <head>
+//   <meta charset="UTF-8" />
+//   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+//   <title>Invoice</title>
+//   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+//   <style>
+//     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+//     body {
+//       font-family: 'DM Sans', Arial, sans-serif;
+//       background: #0f1117;
+//       min-height: 100vh;
+//       display: flex;
+//       align-items: center;
+//       justify-content: center;
+//       padding: 40px 20px;
+//     }
+
+//     .page {
+//       width: 100%;
+//       max-width: 560px;
+//       animation: fadeUp 0.6s ease both;
+//     }
+
+//     @keyframes fadeUp {
+//       from { opacity: 0; transform: translateY(24px); }
+//       to   { opacity: 1; transform: translateY(0); }
+//     }
+
+//     .card {
+//       background: #ffffff;
+//       border-radius: 20px;
+//       overflow: hidden;
+//       box-shadow: 0 40px 80px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.06);
+//     }
+
+//     /* Header */
+//     .header {
+//       background: linear-gradient(135deg, #0a0f1e 0%, #131c38 100%);
+//       padding: 28px 32px 24px;
+//       display: flex;
+//       align-items: center;
+//       justify-content: space-between;
+//       position: relative;
+//       overflow: hidden;
+//     }
+//     .header::after {
+//       content: '';
+//       position: absolute;
+//       right: -40px; top: -40px;
+//       width: 180px; height: 180px;
+//       border-radius: 50%;
+//       background: radial-gradient(circle, rgba(99,179,255,0.12) 0%, transparent 70%);
+//     }
+//     .logo {
+//       display: flex;
+//       align-items: center;
+//       gap: 10px;
+//     }
+//     .logo img {
+//       height: 36px;
+//       width: auto;
+//       object-fit: contain;
+//       filter: brightness(0) invert(1);
+//     }
+//     .logo-fallback {
+//       width: 36px; height: 36px;
+//       background: linear-gradient(135deg, #3b82f6, #60a5fa);
+//       border-radius: 10px;
+//       display: flex; align-items: center; justify-content: center;
+//       font-size: 18px; font-weight: 700; color: #fff;
+//     }
+//     .logo-name {
+//       font-size: 18px;
+//       font-weight: 700;
+//       color: #ffffff;
+//       letter-spacing: 0.5px;
+//     }
+//     .invoice-badge {
+//       background: rgba(255,255,255,0.1);
+//       border: 1px solid rgba(255,255,255,0.15);
+//       color: #94c8ff;
+//       font-size: 11px;
+//       font-weight: 600;
+//       letter-spacing: 2px;
+//       text-transform: uppercase;
+//       padding: 6px 14px;
+//       border-radius: 20px;
+//     }
+
+//     /* Body */
+//     .body { padding: 28px 32px 32px; }
+
+//     /* Meta Grid */
+//     .meta-grid {
+//       display: grid;
+//       grid-template-columns: 1fr 1fr;
+//       gap: 12px;
+//       margin-bottom: 24px;
+//     }
+//     .meta-item {
+//       background: #f8fafc;
+//       border: 1px solid #eef2f7;
+//       border-radius: 12px;
+//       padding: 14px 16px;
+//     }
+//     .meta-item.full { grid-column: 1 / -1; }
+//     .meta-label {
+//       font-size: 10px;
+//       font-weight: 600;
+//       letter-spacing: 1.5px;
+//       text-transform: uppercase;
+//       color: #94a3b8;
+//       margin-bottom: 5px;
+//     }
+//     .meta-value {
+//       font-size: 13px;
+//       font-weight: 600;
+//       color: #1e293b;
+//     }
+//     .meta-value.mono {
+//       font-family: 'DM Mono', monospace;
+//       font-size: 12px;
+//       color: #3b82f6;
+//       word-break: break-all;
+//     }
+
+//     /* Divider */
+//     .divider {
+//       height: 1px;
+//       background: linear-gradient(to right, transparent, #e2e8f0, transparent);
+//       margin: 24px 0;
+//     }
+
+//     /* Recipient */
+//     .recipient {
+//       display: flex;
+//       align-items: center;
+//       gap: 14px;
+//       background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%);
+//       border: 1px solid #dbeafe;
+//       border-radius: 14px;
+//       padding: 16px 20px;
+//       margin-bottom: 24px;
+//     }
+//     .avatar {
+//       width: 44px; height: 44px;
+//       border-radius: 50%;
+//       background: linear-gradient(135deg, #3b82f6, #60a5fa);
+//       display: flex; align-items: center; justify-content: center;
+//       font-size: 18px; font-weight: 700; color: #fff;
+//       flex-shrink: 0;
+//     }
+//     .recipient-info .label {
+//       font-size: 10px;
+//       font-weight: 600;
+//       letter-spacing: 1.5px;
+//       text-transform: uppercase;
+//       color: #64748b;
+//       margin-bottom: 3px;
+//     }
+//     .recipient-info .name {
+//       font-size: 15px;
+//       font-weight: 700;
+//       color: #1e293b;
+//     }
+
+//     /* Line Items */
+//     .items-header {
+//       display: flex;
+//       justify-content: space-between;
+//       padding: 0 4px 10px;
+//       font-size: 10px;
+//       font-weight: 600;
+//       letter-spacing: 1.5px;
+//       text-transform: uppercase;
+//       color: #94a3b8;
+//       border-bottom: 1px solid #f1f5f9;
+//     }
+//     .line-item {
+//       display: flex;
+//       justify-content: space-between;
+//       align-items: center;
+//       padding: 14px 4px;
+//       border-bottom: 1px solid #f8fafc;
+//     }
+//     .item-name {
+//       font-size: 14px;
+//       font-weight: 500;
+//       color: #334155;
+//     }
+//     .item-amount {
+//       font-size: 14px;
+//       font-weight: 600;
+//       color: #1e293b;
+//       font-family: 'DM Mono', monospace;
+//     }
+
+//     /* Total */
+//     .total-row {
+//       display: flex;
+//       justify-content: space-between;
+//       align-items: center;
+//       margin-top: 16px;
+//       background: linear-gradient(135deg, #0a0f1e 0%, #131c38 100%);
+//       border-radius: 14px;
+//       padding: 18px 22px;
+//     }
+//     .total-label {
+//       font-size: 13px;
+//       font-weight: 600;
+//       color: rgba(255,255,255,0.7);
+//     }
+//     .total-amount {
+//       font-size: 24px;
+//       font-weight: 700;
+//       color: #ffffff;
+//       font-family: 'DM Mono', monospace;
+//     }
+
+//     /* Status */
+//     .status-row {
+//       display: flex;
+//       align-items: center;
+//       justify-content: center;
+//       gap: 8px;
+//       margin-top: 22px;
+//     }
+//     .status-dot {
+//       width: 8px; height: 8px;
+//       background: #22c55e;
+//       border-radius: 50%;
+//       animation: pulse 2s infinite;
+//     }
+//     @keyframes pulse {
+//       0%, 100% { opacity: 1; transform: scale(1); }
+//       50% { opacity: 0.6; transform: scale(0.85); }
+//     }
+//     .status-text {
+//       font-size: 12px;
+//       font-weight: 600;
+//       color: #22c55e;
+//     }
+
+//     /* Footer */
+//     .footer {
+//       background: #f8fafc;
+//       border-top: 1px solid #eef2f7;
+//       padding: 16px 32px;
+//       text-align: center;
+//     }
+//     .footer-text {
+//       font-size: 11px;
+//       color: #94a3b8;
+//       font-weight: 500;
+//     }
+
+//     @page { margin: 0; }
+//   </style>
+// </head>
+// <body>
+//   <div class="page">
+//     <div class="card">
+
+//       <!-- Header -->
+//       <div class="header">
+//         <div class="logo">
+//           <img
+//             src="${credentials.BACK_WEB_URL || "https://your-domain.com"}/images/logo.png"
+//             alt="Upfilly Logo"
+//             onerror="this.style.display='none'; document.getElementById('logo-fallback').style.display='flex';"
+//           />
+//           <div class="logo-fallback" id="logo-fallback" style="display:none;">U</div>
+//           <span class="logo-name">UPFILLY</span>
+//         </div>
+//         <span class="invoice-badge">Invoice</span>
+//       </div>
+
+//       <!-- Body -->
+//       <div class="body">
+
+//         <!-- Meta Grid -->
+//         <div class="meta-grid">
+//           <div class="meta-item">
+//             <div class="meta-label">Invoice ID</div>
+//             <div class="meta-value">#INV-${Date.now()}</div>
+//           </div>
+//           <div class="meta-item">
+//             <div class="meta-label">Date</div>
+//             <div class="meta-value">${invoiceDate || new Date().toLocaleDateString("en-CA")}</div>
+//           </div>
+//           <div class="meta-item">
+//             <div class="meta-label">Payment Method</div>
+//             <div class="meta-value">Stripe Transfer</div>
+//           </div>
+//           ${stripeTransferId ? `
+//           <div class="meta-item full">
+//             <div class="meta-label">Stripe Account ID</div>
+//             <div class="meta-value mono">${stripeTransferId}</div>
+//           </div>` : ""}
+//         </div>
+
+//         <!-- Recipient -->
+//         <div class="recipient">
+//           <div class="avatar">${(fullName || "N").charAt(0).toUpperCase()}</div>
+//           <div class="recipient-info">
+//             <div class="label">Paid To</div>
+//             <div class="name">${fullName || "N/A"}</div>
+//           </div>
+//         </div>
+
+//         <!-- Line Items -->
+//         <div class="items-header">
+//           <span>Description</span>
+//           <span>Amount</span>
+//         </div>
+//         <div class="line-item">
+//           <span class="item-name">Commission Amount</span>
+//           <span class="item-amount">$${commission}</span>
+//         </div>
+
+//         <!-- Total -->
+//         <div class="total-row">
+//           <span class="total-label">Total Amount</span>
+//           <span class="total-amount">$${commission}</span>
+//         </div>
+
+//         <!-- Status -->
+//         <div class="status-row">
+//           <div class="status-dot"></div>
+//           <span class="status-text">Payment Successful</span>
+//         </div>
+
+//       </div>
+
+//       <!-- Footer -->
+//       <div class="footer">
+//         <span class="footer-text">Powered by Upfilly · Payments processed securely via Stripe</span>
+//       </div>
+
+//     </div>
+//   </div>
+// </body>
+// </html>
+// `;
 };
 // HTML to PDF function
 async function htmlToPdf(html, outputPath) {

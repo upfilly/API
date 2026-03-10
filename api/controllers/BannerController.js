@@ -642,6 +642,8 @@ exports.getAllBanner = async (req, res) => {
         query.createdAt = { $gte: start, $lte: end };
       }
 
+      console.log("query",query)
+
       let pipeline = [
         {
           $lookup: {
@@ -1068,9 +1070,10 @@ exports.getAllBanner = async (req, res) => {
 
       query.isDeleted = isDeleted === "true";
 
-      if (addType) {
-        query.addType = addType;
-      }
+      // if (addType) {
+      //   query.addType = addType;
+      // }
+      query.addType = { $in: ["link", "banner"] };
       if (is_animation !== undefined)
         query.is_animation = is_animation === "true";
       if (is_deep_linking !== undefined)
@@ -1128,7 +1131,7 @@ exports.getAllBanner = async (req, res) => {
 
         query.createdAt = { $gte: start, $lte: end };
       }
-
+console.log("query",query)
       let pipeline = [
         {
           $lookup: {
