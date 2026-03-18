@@ -125,7 +125,7 @@ module.exports = {
       search = Services.Utils.remove_special_char_exept_underscores(search);
       query.$or = [
         { event: { $regex: search, $options: "i" } },
-        { "urlParams.page": { $regex: search, $options: "i" } },
+        { "subIds.page": { $regex: search, $options: "i" } },
         { "data.page": { $regex: search, $options: "i" } },
       ];
     }

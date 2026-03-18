@@ -155,7 +155,7 @@ exports.generateLinkOfAffiliate = async (req, res) => {
 
 exports.create = async function (req, res) {
   try {
-    const { event, timestamp, urlParams, data, couponId } = req.body;
+    const { event, timestamp, subIds, data, couponId } = req.body;
 
     if (!event || !timestamp) {
       return response.failed(
@@ -224,7 +224,7 @@ exports.find = async function (req, res) {
       search = Services.Utils.remove_special_char_exept_underscores(search);
       query.$or = [
         { event: { $regex: search, $options: "i" } },
-        { "urlParams.page": { $regex: search, $options: "i" } },
+        { "subIds.page": { $regex: search, $options: "i" } },
         { "data.page": { $regex: search, $options: "i" } },
       ];
     }
@@ -406,7 +406,7 @@ exports.find = async function (req, res) {
         discount: "$discount",
         event: "$event",
         timestamp: "$timestamp",
-        urlParams: "$urlParams",
+        subIds: "$subIds",
         data: "$data",
         affiliate_name: "$affiliate_details.fullName",
         brand_name: "$brand_details.fullName",
@@ -715,9 +715,9 @@ exports.findOne = async function (req, res) {
 
 exports.update = async function (req, res) {
   try {
-    const { event, timestamp, urlParams, data, couponId } = req.body;
+    const { event, timestamp, subIds, data, couponId } = req.body;
 
-    if (!event || !timestamp || !urlParams || !data) {
+    if (!event || !timestamp || !subIds || !data) {
       return res
         .status(400)
         .json({ error: constants.AFFILIATELINK.MISSING_FIELDS });
@@ -809,7 +809,7 @@ exports.report = async function (req, res) {
     search = Services.Utils.remove_special_char_exept_underscores(search);
     query.$or = [
       { event: { $regex: search, $options: "i" } },
-      { "urlParams.page": { $regex: search, $options: "i" } },
+      { "subIds.page": { $regex: search, $options: "i" } },
       { "data.page": { $regex: search, $options: "i" } },
     ];
   }
@@ -876,7 +876,7 @@ exports.report = async function (req, res) {
         discount: "$discount",
         event: "$event",
         timestamp: "$timestamp",
-        urlParams: "$urlParams",
+        subIds: "$subIds",
         data: "$data",
         isDeleted: "$isDeleted",
         status: "$status",
@@ -1297,7 +1297,7 @@ async function htmlToPdf(html, outputPath) {
 //       search = Services.Utils.remove_special_char_exept_underscores(search);
 //       query.$or = [
 //         { event: { $regex: search, '$options': 'i' } },
-//         { 'urlParams.page': { $regex: search, '$options': 'i' } },
+//         { 'subIds.page': { $regex: search, '$options': 'i' } },
 //         { 'data.page': { $regex: search, '$options': 'i' } }
 //       ];
 //     }
@@ -1488,7 +1488,7 @@ async function htmlToPdf(html, outputPath) {
 //           discount: "$discount",
 //           event: '$event',
 //           timestamp: '$timestamp',
-//           urlParams: '$urlParams',
+//           subIds: '$subIds',
 //           data: '$data',
 //           brand_details: {
 //             _id: "$brand_details._id",
@@ -2162,7 +2162,7 @@ exports.find_2_admin = async function (req, res) {
       search = Services.Utils.remove_special_char_exept_underscores(search);
       query.$or = [
         { event: { $regex: search, '$options': 'i' } },
-        { 'urlParams.page': { $regex: search, '$options': 'i' } },
+        { 'subIds.page': { $regex: search, '$options': 'i' } },
         { 'data.page': { $regex: search, '$options': 'i' } }
       ];
     }
@@ -2353,7 +2353,7 @@ exports.find_2_admin = async function (req, res) {
           discount: "$discount",
           event: '$event',
           timestamp: '$timestamp',
-          urlParams: '$urlParams',
+          subIds: '$subIds',
           data: '$data',
           brand_details: {
             _id: "$brand_details._id",
@@ -3374,7 +3374,7 @@ exports.affiliateOrderDetail = async function (req, res) {
           discount: 1,
           timestamp: 1,
           event: 1,
-          urlParams: 1,
+          subIds: 1,
           data: 1,
           createdAt: 1,
           updatedAt: 1,

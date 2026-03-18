@@ -25,7 +25,7 @@ module.exports = {
     timestamp: {
       type: "string",
     },
-    urlParams: {
+    subIds: {
       type: "json",
     },
     data: {

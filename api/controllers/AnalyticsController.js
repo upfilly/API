@@ -26,7 +26,7 @@ const moment = require("moment");
 //             search = Services.Utils.remove_special_char_exept_underscores(search);
 //             query.$or = [
 //                 { event: { $regex: search, '$options': 'i' } },
-//                 { 'urlParams.page': { $regex: search, '$options': 'i' } },
+//                 { 'subIds.page': { $regex: search, '$options': 'i' } },
 //                 { 'data.page': { $regex: search, '$options': 'i' } }
 //             ];
 //         }
@@ -74,7 +74,7 @@ const moment = require("moment");
 
 //                 event: '$event',
 //                 timestamp: '$timestamp',
-//                 urlParams: '$urlParams',
+//                 subIds: '$subIds',
 //                 data: '$data',
 //                 isDeleted: '$isDeleted',
 //                 status: '$status',
@@ -144,7 +144,7 @@ exports.salesAnalytics = async (req, res) => {
       search = Services.Utils.remove_special_char_exept_underscores(search);
       query.$or = [
         { event: { $regex: search, $options: "i" } },
-        { "urlParams.page": { $regex: search, $options: "i" } },
+        { "subIds.page": { $regex: search, $options: "i" } },
         { "data.page": { $regex: search, $options: "i" } },
       ];
     }
@@ -231,7 +231,7 @@ exports.salesAnalytics = async (req, res) => {
           discount: "$discount",
           event: "$event",
           timestamp: "$timestamp",
-          urlParams: "$urlParams",
+          subIds: "$subIds",
           data: "$data",
           isDeleted: "$isDeleted",
           status: "$status",
@@ -365,7 +365,7 @@ exports.salesAnalytics = async (req, res) => {
 //             search = Services.Utils.remove_special_char_exept_underscores(search);
 //             query.$or = [
 //                 { event: { $regex: search, '$options': 'i' } },
-//                 { 'urlParams.page': { $regex: search, '$options': 'i' } },
+//                 { 'subIds.page': { $regex: search, '$options': 'i' } },
 //                 { 'data.page': { $regex: search, '$options': 'i' } }
 //             ];
 //         }
@@ -426,7 +426,7 @@ exports.salesAnalytics = async (req, res) => {
 //                     discount: "$discount",
 //                     event: '$event',
 //                     // timestamp: '$timestamp',
-//                     // urlParams: '$urlParams',
+//                     // subIds: '$subIds',
 //                     // data: '$data',
 //                     isDeleted: '$isDeleted',
 //                     status: '$status',
@@ -525,7 +525,7 @@ exports.salesAnalytics = async (req, res) => {
 //                     discount: "$discount",
 //                     event: '$event',
 //                     // timestamp: '$timestamp',
-//                     // urlParams: '$urlParams',
+//                     // subIds: '$subIds',
 //                     // data: '$data',
 //                     isDeleted: '$isDeleted',
 //                     status: '$status',
@@ -682,7 +682,7 @@ exports.reportAnalytics = async (req, res) => {
       search = Services.Utils.remove_special_char_exept_underscores(search);
       query.$or = [
         { event: { $regex: search, $options: "i" } },
-        { "urlParams.page": { $regex: search, $options: "i" } },
+        { "subIds.page": { $regex: search, $options: "i" } },
         { "data.page": { $regex: search, $options: "i" } },
       ];
     }
@@ -914,7 +914,7 @@ exports.clickAnalytics = async (req, res) => {
       search = Services.Utils.remove_special_char_exept_underscores(search);
       query.$or = [
         { event: { $regex: search, $options: "i" } },
-        { "urlParams.page": { $regex: search, $options: "i" } },
+        { "subIds.page": { $regex: search, $options: "i" } },
         { "data.page": { $regex: search, $options: "i" } },
       ];
     }
