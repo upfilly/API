@@ -60,7 +60,7 @@ module.exports = {
         customparameter : {type:"string"},
         tier_calculation_type:{type:'string', isIn:["retrospective","per_tier"]},
         tiers:{type:'json', defaultsTo:[]},
-        tiered_commission_enabled: {type:'boolean',default:false}
+        tiered_commission_enabled: {type:'boolean',defaultsTo:false}
     },
 
 };
