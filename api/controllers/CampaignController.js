@@ -1163,6 +1163,8 @@ exports.getAllCampaignsForBrand = async (req, res) => {
           access_type: 1,
           affiliate_data: "$affiliate_data",
           customparameter :1,
+          tier_calculation_type :1,
+          tiers :1,
         },
       },
       {

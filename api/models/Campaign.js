@@ -58,6 +58,8 @@ module.exports = {
         islegal: {type:'boolean',defaultsTo:false},
         isArchive: {type:'boolean',defaultsTo:false},
         customparameter : {type:"string"},
+        tier_calculation_type:{type:'string', isIn:["retrospective","per_tier"]},
+        tiers:{type:'json', defaultsTo:[]}
     },
 
 };
