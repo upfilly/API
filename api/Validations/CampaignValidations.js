@@ -51,6 +51,9 @@ exports.addCampaign = async (req, res, next) => {
         islegal : Joi.boolean().optional(),
         status : Joi.string().optional().valid("active","deactive"),
         customparameter : Joi.string().optional().allow(""),
+        tier_calculation_type :Joi.string().optional(),
+        tiers :Joi.array().optional(),
+        tiered_commission_enabled: Joi.boolean().optional(),
     });
     return await Validate(schema, req, res);
 }
