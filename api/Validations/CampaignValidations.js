@@ -53,6 +53,7 @@ exports.addCampaign = async (req, res, next) => {
         customparameter : Joi.string().optional().allow(""),
         tier_calculation_type :Joi.string().optional(),
         tiers :Joi.array().optional(),
+        lead_tiers :Joi.array().optional(),
         tiered_commission_enabled: Joi.boolean().optional(),
     });
     return await Validate(schema, req, res);
@@ -103,6 +104,8 @@ exports.editCampaign = async (req, res, next) => {
         status : Joi.string().optional().valid("active","deactive"),
         isArchive : Joi.boolean().optional(),
         customparameter : Joi.string().optional().allow(""),
+        tiers :Joi.array().optional(),
+        lead_tiers :Joi.array().optional(),
         
     });
     return await Validate(schema, req, res);

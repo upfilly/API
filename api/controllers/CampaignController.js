@@ -1165,6 +1165,7 @@ exports.getAllCampaignsForBrand = async (req, res) => {
           customparameter :1,
           tier_calculation_type :1,
           tiers :1,
+          lead_tiers: 1,
         },
       },
       {
