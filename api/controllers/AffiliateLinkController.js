@@ -1004,115 +1004,329 @@ exports.report = async function (req, res) {
   }
 };
 
-exports.updateCommission = async (req, res) => {
+// exports.updateCommission = async (req, res) => {
+//   try {
+//     const { commission_status, commission_paid, id, campaignId } = req.body;
+//     if ((commission_status || commission_paid) && !id) {
+//       return res
+//         .status(400)
+//         .json({ error: constants.AFFILIATELINK.MISSING_FIELDS });
+//     }
+//     const affiliateLinkCheck = await AffiliateLink.findOne({
+//       isDeleted: false,
+//       id: id,
+//     });
+//     console.log("affiliateLinkCheck", affiliateLinkCheck);
+//     const updatedAffiliateLink = await AffiliateLink.updateOne({
+//       id: id,
+//       isDeleted: false,
+//     }).set({ commission_status: commission_status });
+//     let amount = 0;
+//     if (commission_status == "accepted") {
+//       const get_campaign = await Campaign.findOne({ id: campaignId });
+//       if (!get_campaign) {
+//         throw "Campaigin not found";
+//       }
+
+//       const commission_type = get_campaign.commission_type;
+
+//       if (affiliateLinkCheck.amount_of_commission) {
+//         amount = affiliateLinkCheck.amount_of_commission;
+//       } else if (commission_type == "percentage") {
+//         const percentage_value =
+//           (get_campaign.commission / 100) * +updatedAffiliateLink.price;
+//         amount = percentage_value;
+//       } else {
+//         amount = get_campaign.commission;
+//       }
+
+//       // const stripe_fee = calculateStripeFee(amount)
+//       let total_amount = amount;
+
+//       // Find user acitve subscription plan
+//       // const user_active_subscription = await Subscriptions.findOne({ user_id: req.identity?.id, status: "active" }).populate("subscription_plan_id");
+//       // let commission_override = 0;
+//       // if (user_active_subscription) {
+//       //   commission_override = user_active_subscription?.subscription_plan_id?.commission_override;
+//       // } else {
+//       //   return response.failed(null, "You don't have any active plan", req, res);
+//       // }
+
+//       // const commission_override_amount = (commission_override / 100) * total_amount
+//       // total_amount += +commission_override_amount
+//       // Get Admin Details
+//       let get_admin = await Users.findOne({ role: "admin" });
+
+//       // Create invoices directory if it doesn't exist
+//       const invoicesDir = path.join(__dirname, "../../assets", "invoices");
+//       if (!fs.existsSync(invoicesDir)) {
+//         fs.mkdirSync(invoicesDir, { recursive: true });
+//       }
+
+//       const filename = `invoice_${id}_${Date.now()}.pdf`;
+//       const outputPath = path.join(invoicesDir, filename);
+
+//       const payload = {
+//         commission: amount,
+//         // stripe_fees: stripe_fee,
+//         // platform_fee: commission_override,
+//         total_amount,
+//       };
+//       // Generate PDF and wait for it to complete
+//       await htmlToPdf(invoice_itm_html(payload), outputPath);
+//       const custom_invoice_url = `invoices/${filename}`;
+
+//       console.log("PDF created:", custom_invoice_url);
+
+//       let data = {
+//         user_id: req.identity?.id,
+//         paid_to: get_admin.id || "654227e78fd3b1018600710d",
+//         transaction_type: "pay_commission",
+//         transaction_id: "",
+//         stripe_charge_id: "",
+//         currency: get_campaign?.currencies,
+//         amount: total_amount.toFixed(2),
+//         transaction_status: "pending",
+//         special_plan_id: null,
+//         subscription_id: null,
+//         stripe_subscription_id: "",
+//         addedBy: req.identity?.id,
+//         updatedBy: null,
+//         paypal_transaction_id: "",
+//         paypal_transaction_status: "",
+//         affiliateLinkId: id,
+//         custom_invoice_url,
+//       };
+
+//       await Transactions.create(data);
+//     }
+
+//     return response.success(
+//       updatedAffiliateLink,
+//       constants.AFFILIATELINK.UPDATED,
+//       req,
+//       res
+//     );
+//   } catch (error) {
+//     console.log(error, "error");
+//     return response.failed(null, `${error}`, req, res);
+//   }
+// };
+
+// api/controllers/AffiliateLinkController.js
+
+exports.updateCommission = async function(req, res) {
   try {
+    console.log("=== updateCommission called ===");
+    console.log("Request body:", req.body);
+    
     const { commission_status, commission_paid, id, campaignId } = req.body;
+    
     if ((commission_status || commission_paid) && !id) {
-      return res
-        .status(400)
-        .json({ error: constants.AFFILIATELINK.MISSING_FIELDS });
+      return res.status(400).json({ 
+        success: false,
+        error: "Missing required fields: id is required" 
+      });
     }
+    
+    if (!commission_status && !commission_paid) {
+      return res.status(400).json({ 
+        success: false,
+        error: "Either commission_status or commission_paid is required" 
+      });
+    }
+    
     const affiliateLinkCheck = await AffiliateLink.findOne({
-      isDeleted: false,
-      id: id,
+      where: { id: id, isDeleted: false }
     });
-    console.log("affiliateLinkCheck", affiliateLinkCheck);
-    const updatedAffiliateLink = await AffiliateLink.updateOne({
-      id: id,
-      isDeleted: false,
-    }).set({ commission_status: commission_status });
+    
+    console.log("Affiliate link found:", affiliateLinkCheck?.id);
+    
+    if (!affiliateLinkCheck) {
+      return res.status(404).json({ 
+        success: false,
+        error: "Affiliate link not found" 
+      });
+    }
+    
+    const updateData = {};
+    if (commission_status) updateData.commission_status = commission_status;
+    if (commission_paid !== undefined) updateData.commission_paid = commission_paid;
+    
+    const updatedAffiliateLink = await AffiliateLink.updateOne({ id: id })
+      .set(updateData);
+    
     let amount = 0;
-    if (commission_status == "accepted") {
-      const get_campaign = await Campaign.findOne({ id: campaignId });
+    
+    if (commission_status === "accepted") {
+      const get_campaign = await Campaign.findOne({ 
+        where: { id: campaignId, isDeleted: false }
+      });
+      
       if (!get_campaign) {
-        throw "Campaigin not found";
+        throw new Error("Campaign not found");
       }
 
+      console.log("Campaign found:", get_campaign.name);
+      console.log("Tier calculation type:", get_campaign.tier_calculation_type);
+      
       const commission_type = get_campaign.commission_type;
-
-      if (affiliateLinkCheck.amount_of_commission) {
-        amount = affiliateLinkCheck.amount_of_commission;
-      } else if (commission_type == "percentage") {
-        const percentage_value =
-          (get_campaign.commission / 100) * +updatedAffiliateLink.price;
-        amount = percentage_value;
-      } else {
-        amount = get_campaign.commission;
+      const saleAmount = parseFloat(affiliateLinkCheck.price) || 0;
+      
+      console.log(`Sale amount: ${saleAmount} ${affiliateLinkCheck.currency}`);
+      console.log("Tiers:", JSON.stringify(get_campaign.tiers, null, 2));
+      
+      if (get_campaign.tiered_commission_enabled && get_campaign.tiers && get_campaign.tiers.length > 0) {
+        amount = calculateTieredCommission(
+          get_campaign.tiers,
+          saleAmount,
+          commission_type,
+          get_campaign.commission || 0,
+          get_campaign.tier_calculation_type
+        );
+        console.log(`Calculated commission: ${amount}`);
+      } 
+      else if (affiliateLinkCheck.amount_of_commission) {
+        amount = parseFloat(affiliateLinkCheck.amount_of_commission);
+      } 
+      else if (commission_type === "percentage") {
+        amount = (get_campaign.commission / 100) * saleAmount;
+      } 
+      else {
+        amount = get_campaign.commission || 0;
       }
 
-      // const stripe_fee = calculateStripeFee(amount)
-      let total_amount = amount;
+      amount = isNaN(amount) ? 0 : parseFloat(amount.toFixed(4));
+      
+      await AffiliateLink.updateOne({ id: id })
+        .set({ 
+          amount_of_commission: amount,
+          commission_status: commission_status
+        });
 
-      // Find user acitve subscription plan
-      // const user_active_subscription = await Subscriptions.findOne({ user_id: req.identity?.id, status: "active" }).populate("subscription_plan_id");
-      // let commission_override = 0;
-      // if (user_active_subscription) {
-      //   commission_override = user_active_subscription?.subscription_plan_id?.commission_override;
-      // } else {
-      //   return response.failed(null, "You don't have any active plan", req, res);
-      // }
-
-      // const commission_override_amount = (commission_override / 100) * total_amount
-      // total_amount += +commission_override_amount
-      // Get Admin Details
-      let get_admin = await Users.findOne({ role: "admin" });
-
-      // Create invoices directory if it doesn't exist
-      const invoicesDir = path.join(__dirname, "../../assets", "invoices");
-      if (!fs.existsSync(invoicesDir)) {
-        fs.mkdirSync(invoicesDir, { recursive: true });
+      let get_admin = await Users.findOne({ where: { role: "admin" } });
+      let userId = affiliateLinkCheck.user_id || affiliateLinkCheck.affiliate_id;
+      
+      if (userId) {
+        const transactionData = {
+          user_id: userId,
+          paid_to: get_admin?.id || null,
+          transaction_type: "pay_commission",
+          currency: affiliateLinkCheck.currency || "USD",
+          amount: amount.toFixed(4),
+          transaction_status: "pending",
+          affiliateLinkId: id,
+        };
+        
+        if (req.user?.id) {
+          transactionData.addedBy = req.user.id;
+        }
+        
+        await Transactions.create(transactionData);
+        console.log(`Transaction created for amount: ${amount}`);
       }
-
-      const filename = `invoice_${id}_${Date.now()}.pdf`;
-      const outputPath = path.join(invoicesDir, filename);
-
-      const payload = {
-        commission: amount,
-        // stripe_fees: stripe_fee,
-        // platform_fee: commission_override,
-        total_amount,
-      };
-      // Generate PDF and wait for it to complete
-      await htmlToPdf(invoice_itm_html(payload), outputPath);
-      const custom_invoice_url = `invoices/${filename}`;
-
-      console.log("PDF created:", custom_invoice_url);
-
-      let data = {
-        user_id: req.identity?.id,
-        paid_to: get_admin.id || "654227e78fd3b1018600710d",
-        transaction_type: "pay_commission",
-        transaction_id: "",
-        stripe_charge_id: "",
-        currency: get_campaign?.currencies,
-        amount: total_amount.toFixed(2),
-        transaction_status: "pending",
-        special_plan_id: null,
-        subscription_id: null,
-        stripe_subscription_id: "",
-        addedBy: req.identity?.id,
-        updatedBy: null,
-        paypal_transaction_id: "",
-        paypal_transaction_status: "",
-        affiliateLinkId: id,
-        custom_invoice_url,
-      };
-
-      await Transactions.create(data);
     }
 
-    return response.success(
-      updatedAffiliateLink,
-      constants.AFFILIATELINK.UPDATED,
-      req,
-      res
-    );
+    return res.status(200).json({
+      success: true,
+      message: "Affiliate link updated successfully",
+      data: {
+        updatedAffiliateLink,
+        commission_amount: amount,
+        commission_status: commission_status
+      }
+    });
+    
   } catch (error) {
-    console.log(error, "error");
-    return response.failed(null, `${error}`, req, res);
+    console.error("Error in updateCommission:", error);
+    return res.status(500).json({ 
+      success: false, 
+      error: error.message || "Internal server error" 
+    });
   }
 };
 
+function calculateTieredCommission(tiers, saleAmount, commissionType, defaultCommission, calculationType) {
+  if (!tiers || tiers.length === 0) {
+    return commissionType === 'percentage' 
+      ? (defaultCommission / 100) * saleAmount 
+      : defaultCommission;
+  }
+
+  const sortedTiers = [...tiers].sort((a, b) => a.min - b.min);
+  
+  console.log(`Calculating ${calculationType} commission for amount: ${saleAmount}`);
+  
+  if (calculationType === 'retrospective') {
+    // Retrospective: Always select LAST tier
+    const lastTier = sortedTiers[sortedTiers.length - 1];
+    console.log(`Retrospective: Using last tier with rate: ${lastTier.rate}`);
+    
+    if (commissionType === 'percentage') {
+      return lastTier.rate * saleAmount;
+    } else {
+      return lastTier.rate;
+    }
+    
+  } else if (calculationType === 'per_tier') {
+  let totalCommission = 0;
+  let remainingAmount = saleAmount;
+  let previousMax = 0;
+  
+  console.log(`Per_tier calculation for ${saleAmount}`);
+  
+  for (let i = 0; i < sortedTiers.length; i++) {
+    const tier = sortedTiers[i];
+    const tierMin = tier.min;
+    const tierMax = tier.max;
+    const tierRate = tier.rate;
+    
+    console.log(`\nTier ${i+1}: min=${tierMin}, max=${tierMax}, rate=${tierRate}`);
+    console.log(`Remaining amount: ${remainingAmount}`);
+    console.log(`Previous max: ${previousMax}`);
+    
+    if (remainingAmount <= 0) {
+      console.log(`No amount remaining, breaking`);
+      break;
+    }
+    
+    // Calculate how much falls into this tier
+    let amountInTier = 0;
+    
+    // For the first tier, use tierMax - previousMax
+    // For subsequent tiers, just use the remaining amount (since it's already above previous tier)
+    if (i === 0) {
+      // First tier
+      if (remainingAmount >= tierMax) {
+        amountInTier = tierMax;
+      } else {
+        amountInTier = remainingAmount;
+      }
+    } else {
+      // Subsequent tiers - remaining amount is what's left after previous tiers
+      // This remaining amount should be calculated at current tier's rate
+      amountInTier = remainingAmount;
+    }
+    
+    amountInTier = Math.max(0, Math.min(amountInTier, tierMax - tierMin));
+    console.log(`Amount in this tier: ${amountInTier}`);
+    
+    if (amountInTier > 0) {
+      const tierCommission = amountInTier * tierRate;
+      console.log(`Commission: ${amountInTier} × ${tierRate} = ${tierCommission}`);
+      totalCommission += tierCommission;
+      remainingAmount -= amountInTier;
+      console.log(`Remaining after tier: ${remainingAmount}`);
+    }
+    
+    previousMax = tierMax;
+  }
+  
+  console.log(`\nTotal commission: ${totalCommission}`);
+  return totalCommission;
+}
+  return 0;
+}
 function calculateStripeFee(amount) {
   const PERCENT_FEE = 0.029; // 2.9%
   const FIXED_FEE = 0.3; // $0.30
