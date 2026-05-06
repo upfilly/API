@@ -106,7 +106,8 @@ exports.editCampaign = async (req, res, next) => {
         customparameter : Joi.string().optional().allow(""),
         tiers :Joi.array().optional(),
         lead_tiers :Joi.array().optional(),
-        
+        tier_calculation_type :Joi.string().optional(),
+        tiered_commission_enabled: Joi.boolean().optional(),
     });
     return await Validate(schema, req, res);
 }
