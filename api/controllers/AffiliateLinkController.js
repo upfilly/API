@@ -1163,6 +1163,7 @@ exports.updateCommission = async (req, res) => {
         paypal_transaction_status: "",
         affiliateLinkId: id,
         custom_invoice_url,
+        campaign: campaignId || null,
       };
 
       await Transactions.create(data);

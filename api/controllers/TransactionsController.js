@@ -283,6 +283,20 @@ exports.getAllTransactions = async (req, res) => {
             preserveNullAndEmptyArrays: true,
           },
         },
+          {
+        $lookup: {
+          from: "campaign",
+          localField: "campaign",
+          foreignField: "_id",
+          as: "campaign_details",
+        },
+      },
+      {
+        $unwind: {
+          path: "$campaign_details",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
         {
           $project: {
             id: "$_id",
@@ -319,6 +333,9 @@ exports.getAllTransactions = async (req, res) => {
             affiliate_link_data: "$affiliate_link_details",
             custom_invoice_url: "$custom_invoice_url",
             paid_to_emails: "$paid_to_emails",
+            campaign: "$campaign",
+            campaign_details: "$campaign_details",
+
           },
         },
         {
@@ -375,6 +392,20 @@ exports.getAllTransactions = async (req, res) => {
             preserveNullAndEmptyArrays: true,
           },
         },
+       {
+        $lookup: {
+          from: "campaign",
+          localField: "campaign",
+          foreignField: "_id",
+          as: "campaign_details",
+        },
+      },
+      {
+        $unwind: {
+          path: "$campaign_details",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
         {
           $lookup: {
             from: "users",
@@ -453,6 +484,9 @@ exports.getAllTransactions = async (req, res) => {
             brand_details: "$brand_details", // Add brand details to the response
             custom_invoice_url: "$custom_invoice_url",
             paid_to_emails: "$paid_to_emails",
+            campaign_details: "$campaign_details",
+            campaign: "$campaign",
+
           },
         },
         {

@@ -53,6 +53,8 @@ module.exports = {
     monthly_invoice_id: {
       model: "monthlycommissioninvoice",
     },
+    campaign:{model:"Campaign"},
+
   },
   beforeCreate: async function (data, next) {
     let count = await Transactions.count({});
