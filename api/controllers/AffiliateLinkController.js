@@ -1020,6 +1020,16 @@ exports.updateCommission = async (req, res) => {
     console.log("affiliateLinkCheck", affiliateLinkCheck);
     let updateFields = { commission_status: commission_status };
     let amount = 0;
+    
+     const updatedAffiliateLink = await AffiliateLink.updateOne({
+        id: id,
+        isDeleted: false,
+      }).set(updateFields);
+
+      // Check if update was successful
+      if (!updatedAffiliateLink) {
+        throw "Failed to update affiliate link";
+      }
 
     if (commission_status == "accepted") {
       const get_campaign = await Campaign.findOne({ id: campaignId });
@@ -1097,15 +1107,7 @@ exports.updateCommission = async (req, res) => {
       }
 
       // Update the affiliate link with all calculated values
-      const updatedAffiliateLink = await AffiliateLink.updateOne({
-        id: id,
-        isDeleted: false,
-      }).set(updateFields);
-
-      // Check if update was successful
-      if (!updatedAffiliateLink) {
-        throw "Failed to update affiliate link";
-      }
+     
 
       // const stripe_fee = calculateStripeFee(amount)
       let total_amount = amount;
