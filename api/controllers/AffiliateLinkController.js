@@ -1006,6 +1006,7 @@ exports.report = async function (req, res) {
 
 exports.updateCommission = async (req, res) => {
   try {
+    console.log("hlwo")
     const { commission_status, commission_paid, id, campaignId } = req.body;
     if ((commission_status || commission_paid) && !id) {
       return res
@@ -1017,11 +1018,9 @@ exports.updateCommission = async (req, res) => {
       id: id,
     });
     console.log("affiliateLinkCheck", affiliateLinkCheck);
-    const updatedAffiliateLink = await AffiliateLink.updateOne({
-      id: id,
-      isDeleted: false,
-    }).set({ commission_status: commission_status });
+    let updateFields = { commission_status: commission_status };
     let amount = 0;
+
     if (commission_status == "accepted") {
       const get_campaign = await Campaign.findOne({ id: campaignId });
       if (!get_campaign) {
@@ -1030,14 +1029,82 @@ exports.updateCommission = async (req, res) => {
 
       const commission_type = get_campaign.commission_type;
 
-      if (affiliateLinkCheck.amount_of_commission) {
-        amount = affiliateLinkCheck.amount_of_commission;
-      } else if (commission_type == "percentage") {
-        const percentage_value =
-          (get_campaign.commission / 100) * +updatedAffiliateLink.price;
-        amount = percentage_value;
+      if (get_campaign.tiered_commission_enabled === true) {
+        const revenueClicks = affiliateLinkCheck.price;
+        let totalCalculatedCommission = 0;
+        let leadCommission = 0;
+        let purchaseCommission = 0;
+
+        // Get event types from array
+        const eventTypes = get_campaign.event_type || [];
+
+        // Calculate lead commission if "lead" exists in event_type array
+        if (eventTypes.includes("lead")) {
+          const leadCount = affiliateLinkCheck.leadCount || 1;
+          const result = calculateEventCommission(
+            "lead",
+            leadCount,
+            get_campaign.lead_tiers,
+            get_campaign.tier_calculation_type,
+            revenueClicks
+          );
+          leadCommission = result.commission;
+        }
+
+        // Calculate purchase commission if "purchase" exists in event_type array
+        if (eventTypes.includes("purchase")) {
+          const purchaseAmount = revenueClicks;
+          const result = calculateEventCommission(
+            "purchase",
+            purchaseAmount,
+            get_campaign.tiers,
+            get_campaign.tier_calculation_type,
+            revenueClicks
+          );
+          purchaseCommission = result.commission;
+        }
+
+        // Calculate total commission
+        totalCalculatedCommission = leadCommission + purchaseCommission;
+
+        // Store results in updateFields
+        updateFields.commission = totalCalculatedCommission;
+        updateFields.lead_commission = leadCommission;
+        updateFields.purchase_commission = purchaseCommission;
+        updateFields.applied_event_types = eventTypes;
+        
+        // Use the calculated amount for the transaction
+        amount = totalCalculatedCommission;
+
+        console.log({
+          eventTypes,
+          leadCommission,
+          purchaseCommission,
+          totalCommission: totalCalculatedCommission,
+          calculationType: get_campaign.tier_calculation_type
+        });
       } else {
-        amount = get_campaign.commission;
+        // Fallback to old logic if tiered is disabled
+        if (affiliateLinkCheck.amount_of_commission) {
+          amount = affiliateLinkCheck.amount_of_commission;
+        } else if (commission_type == "percentage") {
+          const percentage_value =
+            (get_campaign.commission / 100) * +affiliateLinkCheck.price;
+          amount = percentage_value;
+        } else {
+          amount = get_campaign.commission;
+        }
+      }
+
+      // Update the affiliate link with all calculated values
+      const updatedAffiliateLink = await AffiliateLink.updateOne({
+        id: id,
+        isDeleted: false,
+      }).set(updateFields);
+
+      // Check if update was successful
+      if (!updatedAffiliateLink) {
+        throw "Failed to update affiliate link";
       }
 
       // const stripe_fee = calculateStripeFee(amount)
@@ -1108,7 +1175,7 @@ exports.updateCommission = async (req, res) => {
       res
     );
   } catch (error) {
-    console.log(error, "error");
+    console.log("error", error);
     return response.failed(null, `${error}`, req, res);
   }
 };
@@ -2418,18 +2485,22 @@ exports.find_2_admin = async function (req, res) {
       $addFields: {
         calculated_commission: {
           $cond: {
-            if: { $and: [
-              { $ne: ["$amount_of_commission", null] },
-              { $ne: ["$amount_of_commission", undefined] }
-            ]},
+            if: {
+              $and: [
+                { $ne: ["$amount_of_commission", null] },
+                { $ne: ["$amount_of_commission", undefined] }
+              ]
+            },
             then: { $toDouble: "$amount_of_commission" },
             else: {
               $cond: {
-                if: { $and: [
-                  { $ne: ["$price", null] },
-                  { $ne: ["$commission", null] },
-                  { $ne: ["$commission_type", null] }
-                ]},
+                if: {
+                  $and: [
+                    { $ne: ["$price", null] },
+                    { $ne: ["$commission", null] },
+                    { $ne: ["$commission_type", null] }
+                  ]
+                },
                 then: {
                   $cond: {
                     if: { $eq: ["$commission_type", "amount"] },
@@ -2580,10 +2651,12 @@ exports.find_2_admin = async function (req, res) {
         last_transaction_date: { $max: "$timestampAsDate" },
 
         // Store all brands for this affiliate
-        brands: { $addToSet: {
-          brand_id: "$brand_id",
-          brand_name: "$brand_name"
-        }}
+        brands: {
+          $addToSet: {
+            brand_id: "$brand_id",
+            brand_name: "$brand_name"
+          }
+        }
       }
     });
 
@@ -2807,7 +2880,7 @@ exports.find_2_admin = async function (req, res) {
     // // Check connected accounts for each affiliate
     // const affiliateIds = affiliateSummary.map(affiliate => affiliate.affiliate_id);
     // console.log("affiliateIds",affiliateIds,typeof affiliateIds)
-    
+
     // // Fetch all connected accounts for these affiliates
     //  const connectedAccounts = await Account.find({
     //   where: {
@@ -2834,10 +2907,10 @@ exports.find_2_admin = async function (req, res) {
     //     brand_details: brandDetails ? brandDetails.brand_details : []
     //   };
     // });
-        // Check connected accounts for each affiliate
+    // Check connected accounts for each affiliate
     const affiliateIds = affiliateSummary.map(affiliate => affiliate.affiliate_id.toString());
     console.log("affiliateIds", affiliateIds, typeof affiliateIds);
-    
+
     // CORRECT SAILS.JS WATERLINE SYNTAX:
     // Method 1: Simple query with string IDs
     const connectedAccounts = await Account.find({
@@ -2851,8 +2924,8 @@ exports.find_2_admin = async function (req, res) {
     connectedAccounts.forEach(account => {
       // addedBy might be a string ID or a populated user object
       const addedById = account.addedBy;
-      const affiliateId = (addedById && typeof addedById === 'object' && addedById.id) 
-        ? addedById.id.toString() 
+      const affiliateId = (addedById && typeof addedById === 'object' && addedById.id)
+        ? addedById.id.toString()
         : addedById.toString();
       affiliateConnectedAccountMap[affiliateId] = true;
     });
@@ -3011,7 +3084,7 @@ exports.find_2_admin = async function (req, res) {
     //     has_connected_account: !!resultAffiliateConnectedMap[transaction.affiliate_id.toString()]
     //   }));
     // }
-        // Add connectedAccount status to each transaction record if needed
+    // Add connectedAccount status to each transaction record if needed
     if (result.length > 0) {
       // Fetch connected accounts for all affiliates in the result
       const resultAffiliateIds = result.map(transaction => transaction.affiliate_id.toString());
@@ -3025,8 +3098,8 @@ exports.find_2_admin = async function (req, res) {
       const resultAffiliateConnectedMap = {};
       resultConnectedAccounts.forEach(account => {
         const addedById = account.addedBy;
-        const affiliateId = (addedById && typeof addedById === 'object' && addedById.id) 
-          ? addedById.id.toString() 
+        const affiliateId = (addedById && typeof addedById === 'object' && addedById.id)
+          ? addedById.id.toString()
           : addedById.toString();
         resultAffiliateConnectedMap[affiliateId] = true;
       });
@@ -3106,7 +3179,7 @@ exports.find_2_admin = async function (req, res) {
 
       // if (!req.param('page') && !req.param('count')) {
       //   const fullData = await db.collection('affiliatelink').aggregate([...basePipeline, { $sort: sortquery }]).toArray();
-        
+
       //   // Add connectedAccount status to full data if needed
       //   if (fullData.length > 0) {
       //     const fullAffiliateIds = fullData.map(transaction => transaction.affiliate_id);
@@ -3127,33 +3200,33 @@ exports.find_2_admin = async function (req, res) {
       //     }));
       //   }
       // }
-    if (!req.param('page') && !req.param('count')) {
-      const fullData = await db.collection('affiliatelink').aggregate([...basePipeline, { $sort: sortquery }]).toArray();
-      
-      // Add connectedAccount status to full data if needed
-      if (fullData.length > 0) {
-        const fullAffiliateIds = fullData.map(transaction => transaction.affiliate_id.toString());
-        const fullConnectedAccounts = await Account.find({
-          addedBy: fullAffiliateIds,
-          isActive: true,
-          isDeleted: false,
-        });
+      if (!req.param('page') && !req.param('count')) {
+        const fullData = await db.collection('affiliatelink').aggregate([...basePipeline, { $sort: sortquery }]).toArray();
 
-        const fullAffiliateConnectedMap = {};
-        fullConnectedAccounts.forEach(account => {
-          const addedById = account.addedBy;
-          const affiliateId = (addedById && typeof addedById === 'object' && addedById.id) 
-            ? addedById.id.toString() 
-            : addedById.toString();
-          fullAffiliateConnectedMap[affiliateId] = true;
-        });
+        // Add connectedAccount status to full data if needed
+        if (fullData.length > 0) {
+          const fullAffiliateIds = fullData.map(transaction => transaction.affiliate_id.toString());
+          const fullConnectedAccounts = await Account.find({
+            addedBy: fullAffiliateIds,
+            isActive: true,
+            isDeleted: false,
+          });
 
-        resData.data = fullData.map(transaction => ({
-          ...transaction,
-          has_connected_account: !!fullAffiliateConnectedMap[transaction.affiliate_id.toString()]
-        }));
+          const fullAffiliateConnectedMap = {};
+          fullConnectedAccounts.forEach(account => {
+            const addedById = account.addedBy;
+            const affiliateId = (addedById && typeof addedById === 'object' && addedById.id)
+              ? addedById.id.toString()
+              : addedById.toString();
+            fullAffiliateConnectedMap[affiliateId] = true;
+          });
+
+          resData.data = fullData.map(transaction => ({
+            ...transaction,
+            has_connected_account: !!fullAffiliateConnectedMap[transaction.affiliate_id.toString()]
+          }));
+        }
       }
-    }
       return response.success(resData, constants.AFFILIATELINK.FETCHED, req, res);
     }
   } catch (error) {
@@ -3935,26 +4008,26 @@ exports.affiliateOrderDetail = async function (req, res) {
           brand_acceptance_rate:
             result.length > 0
               ? Math.round(
-                  (commissionSummary.total_commission_accepted_by_brand /
-                    commissionSummary.total_commission_earned) *
-                    100
-                )
+                (commissionSummary.total_commission_accepted_by_brand /
+                  commissionSummary.total_commission_earned) *
+                100
+              )
               : 0,
           brand_payment_rate:
             commissionSummary.total_commission_accepted_by_brand > 0
               ? Math.round(
-                  (commissionSummary.total_commission_paid_by_brand /
-                    commissionSummary.total_commission_accepted_by_brand) *
-                    100
-                )
+                (commissionSummary.total_commission_paid_by_brand /
+                  commissionSummary.total_commission_accepted_by_brand) *
+                100
+              )
               : 0,
           admin_payment_rate:
             commissionSummary.total_commission_paid_by_brand > 0
               ? Math.round(
-                  (commissionSummary.total_commission_paid_by_admin /
-                    commissionSummary.total_commission_paid_by_brand) *
-                    100
-                )
+                (commissionSummary.total_commission_paid_by_admin /
+                  commissionSummary.total_commission_paid_by_brand) *
+                100
+              )
               : 0,
         },
       };
@@ -3972,3 +4045,64 @@ exports.affiliateOrderDetail = async function (req, res) {
     return response.failed(null, err.message, req, res);
   }
 };
+
+// Helper function to calculate commission
+function calculateEventCommission(eventType, amount, tiers, calculationType, revenueClicks) {
+  let commission = 0;
+  let selectedTier = null;
+
+  if (!tiers || tiers.length === 0) return { commission, selectedTier };
+
+  if (calculationType === "retrospective") {
+    // Find highest eligible tier
+    for (let i = tiers.length - 1; i >= 0; i--) {
+      const tier = tiers[i];
+      if (amount >= (tier.min || 0)) {
+        if (tier.max === null || amount <= tier.max) {
+          selectedTier = tier;
+          break;
+        }
+      }
+    }
+
+    if (selectedTier) {
+      if (eventType === "purchase" && selectedTier.type === "percentage") {
+        commission = (revenueClicks * selectedTier.rate) / 100;
+      } else if (eventType === "purchase" && selectedTier.type === "fixed") {
+        commission = selectedTier.rate;
+      } else {
+        // For lead events (fixed rate per lead)
+        commission = amount * selectedTier.rate;
+      }
+    }
+  }
+  else {
+    // Per-tier calculation
+    let remainingAmount = amount;
+
+    for (const tier of tiers) {
+      if (remainingAmount <= 0) break;
+
+      if (amount >= (tier.min || 0)) {
+        let tierAmount = remainingAmount;
+        if (tier.max !== null) {
+          tierAmount = Math.min(remainingAmount, tier.max - (tier.min || 0) + 1);
+        }
+
+        if (eventType === "purchase" && tier.type === "percentage") {
+          commission += (tierAmount * tier.rate) / 100;
+        } else if (eventType === "purchase" && tier.type === "fixed") {
+          commission += tier.rate;
+        } else {
+          // For lead events
+          commission += (tierAmount * tier.rate);
+        }
+
+        remainingAmount -= tierAmount;
+      }
+    }
+  }
+
+  return { commission, selectedTier };
+}
+
