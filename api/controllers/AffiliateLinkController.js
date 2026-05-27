@@ -684,7 +684,7 @@ exports.findOne = async function (req, res) {
     if (!req.query.id) {
       return response.failed(
         null,
-        constants.AFFILIATELINK.ID_REQUIRED,
+        "Affiliatelink id is required.",
         req,
         res
       );
@@ -693,10 +693,11 @@ exports.findOne = async function (req, res) {
       id: req.query.id,
       isDeleted: false,
     }).populate("couponId");
+    console.log("affiliateLink",affiliateLink)
     if (!affiliateLink) {
       return response.failed(
         null,
-        constants.AFFILIATELINK.INVALID_ID,
+        "Invalid affiliatelink id.",
         req,
         res
       );
