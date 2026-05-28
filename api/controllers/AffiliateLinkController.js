@@ -14,6 +14,7 @@ const ObjectId = require("mongodb").ObjectId;
 const puppeteer = require("puppeteer");
 const fs = require("fs");
 const path = require("path");
+const axios = require("axios")
 // const {customAlphabet} = require('nanoid');
 // const nanoid = customAlphabet('1234567890abcdef', 6);
 // const baseUrl = 'https://upfilly.com';
@@ -180,6 +181,15 @@ exports.create = async function (req, res) {
     }
 
     const newAffiliateLink = await AffiliateLink.create(req.body).fetch();
+    
+    // Send the saved data to the chat/shopify-listing-update API
+    try {
+      const chatBaseUrl = credentials.CHAT_WEB_URL || "https://chat.upfilly.com" || "http://localhost:6026";
+      const chatEndpoint = `${chatBaseUrl}/chat/user/shopify-listing-update`;
+      await axios.post(chatEndpoint, newAffiliateLink);
+    } catch (chatErr) {
+      sails.log.error("[AffiliateLinkController.create] Error calling chat API:", chatErr.message);
+    }
 
     return response.success(
       newAffiliateLink,
