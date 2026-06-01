@@ -9,6 +9,8 @@ const db = sails.getDatastore().manager
 const ObjectId = require('mongodb').ObjectId;
 const Emails = require('../Emails/index');
 const { Subscription } = require('braintree');
+const axios = require("axios")
+
 
 // var braintree = require('braintree');
 // // console.log(braintree,"----------------braintree");
@@ -1794,12 +1796,28 @@ exports.webhook = async (request, response) => {
                                         continue
                                     }
                                     await Transactions.updateOne({ id: transaction_id }, { transaction_status: event_object.payment_status, invoice_url: get_invoice?.invoice_pdf || "" })
-                                    await AffiliateLink.updateOne({ id: get_transaction.affiliateLinkId }, { commission_paid: "paid" });
+                                    let updatedAffiliateLink1 = await AffiliateLink.updateOne({ id: get_transaction.affiliateLinkId }, { commission_paid: "paid" });
+
+                                        try {
+                                          const chatBaseUrl = credentials.CHAT_WEB_URL || "https://chat.upfilly.com" || "http://localhost:6026";
+                                          const chatEndpoint = `${chatBaseUrl}/chat/user/shopify-listing-update`;
+                                          await axios.post(chatEndpoint, {...updatedAffiliateLink1,type : "commission_paid"});
+                                        } catch (chatErr) {
+                                          sails.log.error("[AffiliateLinkController.create] Error calling chat API:", chatErr.message);
+                                        }
                                 }
                             } else {
                                 // update user
                                 console.log(event_object.metadata.brandAssociateId, 'event_object.metadata.brandAssociateId')
-                                await AffiliateLink.updateOne({ id: event_object.metadata.brandAssociateId }, { commission_paid: "paid" })
+                              let updatedAffiliateLink1 =  await AffiliateLink.updateOne({ id: event_object.metadata.brandAssociateId }, { commission_paid: "paid" })
+
+                                try {
+                                    const chatBaseUrl = credentials.CHAT_WEB_URL || "https://chat.upfilly.com" || "http://localhost:6026";
+                                    const chatEndpoint = `${chatBaseUrl}/chat/user/shopify-listing-update`;
+                                    await axios.post(chatEndpoint, { ...updatedAffiliateLink1, type: "commission_paid" });
+                                } catch (chatErr) {
+                                    sails.log.error("[AffiliateLinkController.create] Error calling chat API:", chatErr.message);
+                                }
 
                                 let get_admin = await Users.findOne({ role: "admin" })
 

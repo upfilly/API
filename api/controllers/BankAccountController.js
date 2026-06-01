@@ -19,6 +19,8 @@ const fs = require("fs");
 const puppeteer = require("puppeteer");
 const response = require("../services/Response");
 const emails = require("../Emails/EmailMessageTemplate");
+const axios = require("axios")
+
 /** common function for create account onboarding link */
 
 const accountDetailLink = async (userId) => {
@@ -784,7 +786,14 @@ webhook: async (request, response) => {
             };
 
             await Transactions.create(data);
-            await AffiliateLink.updateOne({ id: itm }, { admin_paid: "paid" });
+            let affiliateData = await AffiliateLink.updateOne({ id: itm }, { admin_paid: "paid" });
+            try {
+              const chatBaseUrl = credentials.CHAT_WEB_URL || "https://chat.upfilly.com" || "http://localhost:6026";
+              const chatEndpoint = `${chatBaseUrl}/chat/user/shopify-listing-update`;
+              await axios.post(chatEndpoint, { ...affiliateData, type: "admin_paid" });
+            } catch (chatErr) {
+              sails.log.error("[AffiliateLinkController.create] Error calling chat API:", chatErr.message);
+            }
 
             let email_payload = {
               fullName: userDetail.fullName,

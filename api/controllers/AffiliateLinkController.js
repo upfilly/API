@@ -1182,6 +1182,14 @@ exports.updateCommission = async (req, res) => {
       await Transactions.create(data);
     }
 
+        try {
+      const chatBaseUrl = credentials.CHAT_WEB_URL || "https://chat.upfilly.com" || "http://localhost:6026";
+      const chatEndpoint = `${chatBaseUrl}/chat/user/shopify-listing-update`;
+      await axios.post(chatEndpoint, {...updatedAffiliateLink,type : "updateStatus"});
+    } catch (chatErr) {
+      sails.log.error("[AffiliateLinkController.create] Error calling chat API:", chatErr.message);
+    }
+
     return response.success(
       updatedAffiliateLink,
       constants.AFFILIATELINK.UPDATED,
