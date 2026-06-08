@@ -714,5 +714,20 @@ module.exports.constants = {
     STATUS_UPDATE: "Status updated successfully",
     FETCHED_ALL: "All Requests fetched successfully",
     MANUAL_REQUIRED : "Only Manual campaign is able to send request",
-  }
+  },
+
+  POSTBACK_URL: {
+    ADDED: "Postback URL added successfully",
+    UPDATED: "Postback URL updated successfully",
+    DELETED: "Postback URL deleted successfully",
+    FETCHED: "Postback URL fetched successfully",
+    FETCHED_ALL: "Postback URLs fetched successfully",
+    NOT_FOUND: "Postback URL not found",
+    ID_REQUIRED: "Id is required",
+    INVALID_ID: "Invalid Id",
+    ALREADY_EXIST: "Postback URL already exists for this user",
+    URL_REQUIRED: "Postback URL is required",
+    METHOD_REQUIRED: "Method is required",
+    FORMAT_REQUIRED: "Format is required",
+  },
 };

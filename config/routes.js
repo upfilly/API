@@ -671,4 +671,14 @@ module.exports.routes = {
   'get /commission/monthly-invoices/list': 'CommissionCronController.getMonthlyInvoice',
   'put /commission/monthly-invoices/update/status': 'CommissionCronController.getMonthlyInvoiceStatus',
 
+  /**
+   * @PostbackUrlController
+   */
+  "post /postback-url/add": "PostbackUrlController.addPostbackUrl",
+  "get /postback-url/detail": "PostbackUrlController.getPostbackUrlById",
+  "get /postback-url/list": "PostbackUrlController.getAllPostbackUrls",
+  "put /postback-url/update": "PostbackUrlController.updatePostbackUrl",
+  "delete /postback-url/delete": "PostbackUrlController.deletePostbackUrl",
+  "get /postback-url/my": "PostbackUrlController.getMyPostbackUrl",
+
 };
