@@ -1027,11 +1027,12 @@ exports.updateCommission = async (req, res) => {
     const affiliateLinkCheck = await AffiliateLink.findOne({
       isDeleted: false,
       id: id,
-    });
-    console.log("affiliateLinkCheck", affiliateLinkCheck);
+    }).populate('affiliate_id');
+    console.log("affiliateLinkCheck", affiliateLinkCheck.affiliate_id);
     let updateFields = { commission_status: commission_status };
     let amount = 0;
-    
+    let AffiliateAddress = affiliateLinkCheck.affiliate_id.address
+
      const updatedAffiliateLink = await AffiliateLink.updateOne({
         id: id,
         isDeleted: false,
@@ -1148,6 +1149,7 @@ exports.updateCommission = async (req, res) => {
 
       const payload = {
         commission: amount,
+        address: AffiliateAddress,
         // stripe_fees: stripe_fee,
         // platform_fee: commission_override,
         total_amount,
@@ -1209,8 +1211,143 @@ function calculateStripeFee(amount) {
   return amount * PERCENT_FEE + FIXED_FEE;
 }
 
+// const invoice_itm_html = (payload) => {
+//   // const { commission, stripe_fees, platform_fee, total_amount, address } = payload
+
+//   return `
+// <!DOCTYPE html>
+// <html lang="en">
+// <head>
+//   <meta charset="UTF-8" />
+//   <title>Invoice</title>
+//   <style>
+//     body {
+//       font-family: Arial, Helvetica, sans-serif;
+//       background: #f6f8fb;
+//       margin: 0;
+//       padding: 20px;
+//     }
+
+//     .invoice-container {
+//       max-width: 600px;
+//       margin: auto;
+//       background: #ffffff;
+//       border-radius: 10px;
+//       box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+//       padding: 30px;
+//     }
+
+//     .invoice-header {
+//       display: flex;
+//       align-items: center;
+//       justify-content: space-between;
+//       border-bottom: 2px solid #eee;
+//       padding-bottom: 15px;
+//       margin-bottom: 25px;
+//     }
+
+//     .invoice-header img {
+//       height: 40px;
+//     }
+
+//     .invoice-header h2 {
+//       margin: 0;
+//       font-size: 22px;
+//       color: #333;
+//     }
+
+//     .invoice-details {
+//       margin-bottom: 25px;
+//     }
+
+//     .invoice-details p {
+//       margin: 4px 0;
+//       color: #666;
+//       font-size: 14px;
+//     }
+
+//     .invoice-table {
+//       width: 100%;
+//       border-collapse: collapse;
+//       margin-bottom: 20px;
+//     }
+
+//     .invoice-table th,
+//     .invoice-table td {
+//       padding: 12px 10px;
+//       font-size: 14px;
+//     }
+
+//     .invoice-table th {
+//       text-align: left;
+//       color: #555;
+//       border-bottom: 1px solid #ddd;
+//     }
+
+//     .invoice-table td {
+//       text-align: right;
+//       color: #333;
+//     }
+
+//     .invoice-table tr:not(:last-child) td {
+//       border-bottom: 1px solid #f0f0f0;
+//     }
+
+//     .total-row td {
+//       font-weight: bold;
+//       font-size: 16px;
+//       border-top: 2px solid #333;
+//       padding-top: 15px;
+//     }
+
+//     .footer-note {
+//       text-align: center;
+//       font-size: 12px;
+//       color: #888;
+//       margin-top: 30px;
+//     }
+
+//     @page { margin: 0; }
+//   </style>
+// </head>
+// <body>
+//   <div class="invoice-container">
+//     <div class="invoice-header">
+//       <img src=${credentials.BACK_WEB_URL}/images/logo.png alt="Upfilly Logo" />
+//       <h2>Invoice</h2>
+//     </div>
+
+//     <div class="invoice-details">
+//       <p><strong>Invoice ID:</strong> #INV-${Date.now()}</p>
+//       <p><strong>Date:</strong> ${new Date().toLocaleDateString("en-CA")}</p>
+//     </div>
+
+//     <table class="invoice-table">
+//       <tr>
+//         <th>Description</th>
+//         <th>Amount</th>
+//       </tr>
+//       <tr>
+//         <td style="text-align:left;">Main Amount</td>
+//         <td>${payload.commission}</td>
+//       </tr>
+//       <tr class="total-row">
+//         <td style="text-align:left;">Total Payout</td>
+//         <td>${payload.total_amount}</td>
+//       </tr>
+//     </table>
+
+//     <div class="footer-note">
+//       Powered by Upfilly • Payments processed securely via Stripe
+//     </div>
+//   </div>
+// </body>
+// </html>
+// `;
+// };
+
 const invoice_itm_html = (payload) => {
-  // const { commission, stripe_fees, platform_fee, total_amount } = payload
+  const { commission, total_amount, address } = payload
 
   return `
 <!DOCTYPE html>
@@ -1264,6 +1401,33 @@ const invoice_itm_html = (payload) => {
       font-size: 14px;
     }
 
+    .address-section {
+      margin: 15px 0;
+      padding: 12px;
+      background: #f9f9f9;
+      border-radius: 6px;
+      border-left: 3px solid #4CAF50;
+    }
+
+    .address-section p {
+      margin: 0;
+      word-wrap: break-word;
+      white-space: pre-wrap;
+      line-height: 1.4;
+    }
+
+    .address-label {
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 5px;
+      font-size: 13px;
+    }
+
+    .address-content {
+      color: #555;
+      font-size: 13px;
+    }
+
     .invoice-table {
       width: 100%;
       border-collapse: collapse;
@@ -1311,13 +1475,20 @@ const invoice_itm_html = (payload) => {
 <body>
   <div class="invoice-container">
     <div class="invoice-header">
-      <img src=${credentials.BACK_WEB_URL}/images/logo.png alt="Upfilly Logo" />
+      <img src="${credentials.BACK_WEB_URL}/images/logo.png" alt="Upfilly Logo" />
       <h2>Invoice</h2>
     </div>
 
     <div class="invoice-details">
       <p><strong>Invoice ID:</strong> #INV-${Date.now()}</p>
       <p><strong>Date:</strong> ${new Date().toLocaleDateString("en-CA")}</p>
+
+      ${address ? `
+      <div class="address-section">
+        <div class="address-label">Address:</div>
+        <div class="address-content">${address.replace(/\n/g, '<br>')}</div>
+      </div>
+      ` : ''}
     </div>
 
     <table class="invoice-table">
@@ -1327,11 +1498,11 @@ const invoice_itm_html = (payload) => {
       </tr>
       <tr>
         <td style="text-align:left;">Main Amount</td>
-        <td>${payload.commission}</td>
+        <td>${commission}</td>
       </tr>
       <tr class="total-row">
         <td style="text-align:left;">Total Payout</td>
-        <td>${payload.total_amount}</td>
+        <td>${total_amount}</td>
       </tr>
     </table>
 
