@@ -67,6 +67,58 @@ exports.addPostbackUrl = async (req, res) => {
 };
 
 /**
+ * @GET /postback-url/add-get
+ * @desc Create a new postback URL configuration and transaction via GET request
+ */
+exports.addPostbackUrlGet = async (req, res) => {
+  try {
+    let data = req.query;
+    if (req.body && Object.keys(req.body).length > 0) {
+      data = req.body;
+    }
+
+    const {
+      event,
+      order_id,
+      price,
+      currency,
+      timestamp,
+      affiliate_id,
+    } = data;
+
+    if (!affiliate_id) {
+      return response.failed(null, "affiliate_id is required", req, res);
+    }
+    // if (!order_id) {
+    //   return response.failed(null, "order_id is required", req, res);
+    // }
+
+    // Create a transaction as requested
+    let transactionData = {
+      user_id: affiliate_id,
+      // transaction_id: order_id,
+      transaction_type: "postback",
+      amount: price ? parseFloat(price) : 0,
+      currency: currency || "USD",
+      transaction_status: "paid",
+      addedBy: affiliate_id
+    };
+
+    // If timestamp is provided, we can pass it, otherwise let Sails set createdAt
+    if (timestamp) {
+      transactionData.createdAt = timestamp;
+    }
+    
+    let createdTransaction = await Transactions.create(transactionData).fetch();
+
+    return response.success(createdTransaction, "Transaction created successfully", req, res);
+  } catch (error) {
+    console.log(error, "==addPostbackUrlGet error");
+    return response.failed(null, `${error}`, req, res);
+  }
+};
+
+/**
  * @GET /postback-url/detail
  * @desc Get a single postback URL by id
  */

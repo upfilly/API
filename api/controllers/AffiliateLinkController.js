@@ -158,7 +158,7 @@ exports.create = async function (req, res) {
   try {
     const { event, timestamp, urlParams, data, couponId } = req.body;
 
-    if (!event || !timestamp) {
+    if (!event ) {
       return response.failed(
         null,
         constants.AFFILIATELINK.MISSING_FIELDS,
@@ -222,7 +222,7 @@ exports.create = async function (req, res) {
             
             // Handle special cases for event and timestamp
             if (item.id === "timestamp" && !value) {
-              value = req.body.timestamp || new Date().toISOString();
+              value = req.body?.timestamp || new Date().toISOString();
             }
             
             if (item.id === "event" && !value) {

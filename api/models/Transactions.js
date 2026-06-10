@@ -12,7 +12,7 @@ module.exports = {
     paid_to: { model: "users" },
     transaction_type: {
       type: "string",
-      isIn: ["buy_subscription", "bank_account", "pay_commission"],
+      isIn: ["buy_subscription", "bank_account", "pay_commission","postback"],
     },
 
     subscription_plan_id: { model: "subscriptionplans" },
