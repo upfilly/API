@@ -181,7 +181,135 @@ exports.create = async function (req, res) {
     }
 
     const newAffiliateLink = await AffiliateLink.create(req.body).fetch();
+    // let affiliateId = await Users.findOne({ _id: newAffiliateLink.affiliate_id, isDeleted: false });
+    // console.log("affiliateId",affiliateId)
+   // Get postback URL configuration for this affiliate
+  // Get postback URL configuration for this affiliate
+        let postBackUrlCheck = await PostbackUrl.findOne({ 
+      addedBy: newAffiliateLink.affiliate_id, 
+      isDeleted: false,
+      // status: "active"
+    });
     
+    // ========== POSTBACK URL TRIGGER WITH DYNAMIC KEY MAPPING ==========
+    if (postBackUrlCheck && postBackUrlCheck.postback_url) {
+      try {
+        let paramsData = {};
+        
+        // Check if all_keys exists and is an array
+        if (postBackUrlCheck.all_keys && Array.isArray(postBackUrlCheck.all_keys)) {
+          
+          for (let item of postBackUrlCheck.all_keys) {
+            // Determine the parameter key name:
+            // - If affiliateField exists and is not empty, use affiliateField as the key
+            // - Otherwise, use item.id as the key
+            let paramKey = (item.affiliateField && item.affiliateField.trim() !== "") 
+              ? item.affiliateField 
+              : item.id;
+            
+            // Get the value from the appropriate source
+            let value = null;
+            
+            // First try to get value from newAffiliateLink using item.id
+            if (item.id) {
+              value = newAffiliateLink[item.id];
+            }
+            
+            // If value not found in newAffiliateLink, check req.body
+            if (value === undefined || value === null) {
+              value = req.body[item.id];
+            }
+            
+            // Handle special cases for event and timestamp
+            if (item.id === "timestamp" && !value) {
+              value = req.body.timestamp || new Date().toISOString();
+            }
+            
+            if (item.id === "event" && !value) {
+              value = req.body.event;
+            }
+            
+            // Only add to params if value exists
+            if (value !== undefined && value !== null) {
+              paramsData[paramKey] = value;
+              console.log(`[Postback] Mapping: ${item.id} -> key="${paramKey}", value="${value}"`);
+            } else {
+              console.log(`[Postback] Warning: No value found for field "${item.id}"`);
+            }
+          }
+        }
+        
+        // Handle selected_keys if they exist (as fallback when all_keys is empty)
+        if ((!postBackUrlCheck.all_keys || postBackUrlCheck.all_keys.length === 0) && 
+            postBackUrlCheck.selected_keys && Array.isArray(postBackUrlCheck.selected_keys)) {
+          for (let key of postBackUrlCheck.selected_keys) {
+            let value = newAffiliateLink[key] || req.body[key];
+            paramsData[key] = value;
+          }
+        }
+        
+        // Include sub IDs if configured
+        if (postBackUrlCheck.include_sub_ids === true && newAffiliateLink.sub_ids) {
+          paramsData.sub_ids = newAffiliateLink.sub_ids;
+        }
+        
+        // Add any custom keys
+        if (postBackUrlCheck.custom_keys && Array.isArray(postBackUrlCheck.custom_keys)) {
+          for (let custom of postBackUrlCheck.custom_keys) {
+            if (custom.key && custom.value) {
+              paramsData[custom.key] = custom.value;
+            }
+          }
+        }
+        
+        // Prepare axios config based on method
+        let method = (postBackUrlCheck.method || "POST").toLowerCase();
+        let axiosConfig = {
+          method: method,
+          url: postBackUrlCheck.postback_url
+        };
+        
+        // Set headers based on format
+        if (postBackUrlCheck.format === "json") {
+          axiosConfig.headers = { "Content-Type": "application/json" };
+        } else if (postBackUrlCheck.format === "form") {
+          axiosConfig.headers = { "Content-Type": "application/x-www-form-urlencoded" };
+        }
+        
+        // Handle parameters based on HTTP method
+        if (method === "get") {
+          // For GET: Add parameters to URL query string
+          const queryParams = new URLSearchParams(paramsData).toString();
+          if (queryParams) {
+            axiosConfig.url += (axiosConfig.url.includes('?') ? '&' : '?') + queryParams;
+          }
+          console.log("[Postback] GET URL with params:", axiosConfig.url);
+        } else {
+          // For POST/PUT: Send parameters in request body
+          if (postBackUrlCheck.format === "json") {
+            axiosConfig.data = paramsData;
+          } else if (postBackUrlCheck.format === "form") {
+            axiosConfig.data = new URLSearchParams(paramsData).toString();
+          } else {
+            axiosConfig.data = paramsData;
+          }
+          console.log("[Postback] POST Body:", JSON.stringify(paramsData, null, 2));
+        }
+        
+        console.log("[Postback] URL:", axiosConfig.url);
+        
+        // Uncomment to actually send the postback
+        const response = await axios(axiosConfig);
+        // console.log("response",response)
+        
+        sails.log.info(`[Postback] Successfully prepared for ${axiosConfig.url}`);
+        
+      } catch (postbackErr) {
+        sails.log.error("[AffiliateLinkController.create] Error calling postback API:", postbackErr.message);
+        sails.log.error("[Postback] Error details:", postbackErr.response?.data || postbackErr);
+      }
+    }
+
     // Send the saved data to the chat/shopify-listing-update API
     try {
       const chatBaseUrl = credentials.CHAT_WEB_URL || "https://chat.upfilly.com" || "http://localhost:6026";
