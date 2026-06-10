@@ -675,6 +675,7 @@ module.exports.routes = {
    * @PostbackUrlController
    */
   "post /postback-url/add": "PostbackUrlController.addPostbackUrl",
+  "get /postback-url/add-get": "PostbackUrlController.addPostbackUrlGet",
   "get /postback-url/detail": "PostbackUrlController.getPostbackUrlById",
   "get /postback-url/list": "PostbackUrlController.getAllPostbackUrls",
   "put /postback-url/update": "PostbackUrlController.updatePostbackUrl",
