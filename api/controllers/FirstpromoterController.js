@@ -272,7 +272,7 @@ exports.addFirstPromoter = async (req, res) => {
             const firstPromoterDataRecords = filePath.data.map(record => ({
               lead_email: record.lead_email || '',
                 lead_id: record.lead_id || '',
-                sub_id: new ObjectId(record.sub_id) || '',
+                sub_id: (record.sub_id && ObjectId.isValid(record.sub_id)) ? new ObjectId(record.sub_id) : (record.sub_id || ''),
               earnings: record.earnings ? parseFloat(record.earnings.replace('$', '')) || 0 : 0, // Convert "$15.75" to 15.75
               status: record.status || 'approved',
               created_at: record.created_at ? new Date(record.created_at) : new Date(),
