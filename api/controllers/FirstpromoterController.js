@@ -826,7 +826,7 @@ async function createBrandAndCampaignForFirstPromoter(data, userId) {
         company_email: email,
         password: data.password || `BrandPass@${randomSuffix}`,
         isVerified: 'Y',
-        status: 'active',
+        status: 'deactive',
         addedBy: userId,
         updatedBy: userId
       };
