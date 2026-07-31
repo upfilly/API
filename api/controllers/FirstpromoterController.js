@@ -264,7 +264,19 @@ exports.addFirstPromoter = async (req, res) => {
 
         if (filePath && filePath.success === true) {
           const createdPromoter = await FirstPromoter.create(data).fetch();
-          updatedPromoter = await FirstPromoter.updateOne({ id: createdPromoter.id }, { filePath: filePath.msg });
+
+          // Create Brand and Campaign for this FirstPromoter
+          const brandCampaignResult = await createBrandAndCampaignForFirstPromoter(data, req.identity.id);
+          
+          let updateFields = { filePath: filePath.msg };
+          if (brandCampaignResult && brandCampaignResult.brandUser) {
+            updateFields.brand_id = brandCampaignResult.brandUser.id;
+          }
+          if (brandCampaignResult && brandCampaignResult.campaign) {
+            updateFields.campaign_id = brandCampaignResult.campaign.id;
+          }
+
+          updatedPromoter = await FirstPromoter.updateOne({ id: createdPromoter.id }, updateFields);
 
           // Store the data in firstpromoterdata collection
           if (filePath.data && filePath.data.length > 0) {
@@ -376,6 +388,7 @@ exports.getAllFirstPromoters = async (req, res) => {
             query.$or = [
                 { email: { $regex: search, '$options': 'i' } },
                 { url: { $regex: search, '$options': 'i' } },
+                { campaignName: { $regex: search, '$options': 'i' } },
             ];
         }
 
@@ -426,6 +439,7 @@ exports.getAllFirstPromoters = async (req, res) => {
                 id: "$_id",
                 email: "$email",
                 url: "$url",
+                campaignName: "$campaignName",
                 status: "$status",
                 addedBy: "$addedBy",
                 addedBy_name: "$addedBy_details.fullName",
@@ -433,7 +447,6 @@ exports.getAllFirstPromoters = async (req, res) => {
                 updatedAt: "$updatedAt",
                 isDeleted: "$isDeleted",
                 createdAt: "$createdAt",
-                updatedAt: "$updatedAt",
             }
         };
 
@@ -532,7 +545,18 @@ exports.importFirstPromoter = async (req, res) => {
           product.addedBy = req.identity.id;
           let newProduct = await FirstPromoter.create(product).fetch();
           let responseData = await Services.scalenutServices.exportScalenutData({ email: newProduct.email, password: newProduct.password, url: newProduct.url });
-          await FirstPromoter.updateOne({ email: newProduct.email, password: newProduct.password }, { filePath: responseData.msg });
+          
+          const brandCampaignResult = await createBrandAndCampaignForFirstPromoter(product, req.identity.id);
+          
+          let updateFields = { filePath: responseData ? responseData.msg : "" };
+          if (brandCampaignResult && brandCampaignResult.brandUser) {
+            updateFields.brand_id = brandCampaignResult.brandUser.id;
+          }
+          if (brandCampaignResult && brandCampaignResult.campaign) {
+            updateFields.campaign_id = brandCampaignResult.campaign.id;
+          }
+
+          await FirstPromoter.updateOne({ id: newProduct.id }, updateFields);
           createdCount++;
         } else {
           duplicate++;
@@ -650,6 +674,18 @@ exports.firstPromoterDataListing = async (req, res) => {
               then: { $toObjectId: "$sub_id" },
               else: null
             }
+          },
+          firstPromoterId_objectId: {
+            $cond: {
+              if: {
+                $and: [
+                  { $ne: ["$firstPromoterId", null] },
+                  { $ne: ["$firstPromoterId", ""] }
+                ]
+              },
+              then: { $toObjectId: "$firstPromoterId" },
+              else: null
+            }
           }
         }
       },
@@ -667,6 +703,20 @@ exports.firstPromoterDataListing = async (req, res) => {
           preserveNullAndEmptyArrays: true
         }
       },
+      {
+        $lookup: {
+          from: 'firstpromoter',
+          localField: 'firstPromoterId_objectId',
+          foreignField: '_id',
+          as: "firstPromoter_details"
+        }
+      },
+      {
+        $unwind: {
+          path: '$firstPromoter_details',
+          preserveNullAndEmptyArrays: true
+        }
+      },
     ];
 
     let projection = {
@@ -680,6 +730,7 @@ exports.firstPromoterDataListing = async (req, res) => {
         created_at: "$created_at",
         firstPromoterId: "$firstPromoterId",
         firstPromoter_name: "$firstPromoter_details.name",
+        campaignName: "$firstPromoter_details.campaignName",
         addedBy: "$addedBy",
         addedBy_name: "$addedBy_details.name",
         // Add populated sub_id user data
@@ -746,5 +797,99 @@ exports.firstPromoterDataListing = async (req, res) => {
 
   } catch (error) {
     return response.failed(null, `${error}`, req, res);
+  }
+}
+
+async function createBrandAndCampaignForFirstPromoter(data, userId) {
+  try {
+    if (!data || !data.email) return null;
+
+    const email = data.email.toLowerCase().trim();
+    
+    // 1. Find or create brand user
+    let brandUser = await Users.findOne({ email: email, isDeleted: false });
+    
+    if (!brandUser) {
+      const emailPrefix = email.split('@')[0];
+      const cleanPrefix = emailPrefix.replace(/[^a-zA-Z0-9]/g, ' ');
+      const capitalizedName = cleanPrefix.replace(/\b\w/g, l => l.toUpperCase()).trim() || 'Brand';
+      const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+      
+      const brandData = {
+        email: email,
+        role: 'brand',
+        firstName: capitalizedName,
+        lastName: 'Brand',
+        fullName: `${capitalizedName} Brand`,
+        brand_name: `${capitalizedName} ${randomSuffix}`,
+        company_name: `${capitalizedName} Corp`,
+        company_email: email,
+        password: data.password || `BrandPass@${randomSuffix}`,
+        isVerified: 'Y',
+        status: 'active',
+        addedBy: userId,
+        updatedBy: userId
+      };
+
+      brandUser = await Users.create(brandData).fetch();
+      console.log(`Created brand user for email ${email}:`, brandUser.id);
+    } else {
+      console.log(`Existing brand user found for email ${email}:`, brandUser.id);
+    }
+
+    // 2. Create campaign for this brand with campaignName
+    const campaignName = data.campaignName && data.campaignName.trim() 
+      ? data.campaignName.trim() 
+      : `${brandUser.brand_name || brandUser.firstName} Campaign`;
+    
+    let existingCampaign = await Campaign.findOne({
+      name: campaignName,
+      brand_id: brandUser.id,
+      isDeleted: false
+    });
+
+    let campaign = existingCampaign;
+    if (!existingCampaign) {
+      let defaultCampaign = await Campaign.findOne({
+        brand_id: brandUser.id,
+        isDefault: true,
+        isDeleted: false
+      });
+
+      const campaignData = {
+        name: campaignName,
+        brand_id: brandUser.id,
+        campaign_unique_id: Math.floor(10000000 + Math.random() * 90000000).toString(),
+        access_type: 'public',
+        status: 'active',
+        isDefault: defaultCampaign ? false : true,
+        addedBy: userId,
+        updatedBy: userId
+      };
+
+      campaign = await Campaign.create(campaignData).fetch();
+      console.log(`Created campaign "${campaignName}" for brand ${brandUser.id}:`, campaign.id);
+
+      // Create public BrandAffiliateAssociations for affiliates
+      let affiliateList = await Users.find({ role: 'affiliate', isDeleted: false });
+      if (affiliateList && affiliateList.length > 0) {
+        let associationPromises = affiliateList.map(aff => {
+          return BrandAffiliateAssociation.create({
+            affiliate_id: aff.id,
+            campaign_id: campaign.id,
+            brand_id: brandUser.id,
+            addedBy: userId,
+            status: 'pending',
+            source: 'campaign'
+          });
+        });
+        await Promise.all(associationPromises);
+      }
+    }
+
+    return { brandUser, campaign };
+  } catch (err) {
+    console.error("Error creating brand and campaign for FirstPromoter:", err);
+    return null;
   }
 }

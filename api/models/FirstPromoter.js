@@ -13,6 +13,9 @@ module.exports = {
     password: { type: "string" },
     url: { type: "string" },
     filePath: { type: "string" },
+    campaignName: { type: "string" },
+    brand_id: { model: "users" },
+    campaign_id: { model: "campaign" },
 
     status: {
       type: "string",
