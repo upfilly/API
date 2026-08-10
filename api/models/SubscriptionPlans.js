@@ -15,6 +15,11 @@ module.exports = {
             type: 'string',
             isIn: ['paid', 'free'],
         },
+        type: {
+            type: 'string',
+            isIn: ['normal', 'white_label'],
+            defaultsTo: 'normal'
+        },
         payment_type: {
             type: "string",
             isIn: ['trial', 'recurring']

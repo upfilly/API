@@ -153,7 +153,11 @@ exports.getAllSubscriptionPlans = async (req, res) => {
         let count = req.param('count') || 10;
         let page = req.param('page') || 1;
         let skipNo = (Number(page) - 1) * Number(count);
-        let { search, sortBy, status, isDeleted, plan_type, userId, category } = req.query;
+        let { search, sortBy, status, isDeleted, plan_type, userId, category, type } = req.query;
+
+        if (type) {
+            query.type = type;
+        }
 
         if (search) {
             search = Services.Utils.remove_special_char_exept_underscores(search);
@@ -254,6 +258,7 @@ exports.getAllSubscriptionPlans = async (req, res) => {
                 upcoming_date: "$upcoming_date",
                 plan_type: "$plan_type",
                 payment_type: "$payment_type",
+                type: "$type",
                 role_type: "$role_type",
                 discount_id: "$discount_id",
                 features_id: "$features_id",
@@ -311,6 +316,7 @@ exports.getAllSubscriptionPlans = async (req, res) => {
                 interval_count: { $first: "$interval_count" },
                 discount_details: { $first: "$discount_details" },
                 category: { $first: "$category" },
+                type: { $first: "$type" },
                 features: {
                     $push: {
                         feature_name: "$feature_name",

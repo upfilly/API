@@ -34,7 +34,8 @@ exports.addSubscriptionPlan = async (req, res, next) => {
         basket_value_charge: Joi.number().optional(),
         commission_override: Joi.number().optional(),
         bonus_override: Joi.number().optional(),
-        allowed_total_revenue: Joi.number().optional()
+        allowed_total_revenue: Joi.number().optional(),
+        type: Joi.string().optional().valid('normal', 'white_label')
     });
 
     return await Validate(schema, req, res);
@@ -72,7 +73,8 @@ exports.editSubscriptionPlan = async (req, res, next) => {
         basket_value_charge: Joi.number().optional(),
         commission_override: Joi.number().optional(),
         bonus_override: Joi.number().optional(),
-        allowed_total_revenue: Joi.number().optional()
+        allowed_total_revenue: Joi.number().optional(),
+        type: Joi.string().optional().valid('normal', 'white_label')
     });
 
     return await Validate(schema, req, res);

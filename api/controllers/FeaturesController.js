@@ -43,6 +43,7 @@ module.exports = {
                 let query = {}
                 query.isDeleted = false;
                 query.name = items.name;
+                if (items.type) query.type = items.type;
                 // query.role_type = data.role_type;
 
                 const features_data = await Features.findOne(query);
@@ -130,7 +131,11 @@ module.exports = {
           let count = req.param("count") || 10;
           let page = req.param("page") || 1;
           let skipNo = (Number(page) - 1) * Number(count);
-          let { search, sortBy, status, isDeleted } = req.query;
+          let { search, sortBy, status, isDeleted, type } = req.query;
+
+          if (type) {
+              query.type = type;
+          }
 
           if (search) {
             search =
@@ -183,6 +188,7 @@ module.exports = {
               id: "$_id",
               name: { $toLower: "$name" },
               status: "$status",
+              type: "$type",
               // role_type: "$role_type",
               createdBy: "$createdBy",
               isDeleted: "$isDeleted",
