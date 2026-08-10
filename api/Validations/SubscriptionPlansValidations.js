@@ -6,7 +6,7 @@ exports.addSubscriptionPlan = async (req, res, next) => {
         name: Joi.string().required().max(30).min(3),
         amount: Joi.number().optional().min(0),
         recommended: Joi.string().optional().valid('Y', 'N'),
-        category: Joi.string().optional().valid('Network','Managed Services').default('Network'),
+        category: Joi.string().optional().valid('Network','Managed Services', 'normal', 'white_label').default('Network'),
         interval: Joi.string().required().valid("month"),
         interval_count: Joi.number().required().min(0),
         currency: Joi.string().required(),
@@ -34,8 +34,7 @@ exports.addSubscriptionPlan = async (req, res, next) => {
         basket_value_charge: Joi.number().optional(),
         commission_override: Joi.number().optional(),
         bonus_override: Joi.number().optional(),
-        allowed_total_revenue: Joi.number().optional(),
-        type: Joi.string().optional().valid('normal', 'white_label')
+        allowed_total_revenue: Joi.number().optional()
     });
 
     return await Validate(schema, req, res);
@@ -53,7 +52,7 @@ exports.editSubscriptionPlan = async (req, res, next) => {
         interval_count: Joi.number().optional().min(0),
         plan_type: Joi.string().optional().valid("paid", "free"),
         payment_type: Joi.string().optional().valid('trial', 'recurring'),
-        category: Joi.string().optional().valid('Network','Managed Services'),
+        category: Joi.string().optional().valid('Network','Managed Services', 'normal', 'white_label'),
         trial_period_days: Joi.number().when('payment_type', {
             is: "trial",
             then: Joi.number().optional(),
@@ -73,8 +72,7 @@ exports.editSubscriptionPlan = async (req, res, next) => {
         basket_value_charge: Joi.number().optional(),
         commission_override: Joi.number().optional(),
         bonus_override: Joi.number().optional(),
-        allowed_total_revenue: Joi.number().optional(),
-        type: Joi.string().optional().valid('normal', 'white_label')
+        allowed_total_revenue: Joi.number().optional()
     });
 
     return await Validate(schema, req, res);
