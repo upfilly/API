@@ -1,9 +1,9 @@
 const nodemailer = require('nodemailer');
 const smtpTransport = require('nodemailer-smtp-transport');
 
-exports.test_smtp = async (to, subject, message,res) => {
+exports.test_smtp = async (to, subject, message, res) => {
     let smtp = await Smtp.find({});
-    // console.log(smtp, '==========smtp');
+    console.log(smtp, '==========smtp');
     if (smtp && smtp.length > 0) {
         transport = nodemailer.createTransport(smtpTransport({
             host: smtp[0].host,
