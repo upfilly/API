@@ -63,16 +63,18 @@ module.exports = {
             req.body.updatedBy = req.identity.id;
             let update_smtp = await Smtp.updateOne({ id: req.body.id }, req.body);
             if (update_smtp) {
-                let get_credintails = await Services.Smtp.test_smtp("test@yopmail.com", 'Test SMTP', "<b>Test SMTP<b>", res)
+                let get_credintails = await Services.Smtp.test_smtp("test@yopmail.com", 'Test SMTP', "<b>Test SMTP<b>", res);
                 if (['team'].includes(req.identity.role)) {
-                    await Services.AuditTrial.create_audit_trial(req.identity.id, 'smtp', 'updated', update_smtp, get_smtp)
+                    await Services.AuditTrial.create_audit_trial(req.identity.id, 'smtp', 'updated', update_smtp, get_smtp);
                 }
 
                 if (get_credintails) {
                     return response.success(null, constants.COMMON.SUCCESS, req, res);
+                } else {
+                    return response.failed(null, "SMTP credentials verification failed. Please ensure App Password or valid credentials are provided.", req, res);
                 }
             }
-            // throw constants.COMMON.INVALID_ID;
+            return response.failed(null, constants.COMMON.INVALID_ID, req, res);
         } catch (error) {
             // console.log(error, '=======error');
             return response.failed(null, `${error}`, req, res);
@@ -85,13 +87,13 @@ module.exports = {
      * @param {*} res 
      */
     testSMTP: (req, res) => {
-        data = req.body
-        transport = nodemailer.createTransport(smtpTransport({
+        let data = req.body;
+        let port = Number(data.port) || 587;
+        let transport = nodemailer.createTransport(smtpTransport({
             host: data.host,
-            port: data.port,
+            port: port,
+            secure: port === 465,
             debug: true,
-            sendmail: true,
-            requiresAuth: true,
             auth: {
                 user: data.user,
                 pass: data.pass
@@ -103,17 +105,13 @@ module.exports = {
 
         var myVar;
 
-
         myVar = setTimeout(() => {
             // console.log("sending res")
             return res.status(400).json({
                 success: false,
                 "error": { "code": 400, "message": "SMTP credentials are not valid." }
-            })
-
+            });
         }, 10000);
-
-
 
         transport.sendMail({
             from: 'Trenville  <' + data.user + '>',
@@ -121,38 +119,32 @@ module.exports = {
             subject: "SMTP TESTING",
             html: "This is a test messege for SMTP check.SMTP credentials working fine."
         }, function (err, info) {
-
-
             clearTimeout(myVar);
 
             if (err) {
                 return res.status(400).json({
                     success: false,
                     "error": { "code": 400, "message": "" + err }
-                })
+                });
             } else {
                 return res.status(200).json({
                     "success": true,
                     "code": 200,
                     "message": "SMTP working successfully."
-
-                })
-
+                });
             }
-
         });
     },
 
-    sendEmail: ((to, subject, message,brandName, next) => {
-
+    sendEmail: ((to, subject, message, brandName, next) => {
         Smtp.find({}).then(smtp => {
             if (smtp.length > 0) {
-                transport = nodemailer.createTransport(smtpTransport({
+                let port = Number(smtp[0].port) || 587;
+                let transport = nodemailer.createTransport(smtpTransport({
                     host: smtp[0].host,
-                    port: smtp[0].port,
+                    port: port,
+                    secure: port === 465,
                     debug: true,
-                    sendmail: true,
-                    requiresAuth: true,
                     auth: {
                         user: smtp[0].user,
                         pass: smtp[0].pass
@@ -167,12 +159,10 @@ module.exports = {
                     subject: subject,
                     html: message
                 }, function (err, info) {
-                    console.log('err', err,info)
-
+                    console.log('err', err, info);
                 });
             }
         });
-
     })
 
 
