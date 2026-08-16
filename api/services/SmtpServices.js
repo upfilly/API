@@ -13,8 +13,8 @@ exports.test_smtp = async (to, subject, message, res) => {
                 secure: port === 465,
                 debug: true,
                 auth: {
-                    user: smtp[0].user,
-                    pass: smtp[0].pass
+                    user: smtp[0].user ? smtp[0].user.trim() : smtp[0].user,
+                    pass: smtp[0].pass ? smtp[0].pass.replace(/\s+/g, '') : smtp[0].pass
                 },
                 tls: {
                     rejectUnauthorized: false

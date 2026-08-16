@@ -61,6 +61,12 @@ module.exports = {
             }
 
             req.body.updatedBy = req.identity.id;
+            if (req.body.pass) {
+                req.body.pass = req.body.pass.replace(/\s+/g, '');
+            }
+            if (req.body.user) {
+                req.body.user = req.body.user.trim();
+            }
             let update_smtp = await Smtp.updateOne({ id: req.body.id }, req.body);
             if (update_smtp) {
                 let get_credintails = await Services.Smtp.test_smtp("test@yopmail.com", 'Test SMTP', "<b>Test SMTP<b>", res);
@@ -95,8 +101,8 @@ module.exports = {
             secure: port === 465,
             debug: true,
             auth: {
-                user: data.user,
-                pass: data.pass
+                user: data.user ? data.user.trim() : data.user,
+                pass: data.pass ? data.pass.replace(/\s+/g, '') : data.pass
             },
             tls: {
                 rejectUnauthorized: false
@@ -138,6 +144,7 @@ module.exports = {
 
     sendEmail: ((to, subject, message, brandName, next) => {
         Smtp.find({}).then(smtp => {
+            console.log(smtp, '==========smtp');
             if (smtp.length > 0) {
                 let port = Number(smtp[0].port) || 587;
                 let transport = nodemailer.createTransport(smtpTransport({
@@ -146,8 +153,8 @@ module.exports = {
                     secure: port === 465,
                     debug: true,
                     auth: {
-                        user: smtp[0].user,
-                        pass: smtp[0].pass
+                        user: smtp[0].user ? smtp[0].user.trim() : smtp[0].user,
+                        pass: smtp[0].pass ? smtp[0].pass.replace(/\s+/g, '') : smtp[0].pass
                     },
                     tls: {
                         rejectUnauthorized: false
