@@ -11,6 +11,11 @@ module.exports = {
     name: {
       type: 'String'
     },
+    type: {
+      type: 'string',
+      isIn: ['normal', 'white_label'],
+      defaultsTo: 'normal'
+    },
     status: {
       type: 'string',
       isIn: ['active', 'deactive'],

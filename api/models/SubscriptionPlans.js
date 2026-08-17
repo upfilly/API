@@ -28,7 +28,7 @@ module.exports = {
 
         interval: { type: 'string', isIn: ['month', 'year', 'week', 'day'] },
         interval_count: { type: 'number', defaultsTo: 1 },
-        category: {type: 'string', isIn: ['Network', 'Managed Services']},
+        category: {type: 'string', isIn: ['Network', 'Managed Services', 'normal', 'white_label']},
         isUpcoming: { type: "Boolean", defaultsTo: false },
         stripe_plan_id: { type: 'string', },
         stripe_product_id: { type: 'string', },
