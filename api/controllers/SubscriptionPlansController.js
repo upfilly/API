@@ -108,19 +108,22 @@ exports.editSubscriptionPlan = async (req, res) => {
         }
 
         let { id, name, upcoming_date, make_recommend } = req.body;
-        let get_query = {
-            id: { "!=": id },
-            name: name,
-            isDeleted: false,
-        }
 
         if (upcoming_date) {
             req.body.upcoming_date = new Date(upcoming_date);
 
         }
-        let get_subscription_plan = await SubscriptionPlans.findOne(get_query);
-        if (get_subscription_plan) {
-            throw constants.SUBSCRIPTION_PLAN.NAME_EXIST;
+
+        if (name) {
+            let get_query = {
+                id: { "!=": id },
+                name: name,
+                isDeleted: false,
+            }
+            let get_subscription_plan = await SubscriptionPlans.findOne(get_query);
+            if (get_subscription_plan) {
+                throw constants.SUBSCRIPTION_PLAN.NAME_EXIST;
+            }
         }
 
         req.body.updatedBy = req.identity.id;
