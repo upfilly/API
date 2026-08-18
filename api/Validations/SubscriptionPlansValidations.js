@@ -7,6 +7,7 @@ exports.addSubscriptionPlan = async (req, res, next) => {
         amount: Joi.number().optional().min(0),
         recommended: Joi.string().optional().valid('Y', 'N'),
         category: Joi.string().optional().valid('Network','Managed Services', 'normal', 'white_label').default('Network'),
+        whitelabelType: Joi.string().optional().valid('merchant', 'network'),
         interval: Joi.string().required().valid("month"),
         interval_count: Joi.number().required().min(0),
         currency: Joi.string().required(),
@@ -53,6 +54,7 @@ exports.editSubscriptionPlan = async (req, res, next) => {
         plan_type: Joi.string().optional().valid("paid", "free"),
         payment_type: Joi.string().optional().valid('trial', 'recurring'),
         category: Joi.string().optional().valid('Network','Managed Services', 'normal', 'white_label'),
+        whitelabelType: Joi.string().optional().valid('merchant', 'network'),
         trial_period_days: Joi.number().when('payment_type', {
             is: "trial",
             then: Joi.number().optional(),
