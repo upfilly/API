@@ -10,7 +10,7 @@ exports.register = async (req, res, next) => {
         brand_name: Joi.string().optional().allow("").min(3).max(50),
         email: Joi.string().required(),
         password: Joi.string().required(),
-        role: Joi.string().optional().valid("brand", "affiliate", "admin", "customer"),
+        role: Joi.string().optional().valid("brand", "affiliate", "admin", "customer", "white_lable"),
         countryCode: Joi.string().optional().allow(""),
         dialCode: Joi.string().optional().allow(""),
         address: Joi.string().optional().allow(""),
@@ -41,6 +41,8 @@ exports.register = async (req, res, next) => {
         logo1 : Joi.string().optional().allow("",null),
         affiliateSignupText : Joi.string().optional().allow("",null),
         payout_amount : Joi.string().optional().allow("",null),
+        job_title: Joi.string().optional().allow("",null),
+        termandconditon: Joi.boolean().optional(),
     });
     return await Validate(schema, req, res);
 
@@ -55,7 +57,7 @@ exports.registerBrandWithPlan = async (req, res, next) => {
         brand_name: Joi.string().optional().allow("").min(3).max(50),
         email: Joi.string().required(),
         password: Joi.string().optional(),
-        role: Joi.string().optional().valid("brand"),
+        role: Joi.string().optional().valid("brand", "white_lable"),
         countryCode: Joi.string().optional().allow(""),
         dialCode: Joi.string().optional().allow(""),
         address: Joi.string().optional().allow(""),
@@ -91,6 +93,8 @@ exports.registerBrandWithPlan = async (req, res, next) => {
          logo1 : Joi.string().optional().allow("",null),
         affiliateSignupText : Joi.string().optional().allow("",null),
         payout_amount : Joi.string().optional().allow("",null),
+        job_title: Joi.string().optional().allow("",null),
+        termandconditon: Joi.boolean().optional(),
 
     }).options({ allowUnknown: true });
     return await Validate(schema, req, res);
@@ -113,7 +117,7 @@ exports.addUser = async (req, res, next) => {
         dialCode: Joi.string().optional().allow(""),
         mobileNo: Joi.string().optional().allow("").min(5).max(12),
         image: Joi.string().optional().allow(""),
-        role: Joi.string().required().valid('brand', 'affiliate', 'team', 'customer', 'users', 'affiliate', 'operator', 'analyzer', 'publisher', 'staff'),
+        role: Joi.string().required().valid('brand', 'affiliate', 'team', 'customer', 'users', 'affiliate', 'operator', 'analyzer', 'publisher', 'staff', 'white_lable'),
         category_id: Joi.string().optional().allow(null),
         gender: Joi.string().optional(),
         address: Joi.string().optional().allow(""),
@@ -234,6 +238,8 @@ exports.addUser = async (req, res, next) => {
         affiliateSignupText : Joi.string().optional().allow("",null),
 
         payout_amount : Joi.string().optional().allow("",null),
+        job_title: Joi.string().optional().allow("",null),
+        termandconditon: Joi.boolean().optional(),
 
 
 
@@ -397,6 +403,8 @@ exports.editProfile = async (req, res, next) => {
          logo1 : Joi.string().optional().allow("",null),
         affiliateSignupText : Joi.string().optional().allow("",null),
         payout_amount : Joi.string().optional().allow("",null),
+        job_title: Joi.string().optional().allow("",null),
+        termandconditon: Joi.boolean().optional(),
 
 
     });
@@ -557,7 +565,7 @@ exports.adminSignin = async (req, res, next) => {
 
 exports.userSocialLogin = async (req, res, next) => {
     const schema = Joi.object({
-        role: Joi.string().required().valid("brand", "affiliate", "customer"),
+        role: Joi.string().required().valid("brand", "affiliate", "customer", "white_lable"),
         email: Joi.string().optional().allow(""),
         facebook_auth_id: Joi.string().optional().allow(""),
         google_auth_id: Joi.string().optional().allow(""),

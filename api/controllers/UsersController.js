@@ -783,6 +783,7 @@ module.exports = {
               "users",
               "super_user",
               "staff",
+              "white_lable",
             ],
           },
         },
@@ -805,6 +806,7 @@ module.exports = {
               "users",
               "super_user",
               "staff",
+              "white_lable",
             ],
           },
         },
@@ -919,7 +921,7 @@ module.exports = {
 
       let permission_query = {};
 
-      if (["affiliate", "brand", "staff"].includes(user.role)) {
+      if (["affiliate", "brand", "staff", "white_lable"].includes(user.role)) {
         permission_query.role = user.role;
       } else if (
         ["operator", "analyzer", "publisher", "super_user"].includes(user.role)
@@ -1627,6 +1629,8 @@ module.exports = {
       let projection = {
         $project: {
           id: "$_id",
+          termandconditon: "$termandconditon",
+          job_title: "$job_title",
           firstName: "$firstName",
           lastName: "$lastName",
           fullName: { $toLower: "$fullName" },
@@ -2032,6 +2036,8 @@ module.exports = {
       let projection = {
         $project: {
           id: "$_id",
+          termandconditon: "$termandconditon",
+          job_title: "$job_title",
           firstName: "$firstName",
           lastName: "$lastName",
           fullName: "$fullName",
@@ -2281,6 +2287,8 @@ module.exports = {
       let projection = {
         $project: {
           id: "$_id",
+          termandconditon: "$termandconditon",
+          job_title: "$job_title",
           firstName: "$firstName",
           lastName: "$lastName",
           fullName: "$fullName",
@@ -2600,10 +2608,10 @@ module.exports = {
 //       // Get permission details
 //       let permission_query = {};
 
-//       if (["affiliate", "brand", "staff"].includes(get_user.role)) {
+//       if (["affiliate", "brand", "staff", "white_lable"].includes(get_user.role)) {
 //         permission_query.role = get_user.role;
 //       } else if (
-//         ["operator", "analyzer", "publisher", "super_user"].includes(
+//         ["operator", "analyzer", "publisher", "super_user", "white_lable"].includes(
 //           get_user.role
 //         )
 //       ) {
@@ -2677,7 +2685,7 @@ module.exports = {
       // return
       if (get_user) {
         // console.log(get_user.role);
-        if (get_user.role === "brand" || get_user.role === "affiliate") {
+        if (get_user.role === "brand" || get_user.role === "white_lable" || get_user.role === "affiliate") {
           let active_user = get_user;
           // get_user = await Users.findOne({id:get_user.addedBy,isDeleted:false});
           //throw msg here if not exists then throw brand not exists
@@ -2851,7 +2859,7 @@ module.exports = {
 
         let permission_query = {};
 
-        if (["affiliate", "brand", "staff"].includes(get_user.role)) {
+        if (["affiliate", "brand", "staff", "white_lable"].includes(get_user.role)) {
           permission_query.role = get_user.role;
         } else if (
           ["operator", "analyzer", "publisher", "super_user"].includes(
@@ -2886,7 +2894,7 @@ module.exports = {
           get_user.pending_balance = balance.pending[0].amount;
         }
 
-        if (get_user.role === "brand") {
+        if (get_user.role === "brand" || get_user.role === "white_lable") {
           get_user.total_campaign = await Campaign.count({
             brand_id: id,
             isDeleted: false,
@@ -2921,7 +2929,7 @@ module.exports = {
       // return
       if (get_user) {
         // console.log(get_user.role);
-        if (get_user.role === "brand" || get_user.role === "affiliate") {
+        if (get_user.role === "brand" || get_user.role === "white_lable" || get_user.role === "affiliate") {
           let active_user = get_user;
           // get_user = await Users.findOne({id:get_user.addedBy,isDeleted:false});
           //throw msg here if not exists then throw brand not exists
@@ -3095,7 +3103,7 @@ module.exports = {
 
         let permission_query = {};
 
-        if (["affiliate", "brand", "staff"].includes(get_user.role)) {
+        if (["affiliate", "brand", "staff", "white_lable"].includes(get_user.role)) {
           permission_query.role = get_user.role;
         } else if (
           ["operator", "analyzer", "publisher", "super_user"].includes(
@@ -3130,7 +3138,7 @@ module.exports = {
           get_user.pending_balance = balance.pending[0].amount;
         }
 
-        if (get_user.role === "brand") {
+        if (get_user.role === "brand" || get_user.role === "white_lable") {
           get_user.total_campaign = await Campaign.count({
             brand_id: id,
             isDeleted: false,
@@ -3243,6 +3251,7 @@ module.exports = {
             "publisher",
             "customer",
             "users",
+            "white_lable",
           ],
         },
       });
@@ -4031,7 +4040,7 @@ module.exports = {
 
       let permission_query = {};
 
-      if (["affiliate", "brand", "staff"].includes(update_user.role)) {
+      if (["affiliate", "brand", "staff", "white_lable"].includes(update_user.role)) {
         permission_query.role = update_user.role;
       } else if (
         ["operator", "analyzer", "publisher", "super_user"].includes(
@@ -5739,7 +5748,7 @@ module.exports = {
           },
         },
 
-        role && role === "brand"
+        role && (role === "brand" || role === "white_lable")
           ? {
               $lookup: {
                 from: "affiliatebrandinvite",
@@ -5816,6 +5825,8 @@ module.exports = {
       let projection = {
         $project: {
           id: "$_id",
+          termandconditon: "$termandconditon",
+          job_title: "$job_title",
           firstName: "$firstName",
           lastName: "$lastName",
           fullName: { $toLower: "$fullName" },
@@ -6042,6 +6053,8 @@ module.exports = {
       let projection = {
         $project: {
           id: "$_id",
+          termandconditon: "$termandconditon",
+          job_title: "$job_title",
           firstName: "$firstName",
           lastName: "$lastName",
           fullName: "$fullName",

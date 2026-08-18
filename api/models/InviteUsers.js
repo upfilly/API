@@ -17,7 +17,7 @@ module.exports = {
     email: {
       type: 'string',
     },
-    role: { type: 'string', isIn: ["publisher", "operator", "analyzer", "super_user"] },
+    role: { type: 'string', isIn: ["publisher", "operator", "analyzer", "super_user", "white_lable"] },
     description: {
       type: 'string',
     },

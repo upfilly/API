@@ -24,7 +24,7 @@ module.exports = {
     password: { type: 'string', columnName: 'encryptedPassword', minLength: 8 },
     gender: { type: 'string', isIn: ["male", "female", "transgender", "others"] },
     isVerified: { type: 'string', isIn: ['Y', 'N'], defaultsTo: 'N', },
-    role: { type: 'string', isIn: ['brand', 'admin', 'affiliate', 'team', 'super_user', 'operator', 'analyzer', 'publisher', 'customer', 'users', 'staff'], },
+    role: { type: 'string', isIn: ['brand', 'admin', 'affiliate', 'team', 'super_user', 'operator', 'analyzer', 'publisher', 'customer', 'users', 'staff', 'white_lable'], },
     address: { type: "string" },
     country: { type: 'string' },
     state: { type: 'string' },
@@ -202,6 +202,8 @@ module.exports = {
     logo1: { type: 'string' },
     affiliateSignupText: { type: 'string' },
     payout_amount: { type: 'string', allowNull: true },
+    job_title: { type: 'string' },
+    termandconditon: { type: 'Boolean', defaultsTo: false },
   },
 
   beforeCreate: function (user, next) {

@@ -8,7 +8,7 @@ exports.addInvite = async (req, res, next) => {
         firstName: Joi.string().required(),
         lastName: Joi.string().optional(),
         email: Joi.string().required(),
-        role: Joi.string().valid("publisher", "operator", "analyzer", "super_user"),
+        role: Joi.string().valid("publisher", "operator", "analyzer", "super_user", "white_lable"),
         description: Joi.string().optional(),
         language: Joi.string().optional(),
     });
