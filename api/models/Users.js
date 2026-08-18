@@ -132,11 +132,23 @@ module.exports = {
 
     // Company details for brand
     company_name: { type: 'string' },
+    company_registration_number: { type: 'string' },
     company_email: { type: 'string' },
     company_address: { type: 'string' },
     company_country_code: { type: 'string' },
     company_dial_code: { type: 'string' },
     company_mobile_no: { type: 'string' },
+    taxId: { type: 'string' },
+    company_url: { type: 'string' },
+    billing_email: { type: 'string' },
+    industry : { type: 'string' },
+    sub_domain : { type: 'string' },
+    tracking_hostname : { type: 'string' },
+    white_label_address : { type: 'json' },
+    stripe_key : { type: 'string' },
+    stripe_environment : { type: 'string' },
+    stripe_currency : { type: 'string' },
+    stripe_statement_descriptor : { type: 'string' },
     is_mobile_verified: { type: 'Boolean', defaultsTo: false },
 
 
