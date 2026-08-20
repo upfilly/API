@@ -97,7 +97,7 @@ exports.registerBrandWithPlan = async (req, res, next) => {
         brand_name: Joi.string().optional().allow("").min(3).max(50),
         email: Joi.string().required(),
         password: Joi.string().optional(),
-        role: Joi.string().optional().valid("brand", "registerBrandWithPlan", "white_label"),
+        role: Joi.string().optional().valid("brand", "registerBrandWithPlan", "white_lable"),
         countryCode: Joi.string().optional().allow(""),
         dialCode: Joi.string().optional().allow(""),
         address: Joi.string().optional().allow(""),

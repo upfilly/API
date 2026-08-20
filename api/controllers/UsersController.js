@@ -136,6 +136,7 @@ module.exports = {
         special_plan_id: req.body.special_plan_id,
         network_plan_amount: req.body.network_plan_amount,
         managed_services_plan_amount: req.body.managed_services_plan_amount,
+        white_label_plan_amount: req.body.white_label_plan_amount || 0,
         interval: req.body.interval,
         interval_count: req.body.interval_count,
         isSpecial: req.body.isSpecial,
@@ -146,6 +147,7 @@ module.exports = {
         "special_plan_id",
         "network_plan_amount",
         "managed_services_plan_amount",
+        "white_label_plan_amount",
         "interval",
         "interval_count",
         "isSpecial",
@@ -250,7 +252,8 @@ module.exports = {
 
         if (
           data.network_plan_amount === 0 &&
-          data.managed_services_plan_amount === 0
+          data.managed_services_plan_amount === 0 &&
+          data.white_label_plan_amount === 0
         ) {
           let get_existing_subscription = await Subscriptions.findOne({
             user_id: add_user.id,
@@ -328,6 +331,7 @@ module.exports = {
             amount: 0,
             network_plan_amount: 0,
             managed_services_plan_amount: 0,
+            white_label_plan_amount: 0,
             interval: data.interval,
             interval_count: data.interval_count,
             valid_upto: currentDate,
@@ -357,7 +361,7 @@ module.exports = {
 
         let price1 = await stripe.prices.create({
           product: product1.id,
-          unit_amount: Number(data.network_plan_amount) * 100,
+          unit_amount: (Number(data.network_plan_amount) || Number(data.white_label_plan_amount)) * 100,
           currency: "usd",
           recurring: {
             interval: "month",
@@ -415,6 +419,7 @@ module.exports = {
               user_id: String(add_user.id),
               network_plan_amount: data.network_plan_amount,
               managed_services_plan_amount: data.managed_services_plan_amount,
+              white_label_plan_amount: data.white_label_plan_amount,
               interval_count: data.interval_count,
               promoId: data.promoId ? data.promoId : "",
             },
@@ -425,6 +430,7 @@ module.exports = {
                 user_id: String(add_user.id),
                 network_plan_amount: data.network_plan_amount,
                 managed_services_plan_amount: data.managed_services_plan_amount,
+                white_label_plan_amount: data.white_label_plan_amount,
                 interval_count: data.interval_count,
                 interval: data.interval,
                 promoId: data.promoId ? data.promoId : "",
@@ -473,6 +479,7 @@ module.exports = {
               user_id: String(add_user.id),
               network_plan_amount: data.network_plan_amount,
               managed_services_plan_amount: 0,
+              white_label_plan_amount: data.white_label_plan_amount,
               interval_count: data.interval_count,
               promoId: data.promoId ? data.promoId : "",
             },
@@ -483,6 +490,7 @@ module.exports = {
                 user_id: String(add_user.id),
                 network_plan_amount: data.network_plan_amount,
                 managed_services_plan_amount: data.managed_services_plan_amount,
+                white_label_plan_amount: data.white_label_plan_amount,
                 interval_count: data.interval_count,
                 interval: data.interval,
                 promoId: data.promoId ? data.promoId : "",
