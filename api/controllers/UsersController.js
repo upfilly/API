@@ -628,6 +628,7 @@ module.exports = {
         );
       }
     } catch (err) {
+      console.log(err, "err");
       return response.failed(null, `${err}`, req, res);
     }
   },

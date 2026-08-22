@@ -63,6 +63,8 @@ exports.register = async (req, res, next) => {
         payout_amount : Joi.string().optional().allow("",null),
         job_title: Joi.string().optional().allow("",null),
         termandconditon: Joi.boolean().optional(),
+        mobileNo: Joi.string().optional().allow("").min(5).max(12),
+
     });
     return await Validate(schema, req, res);
 
@@ -135,6 +137,8 @@ exports.registerBrandWithPlan = async (req, res, next) => {
         payout_amount : Joi.string().optional().allow("",null),
         job_title: Joi.string().optional().allow("",null),
         termandconditon: Joi.boolean().optional(),
+        mobileNo: Joi.string().optional().allow("").min(5).max(12),
+
 
     }).options({ allowUnknown: true });
     return await Validate(schema, req, res);

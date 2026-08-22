@@ -216,6 +216,7 @@ module.exports = {
     payout_amount: { type: 'string', allowNull: true },
     job_title: { type: 'string' },
     termandconditon: { type: 'Boolean', defaultsTo: false },
+    chat_user: { type: 'Boolean', defaultsTo: false },
   },
 
   beforeCreate: function (user, next) {
