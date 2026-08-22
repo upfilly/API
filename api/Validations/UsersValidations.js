@@ -493,7 +493,15 @@ exports.editProfile = async (req, res, next) => {
         payout_amount : Joi.string().optional().allow("",null),
         job_title: Joi.string().optional().allow("",null),
         termandconditon: Joi.boolean().optional(),
-
+        brand_name: Joi.string().optional().allow("").min(3).max(50),
+        role: Joi.string().optional().valid("brand", "affiliate", "admin", "customer", "white_lable"),
+        currency: Joi.string().optional().allow(""),
+        createdByBrand: Joi.string().optional().allow(null),
+        campaign_unique_id: Joi.string().optional().allow(""),
+        device_token: Joi.string().optional().allow(""),
+        referral_code: Joi.string().optional().allow(""),
+        request_status : Joi.string().optional().valid('accepted','pending').allow("",null),
+        brand_id : Joi.string().optional().allow("",null),
 
     });
     return await Validate(schema, req, res);
