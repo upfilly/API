@@ -14,6 +14,12 @@ exports.register = async (req, res, next) => {
         sub_domain: Joi.string().optional().allow("", null),
         tracking_hostname: Joi.string().optional().allow("", null),
         white_label_address: Joi.object().optional().allow(null),
+        white_label_progress: Joi.object({
+            a: Joi.boolean().optional(),
+            b: Joi.boolean().optional(),
+            c: Joi.boolean().optional(),
+            d: Joi.boolean().optional()
+        }).optional(),
         stripe_key: Joi.string().optional().allow("", null),
         stripe_environment: Joi.string().optional().allow("", null),
         stripe_currency: Joi.string().optional().allow("", null),
@@ -83,6 +89,12 @@ exports.registerBrandWithPlan = async (req, res, next) => {
         sub_domain: Joi.string().optional().allow("", null),
         tracking_hostname: Joi.string().optional().allow("", null),
         white_label_address: Joi.object().optional().allow(null),
+        white_label_progress: Joi.object({
+            a: Joi.boolean().optional(),
+            b: Joi.boolean().optional(),
+            c: Joi.boolean().optional(),
+            d: Joi.boolean().optional()
+        }).optional(),
         stripe_key: Joi.string().optional().allow("", null),
         stripe_environment: Joi.string().optional().allow("", null),
         stripe_currency: Joi.string().optional().allow("", null),
@@ -157,6 +169,12 @@ exports.addUser = async (req, res, next) => {
         sub_domain: Joi.string().optional().allow("", null),
         tracking_hostname: Joi.string().optional().allow("", null),
         white_label_address: Joi.object().optional().allow(null),
+        white_label_progress: Joi.object({
+            a: Joi.boolean().optional(),
+            b: Joi.boolean().optional(),
+            c: Joi.boolean().optional(),
+            d: Joi.boolean().optional()
+        }).optional(),
         stripe_key: Joi.string().optional().allow("", null),
         stripe_environment: Joi.string().optional().allow("", null),
         stripe_currency: Joi.string().optional().allow("", null),
@@ -445,6 +463,12 @@ exports.editProfile = async (req, res, next) => {
         sub_domain: Joi.string().optional().allow(""),
         tracking_hostname: Joi.string().optional().allow(""),
         white_label_address: Joi.object().optional().allow(null),
+        white_label_progress: Joi.object({
+            a: Joi.boolean().optional(),
+            b: Joi.boolean().optional(),
+            c: Joi.boolean().optional(),
+            d: Joi.boolean().optional()
+        }).optional(),
         stripe_key: Joi.string().optional().allow(""),
         stripe_environment: Joi.string().optional().allow(""),
         stripe_currency: Joi.string().optional().allow(""),
@@ -639,6 +663,12 @@ exports.userSocialLogin = async (req, res, next) => {
         sub_domain: Joi.string().optional().allow("", null),
         tracking_hostname: Joi.string().optional().allow("", null),
         white_label_address: Joi.object().optional().allow(null),
+        white_label_progress: Joi.object({
+            a: Joi.boolean().optional(),
+            b: Joi.boolean().optional(),
+            c: Joi.boolean().optional(),
+            d: Joi.boolean().optional()
+        }).optional(),
         stripe_key: Joi.string().optional().allow("", null),
         stripe_environment: Joi.string().optional().allow("", null),
         stripe_currency: Joi.string().optional().allow("", null),

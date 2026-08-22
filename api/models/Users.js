@@ -145,6 +145,7 @@ module.exports = {
     sub_domain : { type: 'string' },
     tracking_hostname : { type: 'string' },
     white_label_address : { type: 'json' },
+    white_label_progress: { type: 'json', defaultsTo: { a: false, b: false, c: false, d: false } },
     stripe_key : { type: 'string' },
     stripe_environment : { type: 'string' },
     stripe_currency : { type: 'string' },
