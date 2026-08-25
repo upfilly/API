@@ -669,7 +669,18 @@ module.exports = {
         throw constants.user.USERNAME_INACTIVE;
       }
 
-      if (!bcrypt.compareSync(req.body.password, user.password)) {
+      if (!user.password) {
+        throw constants.user.WRONG_PASSWORD;
+      }
+
+      let isPasswordMatch = false;
+      try {
+        isPasswordMatch = bcrypt.compareSync(req.body.password, user.password);
+      } catch (err) {
+        throw constants.user.WRONG_PASSWORD;
+      }
+
+      if (!isPasswordMatch) {
         throw constants.user.WRONG_PASSWORD;
       } else {
         var token = jwt.sign(
@@ -730,7 +741,18 @@ module.exports = {
         throw constant.user.USER_NOT_FOUND;
       }
 
-      if (!bcrypt.compareSync(currentPassword, get_user.password)) {
+      if (!get_user.password) {
+        throw constants.user.CURRENT_PASSWORD;
+      }
+
+      let isPasswordMatch = false;
+      try {
+        isPasswordMatch = bcrypt.compareSync(currentPassword, get_user.password);
+      } catch (err) {
+        throw constants.user.CURRENT_PASSWORD;
+      }
+
+      if (!isPasswordMatch) {
         throw constants.user.CURRENT_PASSWORD;
       }
 
@@ -829,9 +851,23 @@ module.exports = {
         throw constants.user.USERNAME_INACTIVE;
       }
 
-      if (!bcrypt.compareSync(req.body.password, user.password)) {
+      if (!user.password) {
         throw constants.user.INVALID_CRED;
       }
+
+      let isPasswordMatch = false;
+      try {
+        isPasswordMatch = bcrypt.compareSync(req.body.password, user.password);
+      } catch (err) {
+        throw constants.user.INVALID_CRED;
+      }
+
+      if (!isPasswordMatch) {
+      console.log("fail")
+
+        throw constants.user.INVALID_CRED;
+      }
+      console.log("pass")
 
       if (user.isVerified == "N") {
         // if user not verified then sent code to verify email
