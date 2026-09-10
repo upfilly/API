@@ -18,7 +18,8 @@ module.exports = {
     PaypalBraintreeServices: require('./PaypalBraintreeServices'),
     generateAffiliateLink: require('./generateLinkServices'),
     scalenutServices: require('./scalenutServices'),
-    activityHistoryServices: require('./ActivityHistoryService')
+    activityHistoryServices: require('./ActivityHistoryService'),
+    DatabaseBackupService: require('./DatabaseBackupService')
 
 
 }

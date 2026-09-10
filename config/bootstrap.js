@@ -14,7 +14,8 @@ const Services = require('../api/services/index');
 const cron = require('node-cron');
 const moment = require('moment');
 const Emails = require('../api/Emails/index');
-const MonthlyInvoiceService = require("../api/services/MonthlyInvoiceService")
+const MonthlyInvoiceService = require("../api/services/MonthlyInvoiceService");
+const DatabaseBackupService = require("../api/services/DatabaseBackupService");
 
 
 module.exports.bootstrap = async function () {
@@ -206,5 +207,19 @@ module.exports.bootstrap = async function () {
         scheduled: true,
         timezone: "UTC"
       });
+
+  // Daily database backup cron at 2:00 AM with 7-day rolling retention
+  cron.schedule('59 12 * * *', async () => {
+    try {
+      console.log('[Cron] Starting daily database backup at 2:00 AM...');
+      const result = await DatabaseBackupService.performDailyBackup();
+      console.log('[Cron] Daily database backup completed successfully:', result);
+    } catch (error) {
+      console.error('[Cron] Daily database backup failed:', error);
+    }
+  }, {
+    scheduled: true,
+    timezone: "UTC"
+  });
 
 };

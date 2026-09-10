@@ -49,3 +49,7 @@ Thumbs.db
 *.wmv
 
 config/local.js
+
+# Database backups
+backups/
+*.gz
