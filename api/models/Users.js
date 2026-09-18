@@ -229,12 +229,29 @@ module.exports = {
       user.email = user.email.toLowerCase();
     }
 
+    if (user.stripe_key) {
+      const CommonServices = require('../services/CommonServices');
+      user.stripe_key = CommonServices.encrypt(user.stripe_key);
+    }
+
     if (user.hasOwnProperty('password')) {
       user.password = bcrypt.hashSync(user.password, bcrypt.genSaltSync(10));
       next(false, user);
     } else {
       next(null, user);
     }
+  },
+  beforeUpdate: function (user, next) {
+    if (user.stripe_key) {
+      try {
+        const CommonServices = require('../services/CommonServices');
+        // Check if already encrypted (assuming CryptoJS AES format which usually starts with U2FsdGVkX1)
+        if (!user.stripe_key.startsWith('U2FsdGVkX1')) {
+           user.stripe_key = CommonServices.encrypt(user.stripe_key);
+        }
+      } catch (e) {}
+    }
+    next(null, user);
   },
   authenticate: function (email, password) {
     var query = {};
