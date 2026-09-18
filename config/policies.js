@@ -18,10 +18,11 @@ module.exports.policies = {
   *                                                                          *
   ***************************************************************************/
 
-  '*': 'isAuthorized',
+  '*': ['isAuthorized', 'resolveTenant'],
 
 
   UsersController: {
+    checkSubdomainAvailability: true,
     // 'adminSignin': true,
     'registerBrandWithPlan': true,    
     'register': true,

@@ -699,3 +699,15 @@ exports.userSocialLogin = async (req, res, next) => {
     });
     return await Validate(schema, req, res);
 }
+
+exports.checkSubdomain = async (req, res, next) => {
+    const schema = Joi.object({
+        sub_domain: Joi.string().required().regex(/^[a-z0-9-]+$/).min(3).max(30).messages({
+            'string.pattern.base': 'Subdomain can only contain lowercase letters, numbers, and hyphens.',
+            'string.min': 'Subdomain must be at least 3 characters.',
+            'string.max': 'Subdomain cannot exceed 30 characters.',
+            'any.required': 'Subdomain is required.'
+        }),
+    });
+    return await Validate(schema, req, res);
+};

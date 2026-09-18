@@ -49,6 +49,7 @@ module.exports.routes = {
   "get /profile": "UsersController.userProfileData",
   "get /user/detail": "UsersController.userDetail",
   "put /edit/profile": "UsersController.editProfile",
+  "post /check-subdomain": "UsersController.checkSubdomainAvailability",
   "get /verifyUser": "UsersController.verifyUser",
   "post /user/auto-login": "UsersController.userAutoLogin",
   "get /sample/user": "UsersController.sampleFile",

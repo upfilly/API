@@ -143,6 +143,8 @@ module.exports = {
     billing_email: { type: 'string' },
     industry : { type: 'string' },
     sub_domain : { type: 'string' },
+    tenant_db_name : { type: 'string' },
+    tenant_db_status : { type: 'string', defaultsTo: 'pending' },
     tracking_hostname : { type: 'string' },
     white_label_address : { type: 'json' },
     white_label_progress: { type: 'json', defaultsTo: { a: false, b: false, c: false, d: false } },

@@ -3596,6 +3596,26 @@ module.exports = {
         }
       }
 
+      // --- White Label Subdomain & Database Provisioning ---
+      if (req.body.sub_domain) {
+        const cleanSubDomain = req.body.sub_domain.toLowerCase().trim();
+        if (cleanSubDomain !== get_user.sub_domain) {
+          const availCheck = await Services.TenantManager.isSubdomainAvailable(cleanSubDomain, get_user.id);
+          if (!availCheck.available) {
+            throw availCheck.message;
+          }
+          req.body.sub_domain = cleanSubDomain;
+          const cleanDbSuffix = cleanSubDomain.replace(/[^a-z0-9-]/g, '').replace(/-/g, '_');
+          req.body.tenant_db_name = 'db_tenant_' + cleanDbSuffix;
+
+          const provisionResult = await Services.TenantManager.provisionTenantDatabase(cleanSubDomain, {
+            ...get_user,
+            ...req.body
+          });
+          req.body.tenant_db_status = provisionResult.status || 'ready';
+        }
+      }
+
       req.body.updatedBy = req.identity.id;
 
       /**Creating fullName of User using firstName and lastName */
@@ -6373,6 +6393,27 @@ module.exports = {
       }
     } catch (err) {
       console.log("err", err);
+      return response.failed(null, `${err}`, req, res);
+    }
+  },
+
+  checkSubdomainAvailability: async (req, res) => {
+    try {
+      let validation_result = await Validations.UserValidations.checkSubdomain(req, res);
+      if (validation_result && !validation_result.success) {
+        throw validation_result.message;
+      }
+
+      const { sub_domain } = req.body;
+      const currentUserId = req.identity ? req.identity.id : (req.body.userId || null);
+
+      const checkResult = await Services.TenantManager.isSubdomainAvailable(sub_domain, currentUserId);
+      if (!checkResult.available) {
+        return response.failed(null, checkResult.message, req, res);
+      }
+
+      return response.success({ available: true, sub_domain: checkResult.subdomain }, checkResult.message, req, res);
+    } catch (err) {
       return response.failed(null, `${err}`, req, res);
     }
   },
