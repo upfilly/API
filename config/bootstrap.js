@@ -208,8 +208,8 @@ module.exports.bootstrap = async function () {
         timezone: "UTC"
       });
 
-  // Daily database backup cron at 2:00 AM with 7-day rolling retention
-  cron.schedule('59 12 * * *', async () => {
+  // Daily database backup cron at 4:00 AM IST (22:30 UTC)
+  cron.schedule('30 22 * * *', async () => {
     try {
       console.log('[Cron] Starting daily database backup at 2:00 AM...');
       const result = await DatabaseBackupService.performDailyBackup();
