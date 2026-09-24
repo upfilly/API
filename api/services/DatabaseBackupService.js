@@ -7,7 +7,7 @@ const moment = require('moment');
 // Path to store backups
 const BACKUP_DIR = path.resolve(__dirname, '../../backups');
 const MAX_BACKUP_DAYS = 7;
-const BACKUP_FILE_PATTERN = /^backup_.*\.gz$/;
+const CSV_BACKUP_PATTERN = /^backup_csv_.*$/;
 
 /**
  * Retrieve database configuration credentials
@@ -40,7 +40,7 @@ function getSortedBackupFiles(backupDir = BACKUP_DIR) {
 
   const files = fs.readdirSync(backupDir);
   const backupFiles = files
-    .filter(file => BACKUP_FILE_PATTERN.test(file))
+    .filter(file => CSV_BACKUP_PATTERN.test(file))
     .map(file => {
       const filePath = path.join(backupDir, file);
       try {
@@ -50,7 +50,8 @@ function getSortedBackupFiles(backupDir = BACKUP_DIR) {
           filePath,
           mtime: stats.mtime,
           mtimeMs: stats.mtimeMs,
-          size: stats.size
+          size: stats.size,
+          isDirectory: stats.isDirectory()
         };
       } catch (err) {
         return null;
@@ -76,12 +77,16 @@ function cleanupOldBackups(maxCount = MAX_BACKUP_DAYS, backupDir = BACKUP_DIR) {
     const oldestFile = existingFiles.shift();
     try {
       if (fs.existsSync(oldestFile.filePath)) {
-        fs.unlinkSync(oldestFile.filePath);
-        console.log(`[DatabaseBackupService] Deleted oldest backup file: ${oldestFile.filename}`);
+        if (oldestFile.isDirectory) {
+          fs.rmSync(oldestFile.filePath, { recursive: true, force: true });
+        } else {
+          fs.unlinkSync(oldestFile.filePath);
+        }
+        console.log(`[DatabaseBackupService] Deleted oldest backup: ${oldestFile.filename}`);
         deletedFiles.push(oldestFile.filename);
       }
     } catch (err) {
-      console.error(`[DatabaseBackupService] Error deleting backup file ${oldestFile.filename}:`, err);
+      console.error(`[DatabaseBackupService] Error deleting backup ${oldestFile.filename}:`, err);
     }
   }
 
@@ -92,8 +97,12 @@ function cleanupOldBackups(maxCount = MAX_BACKUP_DAYS, backupDir = BACKUP_DIR) {
     if (file.mtimeMs < cutoffTime) {
       try {
         if (fs.existsSync(file.filePath)) {
-          fs.unlinkSync(file.filePath);
-          console.log(`[DatabaseBackupService] Deleted expired backup file (> 7 days): ${file.filename}`);
+          if (file.isDirectory) {
+            fs.rmSync(file.filePath, { recursive: true, force: true });
+          } else {
+            fs.unlinkSync(file.filePath);
+          }
+          console.log(`[DatabaseBackupService] Deleted expired backup (> 7 days): ${file.filename}`);
           deletedFiles.push(file.filename);
           existingFiles.splice(i, 1);
         }
@@ -106,83 +115,43 @@ function cleanupOldBackups(maxCount = MAX_BACKUP_DAYS, backupDir = BACKUP_DIR) {
   return { deletedFiles, remainingCount: existingFiles.length };
 }
 
-/**
- * Dump database using mongodump CLI
- */
-function dumpWithMongodump(backupFilePath, credentials) {
-  return new Promise((resolve, reject) => {
-    const { host, port, user, password, dbName, authDb } = credentials;
 
-    let cmd = `mongodump --host "${host}" --port "${port}" --db "${dbName}" --archive="${backupFilePath}" --gzip`;
-    if (user && password) {
-      cmd += ` --username "${user}" --password "${password}" --authenticationDatabase "${authDb}"`;
-    }
-
-    exec(cmd, { maxBuffer: 1024 * 1024 * 50 }, (error, stdout, stderr) => {
-      if (error) {
-        return reject(new Error(`mongodump failed: ${stderr || error.message}`));
-      }
-      resolve({ stdout, stderr });
-    });
-  });
-}
 
 /**
- * Fallback dump using Sails/MongoDB native driver
+ * Dump entire database to a folder containing CSV files (one per collection)
  */
-async function dumpWithNativeDriver(backupFilePath, dbName) {
-  if (typeof sails === 'undefined' || !sails.getDatastore) {
-    throw new Error('Sails datastore not accessible for native backup fallback');
-  }
+async function dumpDatabaseToCsvDirectory(csvDirPath) {
+  if (typeof sails === 'undefined' || !sails.getDatastore) return;
 
   const datastore = sails.getDatastore();
   const db = datastore.manager;
-  if (!db) {
-    throw new Error('Active MongoDB database handle not available from Sails datastore');
+  if (!db) return;
+
+  const { Parser } = require('json2csv');
+
+  if (!fs.existsSync(csvDirPath)) {
+    fs.mkdirSync(csvDirPath, { recursive: true });
   }
 
   const collections = await db.listCollections().toArray();
-  const writeStream = fs.createWriteStream(backupFilePath);
-  const gzipStream = zlib.createGzip();
 
-  return new Promise((resolve, reject) => {
-    gzipStream.pipe(writeStream);
-
-    writeStream.on('error', reject);
-    gzipStream.on('error', reject);
-
-    (async () => {
-      try {
-        gzipStream.write('{\n  "database": ' + JSON.stringify(dbName) + ',\n  "timestamp": ' + JSON.stringify(new Date().toISOString()) + ',\n  "collections": {\n');
-
-        for (let i = 0; i < collections.length; i++) {
-          const colInfo = collections[i];
-          const colName = colInfo.name;
-
-          // Skip system collections
-          if (colName.startsWith('system.')) continue;
-
-          const collection = db.collection(colName);
-          const docs = await collection.find({}).toArray();
-
-          const isLastCol = (i === collections.length - 1);
-          const colJson = `    ${JSON.stringify(colName)}: ${JSON.stringify(docs)}${isLastCol ? '' : ','}\n`;
-          gzipStream.write(colJson);
-        }
-
-        gzipStream.write('  }\n}\n');
-        gzipStream.end();
-
-        writeStream.on('finish', () => {
-          resolve({ method: 'native_driver' });
-        });
-      } catch (err) {
-        gzipStream.destroy();
-        writeStream.destroy();
-        reject(err);
+  for (let colInfo of collections) {
+    const colName = colInfo.name;
+    if (colName.startsWith('system.')) continue;
+    
+    try {
+      const collection = db.collection(colName);
+      const docs = await collection.find({}).toArray();
+      
+      if (docs && docs.length > 0) {
+        const parser = new Parser();
+        const csv = parser.parse(docs);
+        fs.writeFileSync(path.join(csvDirPath, `${colName}.csv`), csv);
       }
-    })();
-  });
+    } catch (err) {
+      console.error(`[DatabaseBackupService] Error creating CSV for collection ${colName}:`, err);
+    }
+  }
 }
 
 module.exports = {
@@ -204,7 +173,7 @@ module.exports = {
     const backupDir = options.backupDir || BACKUP_DIR;
     const maxDays = options.maxDays || MAX_BACKUP_DAYS;
 
-    console.log(`[DatabaseBackupService] Initiating daily database backup at ${new Date().toISOString()}`);
+    console.log(`[DatabaseBackupService] Initiating daily database CSV backup at ${new Date().toISOString()}`);
 
     // Ensure directory exists
     if (!fs.existsSync(backupDir)) {
@@ -212,8 +181,7 @@ module.exports = {
     }
 
     // Step 1: Check existing backup files.
-    // If there are already 7 or more backup files, delete the oldest backup file(s)
-    // so there is space for the new backup (keeping total <= 7).
+    // If there are already 7 or more backups, delete the oldest
     const preCleanup = cleanupOldBackups(maxDays, backupDir);
     if (preCleanup.deletedFiles.length > 0) {
       console.log(`[DatabaseBackupService] Pre-backup cleanup deleted ${preCleanup.deletedFiles.length} oldest file(s): ${preCleanup.deletedFiles.join(', ')}`);
@@ -222,47 +190,27 @@ module.exports = {
     // Step 2: Generate filename and execute backup
     const creds = getDbCredentials();
     const timestampStr = moment().format('YYYY-MM-DD_HH-mm-ss');
-    const filename = `backup_${creds.dbName}_${timestampStr}.gz`;
-    const targetFilePath = path.join(backupDir, filename);
-
-    let backupMethod = 'mongodump';
+    const csvDirName = `backup_csv_${creds.dbName}_${timestampStr}`;
+    const csvDirPath = path.join(backupDir, csvDirName);
+    
     try {
-      await dumpWithMongodump(targetFilePath, creds);
-      console.log(`[DatabaseBackupService] Backup successfully created via mongodump: ${filename}`);
-    } catch (mongodumpErr) {
-      console.warn(`[DatabaseBackupService] mongodump encountered an issue (${mongodumpErr.message}), attempting native driver fallback...`);
-      try {
-        await dumpWithNativeDriver(targetFilePath, creds.dbName);
-        backupMethod = 'native_driver';
-        console.log(`[DatabaseBackupService] Backup successfully created via native driver fallback: ${filename}`);
-      } catch (nativeErr) {
-        // If file was partially written, remove it
-        if (fs.existsSync(targetFilePath)) {
-          try { fs.unlinkSync(targetFilePath); } catch (e) {}
-        }
-        console.error('[DatabaseBackupService] Backup failed on all available methods:', nativeErr);
-        throw new Error(`Database backup failed: mongodump error: ${mongodumpErr.message}; native error: ${nativeErr.message}`);
-      }
+      await dumpDatabaseToCsvDirectory(csvDirPath);
+      console.log(`[DatabaseBackupService] CSV backup successfully created at: ${csvDirName}`);
+    } catch (csvErr) {
+      console.error(`[DatabaseBackupService] Failed to create CSV backup:`, csvErr);
+      throw csvErr;
     }
 
-    // Step 3: Verify new backup file exists and has size
-    const fileStats = fs.statSync(targetFilePath);
-    if (fileStats.size === 0) {
-      throw new Error(`Generated backup file ${filename} is empty (0 bytes).`);
-    }
-
-    // Step 4: Final verification to guarantee at most 7 days of backups
+    // Step 3: Final verification to guarantee at most 7 days of backups
     cleanupOldBackups(maxDays + 1, backupDir);
     const activeBackups = getSortedBackupFiles(backupDir);
 
-    console.log(`[DatabaseBackupService] Successfully finished backup. Total active backups: ${activeBackups.length}/${maxDays}`);
+    console.log(`[DatabaseBackupService] Successfully finished CSV backup. Total active backups: ${activeBackups.length}/${maxDays}`);
 
     return {
       success: true,
-      filename,
-      filePath: targetFilePath,
-      sizeBytes: fileStats.size,
-      method: backupMethod,
+      filename: csvDirName,
+      filePath: csvDirPath,
       totalActiveBackups: activeBackups.length,
       backups: activeBackups.map(b => b.filename)
     };

@@ -33,7 +33,9 @@ exports.register = async (req, res, next) => {
         firstName: Joi.string().optional().min(3).max(50).allow(""),
         lastName: Joi.string().optional().allow("").max(50),
         fullName: Joi.string().optional().allow("").min(3).max(50),
-        brand_name: Joi.string().optional().allow("").min(3).max(50),
+        brand_name: Joi.string().optional().allow("").min(3).max(50).messages({
+            'string.min': 'Your brand name is too short. Please ensure it contains at least 3 characters.'
+        }),
         email: Joi.string().required(),
         password: Joi.string().required(),
         role: Joi.string().optional().valid("brand", "affiliate", "admin", "customer", "white_lable"),
@@ -108,7 +110,9 @@ exports.registerBrandWithPlan = async (req, res, next) => {
         firstName: Joi.string().optional().min(3).max(50).allow(""),
         lastName: Joi.string().optional().allow("").max(50),
         fullName: Joi.string().optional().allow("").min(3).max(50),
-        brand_name: Joi.string().optional().allow("").min(3).max(50),
+        brand_name: Joi.string().optional().allow("").min(3).max(50).messages({
+            'string.min': 'Your brand name is too short. Please ensure it contains at least 3 characters.'
+        }),
         email: Joi.string().required(),
         password: Joi.string().optional(),
         role: Joi.string().optional().valid("brand", "registerBrandWithPlan", "white_lable"),
@@ -334,6 +338,9 @@ exports.editProfile = async (req, res, next) => {
         firstName: Joi.string().optional().min(3).max(50).allow(""),
         lastName: Joi.string().optional().allow("").max(50),
         fullName: Joi.string().optional().allow("").min(3).max(50),
+        brand_name: Joi.string().optional().allow("").min(3).messages({
+            'string.min': 'Your brand name is too short. Please ensure it contains at least 3 characters.'
+        }),
         email: Joi.string().optional(),
         affiliate_type: Joi.string().optional().valid("individual", "business"),
         password: Joi.string().optional(),
@@ -493,7 +500,9 @@ exports.editProfile = async (req, res, next) => {
         payout_amount : Joi.string().optional().allow("",null),
         job_title: Joi.string().optional().allow("",null),
         termandconditon: Joi.boolean().optional(),
-        brand_name: Joi.string().optional().allow("").min(3).max(50),
+        brand_name: Joi.string().optional().allow("").min(3).max(50).messages({
+            'string.min': 'Your brand name is too short. Please ensure it contains at least 3 characters.'
+        }),
         role: Joi.string().optional().valid("brand", "affiliate", "admin", "customer", "white_lable"),
         currency: Joi.string().optional().allow(""),
         createdByBrand: Joi.string().optional().allow(null),
