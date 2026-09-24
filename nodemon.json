@@ -1,0 +1,9 @@
+{
+  "ignore": [
+    "backups/*",
+    "backups/**/*",
+    ".tmp/*",
+    "views/*",
+    "assets/*"
+  ]
+}
