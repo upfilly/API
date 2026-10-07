@@ -20,7 +20,6 @@ module.exports = {
     scalenutServices: require('./scalenutServices'),
     activityHistoryServices: require('./ActivityHistoryService'),
     TenantManager: require('./TenantManagerService'),
-    DatabaseBackupService: require('./DatabaseBackupService')
-
-
+    DatabaseBackupService: require('./DatabaseBackupService'),
+    FirstPromoterCron: require('./FirstPromoterCronService')
 }

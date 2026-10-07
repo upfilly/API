@@ -257,62 +257,25 @@ exports.addFirstPromoter = async (req, res) => {
         data.addedBy = req.identity.id;
         data.updatedBy = req.identity.id;
        
-      // if (createdPromoter) {
-        let filePath = await Services.scalenutServices.exportScalenutData(data);
-        console.log(filePath, "kjkjkjk")
-        let updatedPromoter = {};
+        const createdPromoter = await FirstPromoter.create(data).fetch();
 
-        if (filePath && filePath.success === true) {
-          const createdPromoter = await FirstPromoter.create(data).fetch();
-
-          // Create Brand and Campaign for this FirstPromoter
-          const brandCampaignResult = await createBrandAndCampaignForFirstPromoter(data, req.identity.id);
-          
-          let updateFields = { filePath: filePath.msg };
-          if (brandCampaignResult && brandCampaignResult.brandUser) {
-            updateFields.brand_id = brandCampaignResult.brandUser.id;
-          }
-          if (brandCampaignResult && brandCampaignResult.campaign) {
-            updateFields.campaign_id = brandCampaignResult.campaign.id;
-          }
-
-          updatedPromoter = await FirstPromoter.updateOne({ id: createdPromoter.id }, updateFields);
-
-          // Store the data in firstpromoterdata collection
-          if (filePath.data && filePath.data.length > 0) {
-            try {
-            const firstPromoterDataRecords = filePath.data.map(record => ({
-              lead_email: record.lead_email || '',
-                lead_id: record.lead_id || '',
-                sub_id: (record.sub_id && ObjectId.isValid(record.sub_id)) ? new ObjectId(record.sub_id) : (record.sub_id || ''),
-              earnings: record.earnings ? parseFloat(record.earnings.replace('$', '')) || 0 : 0, // Convert "$15.75" to 15.75
-              status: record.status || 'approved',
-              created_at: record.created_at ? new Date(record.created_at) : new Date(),
-                firstPromoterId: createdPromoter.id, // Reference to the parent FirstPromoter
-                addedBy: req.identity.id,
-                updatedBy: req.identity.id,
-                status: 'active',
-                isDeleted: false,
-                createdAt: new Date(),
-                updatedAt: new Date()
-              }));
-
-              // Insert into firstpromoterdata collection
-              await db.collection('firstpromoterdata').insertMany(firstPromoterDataRecords);
-
-              console.log(`Successfully inserted ${firstPromoterDataRecords.length} records into firstpromoterdata collection`);
-            } catch (insertError) {
-              console.error('Error inserting data into firstpromoterdata:', insertError);
-              // You might want to handle this error differently - maybe not fail the entire request
-            }
-          }
-        } else {
-          return response.failed(null, filePath.msg, req, res);
+        // Create Brand and Campaign for this FirstPromoter
+        const brandCampaignResult = await createBrandAndCampaignForFirstPromoter(data, req.identity.id);
+        
+        let updateFields = {};
+        if (brandCampaignResult && brandCampaignResult.brandUser) {
+          updateFields.brand_id = brandCampaignResult.brandUser.id;
         }
-        console.log(updatedPromoter, "0909009")
+        if (brandCampaignResult && brandCampaignResult.campaign) {
+          updateFields.campaign_id = brandCampaignResult.campaign.id;
+        }
+
+        let updatedPromoter = createdPromoter;
+        if (Object.keys(updateFields).length > 0) {
+          updatedPromoter = await FirstPromoter.updateOne({ id: createdPromoter.id }, updateFields);
+        }
+
         return response.success(updatedPromoter, constants.FIRST_PROMOTER.CREATED, req, res);
-      // }
-        throw constants.COMMON.SERVER_ERROR;
     } catch (error) {
         return response.failed(null, `${error}`, req, res);
     }
@@ -544,11 +507,10 @@ exports.importFirstPromoter = async (req, res) => {
         if (!isExists) {
           product.addedBy = req.identity.id;
           let newProduct = await FirstPromoter.create(product).fetch();
-          let responseData = await Services.scalenutServices.exportScalenutData({ email: newProduct.email, password: newProduct.password, url: newProduct.url });
-          
+
           const brandCampaignResult = await createBrandAndCampaignForFirstPromoter(product, req.identity.id);
-          
-          let updateFields = { filePath: responseData ? responseData.msg : "" };
+
+          let updateFields = {};
           if (brandCampaignResult && brandCampaignResult.brandUser) {
             updateFields.brand_id = brandCampaignResult.brandUser.id;
           }
@@ -556,7 +518,9 @@ exports.importFirstPromoter = async (req, res) => {
             updateFields.campaign_id = brandCampaignResult.campaign.id;
           }
 
-          await FirstPromoter.updateOne({ id: newProduct.id }, updateFields);
+          if (Object.keys(updateFields).length > 0) {
+            await FirstPromoter.updateOne({ id: newProduct.id }, updateFields);
+          }
           createdCount++;
         } else {
           duplicate++;

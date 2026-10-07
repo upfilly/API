@@ -16,6 +16,7 @@ const moment = require('moment');
 const Emails = require('../api/Emails/index');
 const MonthlyInvoiceService = require("../api/services/MonthlyInvoiceService");
 const DatabaseBackupService = require("../api/services/DatabaseBackupService");
+const FirstPromoterCronService = require("../api/services/FirstPromoterCronService");
 
 
 module.exports.bootstrap = async function () {
@@ -222,4 +223,21 @@ module.exports.bootstrap = async function () {
     timezone: "UTC"
   });
 
+  // Daily FirstPromoter CSV sync at midnight UTC (0 0 * * *)
+  // Fetches latest CSV data from all active FirstPromoter accounts
+  // and inserts new records into firstpromoterdata (duplicates are skipped)
+  cron.schedule('0 0 * * *', async () => {
+    try {
+      console.log('[Cron] Starting daily FirstPromoter CSV sync...');
+      const result = await FirstPromoterCronService.syncAllFirstPromoterData();
+      console.log('[Cron] FirstPromoter sync completed:', result);
+    } catch (error) {
+      console.error('[Cron] FirstPromoter sync failed:', error);
+    }
+  }, {
+    scheduled: true,
+    timezone: "UTC"
+  });
+
 };
+
