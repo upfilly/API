@@ -19,7 +19,8 @@ module.exports = {
     generateAffiliateLink: require('./generateLinkServices'),
     scalenutServices: require('./scalenutServices'),
     activityHistoryServices: require('./ActivityHistoryService'),
-    TenantManager: require('./TenantManagerService')
+    TenantManager: require('./TenantManagerService'),
+    DatabaseBackupService: require('./DatabaseBackupService')
 
 
 }
