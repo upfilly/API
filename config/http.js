@@ -29,16 +29,52 @@ module.exports.http = {
     *                                                                          *
     ***************************************************************************/
 
-    // order: [
-    //   'cookieParser',
-    //   'session',
-    //   'bodyParser',
-    //   'compress',
-    //   'poweredBy',
-    //   'router',
-    //   'www',
-    //   'favicon',
-    // ],
+    order: [
+      'cookieParser',
+      'session',
+      'tenantInjector', // <--- Add our dynamic DB middleware here
+      'bodyParser',
+      'compress',
+      'poweredBy',
+      'router',
+      'www',
+      'favicon',
+    ],
+
+    /**
+     * Tenant DB Injector Middleware
+     * Intercepts the request, extracts the subdomain, and attaches the specific 
+     * Native MongoDB database instance to `req.tenantDb`.
+     */
+    tenantInjector: (function() {
+      return async function(req, res, next) {
+        try {
+          const host = req.headers.host; // e.g. "brand.upfilly.io"
+          
+          // Basic extraction logic: if host has 3 parts (brand.upfilly.io)
+          // You may need to adapt this logic depending on your actual hostnames.
+          const parts = host ? host.split('.') : [];
+          if (parts.length >= 3 && parts[0] !== 'www' && parts[0] !== 'api') {
+            const subdomain = parts[0];
+            
+            // Check if tenant exists in Master DB
+            const tenant = await sails.models.users.findOne({ sub_domain: subdomain, role: 'white_lable' });
+            
+            if (tenant) {
+              // Get native mongo connection for this tenant's physical DB
+              // If we saved tenant_db_name in the DB, use it. Otherwise fallback to calculating it.
+              const tenantDb = await sails.services.tenantmongoservice.getTenantDb(subdomain);
+              req.tenantDb = tenantDb;
+              req.tenant = tenant; // Store tenant info too for convenience
+            }
+          }
+        } catch (e) {
+          sails.log.error('TenantInjector Middleware Error:', e);
+        }
+        
+        return next();
+      };
+    })(),
 
 
     /***************************************************************************

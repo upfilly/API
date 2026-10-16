@@ -76,6 +76,10 @@ module.exports.routes = {
   "post /userName/check": "UsersController.userNameCheck",
   "post /userRegisterByBrandId": "UsersController.registerWithBrandId",
 
+  /**
+   * @WhiteLabelOnboarding
+   */
+  "post /subdomain/check": "WhiteLabelController.checkSubdomain",
 
   /**
    * @CommonAPIs
