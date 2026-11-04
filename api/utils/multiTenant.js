@@ -185,7 +185,10 @@ function getActiveDb() {
 /**
  * Retrieve master database instance
  */
-function getMasterDb() {
+async function getMasterDb() {
+  if (!masterDbInstance) {
+    await getMasterClient();
+  }
   return masterDbInstance;
 }
 

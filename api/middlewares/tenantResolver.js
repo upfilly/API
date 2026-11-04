@@ -74,23 +74,24 @@ module.exports = async function tenantResolver(req, res, next) {
     return multiTenant.runWithTenant({ tenant: null, isMaster: true }, next);
   }
 
-  // 5. Lookup Tenant record from Master Database
+  // 5. Lookup Tenant record from Master Database (upfilly_master)
   let tenant = null;
   try {
+    const queryObj = hostInfo.kind === 'tenant'
+      ? { subdomain: hostInfo.subdomain, isDeleted: false }
+      : { custom_domain: hostInfo.customDomain, isDeleted: false };
+
     if (typeof Tenants !== 'undefined' && Tenants.findOne) {
-      if (hostInfo.kind === 'tenant') {
-        tenant = await Tenants.findOne({ subdomain: hostInfo.subdomain, isDeleted: false });
-      } else if (hostInfo.kind === 'custom_domain') {
-        tenant = await Tenants.findOne({ custom_domain: hostInfo.customDomain, isDeleted: false });
-      }
-    } else {
-      // Direct native MongoDB query if Sails models not yet registered
-      const masterDb = multiTenant.getMasterDb();
+      tenant = await Tenants.findOne(queryObj);
+    }
+
+    if (!tenant) {
+      const masterDb = await multiTenant.getMasterDb();
       if (masterDb) {
-        const query = hostInfo.kind === 'tenant'
+        const mongoQuery = hostInfo.kind === 'tenant'
           ? { subdomain: hostInfo.subdomain, isDeleted: { $ne: true } }
           : { custom_domain: hostInfo.customDomain, isDeleted: { $ne: true } };
-        tenant = await masterDb.collection('tenants').findOne(query);
+        tenant = await masterDb.collection('tenants').findOne(mongoQuery);
       }
     }
   } catch (err) {

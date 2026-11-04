@@ -59,7 +59,7 @@
 
         
         adapter: require('sails-mongo'), 
-        url: 'mongodb://'+safeCred.DB_USER+':'+safeCred.DB_PASSWORD+'@'+safeCred.DB_HOST+':'+safeCred.DB_PORT+ '/'+ safeCred.DB_NAME ,          
+        url: 'mongodb://'+encodeURIComponent(safeCred.DB_USER)+':'+encodeURIComponent(safeCred.DB_PASSWORD)+'@'+safeCred.DB_HOST+':'+safeCred.DB_PORT+ '/'+ safeCred.DB_NAME + '?authSource=admin',          
         
   
         //--------------------------------------------------------------------------

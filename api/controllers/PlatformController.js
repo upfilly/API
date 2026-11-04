@@ -71,23 +71,55 @@ module.exports = {
         });
       }
 
-      // 3. Create Master Tenant Record in Master DB
+      // 3. Create Master Tenant Record in Master DB (upfilly_master)
       const dbName = multiTenant.buildTenantDbName(cleanSubdomain);
+      const masterDb = multiTenant.getMasterDb();
 
-      const newTenant = await Tenants.create({
-        business_name: business_name.trim(),
-        subdomain: cleanSubdomain,
-        admin_email: admin_email.toLowerCase().trim(),
-        admin_name: admin_name || business_name,
-        db_name: dbName,
-        plan_status: 'pending_payment',
-        status: 'active',
-        branding: {
-          brand_name: business_name,
-          currency: currency || 'USD',
-          phone: company_phone || ''
+      let newTenant;
+      if (typeof Tenants !== 'undefined' && Tenants.create) {
+        newTenant = await Tenants.create({
+          business_name: business_name.trim(),
+          subdomain: cleanSubdomain,
+          admin_email: admin_email.toLowerCase().trim(),
+          admin_name: admin_name || business_name,
+          db_name: dbName,
+          plan_status: 'pending_payment',
+          status: 'active',
+          branding: {
+            brand_name: business_name,
+            currency: currency || 'USD',
+            phone: company_phone || ''
+          }
+        }).fetch();
+      }
+
+      // Ensure tenant record exists in upfilly_master collection
+      if (masterDb) {
+        const tenantDoc = {
+          business_name: business_name.trim(),
+          subdomain: cleanSubdomain,
+          admin_email: admin_email.toLowerCase().trim(),
+          admin_name: admin_name || business_name,
+          db_name: dbName,
+          plan_status: 'pending_payment',
+          status: 'active',
+          branding: {
+            brand_name: business_name,
+            currency: currency || 'USD',
+            phone: company_phone || ''
+          },
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          isDeleted: false
+        };
+        const existingDoc = await masterDb.collection('tenants').findOne({ subdomain: cleanSubdomain });
+        if (!existingDoc) {
+          const insertRes = await masterDb.collection('tenants').insertOne(tenantDoc);
+          if (!newTenant) {
+            newTenant = { id: insertRes.insertedId.toString(), ...tenantDoc };
+          }
         }
-      }).fetch();
+      }
 
       // 4. Provision dedicated database, indexes, and initial admin user
       await tenantProvision.provisionTenantDatabase(newTenant, {
@@ -95,14 +127,21 @@ module.exports = {
       });
 
       // 5. Register subdomain in DomainMappings
-      await DomainMappings.create({
+      const mappingDoc = {
         hostname: `${cleanSubdomain}.${process.env.APP_BASE_DOMAIN || 'upfilly.com'}`,
         subdomain: cleanSubdomain,
-        tenant_id: newTenant.id,
+        tenant_id: newTenant ? (newTenant.id || newTenant._id) : null,
         type: 'subdomain',
         is_verified: true,
-        ssl_active: true
-      });
+        ssl_active: true,
+        createdAt: new Date()
+      };
+      if (typeof DomainMappings !== 'undefined' && DomainMappings.create) {
+        try { await DomainMappings.create(mappingDoc); } catch (e) {}
+      }
+      if (masterDb) {
+        try { await masterDb.collection('domainmappings').insertOne(mappingDoc); } catch (e) {}
+      }
 
       return res.status(201).json({
         success: true,
