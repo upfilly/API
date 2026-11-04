@@ -62,7 +62,7 @@
     "eslint": "5.16.0"
   },
   "scripts": {
-    "start": "nodemon app.js",
+    "start": "bash -c 'if [ -s \"$HOME/.nvm/nvm.sh\" ]; then . \"$HOME/.nvm/nvm.sh\" && nvm use 16.20.2 >/dev/null 2>&1; fi; nodemon app.js'",
     "test": "npm run lint && npm run custom-tests && echo 'Done.'",
     "lint": "./node_modules/eslint/bin/eslint.js . --max-warnings=0 --report-unused-disable-directives && echo '✔  Your .js files look good.'",
     "custom-tests": "echo \"(No other custom tests yet.)\" && echo"
@@ -75,6 +75,6 @@
   "author": "Amit Kumar",
   "license": "",
   "engines": {
-    "node": "^16.9"
+    "node": ">=16.20.2"
   }
 }

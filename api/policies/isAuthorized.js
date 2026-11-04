@@ -50,12 +50,25 @@ module.exports = async function (req, res, next) {
             return res.status(401).json({
                 "success": false,
                 "error":{"code": 401, "message": "Your session has expired. Please login"}
-               
             });
         } else if (token && token.user_id) {
-            var user = await Users.findOne({ id: token.user_id });
-            req.identity = user;
+            let user = null;
+            if (req.tenantDb) {
+                // Multi-tenant: query the active tenant's dedicated database
+                const { ObjectId } = require('mongodb');
+                const query = ObjectId.isValid(token.user_id)
+                    ? { $or: [{ _id: new ObjectId(token.user_id) }, { id: token.user_id }] }
+                    : { id: token.user_id };
+                user = await req.tenantDb.collection('users').findOne(query);
+                if (user && user._id) {
+                    user.id = user._id.toString();
+                }
+            } else {
+                // Master / Legacy fallback
+                user = await Users.findOne({ id: token.user_id });
+            }
 
+            req.identity = user;
         }
       
         // req.token = token; // This is the decrypted token or the payload you provided

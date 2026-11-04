@@ -20,6 +20,10 @@ module.exports.policies = {
 
   '*': 'isAuthorized',
 
+  PlatformController: {
+    '*': true,
+  },
+
 
   UsersController: {
     // 'adminSignin': true,

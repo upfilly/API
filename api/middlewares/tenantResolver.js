@@ -1,0 +1,162 @@
+/**
+ * api/middlewares/tenantResolver.js
+ *
+ * @description :: Multi-tenant request resolution middleware.
+ *                 Executes before routes are dispatched:
+ *                 - Drops spoofed x-tenant headers
+ *                 - Bypasses tenant-agnostic/platform paths
+ *                 - Resolves tenant from hostname (subdomain or custom CNAME domain)
+ *                 - Enforces subscription plan billing gating (allowing only billing paths if unpaid)
+ *                 - Connects to dedicated tenant database and binds to AsyncLocalStorage (ALS)
+ */
+
+const multiTenant = require('../utils/multiTenant');
+const tenantHost = require('../services/tenantHost.service');
+
+// Paths that are globally agnostic of tenant context (master platform operations)
+const TENANT_AGNOSTIC_PATH_PREFIXES = [
+  '/platform/',
+  '/health',
+  '/favicon.ico',
+  '/assets/',
+  '/homepage'
+];
+
+// Billing & authentication allowlist accessible even when plan status is pending_payment/suspended
+const BILLING_ALLOWLIST_PATH_PREFIXES = [
+  '/platform/checkout',
+  '/platform/subscribe',
+  '/billing',
+  '/user/signin',
+  '/admin/signin',
+  '/logout',
+  '/change/password',
+  '/reset/password',
+  '/forgot/password'
+];
+
+module.exports = async function tenantResolver(req, res, next) {
+  // 1. Drop untrusted x-tenant-* headers in production to prevent header spoofing
+  if (process.env.NODE_ENV === 'production') {
+    delete req.headers['x-tenant-id'];
+    delete req.headers['x-tenant-subdomain'];
+    delete req.headers['x-tenant-db'];
+  }
+
+  const reqPath = req.path || req.url || '/';
+
+  // 2. Check if request path is tenant-agnostic (platform admin / master signup / health)
+  const isAgnostic = TENANT_AGNOSTIC_PATH_PREFIXES.some(prefix => reqPath.startsWith(prefix));
+  if (isAgnostic) {
+    req.tenant = null;
+    req.isMaster = true;
+    return multiTenant.runWithTenant({ tenant: null, isMaster: true }, next);
+  }
+
+  // 3. Parse Host header
+  const rawHost = req.headers['x-forwarded-host'] || req.headers.host || '';
+  let hostInfo = tenantHost.parseTenantHost(rawHost);
+
+  // In local dev, allow manual subdomain override via header or query parameter for testing
+  if (hostInfo.isDev && (req.headers['x-tenant-subdomain'] || req.query.subdomain)) {
+    const devSubdomain = req.headers['x-tenant-subdomain'] || req.query.subdomain;
+    hostInfo = {
+      kind: 'tenant',
+      subdomain: String(devSubdomain).toLowerCase().trim(),
+      host: rawHost
+    };
+  }
+
+  // 4. If platform root or admin portal, execute in master platform context
+  if (hostInfo.kind === 'root' || hostInfo.kind === 'platform-admin') {
+    req.tenant = null;
+    req.isMaster = true;
+    return multiTenant.runWithTenant({ tenant: null, isMaster: true }, next);
+  }
+
+  // 5. Lookup Tenant record from Master Database
+  let tenant = null;
+  try {
+    if (typeof Tenants !== 'undefined' && Tenants.findOne) {
+      if (hostInfo.kind === 'tenant') {
+        tenant = await Tenants.findOne({ subdomain: hostInfo.subdomain, isDeleted: false });
+      } else if (hostInfo.kind === 'custom_domain') {
+        tenant = await Tenants.findOne({ custom_domain: hostInfo.customDomain, isDeleted: false });
+      }
+    } else {
+      // Direct native MongoDB query if Sails models not yet registered
+      const masterDb = multiTenant.getMasterDb();
+      if (masterDb) {
+        const query = hostInfo.kind === 'tenant'
+          ? { subdomain: hostInfo.subdomain, isDeleted: { $ne: true } }
+          : { custom_domain: hostInfo.customDomain, isDeleted: { $ne: true } };
+        tenant = await masterDb.collection('tenants').findOne(query);
+      }
+    }
+  } catch (err) {
+    if (typeof sails !== 'undefined' && sails.log) {
+      sails.log.error('tenantResolver: Error querying tenant:', err.message);
+    }
+  }
+
+  // 6. Tenant not found -> Return 404 Site Not Found
+  if (!tenant) {
+    return res.status(404).json({
+      success: false,
+      code: 404,
+      message: 'Site not found. No tenant business registered for this domain.',
+      domain: rawHost
+    });
+  }
+
+  // 7. Status & Plan Billing Gating
+  const planStatus = tenant.plan_status || 'pending_payment';
+  const isInactivePlan = (planStatus === 'pending_payment' || planStatus === 'suspended' || planStatus === 'canceled' || planStatus === 'past_due');
+
+  if (isInactivePlan) {
+    // Check if current route is in the billing/auth allowlist
+    const isAllowed = BILLING_ALLOWLIST_PATH_PREFIXES.some(prefix => reqPath.startsWith(prefix));
+
+    if (!isAllowed) {
+      return res.status(402).json({
+        success: false,
+        code: 402,
+        message: 'Subscription plan is inactive. Please complete your subscription plan payment to unlock platform features.',
+        plan_status: planStatus,
+        checkout_url: `https://${process.env.APP_BASE_DOMAIN || 'upfilly.com'}/billing/checkout?tenant_id=${tenant.id || tenant._id}`
+      });
+    }
+  }
+
+  // 8. Attach tenant to request and resolve dedicated database connection
+  req.tenant = tenant;
+
+  // Coexistence rule: If tenant has a dedicated db_name, route through dedicated DB connection
+  if (tenant.db_name) {
+    try {
+      const tenantDb = await multiTenant.ensureTenantConnection(tenant.db_name, tenant.db_connection_uri);
+      req.tenantDb = tenantDb;
+      req.tenantDbName = tenant.db_name;
+
+      // Run entire request lifecycle inside ALS tenant context
+      return multiTenant.runWithTenant({
+        tenant,
+        dbName: tenant.db_name,
+        db: tenantDb
+      }, next);
+    } catch (dbErr) {
+      if (typeof sails !== 'undefined' && sails.log) {
+        sails.log.error(`tenantResolver: Failed to connect to tenant database '${tenant.db_name}':`, dbErr.message);
+      }
+      return res.status(503).json({
+        success: false,
+        code: 503,
+        message: 'Tenant database service is temporarily unavailable. Please try again shortly.'
+      });
+    }
+  }
+
+  // Legacy fallback: Tenant without dedicated db_name operates on master/default DB
+  return multiTenant.runWithTenant({ tenant, dbName: null, db: null }, next);
+};
+

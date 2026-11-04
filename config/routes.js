@@ -32,6 +32,16 @@ module.exports.routes = {
    ***************************************************************************/
 
   /**
+   * @PlatformSaaS Multi-Tenancy & White-Label Onboarding
+   */
+  "post /platform/register": "PlatformController.registerBusiness",
+  "get /platform/plans": "PlatformController.getPlans",
+  "post /platform/checkout-session": "PlatformController.createCheckoutSession",
+  "post /platform/webhook": "PlatformController.stripeWebhook",
+  "get /platform/tenant/status": "PlatformController.getTenantStatus",
+  "put /platform/tenant/custom-domain": "PlatformController.configureCustomDomain",
+
+  /**
    * @Onboarding
    */
   "post /admin/signin": "UsersController.adminSignin",

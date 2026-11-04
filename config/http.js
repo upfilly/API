@@ -24,21 +24,29 @@ module.exports.http = {
 
     /***************************************************************************
     *                                                                          *
+    * Custom Multi-Tenant Resolution Middleware                                *
+    *                                                                          *
+    ***************************************************************************/
+    tenantResolver: require('../api/middlewares/tenantResolver'),
+
+    /***************************************************************************
+    *                                                                          *
     * The order in which middleware should be run for HTTP requests.           *
     * (This Sails app's routes are handled by the "router" middleware below.)  *
     *                                                                          *
     ***************************************************************************/
 
-    // order: [
-    //   'cookieParser',
-    //   'session',
-    //   'bodyParser',
-    //   'compress',
-    //   'poweredBy',
-    //   'router',
-    //   'www',
-    //   'favicon',
-    // ],
+    order: [
+      'cookieParser',
+      'session',
+      'bodyParser',
+      'compress',
+      'poweredBy',
+      'tenantResolver',
+      'router',
+      'www',
+      'favicon',
+    ],
 
 
     /***************************************************************************
