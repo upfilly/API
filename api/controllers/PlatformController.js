@@ -223,7 +223,29 @@ module.exports = {
    */
   getPlans: async function (req, res) {
     try {
-      let plans = await PlatformPlans.find({ status: 'active', isDeleted: false });
+      let plans = [];
+      if (typeof SubscriptionPlans !== 'undefined') {
+        plans = await SubscriptionPlans.find({
+          category: 'white_label',
+          isDeleted: false
+        }).sort('amount ASC');
+      }
+
+      if (!plans || plans.length === 0) {
+        const masterDb = await multiTenant.getMasterDb();
+        if (masterDb) {
+          plans = await masterDb.collection('subscriptionplans').find({
+            category: 'white_label',
+            isDeleted: { $ne: true }
+          }).sort({ amount: 1 }).toArray();
+        }
+      }
+
+      if (!plans || plans.length === 0) {
+        if (typeof PlatformPlans !== 'undefined') {
+          plans = await PlatformPlans.find({ status: 'active', isDeleted: false });
+        }
+      }
 
       // Fallback default plans if none seeded yet
       if (!plans || plans.length === 0) {

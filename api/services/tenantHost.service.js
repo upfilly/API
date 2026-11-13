@@ -9,7 +9,9 @@
 
 const PLATFORM_BASE_DOMAIN = process.env.APP_BASE_DOMAIN || 'upfilly.com';
 const RESERVED_SUBDOMAINS = new Set([
-  'www', 'api', 'admin', 'app', 'master', 'root', 'static', 'cdn', 'mail', 'smtp', 'auth', 'billing', 'dev', 'staging'
+  'admin', 'api', 'app', 'www', 'mail', 'smtp', 'ftp', 'status', 'support',
+  'help', 'docs', 'blog', 'cdn', 'static', 'track', 'click', 'dashboard',
+  'login', 'billing', 'upfilly', 'master', 'root', 'dev', 'staging'
 ]);
 
 module.exports = {

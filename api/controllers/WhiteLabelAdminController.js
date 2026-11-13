@@ -614,6 +614,48 @@ module.exports = {
     } catch (err) {
       return res.status(500).json({ success: false, code: 500, message: err.message });
     }
+  },
+
+  /**
+   * 6. Assisted Onboarding Call Sign-Off (for Network branch)
+   * PUT /admin/whitelabel/tenant/:id/complete-call
+   */
+  completeAssistedCall: async function (req, res) {
+    try {
+      const tenantId = req.params.id;
+      const { notes } = req.body;
+
+      const masterDb = await multiTenant.getMasterDb();
+      const updateData = {
+        onboarding_call_booked: true,
+        onboarding_completed: true,
+        onboarding_call_completed_at: new Date(),
+        onboarding_call_notes: notes || '',
+        updatedAt: new Date()
+      };
+
+      if (masterDb) {
+        const { ObjectId } = require('mongodb');
+        try {
+          await masterDb.collection('tenants').updateOne({ _id: new ObjectId(tenantId) }, { $set: updateData });
+        } catch (e) {
+          await masterDb.collection('tenants').updateOne({ id: tenantId }, { $set: updateData });
+        }
+      }
+
+      if (typeof Tenants !== 'undefined') {
+        try { await Tenants.updateOne({ id: tenantId }).set(updateData); } catch (e) {}
+      }
+
+      return res.status(200).json({
+        success: true,
+        code: 200,
+        message: 'Assisted onboarding call marked as complete for tenant.',
+        data: { tenant_id: tenantId, ...updateData }
+      });
+    } catch (err) {
+      return res.status(500).json({ success: false, code: 500, message: err.message });
+    }
   }
 };
 

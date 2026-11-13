@@ -24,6 +24,10 @@ module.exports.policies = {
     '*': true,
   },
 
+  WhiteLabelOnboardingController: {
+    '*': true,
+  },
+
 
   UsersController: {
     // 'adminSignin': true,

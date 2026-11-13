@@ -263,6 +263,221 @@
           "response": []
         },
         {
+          "name": "White-Label 4-Step Resumable Onboarding Flow",
+          "description": "Complete post-plan-selection onboarding flow for White-Label Merchants and Networks. Features 4 resumable steps (Account, Business, Domains, Stripe BYOK), live debounce subdomain availability check, DNS CNAME verification, and branching next steps.",
+          "item": [
+            {
+              "name": "GET /platform/subdomain/check (Live Subdomain Availability Check)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/platform/subdomain/check?slug=freshnetwork",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "platform",
+                    "subdomain",
+                    "check"
+                  ],
+                  "query": [
+                    {
+                      "key": "slug",
+                      "value": "freshnetwork",
+                      "description": "Requested subdomain slug (3-30 alphanumeric + hyphens)"
+                    }
+                  ]
+                },
+                "description": "Debounce-ready live availability check. Validates format (3-30 chars, no leading/trailing hyphen), checks 24-word reserved blocklist, and checks if already claimed across the platform."
+              },
+              "response": []
+            },
+            {
+              "name": "POST /platform/onboarding/step-a (Step A: Minimum Viable Identity & Account Creation)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"first_name\": \"Alexander\",\n  \"last_name\": \"Wright\",\n  \"work_email\": \"alexander.wright@apexnetwork.io\",\n  \"password\": \"SecurePassword2026!\",\n  \"phone\": \"+14155552671\",\n  \"job_title\": \"Head of Partnerships\",\n  \"terms_and_conditions\": true,\n  \"whitelabel_type\": \"network\",\n  \"plan_id\": \"{{plan_id}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/platform/onboarding/step-a",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "platform",
+                    "onboarding",
+                    "step-a"
+                  ]
+                },
+                "description": "Captures minimum viable identity so nothing is lost if the user abandons. Generates a resumable session_token and stores a draft tenant record. whitelabel_type is \"merchant\" or \"network\"."
+              },
+              "response": []
+            },
+            {
+              "name": "POST /platform/onboarding/step-b (Step B: Business Details & Invoicing / Tax)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"session_token\": \"{{onboarding_session_token}}\",\n  \"legal_company_name\": \"Apex Digital Media Group Ltd\",\n  \"trading_name\": \"Apex Network\",\n  \"company_registration_number\": \"09876543\",\n  \"vat_tax_id\": \"GB987654321\",\n  \"registered_address\": {\n    \"line1\": \"100 Bishopsgate\",\n    \"line2\": \"Floor 18\",\n    \"city\": \"London\",\n    \"postal_code\": \"EC2N 4AG\",\n    \"country_code\": \"GB\"\n  },\n  \"billing_email\": \"finance@apexnetwork.io\",\n  \"company_website\": \"https://apexnetwork.io\",\n  \"industry\": \"Affiliate & Influencer Marketing\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/platform/onboarding/step-b",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "platform",
+                    "onboarding",
+                    "step-b"
+                  ]
+                },
+                "description": "Drives invoicing and tax treatment (ISO-3166 country dropdown, VAT/Tax ID passed for reverse charge). Trading name becomes the default branding name."
+              },
+              "response": []
+            },
+            {
+              "name": "POST /platform/onboarding/step-c (Step C: Subdomain Slug & Network Tracking Hostname)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"session_token\": \"{{onboarding_session_token}}\",\n  \"subdomain\": \"apexmedia\",\n  \"tracking_domain\": \"track.apexmedia.io\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/platform/onboarding/step-c",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "platform",
+                    "onboarding",
+                    "step-c"
+                  ]
+                },
+                "description": "Claims the immutable subdomain slug (<slug>.upfilly.com) and generates DNS CNAME instructions for network tracking domain (points to cname.upfilly.com). Does not block onboarding."
+              },
+              "response": []
+            },
+            {
+              "name": "POST /platform/onboarding/step-d (Step D: Stripe BYOK & Dedicated Database Provisioning)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"session_token\": \"{{onboarding_session_token}}\",\n  \"stripe_publishable_key\": \"pk_test_51XYZ...\",\n  \"stripe_secret_key\": \"sk_test_51XYZ...\",\n  \"environment\": \"test\",\n  \"statement_descriptor\": \"APEX NETWORK\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/platform/onboarding/step-d",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "platform",
+                    "onboarding",
+                    "step-d"
+                  ]
+                },
+                "description": "Bring-Your-Own-Key Stripe connection. Live validation against Stripe API, AES-256 key encryption, automated provisioning of dedicated database (upfilly_tenant_apexmedia on 209.46.122.17), and dynamic branching into Merchant Self-Serve or Network Assisted Zoho Onboarding."
+              },
+              "response": []
+            },
+            {
+              "name": "GET /platform/onboarding/resume (Resume Onboarding Session from Drop-Off Step)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/platform/onboarding/resume?session_token={{onboarding_session_token}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "platform",
+                    "onboarding",
+                    "resume"
+                  ],
+                  "query": [
+                    {
+                      "key": "session_token",
+                      "value": "{{onboarding_session_token}}",
+                      "description": "Session token returned from Step A"
+                    },
+                    {
+                      "key": "email",
+                      "value": "",
+                      "description": "Alternatively look up by work email"
+                    }
+                  ]
+                },
+                "description": "Returns saved step and prefilled data so a returning user is resumed at their exact step without repeating previous steps."
+              },
+              "response": []
+            },
+            {
+              "name": "POST /platform/domain/verify-cname (DNS CNAME Resolution Check Poller)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"tenant_id\": \"{{tenant_id}}\",\n  \"subdomain\": \"apexmedia\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/platform/domain/verify-cname",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "platform",
+                    "domain",
+                    "verify-cname"
+                  ]
+                },
+                "description": "Poller to verify whether the customer's tracking hostname CNAME record resolves to cname.upfilly.com."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
           "name": "Super Admin White-Label Dashboard Tab",
           "description": "Endpoints for the Super Admin \"White-Label\" tab in the Main Admin Dashboard (backed by db_upfilly). Manages White-Label Dashboard KPIs, Tenants registry, White-Label SubscriptionPlans, Subscriptions, and Transactions.",
           "item": [
@@ -629,6 +844,50 @@
                 },
                 "description": "List all payment transactions from Transactions collection for white-label subscription purchases."
               }
+            },
+            {
+              "name": "PUT /admin/whitelabel/tenant/:id/complete-call (Assisted Onboarding Call Sign-Off)",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"notes\": \"1-on-1 kick-off call completed with client. Tracking domain verified, payout rules configured, and publisher approvals enabled.\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/admin/whitelabel/tenant/:id/complete-call",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "whitelabel",
+                    "tenant",
+                    ":id",
+                    "complete-call"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "{{tenant_id}}",
+                      "description": "Tenant Object ID"
+                    }
+                  ]
+                },
+                "description": "Super Admin action to sign off on the assisted onboarding call for a Network tenant, marking onboarding completed and moving tenant to business-as-usual."
+              },
+              "response": []
             }
           ]
         }

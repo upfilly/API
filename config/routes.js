@@ -49,11 +49,23 @@ module.exports.routes = {
   "get /admin/whitelabel/tenant/:id": "WhiteLabelAdminController.getTenantDetails",
   "put /admin/whitelabel/tenant/:id/status": "WhiteLabelAdminController.updateTenantStatus",
   "post /admin/whitelabel/tenant/provision": "WhiteLabelAdminController.provisionTenant",
+  "put /admin/whitelabel/tenant/:id/complete-call": "WhiteLabelAdminController.completeAssistedCall",
   "get /admin/whitelabel/plans": "WhiteLabelAdminController.listWhiteLabelPlans",
   "post /admin/whitelabel/plans": "WhiteLabelAdminController.createWhiteLabelPlan",
   "put /admin/whitelabel/plans/:id": "WhiteLabelAdminController.updateWhiteLabelPlan",
   "get /admin/whitelabel/subscriptions": "WhiteLabelAdminController.listWhiteLabelSubscriptions",
   "get /admin/whitelabel/transactions": "WhiteLabelAdminController.listWhiteLabelTransactions",
+
+  /**
+   * White-Label 4-Step Resumable Onboarding Flow Endpoints
+   */
+  "get /platform/subdomain/check": "WhiteLabelOnboardingController.checkSubdomainAvailability",
+  "post /platform/onboarding/step-a": "WhiteLabelOnboardingController.onboardingStepA",
+  "post /platform/onboarding/step-b": "WhiteLabelOnboardingController.onboardingStepB",
+  "post /platform/onboarding/step-c": "WhiteLabelOnboardingController.onboardingStepC",
+  "post /platform/onboarding/step-d": "WhiteLabelOnboardingController.onboardingStepD",
+  "get /platform/onboarding/resume": "WhiteLabelOnboardingController.resumeOnboarding",
+  "post /platform/domain/verify-cname": "WhiteLabelOnboardingController.verifyTrackingDomainCname",
 
   /**
    * @Onboarding

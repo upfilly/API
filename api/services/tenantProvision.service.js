@@ -70,14 +70,18 @@ module.exports = {
       const adminEmail = (tenant.admin_email || '').toLowerCase().trim();
       const existingUser = await tenantDb.collection('users').findOne({ email: adminEmail });
 
+      const resolvedFirstName = tenant.first_name || (tenant.admin_name ? tenant.admin_name.split(' ')[0] : 'Admin');
+      const resolvedLastName = tenant.last_name || (tenant.admin_name ? tenant.admin_name.split(' ').slice(1).join(' ') : 'Manager') || 'Manager';
+      const resolvedFullName = tenant.admin_name || `${resolvedFirstName} ${resolvedLastName}`.trim();
+
       if (!existingUser && adminEmail) {
         const rawPassword = options.password || 'Upfilly@2026!';
         const hashedPassword = bcrypt.hashSync(rawPassword, bcrypt.genSaltSync(10));
 
         await tenantDb.collection('users').insertOne({
-          firstName: tenant.admin_name || tenant.business_name || 'Admin',
-          lastName: 'Manager',
-          fullName: tenant.admin_name || tenant.business_name || 'Admin Manager',
+          firstName: resolvedFirstName,
+          lastName: resolvedLastName,
+          fullName: resolvedFullName,
           brand_name: tenant.business_name,
           email: adminEmail,
           password: hashedPassword,
@@ -92,6 +96,33 @@ module.exports = {
           isDeleted: false
         });
         logInfo(`tenantProvision: Created initial brand admin for '${adminEmail}' in '${dbName}'`);
+      }
+
+      // 2b. Seed Stripe BYOK Gateway Settings if provided
+      if (tenant.tenant_stripe_publishable_key || options.stripe_publishable_key) {
+        const pubKey = tenant.tenant_stripe_publishable_key || options.stripe_publishable_key;
+        const secKey = tenant.tenant_stripe_secret_key || options.stripe_secret_key;
+        const env = tenant.tenant_stripe_environment || options.environment || 'test';
+        const cur = tenant.tenant_stripe_currency || options.currency || 'USD';
+        const descriptor = tenant.statement_descriptor || options.statement_descriptor || tenant.business_name;
+
+        await tenantDb.collection('settings').updateOne(
+          { type: 'payment_gateway' },
+          {
+            $set: {
+              type: 'payment_gateway',
+              gateway: 'stripe',
+              environment: env,
+              publishable_key: pubKey,
+              secret_key: secKey,
+              currency: cur,
+              statement_descriptor: descriptor,
+              updatedAt: new Date()
+            }
+          },
+          { upsert: true }
+        );
+        logInfo(`tenantProvision: Configured payment_gateway settings in '${dbName}'`);
       }
 
       // 3. Seed default Email Templates for the tenant
@@ -174,11 +205,29 @@ module.exports = {
       }
 
       // 5. Update Master Tenant record with db_name and provisioned timestamp
+      const masterDb = await multiTenant.getMasterDb();
+      if (masterDb) {
+        const { ObjectId } = require('mongodb');
+        try {
+          await masterDb.collection('tenants').updateOne(
+            { _id: new ObjectId(String(tenantId)) },
+            { $set: { db_name: dbName, provisioned_at: new Date() } }
+          );
+        } catch (e) {
+          await masterDb.collection('tenants').updateOne(
+            { id: String(tenantId) },
+            { $set: { db_name: dbName, provisioned_at: new Date() } }
+          );
+        }
+      }
+
       if (typeof Tenants !== 'undefined' && Tenants.updateOne) {
-        await Tenants.updateOne({ id: tenantId }).set({
-          db_name: dbName,
-          provisioned_at: new Date()
-        });
+        try {
+          await Tenants.updateOne({ id: tenantId }).set({
+            db_name: dbName,
+            provisioned_at: new Date()
+          });
+        } catch (e) {}
       }
 
       logInfo(`tenantProvision: Provisioning complete for '${tenant.subdomain}' -> '${dbName}'`);

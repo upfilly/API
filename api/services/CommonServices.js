@@ -164,12 +164,14 @@ exports.avg_rating = async (type, rate_to) => {
 };
 
 exports.encrypt = (data) => {
-    let encrypted = CryptoJS.AES.encrypt(JSON.stringify(data), credentials.CRYPTO_SECREATE_KEY).toString()
+    const key = credentials.CRYPTO_SECREATE_KEY || process.env.CRYPTO_SECREATE_KEY || process.env.JWT_SECRET || 'upfilly_aes_secret_key_2026';
+    let encrypted = CryptoJS.AES.encrypt(JSON.stringify(data), key).toString();
     return encrypted;
 };
 
 exports.decrypt = (data) => {
-    let bytes = CryptoJS.AES.decrypt(data, credentials.CRYPTO_SECREATE_KEY);
+    const key = credentials.CRYPTO_SECREATE_KEY || process.env.CRYPTO_SECREATE_KEY || process.env.JWT_SECRET || 'upfilly_aes_secret_key_2026';
+    let bytes = CryptoJS.AES.decrypt(data, key);
     let decryptedData = bytes.toString(CryptoJS.enc.Utf8);
     return decryptedData;
 };
