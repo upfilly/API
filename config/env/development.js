@@ -59,7 +59,30 @@
 
         
         adapter: require('sails-mongo'), 
-        url: 'mongodb://'+encodeURIComponent(safeCred.DB_USER)+':'+encodeURIComponent(safeCred.DB_PASSWORD)+'@'+safeCred.DB_HOST+':'+safeCred.DB_PORT+ '/'+ safeCred.DB_NAME + '?authSource=admin',          
+        url: (function () {
+          // If master database is configured as db_upfilly on live server (18.118.184.230)
+          if (safeCred.MASTER_DB_NAME === 'db_upfilly' || safeCred.DB_NAME === 'db_upfilly') {
+            const user = safeCred.DB_USER;
+            const pass = safeCred.DB_PASSWORD;
+            const host = safeCred.DB_HOST || '18.118.184.230';
+            const port = safeCred.DB_PORT || 27017;
+            const dbName = safeCred.MASTER_DB_NAME || safeCred.DB_NAME || 'db_upfilly';
+            if (user && pass) {
+              const authSource = (host === '209.46.122.17') ? '?authSource=admin' : '';
+              return 'mongodb://' + encodeURIComponent(user) + ':' + encodeURIComponent(pass) + '@' + host + ':' + port + '/' + dbName + authSource;
+            }
+            return 'mongodb://' + host + ':' + port + '/' + dbName;
+          }
+          // If Multi-Tenancy MONGODB_ROOT_URI is configured for the 209.46.122.17 cluster
+          if (safeCred.MONGODB_ROOT_URI && safeCred.MONGODB_ROOT_URI.includes('209.46.122.17')) {
+            return 'mongodb://JC_neWsE18rVbeRvE09RAdM24In:JC_NEws18IuyYDrSdB09SERSve24SR@209.46.122.17:27017/' + (safeCred.MASTER_DB_NAME || 'db_upfilly') + '?authSource=admin';
+          }
+          if (safeCred.DB_HOST === '209.46.122.17') {
+            return 'mongodb://' + encodeURIComponent(safeCred.DB_USER) + ':' + encodeURIComponent(safeCred.DB_PASSWORD) + '@209.46.122.17:27017/' + (safeCred.DB_NAME || 'db_upfilly') + '?authSource=admin';
+          }
+          // Legacy server fallback (authenticates without authSource=admin)
+          return 'mongodb://' + safeCred.DB_USER + ':' + safeCred.DB_PASSWORD + '@' + safeCred.DB_HOST + ':' + safeCred.DB_PORT + '/' + safeCred.DB_NAME;
+        })(),          
         
   
         //--------------------------------------------------------------------------

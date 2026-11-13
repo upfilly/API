@@ -81,6 +81,7 @@ module.exports = {
           brand_name: tenant.business_name,
           email: adminEmail,
           password: hashedPassword,
+          encryptedPassword: hashedPassword,
           role: 'admin',
           isVerified: 'Y',
           status: 'active',
@@ -116,7 +117,63 @@ module.exports = {
         ]);
       }
 
-      // 4. Update Master Tenant record with db_name and provisioned timestamp
+      // 4. Seed default Brand Subscription Plans for this tenant
+      const planCount = await tenantDb.collection('subscriptionplans').countDocuments();
+      if (planCount === 0) {
+        await tenantDb.collection('subscriptionplans').insertMany([
+          {
+            name: 'Free Trial',
+            amount: 0,
+            plan_type: 'free',
+            payment_type: 'trial',
+            status: 'active',
+            interval: 'month',
+            interval_count: 1,
+            trial_period_days: 14,
+            category: 'normal',
+            currency: 'USD',
+            features: ['Up to 5 Campaigns', 'Unlimited Referral Links', 'Real-time Analytics'],
+            isDeleted: false,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          },
+          {
+            name: 'Starter Plan',
+            amount: 29,
+            plan_type: 'paid',
+            payment_type: 'recurring',
+            status: 'active',
+            interval: 'month',
+            interval_count: 1,
+            trial_period_days: 0,
+            category: 'normal',
+            currency: 'USD',
+            features: ['Up to 20 Campaigns', 'Custom Commission Rules', 'Email Automation'],
+            isDeleted: false,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          },
+          {
+            name: 'Growth Plan',
+            amount: 79,
+            plan_type: 'paid',
+            payment_type: 'recurring',
+            status: 'active',
+            interval: 'month',
+            interval_count: 1,
+            trial_period_days: 0,
+            category: 'normal',
+            currency: 'USD',
+            features: ['Unlimited Campaigns', 'Multi-tier Affiliates', 'Priority Support'],
+            isDeleted: false,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          }
+        ]);
+        logInfo(`tenantProvision: Seeded default Brand Subscription Plans in '${dbName}'`);
+      }
+
+      // 5. Update Master Tenant record with db_name and provisioned timestamp
       if (typeof Tenants !== 'undefined' && Tenants.updateOne) {
         await Tenants.updateOne({ id: tenantId }).set({
           db_name: dbName,

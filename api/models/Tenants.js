@@ -42,7 +42,8 @@ module.exports = {
     },
     admin_email: {
       type: 'string',
-      required: true
+      required: true,
+      unique: true
     },
     admin_name: {
       type: 'string'

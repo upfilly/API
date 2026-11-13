@@ -39,6 +39,16 @@ module.exports = {
         });
       }
 
+      const cleanEmail = String(admin_email).toLowerCase().trim();
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(cleanEmail)) {
+        return res.status(400).json({
+          success: false,
+          code: 400,
+          message: 'Please provide a valid email address.'
+        });
+      }
+
       const cleanSubdomain = tenantHost.parseTenantHost(`${subdomain}.upfilly.com`).subdomain;
 
       if (!cleanSubdomain || cleanSubdomain.length < 3) {
@@ -58,12 +68,25 @@ module.exports = {
       }
 
       // 2. Check if subdomain already exists
-      const existing = await Tenants.findOne({
-        subdomain: cleanSubdomain,
-        isDeleted: false
-      });
+      let existingSubdomain = null;
+      if (typeof Tenants !== 'undefined' && Tenants.findOne) {
+        existingSubdomain = await Tenants.findOne({
+          subdomain: cleanSubdomain,
+          isDeleted: false
+        });
+      }
 
-      if (existing) {
+      if (!existingSubdomain) {
+        const masterDb = await multiTenant.getMasterDb();
+        if (masterDb) {
+          existingSubdomain = await masterDb.collection('tenants').findOne({
+            subdomain: cleanSubdomain,
+            isDeleted: { $ne: true }
+          });
+        }
+      }
+
+      if (existingSubdomain) {
         return res.status(409).json({
           success: false,
           code: 409,
@@ -71,9 +94,36 @@ module.exports = {
         });
       }
 
-      // 3. Create Master Tenant Record in Master DB (upfilly_master)
+      // 3. Check if admin email is already registered with another business
+      let existingEmail = null;
+      if (typeof Tenants !== 'undefined' && Tenants.findOne) {
+        existingEmail = await Tenants.findOne({
+          admin_email: cleanEmail,
+          isDeleted: false
+        });
+      }
+
+      if (!existingEmail) {
+        const masterDb = await multiTenant.getMasterDb();
+        if (masterDb) {
+          existingEmail = await masterDb.collection('tenants').findOne({
+            admin_email: cleanEmail,
+            isDeleted: { $ne: true }
+          });
+        }
+      }
+
+      if (existingEmail) {
+        return res.status(409).json({
+          success: false,
+          code: 409,
+          message: `An account with email '${cleanEmail}' is already registered with business '${existingEmail.business_name || existingEmail.subdomain}'. Each business account requires a unique administrator email address.`
+        });
+      }
+
+      // 4. Create Master Tenant Record in Master DB (upfilly_master)
       const dbName = multiTenant.buildTenantDbName(cleanSubdomain);
-      const masterDb = multiTenant.getMasterDb();
+      const masterDb = await multiTenant.getMasterDb();
 
       let newTenant;
       if (typeof Tenants !== 'undefined' && Tenants.create) {

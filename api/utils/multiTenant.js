@@ -15,6 +15,7 @@ const als = new AsyncLocalStorage();
 const connectionCache = new Map();
 let masterClient = null;
 let masterDbInstance = null;
+let tenantClusterClient = null;
 
 let localConfigCache = null;
 function getLocalConfig() {
@@ -34,44 +35,49 @@ function getTenantDbPrefix() {
 
 function getMasterDbName() {
   const conf = getLocalConfig();
-  return process.env.MASTER_DB_NAME || conf.MASTER_DB_NAME || 'upfilly_master';
+  return process.env.MASTER_DB_NAME || conf.MASTER_DB_NAME || conf.DB_NAME || 'db_upfilly';
 }
 
 /**
- * Build connection URI from local config or environment
+ * Build Master Database Connection URI (points to live master DB: db_upfilly)
  */
-function getMongoConnectionUri() {
+function getMasterConnectionUri() {
   const localConfig = getLocalConfig();
 
-  if (process.env.MONGODB_ROOT_URI) {
-    return process.env.MONGODB_ROOT_URI;
-  }
-  if (localConfig.MONGODB_ROOT_URI) {
-    return localConfig.MONGODB_ROOT_URI;
-  }
-  if (process.env.MONGODB_URI) {
-    return process.env.MONGODB_URI;
-  }
+  if (process.env.MASTER_DB_URI) return process.env.MASTER_DB_URI;
+  if (localConfig.MASTER_DB_URI) return localConfig.MASTER_DB_URI;
 
   const user = process.env.DB_USER || localConfig.DB_USER;
   const pass = process.env.DB_PASSWORD || localConfig.DB_PASSWORD;
-  const host = process.env.DB_HOST || localConfig.DB_HOST || '127.0.0.1';
+  const host = process.env.DB_HOST || localConfig.DB_HOST || '18.118.184.230';
   const port = process.env.DB_PORT || localConfig.DB_PORT || 27017;
   const dbName = getMasterDbName();
 
   if (user && pass) {
-    return `mongodb://${encodeURIComponent(user)}:${encodeURIComponent(pass)}@${host}:${port}/${dbName}?authSource=admin`;
+    // If connecting to cluster requiring authSource=admin
+    const authSource = (host === '209.46.122.17') ? '?authSource=admin' : '';
+    return `mongodb://${encodeURIComponent(user)}:${encodeURIComponent(pass)}@${host}:${port}/${dbName}${authSource}`;
   }
   return `mongodb://${host}:${port}/${dbName}`;
 }
 
 /**
- * Initialize root/master Mongo client
+ * Build Tenant Dedicated Cluster URI (points to cluster for upfilly_tenant_* databases)
+ */
+function getTenantClusterUri() {
+  const localConfig = getLocalConfig();
+  if (process.env.MONGODB_ROOT_URI) return process.env.MONGODB_ROOT_URI;
+  if (localConfig.MONGODB_ROOT_URI) return localConfig.MONGODB_ROOT_URI;
+  return getMasterConnectionUri();
+}
+
+/**
+ * Initialize Master Mongo client (connecting to db_upfilly)
  */
 async function getMasterClient() {
   if (masterClient) return masterClient;
 
-  const uri = getMongoConnectionUri();
+  const uri = getMasterConnectionUri();
   masterClient = new MongoClient(uri, {
     maxPoolSize: 100,
     minPoolSize: 5,
@@ -83,6 +89,24 @@ async function getMasterClient() {
   const masterDbName = getMasterDbName();
   masterDbInstance = masterClient.db(masterDbName);
   return masterClient;
+}
+
+/**
+ * Initialize Tenant Cluster Mongo client (connecting to 209.46.122.17 cluster)
+ */
+async function getTenantClusterClient() {
+  if (tenantClusterClient) return tenantClusterClient;
+
+  const uri = getTenantClusterUri();
+  tenantClusterClient = new MongoClient(uri, {
+    maxPoolSize: 100,
+    minPoolSize: 5,
+    connectTimeoutMS: 10000,
+    socketTimeoutMS: 45000,
+  });
+
+  await tenantClusterClient.connect();
+  return tenantClusterClient;
 }
 
 /**
@@ -121,7 +145,6 @@ async function ensureTenantConnection(dbName, customUri) {
     return connectionCache.get(dbName);
   }
 
-  const client = await getMasterClient();
   let tenantDb;
 
   if (customUri) {
@@ -133,8 +156,9 @@ async function ensureTenantConnection(dbName, customUri) {
     await customClient.connect();
     tenantDb = customClient.db(dbName);
   } else {
-    // Reuses root client connection pool
-    tenantDb = client.db(dbName);
+    // Connect to dedicated tenant cluster (209.46.122.17)
+    const clusterClient = await getTenantClusterClient();
+    tenantDb = clusterClient.db(dbName);
   }
 
   connectionCache.set(dbName, tenantDb);
@@ -220,6 +244,10 @@ async function closeAllConnections() {
     await masterClient.close();
     masterClient = null;
     masterDbInstance = null;
+  }
+  if (tenantClusterClient) {
+    await tenantClusterClient.close();
+    tenantClusterClient = null;
   }
   connectionCache.clear();
 }

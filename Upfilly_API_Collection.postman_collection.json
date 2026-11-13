@@ -261,6 +261,376 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "Super Admin White-Label Dashboard Tab",
+          "description": "Endpoints for the Super Admin \"White-Label\" tab in the Main Admin Dashboard (backed by db_upfilly). Manages White-Label Dashboard KPIs, Tenants registry, White-Label SubscriptionPlans, Subscriptions, and Transactions.",
+          "item": [
+            {
+              "name": "GET /admin/whitelabel/dashboard (Dashboard KPIs & Revenue)",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/whitelabel/dashboard",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "whitelabel",
+                    "dashboard"
+                  ]
+                },
+                "description": "Fetch overall White-Label KPIs: total tenants, active vs suspended, white-label subscription counts, total revenue, and recent 5 registrations."
+              }
+            },
+            {
+              "name": "GET /admin/whitelabel/tenants (List All Tenants)",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/whitelabel/tenants?page=1&limit=10&status=active&search=",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "whitelabel",
+                    "tenants"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1",
+                      "description": "Page number"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "10",
+                      "description": "Records per page"
+                    },
+                    {
+                      "key": "status",
+                      "value": "active",
+                      "description": "Filter by status: active, suspended"
+                    },
+                    {
+                      "key": "search",
+                      "value": "",
+                      "description": "Search by business_name, subdomain, admin_email"
+                    }
+                  ]
+                },
+                "description": "Paginated list of all white-label registered businesses with subdomains, portal URLs, and status."
+              }
+            },
+            {
+              "name": "GET /admin/whitelabel/tenant/:id (Tenant Details & Live Counts)",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/whitelabel/tenant/:id",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "whitelabel",
+                    "tenant",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "6aeb2d227de377aed63936ac",
+                      "description": "Tenant ID"
+                    }
+                  ]
+                },
+                "description": "Get full tenant details + live operational counts from their dedicated database (brands_count, affiliates_count, campaigns_count)."
+              }
+            },
+            {
+              "name": "PUT /admin/whitelabel/tenant/:id/status (Suspend / Activate Tenant)",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"active\",\n  \"plan_status\": \"active\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/admin/whitelabel/tenant/:id/status",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "whitelabel",
+                    "tenant",
+                    ":id",
+                    "status"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "6aeb2d227de377aed63936ac",
+                      "description": "Tenant ID"
+                    }
+                  ]
+                },
+                "description": "Update tenant status (active, suspended, deleted) or plan status (active, past_due, canceled)."
+              }
+            },
+            {
+              "name": "POST /admin/whitelabel/tenant/provision (Manual Database Provisioning)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"subdomain\": \"rocket\",\n  \"password\": \"AdminPassword@123\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/admin/whitelabel/tenant/provision",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "whitelabel",
+                    "tenant",
+                    "provision"
+                  ]
+                },
+                "description": "Super Admin can manually provision or re-index a dedicated database for a white-label tenant."
+              }
+            },
+            {
+              "name": "GET /admin/whitelabel/plans (List White-Label Plans)",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/whitelabel/plans",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "whitelabel",
+                    "plans"
+                  ]
+                },
+                "description": "List all white-label subscription tiers from existing SubscriptionPlans where category: white_label."
+              }
+            },
+            {
+              "name": "POST /admin/whitelabel/plans (Create White-Label Plan)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Enterprise White-Label\",\n  \"amount\": 299,\n  \"plan_type\": \"paid\",\n  \"payment_type\": \"recurring\",\n  \"interval\": \"month\",\n  \"interval_count\": 1,\n  \"trial_period_days\": 14,\n  \"whitelabelType\": \"network\",\n  \"currency\": \"USD\",\n  \"features\": [\n    \"Dedicated Database Isolation\",\n    \"Custom CNAME Domain\",\n    \"Unlimited Brands & Affiliates\",\n    \"Custom SMTP & Branding\"\n  ]\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/admin/whitelabel/plans",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "whitelabel",
+                    "plans"
+                  ]
+                },
+                "description": "Create a new white-label subscription plan tier in SubscriptionPlans."
+              }
+            },
+            {
+              "name": "PUT /admin/whitelabel/plans/:id (Update White-Label Plan)",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Enterprise White-Label Pro\",\n  \"amount\": 349,\n  \"status\": \"active\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/admin/whitelabel/plans/:id",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "whitelabel",
+                    "plans",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "plan_id_here",
+                      "description": "Plan ID"
+                    }
+                  ]
+                },
+                "description": "Update an existing white-label plan tier."
+              }
+            },
+            {
+              "name": "GET /admin/whitelabel/subscriptions (List White-Label Subscriptions)",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/whitelabel/subscriptions",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "whitelabel",
+                    "subscriptions"
+                  ]
+                },
+                "description": "List all tenant subscriptions associated with white-label plans, populated with user info and validity dates."
+              }
+            },
+            {
+              "name": "GET /admin/whitelabel/transactions (List White-Label Payment Transactions)",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/whitelabel/transactions",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "whitelabel",
+                    "transactions"
+                  ]
+                },
+                "description": "List all payment transactions from Transactions collection for white-label subscription purchases."
+              }
+            }
+          ]
         }
       ]
     },

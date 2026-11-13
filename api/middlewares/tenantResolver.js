@@ -16,6 +16,7 @@ const tenantHost = require('../services/tenantHost.service');
 // Paths that are globally agnostic of tenant context (master platform operations)
 const TENANT_AGNOSTIC_PATH_PREFIXES = [
   '/platform/',
+  '/admin/whitelabel/',
   '/health',
   '/favicon.ico',
   '/assets/',
@@ -36,10 +37,9 @@ const BILLING_ALLOWLIST_PATH_PREFIXES = [
 ];
 
 module.exports = async function tenantResolver(req, res, next) {
-  // 1. Drop untrusted x-tenant-* headers in production to prevent header spoofing
+  // 1. Drop internal sensitive override headers (db name / internal IDs)
   if (process.env.NODE_ENV === 'production') {
     delete req.headers['x-tenant-id'];
-    delete req.headers['x-tenant-subdomain'];
     delete req.headers['x-tenant-db'];
   }
 
@@ -54,20 +54,33 @@ module.exports = async function tenantResolver(req, res, next) {
   }
 
   // 3. Parse Host header
-  const rawHost = req.headers['x-forwarded-host'] || req.headers.host || '';
+  let rawHost = req.headers['x-forwarded-host'] || req.headers.host || '';
   let hostInfo = tenantHost.parseTenantHost(rawHost);
 
-  // In local dev, allow manual subdomain override via header or query parameter for testing
-  if (hostInfo.isDev && (req.headers['x-tenant-subdomain'] || req.query.subdomain)) {
-    const devSubdomain = req.headers['x-tenant-subdomain'] || req.query.subdomain;
-    hostInfo = {
-      kind: 'tenant',
-      subdomain: String(devSubdomain).toLowerCase().trim(),
-      host: rawHost
-    };
+  // If host is API root / platform root / dev host, check Origin/Referer (from SPA frontends) or custom tenant header
+  if (hostInfo.kind === 'root' || hostInfo.kind === 'platform-admin') {
+    const originHeader = req.headers.origin || req.headers.referer || '';
+    if (originHeader) {
+      const originHost = originHeader.replace(/^https?:\/\//, '').split('/')[0];
+      const originInfo = tenantHost.parseTenantHost(originHost);
+      if (originInfo.kind === 'tenant' || originInfo.kind === 'custom_domain') {
+        hostInfo = originInfo;
+        rawHost = originHost;
+      }
+    }
+
+    // Support explicit tenant header or query param (for Mobile Apps, Postman, or local testing)
+    const explicitSubdomain = req.headers['x-tenant-subdomain'] || req.query.subdomain;
+    if (explicitSubdomain && (hostInfo.kind === 'root' || hostInfo.kind === 'platform-admin')) {
+      hostInfo = {
+        kind: 'tenant',
+        subdomain: String(explicitSubdomain).toLowerCase().trim(),
+        host: rawHost
+      };
+    }
   }
 
-  // 4. If platform root or admin portal, execute in master platform context
+  // 4. If platform root or admin portal without tenant origin/header, execute in master platform context
   if (hostInfo.kind === 'root' || hostInfo.kind === 'platform-admin') {
     req.tenant = null;
     req.isMaster = true;

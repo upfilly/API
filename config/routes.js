@@ -42,6 +42,20 @@ module.exports.routes = {
   "put /platform/tenant/custom-domain": "PlatformController.configureCustomDomain",
 
   /**
+   * Super Admin White-Label Management Tab Endpoints
+   */
+  "get /admin/whitelabel/dashboard": "WhiteLabelAdminController.getDashboardStats",
+  "get /admin/whitelabel/tenants": "WhiteLabelAdminController.listTenants",
+  "get /admin/whitelabel/tenant/:id": "WhiteLabelAdminController.getTenantDetails",
+  "put /admin/whitelabel/tenant/:id/status": "WhiteLabelAdminController.updateTenantStatus",
+  "post /admin/whitelabel/tenant/provision": "WhiteLabelAdminController.provisionTenant",
+  "get /admin/whitelabel/plans": "WhiteLabelAdminController.listWhiteLabelPlans",
+  "post /admin/whitelabel/plans": "WhiteLabelAdminController.createWhiteLabelPlan",
+  "put /admin/whitelabel/plans/:id": "WhiteLabelAdminController.updateWhiteLabelPlan",
+  "get /admin/whitelabel/subscriptions": "WhiteLabelAdminController.listWhiteLabelSubscriptions",
+  "get /admin/whitelabel/transactions": "WhiteLabelAdminController.listWhiteLabelTransactions",
+
+  /**
    * @Onboarding
    */
   "post /admin/signin": "UsersController.adminSignin",
