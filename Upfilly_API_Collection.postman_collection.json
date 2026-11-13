@@ -149,10 +149,10 @@
               ],
               "query": []
             },
-            "description": "**Controller**: `PlatformController.createCheckoutSession`\n**Security**: Public\n**Scope**: Master Platform Control Plane",
+            "description": "Creates a Stripe Checkout Session for a tenant to purchase a White-Label platform subscription plan (e.g. 99/month). Redirects user to Stripe hosted checkout. When payment succeeds, Stripe redirects to success_url and fires webhook at /platform/webhook to activate tenant subscription.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"tenant_id\": \"{{tenantId}}\",\n  \"plan_id\": \"growth\",\n  \"success_url\": \"https://{{subdomain}}.upfilly.com/dashboard?payment=success\",\n  \"cancel_url\": \"https://{{subdomain}}.upfilly.com/billing?payment=canceled\"\n}"
+              "raw": "{\n  \"tenant_id\": \"{{tenant_id}}\",\n  \"session_token\": \"{{onboarding_session_token}}\",\n  \"plan_id\": \"6a7c1c98f61e746858876b5f\",\n  \"success_url\": \"https://upfilly.com/onboarding/step-b?payment=success\",\n  \"cancel_url\": \"https://upfilly.com/pricing?payment=canceled\"\n}"
             }
           },
           "response": []

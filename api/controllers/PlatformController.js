@@ -322,22 +322,88 @@ module.exports = {
    */
   createCheckoutSession: async function (req, res) {
     try {
-      const { tenant_id, plan_id, success_url, cancel_url } = req.body;
+      const { tenant_id, session_token, plan_id, success_url, cancel_url } = req.body;
 
-      if (!tenant_id) {
+      if (!tenant_id && !session_token) {
         return res.status(400).json({
           success: false,
           code: 400,
-          message: 'tenant_id is required'
+          message: 'tenant_id or session_token is required'
         });
       }
 
-      const tenant = await Tenants.findOne({ id: tenant_id });
+      const masterDb = await multiTenant.getMasterDb();
+      let tenant = null;
+
+      if (tenant_id) {
+        if (typeof Tenants !== 'undefined') {
+          tenant = await Tenants.findOne({ id: tenant_id });
+        }
+        if (!tenant && masterDb) {
+          const { ObjectId } = require('mongodb');
+          try { tenant = await masterDb.collection('tenants').findOne({ _id: new ObjectId(tenant_id) }); } catch(e) {}
+          if (!tenant) tenant = await masterDb.collection('tenants').findOne({ id: tenant_id });
+        }
+      } else if (session_token && masterDb) {
+        tenant = await masterDb.collection('tenants').findOne({ onboarding_session_token: session_token });
+      }
+
       if (!tenant) {
         return res.status(404).json({
           success: false,
           code: 404,
           message: 'Tenant business not found'
+        });
+      }
+
+      const currentTenantId = String(tenant.id || tenant._id);
+
+      // Retrieve selected Plan from SubscriptionPlans
+      const targetPlanId = plan_id || tenant.plan_id;
+      let selectedPlan = null;
+      if (targetPlanId) {
+        if (typeof SubscriptionPlans !== 'undefined') {
+          selectedPlan = await SubscriptionPlans.findOne({ id: targetPlanId });
+        }
+        if (!selectedPlan && masterDb) {
+          const { ObjectId } = require('mongodb');
+          try { selectedPlan = await masterDb.collection('subscriptionplans').findOne({ _id: new ObjectId(targetPlanId) }); } catch (e) {}
+          if (!selectedPlan) selectedPlan = await masterDb.collection('subscriptionplans').findOne({ id: targetPlanId });
+        }
+      }
+
+      const baseDomain = process.env.APP_BASE_DOMAIN || 'upfilly.com';
+      const redirectSuccess = success_url || `https://${tenant.subdomain || 'app'}.${baseDomain}/dashboard?payment=success`;
+      const redirectCancel = cancel_url || `https://${tenant.subdomain || 'app'}.${baseDomain}/billing?payment=canceled`;
+
+      const planName = selectedPlan ? selectedPlan.name : 'White-Label Subscription';
+      const planAmount = selectedPlan && typeof selectedPlan.amount === 'number' ? selectedPlan.amount : 199;
+      const planCurrency = selectedPlan && selectedPlan.currency ? selectedPlan.currency.toLowerCase() : 'usd';
+      const planInterval = selectedPlan && selectedPlan.interval ? selectedPlan.interval : 'month';
+
+      // If plan is free trial ($0), activate immediately without Stripe checkout
+      if (planAmount === 0) {
+        const updateData = { plan_status: 'active', plan_id: targetPlanId, status: 'active', updatedAt: new Date() };
+        if (masterDb) {
+          const { ObjectId } = require('mongodb');
+          try { await masterDb.collection('tenants').updateOne({ _id: new ObjectId(currentTenantId) }, { $set: updateData }); } catch(e) {
+            await masterDb.collection('tenants').updateOne({ id: currentTenantId }, { $set: updateData });
+          }
+        }
+        if (typeof Tenants !== 'undefined') {
+          try { await Tenants.updateOne({ id: currentTenantId }).set(updateData); } catch (e) {}
+        }
+
+        return res.status(200).json({
+          success: true,
+          code: 200,
+          message: 'Free trial plan activated successfully. Proceed to onboarding.',
+          data: {
+            free_plan: true,
+            plan_name: planName,
+            tenant_id: currentTenantId,
+            next_url: redirectSuccess
+          }
         });
       }
 
@@ -349,43 +415,56 @@ module.exports = {
       if (!customerId) {
         const customer = await stripe.customers.create({
           email: tenant.admin_email,
-          name: tenant.business_name,
+          name: tenant.business_name || tenant.admin_name,
           metadata: {
-            tenant_id: tenant.id,
-            subdomain: tenant.subdomain
+            tenant_id: currentTenantId,
+            subdomain: tenant.subdomain || ''
           }
         });
         customerId = customer.id;
-        await Tenants.updateOne({ id: tenant.id }).set({ stripe_customer_id: customerId });
+        if (masterDb) {
+          const { ObjectId } = require('mongodb');
+          try { await masterDb.collection('tenants').updateOne({ _id: new ObjectId(currentTenantId) }, { $set: { stripe_customer_id: customerId } }); } catch(e) {
+            await masterDb.collection('tenants').updateOne({ id: currentTenantId }, { $set: { stripe_customer_id: customerId } });
+          }
+        }
+        if (typeof Tenants !== 'undefined') {
+          try { await Tenants.updateOne({ id: currentTenantId }).set({ stripe_customer_id: customerId }); } catch(e) {}
+        }
       }
 
-      const baseDomain = process.env.APP_BASE_DOMAIN || 'upfilly.com';
-      const redirectSuccess = success_url || `https://${tenant.subdomain}.${baseDomain}/dashboard?payment=success`;
-      const redirectCancel = cancel_url || `https://${tenant.subdomain}.${baseDomain}/billing?payment=canceled`;
+      // Configure Line Items based on selected plan
+      let lineItems = [];
+      if (selectedPlan && selectedPlan.stripe_plan_id) {
+        lineItems.push({
+          price: selectedPlan.stripe_plan_id,
+          quantity: 1
+        });
+      } else {
+        lineItems.push({
+          price_data: {
+            currency: planCurrency,
+            product_data: {
+              name: `Upfilly Platform - ${planName}`,
+              description: `Dedicated White-Label Platform for ${tenant.business_name || 'Organization'}`
+            },
+            unit_amount: Math.round(planAmount * 100),
+            recurring: { interval: planInterval }
+          },
+          quantity: 1
+        });
+      }
 
-      // Create checkout session (either with existing price_id or ad-hoc subscription)
+      // Create checkout session
       const session = await stripe.checkout.sessions.create({
         customer: customerId,
         payment_method_types: ['card'],
         mode: 'subscription',
-        line_items: [
-          {
-            price_data: {
-              currency: 'usd',
-              product_data: {
-                name: `Upfilly Platform - Plan (${plan_id || 'Growth Network'})`,
-                description: `Dedicated White-Label Platform for ${tenant.business_name}`
-              },
-              unit_amount: 19900, // $199.00
-              recurring: { interval: 'month' }
-            },
-            quantity: 1
-          }
-        ],
+        line_items: lineItems,
         metadata: {
-          tenant_id: String(tenant.id),
-          subdomain: tenant.subdomain,
-          plan_id: String(plan_id || 'growth')
+          tenant_id: currentTenantId,
+          subdomain: tenant.subdomain || '',
+          plan_id: String(targetPlanId || '')
         },
         success_url: redirectSuccess,
         cancel_url: redirectCancel
@@ -422,23 +501,68 @@ module.exports = {
       if (event.type === 'checkout.session.completed') {
         const session = event.data.object;
         const tenantId = session.metadata ? session.metadata.tenant_id : null;
+        const planId = session.metadata ? session.metadata.plan_id : null;
 
         if (tenantId) {
-          await Tenants.updateOne({ id: tenantId }).set({
+          const masterDb = await multiTenant.getMasterDb();
+          const updateData = {
             plan_status: 'active',
             stripe_subscription_id: session.subscription,
             stripe_customer_id: session.customer,
-            status: 'active'
-          });
-
-          await PlatformSubscriptions.create({
-            tenant_id: tenantId,
-            stripe_subscription_id: session.subscription,
-            stripe_customer_id: session.customer,
             status: 'active',
-            amount: (session.amount_total || 19900) / 100,
-            metadata: session.metadata
-          });
+            updatedAt: new Date()
+          };
+          if (planId) updateData.plan_id = planId;
+
+          if (masterDb) {
+            const { ObjectId } = require('mongodb');
+            try { await masterDb.collection('tenants').updateOne({ _id: new ObjectId(tenantId) }, { $set: updateData }); } catch(e) {
+              await masterDb.collection('tenants').updateOne({ id: tenantId }, { $set: updateData });
+            }
+
+            // Record in Subscriptions and Transactions in db_upfilly
+            try {
+              await masterDb.collection('subscriptions').insertOne({
+                tenant_id: tenantId,
+                stripe_subscription_id: session.subscription,
+                stripe_customer_id: session.customer,
+                subscription_plan_id: planId,
+                status: 'active',
+                amount: (session.amount_total || 0) / 100,
+                createdAt: new Date(),
+                updatedAt: new Date()
+              });
+              await masterDb.collection('transactions').insertOne({
+                tenant_id: tenantId,
+                stripe_customer_id: session.customer,
+                subscription_plan_id: planId,
+                amount: (session.amount_total || 0) / 100,
+                currency: session.currency || 'usd',
+                status: 'succeeded',
+                payment_gateway: 'stripe',
+                stripe_checkout_session_id: session.id,
+                createdAt: new Date(),
+                updatedAt: new Date()
+              });
+            } catch (histErr) {}
+          }
+
+          if (typeof Tenants !== 'undefined') {
+            try { await Tenants.updateOne({ id: tenantId }).set(updateData); } catch (e) {}
+          }
+
+          if (typeof PlatformSubscriptions !== 'undefined') {
+            try {
+              await PlatformSubscriptions.create({
+                tenant_id: tenantId,
+                stripe_subscription_id: session.subscription,
+                stripe_customer_id: session.customer,
+                status: 'active',
+                amount: (session.amount_total || 0) / 100,
+                metadata: session.metadata
+              });
+            } catch (e) {}
+          }
 
           sails.log.info(`PlatformController: Activated tenant '${tenantId}' via Stripe checkout session`);
         }
