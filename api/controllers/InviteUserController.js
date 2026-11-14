@@ -28,7 +28,7 @@ module.exports = {
 
         let get_account_manager_detail = await Users.findOne({ id: loggedInUser.addedBy, isDeleted: false });
         if (get_account_manager_detail && get_account_manager_detail.role) {
-          if(loggedInUser.role === 'brand' || loggedInUser.role === 'affiliate') {
+          if (['brand', 'affiliate', 'white_lable', 'white_label', 'admin', 'super_admin'].includes(loggedInUser.role) || !loggedInUser.addedBy) {
             var isPermissionExists = await Permissions.findOne({
               role: loggedInUser.role,
               //account_manager: get_account_manager_detail.role
@@ -151,14 +151,23 @@ module.exports = {
 
   changeActiveUser: async (req, res) => {
     try {
-      let user_id = req.identity.id;
+      let user_id = req.identity ? req.identity.id : req.body.id;
 
       let loggedInUser = await Users.findOne({ id: user_id, isDeleted: false });
-      if (loggedInUser.addedBy) {
+      if (!loggedInUser) {
+        const multiTenant = require('../utils/multiTenant');
+        const db = req.tenantDb || await multiTenant.getMasterDb();
+        if (db) {
+          const { ObjectId } = require('mongodb');
+          try { loggedInUser = await db.collection('users').findOne({ _id: new ObjectId(user_id), isDeleted: { $ne: true } }); } catch(e) {}
+          if (!loggedInUser) loggedInUser = await db.collection('users').findOne({ id: user_id, isDeleted: { $ne: true } });
+        }
+      }
 
+      if (loggedInUser && loggedInUser.addedBy) {
         let get_account_manager_detail = await Users.findOne({ id: loggedInUser.addedBy, isDeleted: false });
         if (get_account_manager_detail && get_account_manager_detail.role) {
-          if(loggedInUser.role === 'brand' || loggedInUser.role === 'affiliate') {
+          if (['brand', 'affiliate', 'white_lable', 'white_label', 'admin', 'super_admin'].includes(loggedInUser.role) || !loggedInUser.addedBy) {
             var isPermissionExists = await Permissions.findOne({
               role: loggedInUser.role,
               //account_manager: get_account_manager_detail.role
@@ -186,14 +195,41 @@ module.exports = {
       }
 
       let userExists = await Users.findOne({ id: id, isDeleted: false });
-      // const deletedUSer = await Users.update({ id: id }, { isDeleted: true });
+      if (!userExists) {
+        const multiTenant = require('../utils/multiTenant');
+        const db = req.tenantDb || await multiTenant.getMasterDb();
+        if (db) {
+          const { ObjectId } = require('mongodb');
+          try { userExists = await db.collection('users').findOne({ _id: new ObjectId(id), isDeleted: { $ne: true } }); } catch(e) {}
+          if (!userExists) userExists = await db.collection('users').findOne({ id: id, isDeleted: { $ne: true } });
+        }
+      }
 
       if (!userExists) {
         throw constants.user.USER_NOT_FOUND;
       }
       let activeUser = {};
-      if (userExists.role === "brand" || userExists.role === "affiliate") {
+      const isPrimaryOwner = (
+        ['brand', 'affiliate', 'white_lable', 'white_label', 'admin', 'super_admin'].includes(userExists.role) ||
+        !userExists.addedBy
+      );
+
+      if (isPrimaryOwner) {
         activeUser = await Users.updateOne({ id: id }, { activeUser: id });
+        if (!activeUser) {
+          const multiTenant = require('../utils/multiTenant');
+          const db = req.tenantDb || await multiTenant.getMasterDb();
+          if (db) {
+            const { ObjectId } = require('mongodb');
+            try {
+              await db.collection('users').updateOne({ _id: new ObjectId(id) }, { $set: { activeUser: id } });
+              activeUser = await db.collection('users').findOne({ _id: new ObjectId(id) });
+            } catch(e) {
+              await db.collection('users').updateOne({ id: id }, { $set: { activeUser: id } });
+              activeUser = await db.collection('users').findOne({ id: id });
+            }
+          }
+        }
       } else {
         let superUser = await Users.findOne({
           id: userExists.addedBy,
@@ -201,13 +237,14 @@ module.exports = {
         });
 
         if (!superUser) {
-          throw constants.user.BRAND_NOT_EXISTS;
+          // If parent cannot be found, fall back to self
+          activeUser = await Users.updateOne({ id: id }, { activeUser: id });
+        } else {
+          activeUser = await Users.updateOne(
+            { id: superUser.id },
+            { activeUser: userExists.id }
+          );
         }
-
-        activeUser = await Users.updateOne(
-          { id: superUser.id },
-          { activeUser: userExists.id }
-        );
       }
       return res.status(200).json({
         success: true,
@@ -232,7 +269,7 @@ module.exports = {
 
         let get_account_manager_detail = await Users.findOne({ id: loggedInUser.addedBy, isDeleted: false });
         if (get_account_manager_detail && get_account_manager_detail.role) {
-          if(loggedInUser.role === 'brand' || loggedInUser.role === 'affiliate') {
+          if (['brand', 'affiliate', 'white_lable', 'white_label', 'admin', 'super_admin'].includes(loggedInUser.role) || !loggedInUser.addedBy) {
             var isPermissionExists = await Permissions.findOne({
               role: loggedInUser.role,
               //account_manager: get_account_manager_detail.role
@@ -296,7 +333,7 @@ module.exports = {
 
         let get_account_manager_detail = await Users.findOne({ id: loggedInUser.addedBy, isDeleted: false });
         if (get_account_manager_detail && get_account_manager_detail.role) {
-          if(loggedInUser.role === 'brand' || loggedInUser.role === 'affiliate') {
+          if (['brand', 'affiliate', 'white_lable', 'white_label', 'admin', 'super_admin'].includes(loggedInUser.role) || !loggedInUser.addedBy) {
             var isPermissionExists = await Permissions.findOne({
               role: loggedInUser.role,
               //account_manager: get_account_manager_detail.role
@@ -455,7 +492,7 @@ module.exports = {
     try {
       let id = req.identity.id;
       let listOfOtherUsers = [];
-      if (req.identity.role === "brand" || req.identity.role === "affiliate") {
+      if (['brand', 'affiliate', 'white_lable', 'white_label', 'admin', 'super_admin'].includes(req.identity.role) || !req.identity.addedBy) {
         listOfOtherUsers = await InviteUsers.find({
           addedBy: req.identity.id,
           isDeleted: false,
@@ -543,7 +580,7 @@ module.exports = {
 
         let get_account_manager_detail = await Users.findOne({ id: loggedInUser.addedBy, isDeleted: false });
         if (get_account_manager_detail && get_account_manager_detail.role) {
-          if(loggedInUser.role === 'brand' || loggedInUser.role === 'affiliate') {
+          if (['brand', 'affiliate', 'white_lable', 'white_label', 'admin', 'super_admin'].includes(loggedInUser.role) || !loggedInUser.addedBy) {
             var isPermissionExists = await Permissions.findOne({
               role: loggedInUser.role,
               //account_manager: get_account_manager_detail.role
@@ -617,7 +654,7 @@ module.exports = {
 
         let get_account_manager_detail = await Users.findOne({ id: loggedInUser.addedBy, isDeleted: false });
         if (get_account_manager_detail && get_account_manager_detail.role) {
-          if(loggedInUser.role === 'brand' || loggedInUser.role === 'affiliate') {
+          if (['brand', 'affiliate', 'white_lable', 'white_label', 'admin', 'super_admin'].includes(loggedInUser.role) || !loggedInUser.addedBy) {
             var isPermissionExists = await Permissions.findOne({
               role: loggedInUser.role,
               //account_manager: get_account_manager_detail.role

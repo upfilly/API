@@ -105,6 +105,38 @@ module.exports = async function tenantResolver(req, res, next) {
           ? { subdomain: hostInfo.subdomain, isDeleted: { $ne: true } }
           : { custom_domain: hostInfo.customDomain, isDeleted: { $ne: true } };
         tenant = await masterDb.collection('tenants').findOne(mongoQuery);
+
+        // Fallback: Check if an existing brand user registered this sub_domain in users collection
+        if (!tenant && hostInfo.kind === 'tenant') {
+          const legacyUser = await masterDb.collection('users').findOne({
+            sub_domain: hostInfo.subdomain,
+            isDeleted: { $ne: true }
+          });
+          if (legacyUser) {
+            const tenantSlug = hostInfo.subdomain;
+            const dedicatedDbName = multiTenant.buildTenantDbName(tenantSlug);
+            const newTenantDoc = {
+              business_name: legacyUser.company_name || legacyUser.brand_name || `${legacyUser.firstName || 'Brand'} Organization`,
+              subdomain: tenantSlug,
+              db_name: dedicatedDbName,
+              admin_email: (legacyUser.email || '').toLowerCase().trim(),
+              admin_name: legacyUser.fullName || `${legacyUser.firstName || ''} ${legacyUser.lastName || ''}`.trim(),
+              whitelabel_type: 'merchant',
+              onboarding_step: 'completed',
+              plan_status: 'active',
+              status: 'active',
+              master_user_id: String(legacyUser._id || legacyUser.id),
+              is_existing_brand_upgrade: true,
+              isDeleted: false,
+              createdAt: new Date(),
+              updatedAt: new Date()
+            };
+            const ins = await masterDb.collection('tenants').insertOne(newTenantDoc);
+            newTenantDoc._id = ins.insertedId;
+            newTenantDoc.id = ins.insertedId.toString();
+            tenant = newTenantDoc;
+          }
+        }
       }
     }
   } catch (err) {

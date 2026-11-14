@@ -66,6 +66,18 @@ module.exports = async function (req, res, next) {
             } else {
                 // Master / Legacy fallback
                 user = await Users.findOne({ id: token.user_id });
+                if (!user) {
+                    const multiTenant = require('../utils/multiTenant');
+                    const masterDb = await multiTenant.getMasterDb();
+                    if (masterDb) {
+                        const { ObjectId } = require('mongodb');
+                        try { user = await masterDb.collection('users').findOne({ _id: new ObjectId(token.user_id) }); } catch(e) {}
+                        if (!user) user = await masterDb.collection('users').findOne({ id: token.user_id });
+                        if (user && user._id) {
+                            user.id = user._id.toString();
+                        }
+                    }
+                }
             }
 
             req.identity = user;
