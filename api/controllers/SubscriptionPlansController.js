@@ -156,7 +156,7 @@ exports.getAllSubscriptionPlans = async (req, res) => {
         let count = req.param('count') || 10;
         let page = req.param('page') || 1;
         let skipNo = (Number(page) - 1) * Number(count);
-        let { search, sortBy, status, isDeleted, plan_type, userId, category, whitelabelType } = req.query;
+        let { search, sortBy, status, isDeleted, plan_type, userId, category, whitelabelType, isAllowed = 'true' } = req.query;
 
         if (search) {
             search = Services.Utils.remove_special_char_exept_underscores(search);
@@ -166,8 +166,14 @@ exports.getAllSubscriptionPlans = async (req, res) => {
         }
 
         if (category) {
-            query.category = category;
+            if(isAllowed === 'false'){
+              query.category = {$ne : category};
+            }else{
+                 query.category = category;
+            }
+           
         }
+        
 
         if (whitelabelType) {
             query.whitelabelType = whitelabelType;
