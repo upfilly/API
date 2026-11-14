@@ -12,7 +12,7 @@
 const multiTenant = require('../utils/multiTenant');
 const tenantHost = require('../services/tenantHost.service');
 const tenantProvision = require('../services/tenantProvision.service');
-
+ var safeCred = require('../config/local.js');
 module.exports = {
   /**
    * Register a new business organization (white-label tenant)
@@ -406,11 +406,8 @@ module.exports = {
           }
         });
       }
-console.log(sails.config,"===config")
-console.log(process.env,"====env")
-console.log(sails.config.env,"===sails.config.env")
-console.log(sails.config.env.PAYMENT_INFO,"===sails.PAYMENT_INFO")
-      const stripeKey = sails.config.env.PAYMENT_INFO.SECREATKEY ;
+
+      const stripeKey = safeCred.PAYMENT_INFO.SECREATKEY ;
       const stripe = require('stripe')(stripeKey);
 
       // Create or retrieve Stripe customer for this tenant business
