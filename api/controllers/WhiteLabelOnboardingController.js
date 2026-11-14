@@ -180,8 +180,10 @@ module.exports = {
 
       // Check unique email across platform
       let existingTenant = null;
+      let existingMasterUser = null;
       if (masterDb) {
         existingTenant = await masterDb.collection('tenants').findOne({ admin_email: cleanEmail, isDeleted: { $ne: true } });
+        existingMasterUser = await masterDb.collection('users').findOne({ email: cleanEmail, isDeleted: { $ne: true } });
       }
       if (!existingTenant && typeof Tenants !== 'undefined') {
         existingTenant = await Tenants.findOne({ admin_email: cleanEmail, isDeleted: false });
@@ -202,16 +204,22 @@ module.exports = {
         ? existingTenant.subdomain
         : `draft-${Date.now().toString(36)}`;
 
+      const resolvedBusinessName = (existingMasterUser && (existingMasterUser.brand_name || existingMasterUser.company_name))
+        ? (existingMasterUser.brand_name || existingMasterUser.company_name)
+        : `${first_name.trim()} ${last_name.trim()}'s Organization`;
+
       const tenantPayload = {
-        business_name: `${first_name.trim()} ${last_name.trim()}'s Organization`,
+        business_name: resolvedBusinessName,
         first_name: first_name.trim(),
         last_name: last_name.trim(),
         admin_name: `${first_name.trim()} ${last_name.trim()}`,
         admin_email: cleanEmail,
-        job_title: job_title ? job_title.trim() : '',
-        phone: phone ? phone.trim() : '',
+        job_title: job_title ? job_title.trim() : (existingMasterUser ? existingMasterUser.role : ''),
+        phone: phone ? phone.trim() : (existingMasterUser ? (existingMasterUser.work_phone || existingMasterUser.mobileNo || '') : ''),
         terms_and_conditions: true,
         whitelabel_type: selectedType,
+        master_user_id: existingMasterUser ? String(existingMasterUser._id || existingMasterUser.id) : null,
+        is_existing_brand_upgrade: !!existingMasterUser,
         subdomain: draftSubdomain,
         db_name: `upfilly_tenant_${draftSubdomain}`,
         onboarding_step: 'step_b',
@@ -683,6 +691,12 @@ module.exports = {
       const currentStep = tenant.onboarding_step || 'step_a';
       const progress = tenant.onboarding_progress || { step_a: false, step_b: false, step_c: false, step_d: false };
 
+      // If tenant was an existing brand upgrade, prefill empty fields from their master user record
+      let existingMasterUser = null;
+      if (masterDb && tenant.admin_email) {
+        existingMasterUser = await masterDb.collection('users').findOne({ email: tenant.admin_email, isDeleted: { $ne: true } });
+      }
+
       return res.status(200).json({
         success: true,
         code: 200,
@@ -692,21 +706,22 @@ module.exports = {
           session_token: tenant.onboarding_session_token,
           current_step: currentStep,
           whitelabel_type: tenant.whitelabel_type || 'merchant',
+          is_existing_brand_upgrade: !!existingMasterUser || !!tenant.master_user_id,
           progress: progress,
           saved_data: {
-            first_name: tenant.first_name,
-            last_name: tenant.last_name,
+            first_name: tenant.first_name || (existingMasterUser ? existingMasterUser.firstName : ''),
+            last_name: tenant.last_name || (existingMasterUser ? existingMasterUser.lastName : ''),
             admin_email: tenant.admin_email,
-            phone: tenant.phone,
+            phone: tenant.phone || (existingMasterUser ? (existingMasterUser.work_phone || existingMasterUser.mobileNo || '') : ''),
             job_title: tenant.job_title,
-            legal_company_name: tenant.legal_company_name,
-            trading_name: tenant.trading_name,
-            company_registration_number: tenant.company_registration_number,
-            vat_tax_id: tenant.vat_tax_id,
-            registered_address: tenant.registered_address,
-            billing_email: tenant.billing_email,
-            company_website: tenant.company_website,
-            industry: tenant.industry,
+            legal_company_name: tenant.legal_company_name || (existingMasterUser ? (existingMasterUser.company_name || existingMasterUser.brand_name) : ''),
+            trading_name: tenant.trading_name || (existingMasterUser ? (existingMasterUser.brand_name || existingMasterUser.company_name) : ''),
+            company_registration_number: tenant.company_registration_number || (existingMasterUser ? existingMasterUser.company_registration_number : ''),
+            vat_tax_id: tenant.vat_tax_id || (existingMasterUser ? existingMasterUser.taxId : ''),
+            registered_address: tenant.registered_address || (existingMasterUser ? existingMasterUser.white_label_address : null),
+            billing_email: tenant.billing_email || (existingMasterUser ? (existingMasterUser.billing_email || existingMasterUser.email) : tenant.admin_email),
+            company_website: tenant.company_website || (existingMasterUser ? existingMasterUser.company_url : ''),
+            industry: tenant.industry || (existingMasterUser ? existingMasterUser.industry : ''),
             subdomain: (tenant.subdomain && !tenant.subdomain.startsWith('draft-')) ? tenant.subdomain : '',
             tracking_domain: tenant.tracking_domain,
             tracking_domain_status: tenant.tracking_domain_status

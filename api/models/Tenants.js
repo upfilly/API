@@ -170,6 +170,14 @@ module.exports = {
     admin_name: {
       type: 'string'
     },
+    master_user_id: {
+      type: 'string',
+      allowNull: true
+    },
+    is_existing_brand_upgrade: {
+      type: 'boolean',
+      defaultsTo: false
+    },
 
     // Plan & Billing Lifecycle
     plan_status: {
