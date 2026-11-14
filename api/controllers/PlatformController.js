@@ -407,7 +407,7 @@ module.exports = {
         });
       }
 
-      const stripeKey = sails.config.local ? sails.config.local.PAYMENT_INFO.SECREATKEY : process.env.STRIPE_SECRET_KEY;
+      const stripeKey = sails.config.env.PAYMENT_INFO.SECREATKEY ;
       const stripe = require('stripe')(stripeKey);
 
       // Create or retrieve Stripe customer for this tenant business
