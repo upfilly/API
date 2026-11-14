@@ -500,11 +500,31 @@ module.exports = {
 
       if (event.type === 'checkout.session.completed') {
         const session = event.data.object;
-        const tenantId = session.metadata ? session.metadata.tenant_id : null;
-        const planId = session.metadata ? session.metadata.plan_id : null;
+        let tenantId = session.metadata ? session.metadata.tenant_id : null;
+        let planId = session.metadata ? session.metadata.plan_id : null;
+        let userId = session.metadata ? session.metadata.user_id : null;
+        const customerEmail = (session.customer_details && session.customer_details.email)
+          ? session.customer_details.email.toLowerCase().trim()
+          : (session.customer_email ? session.customer_email.toLowerCase().trim() : null);
+
+        const masterDb = await multiTenant.getMasterDb();
+
+        // If tenantId was not directly in metadata, try finding by userId or customerEmail
+        if (!tenantId && masterDb) {
+          let foundTenant = null;
+          if (userId) {
+            const { ObjectId } = require('mongodb');
+            try { foundTenant = await masterDb.collection('tenants').findOne({ master_user_id: String(userId) }); } catch(e) {}
+          }
+          if (!foundTenant && customerEmail) {
+            foundTenant = await masterDb.collection('tenants').findOne({ admin_email: customerEmail });
+          }
+          if (foundTenant) {
+            tenantId = String(foundTenant._id || foundTenant.id);
+          }
+        }
 
         if (tenantId) {
-          const masterDb = await multiTenant.getMasterDb();
           const updateData = {
             plan_status: 'active',
             stripe_subscription_id: session.subscription,
@@ -566,6 +586,41 @@ module.exports = {
 
           sails.log.info(`PlatformController: Activated tenant '${tenantId}' via Stripe checkout session`);
         }
+
+        // Also activate corresponding brand user in db_upfilly.users if found
+        if (masterDb && (userId || customerEmail)) {
+          const { ObjectId } = require('mongodb');
+          const userUpdate = {
+            isPayment: true,
+            status: 'active',
+            updatedAt: new Date()
+          };
+          if (planId) userUpdate.plan_id = planId;
+          if (session.subscription) userUpdate.stripe_subscription_id = session.subscription;
+          if (session.customer) userUpdate.stripe_customer_id = session.customer;
+
+          if (userId) {
+            try { await masterDb.collection('users').updateOne({ _id: new ObjectId(userId) }, { $set: userUpdate }); } catch(e) {
+              await masterDb.collection('users').updateOne({ id: userId }, { $set: userUpdate });
+            }
+          } else if (customerEmail) {
+            await masterDb.collection('users').updateOne({ email: customerEmail }, { $set: userUpdate });
+          }
+        }
+      } else if (event.type === 'customer.subscription.updated') {
+        const sub = event.data.object;
+        const subStatus = sub.status === 'active' ? 'active' : (sub.status === 'past_due' ? 'past_due' : 'canceled');
+        const masterDb = await multiTenant.getMasterDb();
+        if (masterDb) {
+          await masterDb.collection('tenants').updateOne(
+            { stripe_subscription_id: sub.id },
+            { $set: { plan_status: subStatus, updatedAt: new Date() } }
+          );
+        }
+        if (typeof Tenants !== 'undefined') {
+          try { await Tenants.updateOne({ stripe_subscription_id: sub.id }).set({ plan_status: subStatus }); } catch (e) {}
+        }
+        sails.log.info(`PlatformController: Subscription '${sub.id}' updated to '${subStatus}'`);
       } else if (event.type === 'customer.subscription.deleted') {
         const sub = event.data.object;
         await Tenants.updateOne({ stripe_subscription_id: sub.id }).set({
