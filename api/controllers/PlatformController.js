@@ -12,7 +12,7 @@
 const multiTenant = require('../utils/multiTenant');
 const tenantHost = require('../services/tenantHost.service');
 const tenantProvision = require('../services/tenantProvision.service');
- var safeCred = require('../config/local.js');
+ var safeCred = require('../../../config/local.js');
 module.exports = {
   /**
    * Register a new business organization (white-label tenant)
