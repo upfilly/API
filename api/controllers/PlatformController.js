@@ -406,7 +406,10 @@ module.exports = {
           }
         });
       }
-
+console.log(sails.config,"===config")
+console.log(process.env,"====env")
+console.log(sails.config.env,"===sails.config.env")
+console.log(sails.config.env.PAYMENT_INFO,"===sails.PAYMENT_INFO")
       const stripeKey = sails.config.env.PAYMENT_INFO.SECREATKEY ;
       const stripe = require('stripe')(stripeKey);
 
