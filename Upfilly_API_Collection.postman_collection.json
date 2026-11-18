@@ -602,6 +602,48 @@
               }
             },
             {
+              "name": "PUT /admin/whitelabel/tenant/:id (Update Complete Tenant Profile)",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"business_name\": \"Acme Global Partners\",\n  \"first_name\": \"John\",\n  \"last_name\": \"Doe\",\n  \"admin_name\": \"John Doe\",\n  \"admin_email\": \"john@acme.com\",\n  \"phone\": \"+14155552671\",\n  \"job_title\": \"Chief Executive Officer\",\n  \"legal_company_name\": \"Acme Corporation Inc.\",\n  \"trading_name\": \"Acme Brand\",\n  \"company_registration_number\": \"REG-987654\",\n  \"vat_tax_id\": \"VAT-US987654\",\n  \"registered_address\": {\n    \"line1\": \"100 Market Street\",\n    \"line2\": \"Suite 400\",\n    \"city\": \"San Francisco\",\n    \"postal_code\": \"94105\",\n    \"country_code\": \"US\"\n  },\n  \"billing_email\": \"billing@acme.com\",\n  \"company_website\": \"https://acme.com\",\n  \"industry\": \"saas\",\n  \"custom_domain\": \"portal.acme.com\",\n  \"tracking_domain\": \"track.acme.com\",\n  \"statement_descriptor\": \"ACME BRAND\",\n  \"branding\": {\n    \"logo_url\": \"https://acme.com/logo.png\",\n    \"favicon_url\": \"https://acme.com/favicon.ico\",\n    \"primary_color\": \"#1A56DB\",\n    \"secondary_color\": \"#F3F4F6\"\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/admin/whitelabel/tenant/:id",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "whitelabel",
+                    "tenant",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "6aeb2d227de377aed63936ac",
+                      "description": "Tenant ID"
+                    }
+                  ]
+                },
+                "description": "Update complete tenant information including business details, contact info, domains, and branding."
+              }
+            },
+            {
               "name": "PUT /admin/whitelabel/tenant/:id/status (Suspend / Activate Tenant)",
               "request": {
                 "method": "PUT",
