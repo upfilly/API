@@ -2,7 +2,7 @@
  * api/controllers/WhiteLabelOnboardingController.js
  *
  * @description :: Complete implementation of the Upfilly White-Label Onboarding Flow specification:
- *                 - Resumable 4-Step Information Capture (Step A: Account, Step B: Business, Step C: Domains, Step D: Stripe BYOK)
+ *                 - Resumable 4-Step Information Capture (Step 1: Account, Step 2: Business, Step 3: Domains, Step 4: Stripe BYOK)
  *                 - Live Subdomain Availability Check with Debounce & Full Reserved Blocklist
  *                 - Tracking Domain CNAME Generation & DNS Verification
  *                 - Stripe Bring-Your-Own-Key (BYOK) Verification & AES Encryption
@@ -104,7 +104,7 @@ module.exports = {
   },
 
   /**
-   * Step A: Account Creation (Minimum Viable Identity)
+   * Step 1: Account Creation (Minimum Viable Identity)
    * POST /platform/onboarding/step-a
    */
   onboardingStepA: async function (req, res) {
@@ -261,7 +261,7 @@ module.exports = {
       return res.status(200).json({
         success: true,
         code: 200,
-        message: 'Step A completed: Account created. Proceed to Step B.',
+        message: 'Step 1 completed: Account created. Proceed to Step 2.',
         data: {
           tenant_id: tenantId,
           session_token: sessionToken,
@@ -277,7 +277,7 @@ module.exports = {
   },
 
   /**
-   * Step B: Business Details & Invoicing
+   * Step 2: Business Details & Invoicing
    * POST /platform/onboarding/step-b
    */
   onboardingStepB: async function (req, res) {
@@ -359,7 +359,7 @@ module.exports = {
       return res.status(200).json({
         success: true,
         code: 200,
-        message: 'Step B completed: Business details saved. Proceed to Step C.',
+        message: 'Step 2 completed: Business details saved. Proceed to Step 3.',
         data: {
           tenant_id: tenant.id || tenant._id,
           business_name: resolvedTradingName,
@@ -374,7 +374,7 @@ module.exports = {
   },
 
   /**
-   * Step C: Domain Configuration & Network Tracking Hostname
+   * Step 3: Domain Configuration & Network Tracking Hostname
    * POST /platform/onboarding/step-c
    */
   onboardingStepC: async function (req, res) {
@@ -470,7 +470,7 @@ module.exports = {
       return res.status(200).json({
         success: true,
         code: 200,
-        message: 'Step C completed: Subdomain configured. Proceed to Step D.',
+        message: 'Step 3 completed: Subdomain configured. Proceed to Step 4.',
         data: {
           tenant_id: currentId,
           subdomain: cleanSlug,
@@ -494,7 +494,7 @@ module.exports = {
   },
 
   /**
-   * Step D: Stripe Connection (Bring Your Own Key - BYOK) & Database Provisioning
+   * Step 4: Stripe Connection (Bring Your Own Key - BYOK) & Database Provisioning
    * POST /platform/onboarding/step-d
    */
   onboardingStepD: async function (req, res) {
@@ -649,7 +649,7 @@ module.exports = {
   },
 
   /**
-   * Resume Onboarding: Return saved step and prefilled data so user returns to their exact step
+   * Resume Onboarding: Return saved Step 1nd prefilled data so user returns to their exact step
    * GET /platform/onboarding/resume?session_token=... OR ?email=...
    */
   resumeOnboarding: async function (req, res) {
