@@ -188,21 +188,37 @@ module.exports = {
         tenants = await Tenants.find(waterlineQuery).skip(skip).limit(limit).sort('createdAt DESC');
       }
 
-      const formatted = tenants.map(t => ({
-        id: t.id || t._id,
-        business_name: t.business_name,
-        subdomain: t.subdomain,
-        portal_url: `https://${t.subdomain}.${process.env.APP_BASE_DOMAIN || 'upfilly.com'}`,
-        custom_domain: t.custom_domain || null,
-        cname_status: t.cname_status || 'pending',
-        admin_email: t.admin_email,
-        admin_name: t.admin_name,
-        dedicated_database: t.db_name,
-        plan_status: t.plan_status,
-        status: t.status,
-        createdAt: t.createdAt,
-        updatedAt: t.updatedAt
-      }));
+      const formatted = tenants.map(t => {
+        const fn = t.first_name || t.firstName || '';
+        const ln = t.last_name || t.lastName || '';
+        const ph = t.phone || t.mobileNo || '';
+        const roleType = t.whitelabel_type || t.role || 'merchant';
+        return {
+          id: t.id || t._id,
+          business_name: t.business_name,
+          subdomain: t.subdomain,
+          portal_url: `https://${t.subdomain}.${process.env.APP_BASE_DOMAIN || 'upfilly.com'}`,
+          custom_domain: t.custom_domain || null,
+          cname_status: t.cname_status || 'pending',
+          admin_email: t.admin_email || t.email,
+          email: t.admin_email || t.email,
+          admin_name: t.admin_name || t.fullName || `${fn} ${ln}`.trim(),
+          fullName: t.admin_name || t.fullName || `${fn} ${ln}`.trim(),
+          first_name: fn,
+          firstName: fn,
+          last_name: ln,
+          lastName: ln,
+          phone: ph,
+          mobileNo: ph,
+          whitelabel_type: roleType,
+          role: roleType,
+          dedicated_database: t.db_name,
+          plan_status: t.plan_status,
+          status: t.status,
+          createdAt: t.createdAt,
+          updatedAt: t.updatedAt
+        };
+      });
 
       return res.status(200).json({
         success: true,
@@ -244,12 +260,13 @@ module.exports = {
         return res.status(404).json({ success: false, code: 404, message: 'Tenant not found' });
       }
 
-      // Query tenant's dedicated database for operational stats
+      // Query tenant's dedicated database for operational stats and admin user details
       let operationalStats = {
         brands_count: 0,
         affiliates_count: 0,
         campaigns_count: 0
       };
+      let tenantAdminUser = null;
 
       if (tenant.db_name) {
         try {
@@ -258,33 +275,67 @@ module.exports = {
             operationalStats.brands_count = await tenantDb.collection('users').countDocuments({ role: 'brand', isDeleted: { $ne: true } });
             operationalStats.affiliates_count = await tenantDb.collection('users').countDocuments({ role: 'affiliate', isDeleted: { $ne: true } });
             operationalStats.campaigns_count = await tenantDb.collection('campaign').countDocuments({ isDeleted: { $ne: true } });
+            tenantAdminUser = await tenantDb.collection('users').findOne({
+              $or: [
+                { email: tenant.admin_email },
+                { role: 'admin' },
+                { role: 'super_admin' },
+                { role: 'brand' }
+              ]
+            });
           }
         } catch (dbErr) {
           sails.log.warn(`Could not connect to tenant DB '${tenant.db_name}' for operational stats:`, dbErr.message);
         }
       }
 
+      const tenantIdStr = String(tenant.id || tenant._id);
+      const portalUrl = `https://${tenant.subdomain}.${process.env.APP_BASE_DOMAIN || 'upfilly.com'}`;
+
+      const fName = tenant.first_name || tenant.firstName || (tenantAdminUser && tenantAdminUser.firstName) || '';
+      const lName = tenant.last_name || tenant.lastName || (tenantAdminUser && tenantAdminUser.lastName) || '';
+      const admName = tenant.admin_name || tenant.fullName || (tenantAdminUser && tenantAdminUser.fullName) || `${fName} ${lName}`.trim();
+      const admEmail = tenant.admin_email || tenant.email || (tenantAdminUser && tenantAdminUser.email) || '';
+      const admPhone = tenant.phone || tenant.mobileNo || (tenantAdminUser && (tenantAdminUser.phone || tenantAdminUser.mobileNo)) || '';
+
+      const fullTenantObj = {
+        ...tenant,
+        id: tenantIdStr,
+        portal_url: portalUrl,
+        dedicated_database: tenant.db_name,
+        // Canonical & Alias Fields
+        first_name: fName,
+        firstName: fName,
+        last_name: lName,
+        lastName: lName,
+        admin_name: admName,
+        fullName: admName,
+        admin_email: admEmail,
+        email: admEmail,
+        phone: admPhone,
+        mobileNo: admPhone,
+        role: tenant.whitelabel_type || tenant.role || 'merchant',
+        whitelabel_type: tenant.whitelabel_type || tenant.role || 'merchant',
+        gender: tenant.gender || (tenantAdminUser && tenantAdminUser.gender) || '',
+        userName: tenant.userName || tenant.subdomain || '',
+        image: tenant.image || (tenantAdminUser && tenantAdminUser.image) || (tenant.branding && tenant.branding.logo_url) || '',
+        description: tenant.description || (tenantAdminUser && tenantAdminUser.description) || '',
+        tags: tenant.tags || (tenantAdminUser && tenantAdminUser.tags) || [],
+        address: tenant.address || (tenantAdminUser && tenantAdminUser.address) || '',
+        city: tenant.city || (tenantAdminUser && tenantAdminUser.city) || '',
+        country: tenant.country || (tenantAdminUser && tenantAdminUser.country) || '',
+        dialCode: tenant.dialCode || (tenantAdminUser && tenantAdminUser.dialCode) || '+1',
+        pincode: tenant.pincode || (tenantAdminUser && tenantAdminUser.pincode) || '',
+        website: tenant.company_website || tenant.website || (tenantAdminUser && tenantAdminUser.website) || '',
+        social_media_platforms: tenant.social_media_platforms || (tenantAdminUser && tenantAdminUser.social_media_platforms) || []
+      };
+
       return res.status(200).json({
         success: true,
         code: 200,
         data: {
-          tenant: {
-            id: tenant.id || tenant._id,
-            business_name: tenant.business_name,
-            subdomain: tenant.subdomain,
-            portal_url: `https://${tenant.subdomain}.${process.env.APP_BASE_DOMAIN || 'upfilly.com'}`,
-            custom_domain: tenant.custom_domain,
-            cname_status: tenant.cname_status,
-            ssl_status: tenant.ssl_status,
-            admin_email: tenant.admin_email,
-            admin_name: tenant.admin_name,
-            dedicated_database: tenant.db_name,
-            plan_status: tenant.plan_status,
-            status: tenant.status,
-            branding: tenant.branding,
-            createdAt: tenant.createdAt,
-            updatedAt: tenant.updatedAt
-          },
+          tenant: fullTenantObj,
+          ...fullTenantObj,
           operational_stats: operationalStats
         }
       });
@@ -319,47 +370,88 @@ module.exports = {
         return res.status(404).json({ success: false, code: 404, message: 'Tenant not found' });
       }
 
-      const allowedFields = [
-        'business_name',
-        'first_name',
-        'last_name',
-        'admin_name',
-        'admin_email',
-        'phone',
-        'job_title',
-        'legal_company_name',
-        'trading_name',
-        'company_registration_number',
-        'vat_tax_id',
-        'registered_address',
-        'billing_email',
-        'company_website',
-        'industry',
-        'custom_domain',
-        'tracking_domain',
-        'statement_descriptor',
-        'branding',
-        'status',
-        'plan_status',
-        'whitelabel_type'
-      ];
-
       const updatePayload = { updatedAt: new Date() };
 
-      for (const field of allowedFields) {
-        if (req.body[field] !== undefined) {
-          updatePayload[field] = req.body[field];
+      // 1. Name Mapping (supports snake_case and camelCase)
+      const firstName = req.body.first_name !== undefined ? req.body.first_name : req.body.firstName;
+      if (firstName !== undefined) {
+        updatePayload.first_name = firstName;
+        updatePayload.firstName = firstName;
+      }
+      const lastName = req.body.last_name !== undefined ? req.body.last_name : req.body.lastName;
+      if (lastName !== undefined) {
+        updatePayload.last_name = lastName;
+        updatePayload.lastName = lastName;
+      }
+
+      const fName = updatePayload.first_name !== undefined ? updatePayload.first_name : (tenant.first_name || tenant.firstName || '');
+      const lName = updatePayload.last_name !== undefined ? updatePayload.last_name : (tenant.last_name || tenant.lastName || '');
+      const computedAdminName = `${fName} ${lName}`.trim();
+      const adminName = req.body.admin_name || req.body.fullName || (computedAdminName ? computedAdminName : tenant.admin_name);
+      if (adminName) {
+        updatePayload.admin_name = adminName;
+        updatePayload.fullName = adminName;
+      }
+
+      // 2. Email Mapping
+      const email = req.body.admin_email || req.body.email;
+      if (email !== undefined) {
+        const cleanEmail = String(email).toLowerCase().trim();
+        updatePayload.admin_email = cleanEmail;
+        updatePayload.email = cleanEmail;
+      }
+
+      // 3. Phone Mapping
+      const phone = req.body.phone !== undefined ? req.body.phone : req.body.mobileNo;
+      if (phone !== undefined) {
+        updatePayload.phone = phone;
+        updatePayload.mobileNo = phone;
+      }
+      if (req.body.dialCode !== undefined) updatePayload.dialCode = req.body.dialCode;
+
+      // 4. Role / Whitelabel Type Mapping
+      const roleOrType = (req.body.role || req.body.whitelabel_type || '').toLowerCase().trim();
+      if (roleOrType && ['merchant', 'network'].includes(roleOrType)) {
+        updatePayload.whitelabel_type = roleOrType;
+        updatePayload.role = roleOrType;
+      }
+
+      // 5. Business / Company Information
+      if (req.body.business_name !== undefined) updatePayload.business_name = req.body.business_name;
+      if (req.body.legal_company_name !== undefined) updatePayload.legal_company_name = req.body.legal_company_name;
+      if (req.body.trading_name !== undefined) updatePayload.trading_name = req.body.trading_name;
+      if (req.body.company_registration_number !== undefined) updatePayload.company_registration_number = req.body.company_registration_number;
+      if (req.body.vat_tax_id !== undefined) updatePayload.vat_tax_id = req.body.vat_tax_id;
+      if (req.body.registered_address !== undefined) updatePayload.registered_address = req.body.registered_address;
+      if (req.body.billing_email !== undefined) updatePayload.billing_email = req.body.billing_email;
+      if (req.body.company_website !== undefined) updatePayload.company_website = req.body.company_website;
+      if (req.body.website !== undefined) {
+        updatePayload.website = req.body.website;
+        if (!updatePayload.company_website) updatePayload.company_website = req.body.website;
+      }
+      if (req.body.industry !== undefined) updatePayload.industry = req.body.industry;
+      if (req.body.job_title !== undefined) updatePayload.job_title = req.body.job_title;
+      if (req.body.statement_descriptor !== undefined) updatePayload.statement_descriptor = req.body.statement_descriptor;
+
+      // 6. User Profile / Social / Form Fields
+      const profileFields = [
+        'gender', 'userName', 'image', 'description', 'tags', 'address', 'city', 'country',
+        'pincode', 'category_id', 'social_media_platforms', 'instagram_username',
+        'instagram_profile_link', 'youtube_username', 'youtube_profile_link',
+        'twitter_username', 'twitter_profile_link', 'linkedin_username', 'linkedin_profile_link'
+      ];
+      for (const pf of profileFields) {
+        if (req.body[pf] !== undefined) {
+          updatePayload[pf] = req.body[pf];
         }
       }
 
-      // If first_name or last_name updated and admin_name not explicitly provided, update admin_name
-      if ((req.body.first_name || req.body.last_name) && !req.body.admin_name) {
-        const fn = req.body.first_name || tenant.first_name || '';
-        const ln = req.body.last_name || tenant.last_name || '';
-        updatePayload.admin_name = `${fn} ${ln}`.trim();
-      }
+      // 7. Status & Plan Status
+      if (req.body.status !== undefined) updatePayload.status = req.body.status;
+      if (req.body.plan_status !== undefined) updatePayload.plan_status = req.body.plan_status;
+      if (req.body.branding !== undefined) updatePayload.branding = req.body.branding;
 
-      // If custom_domain is being updated
+      // 8. Custom Domain
       if (req.body.custom_domain !== undefined) {
         if (req.body.custom_domain) {
           const cleanCustomDomain = req.body.custom_domain.toLowerCase().trim().replace(/^https?:\/\//, '');
@@ -371,7 +463,7 @@ module.exports = {
         }
       }
 
-      // If tracking_domain is being updated
+      // 9. Tracking Domain
       if (req.body.tracking_domain !== undefined) {
         if (req.body.tracking_domain) {
           const cleanTrackingDomain = req.body.tracking_domain.toLowerCase().trim().replace(/^https?:\/\//, '');
@@ -384,7 +476,7 @@ module.exports = {
         }
       }
 
-      // If subdomain is being updated, validate uniqueness & reserved words
+      // 10. Subdomain validation
       if (req.body.subdomain && req.body.subdomain !== tenant.subdomain) {
         const cleanSlug = req.body.subdomain.toLowerCase().trim();
         const slugRegex = /^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$/;
@@ -419,6 +511,7 @@ module.exports = {
         updatePayload.subdomain = cleanSlug;
       }
 
+      // 11. Save to Master DB Tenants collection
       if (masterDb) {
         try {
           await masterDb.collection('tenants').updateOne({ _id: new ObjectId(tenantId) }, { $set: updatePayload });
@@ -433,6 +526,78 @@ module.exports = {
         } catch (e) {}
       }
 
+      // 12. Synchronize Admin User in Dedicated Tenant Database
+      const effectiveDbName = tenant.db_name;
+      if (effectiveDbName) {
+        try {
+          const tenantDb = await multiTenant.ensureTenantConnection(effectiveDbName);
+          if (tenantDb) {
+            const userFilter = {
+              $or: [
+                { email: tenant.admin_email },
+                { role: 'admin' },
+                { role: 'super_admin' },
+                { role: 'brand' }
+              ]
+            };
+            const existingUser = await tenantDb.collection('users').findOne(userFilter);
+            if (existingUser) {
+              const tenantUserUpdate = { updatedAt: new Date() };
+              if (updatePayload.first_name) tenantUserUpdate.firstName = updatePayload.first_name;
+              if (updatePayload.last_name) tenantUserUpdate.lastName = updatePayload.last_name;
+              if (updatePayload.admin_name) tenantUserUpdate.fullName = updatePayload.admin_name;
+              if (updatePayload.admin_email) tenantUserUpdate.email = updatePayload.admin_email;
+              if (updatePayload.phone) {
+                tenantUserUpdate.phone = updatePayload.phone;
+                tenantUserUpdate.mobileNo = updatePayload.phone;
+              }
+              if (updatePayload.dialCode) tenantUserUpdate.dialCode = updatePayload.dialCode;
+              if (updatePayload.gender !== undefined) tenantUserUpdate.gender = updatePayload.gender;
+              if (updatePayload.image !== undefined) tenantUserUpdate.image = updatePayload.image;
+              if (updatePayload.description !== undefined) tenantUserUpdate.description = updatePayload.description;
+              if (updatePayload.tags !== undefined) tenantUserUpdate.tags = updatePayload.tags;
+              if (updatePayload.address !== undefined) tenantUserUpdate.address = updatePayload.address;
+              if (updatePayload.city !== undefined) tenantUserUpdate.city = updatePayload.city;
+              if (updatePayload.country !== undefined) tenantUserUpdate.country = updatePayload.country;
+              if (updatePayload.pincode !== undefined) tenantUserUpdate.pincode = updatePayload.pincode;
+              if (updatePayload.website !== undefined) tenantUserUpdate.website = updatePayload.website;
+              if (updatePayload.userName !== undefined) tenantUserUpdate.userName = updatePayload.userName;
+              if (updatePayload.social_media_platforms !== undefined) tenantUserUpdate.social_media_platforms = updatePayload.social_media_platforms;
+              if (updatePayload.status) {
+                tenantUserUpdate.status = (updatePayload.status === 'suspended') ? 'deactive' : updatePayload.status;
+              }
+
+              await tenantDb.collection('users').updateOne({ _id: existingUser._id }, { $set: tenantUserUpdate });
+            }
+          }
+        } catch (dbSyncErr) {
+          sails.log.warn('Could not sync user in tenant DB:', dbSyncErr.message);
+        }
+      }
+
+      // 13. Synchronize in Master DB users (if user exists there)
+      if (masterDb) {
+        try {
+          const masterUser = await masterDb.collection('users').findOne({ email: tenant.admin_email });
+          if (masterUser) {
+            const masterUserUpdate = { updatedAt: new Date() };
+            if (updatePayload.first_name) masterUserUpdate.firstName = updatePayload.first_name;
+            if (updatePayload.last_name) masterUserUpdate.lastName = updatePayload.last_name;
+            if (updatePayload.admin_name) masterUserUpdate.fullName = updatePayload.admin_name;
+            if (updatePayload.admin_email) masterUserUpdate.email = updatePayload.admin_email;
+            if (updatePayload.phone) {
+              masterUserUpdate.phone = updatePayload.phone;
+              masterUserUpdate.mobileNo = updatePayload.phone;
+            }
+            if (updatePayload.dialCode) masterUserUpdate.dialCode = updatePayload.dialCode;
+            if (updatePayload.status) {
+              masterUserUpdate.status = (updatePayload.status === 'suspended') ? 'deactive' : updatePayload.status;
+            }
+            await masterDb.collection('users').updateOne({ _id: masterUser._id }, { $set: masterUserUpdate });
+          }
+        } catch (muErr) {}
+      }
+
       // Fetch refreshed tenant
       let updatedTenant = null;
       if (masterDb) {
@@ -443,11 +608,21 @@ module.exports = {
         }
       }
 
+      const responseTenant = {
+        ...(updatedTenant || tenant),
+        ...updatePayload,
+        id: tenantId,
+        portal_url: `https://${(updatedTenant || tenant).subdomain}.${process.env.APP_BASE_DOMAIN || 'upfilly.com'}`
+      };
+
       return res.status(200).json({
         success: true,
         code: 200,
         message: 'Tenant details successfully updated',
-        data: updatedTenant || { tenant_id: tenantId, ...updatePayload }
+        data: {
+          tenant: responseTenant,
+          ...responseTenant
+        }
       });
     } catch (err) {
       return res.status(500).json({ success: false, code: 500, message: err.message });
