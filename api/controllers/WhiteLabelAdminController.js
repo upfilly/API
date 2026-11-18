@@ -503,6 +503,71 @@ module.exports = {
   },
 
   /**
+   * 2c-2. Soft Delete Tenant (Marks isDeleted: true, status: 'deleted', deletedAt)
+   * DELETE /admin/whitelabel/tenant/:id
+   */
+  softDeleteTenant: async function (req, res) {
+    try {
+      const tenantId = req.params.id;
+      const masterDb = await multiTenant.getMasterDb();
+
+      let tenant = null;
+      const { ObjectId } = require('mongodb');
+      if (masterDb) {
+        try {
+          tenant = await masterDb.collection('tenants').findOne({ _id: new ObjectId(tenantId), isDeleted: { $ne: true } });
+        } catch (e) {
+          tenant = await masterDb.collection('tenants').findOne({ id: tenantId, isDeleted: { $ne: true } });
+        }
+      }
+      if (!tenant && typeof Tenants !== 'undefined') {
+        tenant = await Tenants.findOne({ id: tenantId, isDeleted: false });
+      }
+
+      if (!tenant) {
+        return res.status(404).json({ success: false, code: 404, message: 'Tenant not found or already deleted' });
+      }
+
+      const updatePayload = {
+        isDeleted: true,
+        status: 'deleted',
+        deletedAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      if (masterDb) {
+        try {
+          await masterDb.collection('tenants').updateOne({ _id: new ObjectId(tenantId) }, { $set: updatePayload });
+        } catch (e) {
+          await masterDb.collection('tenants').updateOne({ id: tenantId }, { $set: updatePayload });
+        }
+      }
+
+      if (typeof Tenants !== 'undefined') {
+        try {
+          await Tenants.updateOne({ id: tenantId }).set(updatePayload);
+        } catch (e) {}
+      }
+
+      return res.status(200).json({
+        success: true,
+        code: 200,
+        message: 'Tenant soft deleted successfully',
+        data: {
+          tenant_id: tenantId,
+          business_name: tenant.business_name,
+          subdomain: tenant.subdomain,
+          isDeleted: true,
+          status: 'deleted',
+          deletedAt: updatePayload.deletedAt
+        }
+      });
+    } catch (err) {
+      return res.status(500).json({ success: false, code: 500, message: err.message });
+    }
+  },
+
+  /**
    * 2d. Super Admin Manual Provisioning: Provision dedicated database for a tenant on demand
    * POST /admin/whitelabel/tenant/provision
    */

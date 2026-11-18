@@ -687,6 +687,39 @@
               }
             },
             {
+              "name": "DELETE /admin/whitelabel/tenant/:id (Soft Delete Tenant)",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/whitelabel/tenant/:id",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "whitelabel",
+                    "tenant",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "6aeb2d227de377aed63936ac",
+                      "description": "Tenant ID"
+                    }
+                  ]
+                },
+                "description": "Soft delete tenant: marks isDeleted=true, status='deleted', and records deletedAt timestamp."
+              }
+            },
+            {
               "name": "POST /admin/whitelabel/tenant/provision (Manual Database Provisioning)",
               "request": {
                 "method": "POST",

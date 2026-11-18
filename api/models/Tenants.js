@@ -231,6 +231,10 @@ module.exports = {
     isDeleted: {
       type: 'boolean',
       defaultsTo: false
+    },
+    deletedAt: {
+      type: 'ref',
+      columnType: 'datetime'
     }
   }
 };

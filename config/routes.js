@@ -49,6 +49,8 @@ module.exports.routes = {
   "get /admin/whitelabel/tenant/:id": "WhiteLabelAdminController.getTenantDetails",
   "put /admin/whitelabel/tenant/:id": "WhiteLabelAdminController.updateTenant",
   "put /admin/whitelabel/tenant/:id/status": "WhiteLabelAdminController.updateTenantStatus",
+  "delete /admin/whitelabel/tenant/:id": "WhiteLabelAdminController.softDeleteTenant",
+  "put /admin/whitelabel/tenant/:id/delete": "WhiteLabelAdminController.softDeleteTenant",
   "post /admin/whitelabel/tenant/provision": "WhiteLabelAdminController.provisionTenant",
   "put /admin/whitelabel/tenant/:id/complete-call": "WhiteLabelAdminController.completeAssistedCall",
   "get /admin/whitelabel/plans": "WhiteLabelAdminController.listWhiteLabelPlans",
