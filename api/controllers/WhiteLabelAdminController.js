@@ -208,13 +208,8 @@ module.exports = {
         success: true,
         code: 200,
         message: 'Tenants fetched successfully',
-        data: {
-          total,
-          page,
-          limit,
-          totalPages: Math.ceil(total / limit),
-          list: formatted
-        }
+        data:formatted,
+        total:total
       });
     } catch (err) {
       sails.log.error('WhiteLabelAdminController.listTenants:', err);
@@ -550,10 +545,8 @@ module.exports = {
         success: true,
         code: 200,
         message: 'White-Label subscriptions fetched successfully',
-        data: {
-          total: formatted.length,
-          list: formatted
-        }
+        data: formatted,
+        total : formatted.length  
       });
     } catch (err) {
       return res.status(500).json({ success: false, code: 500, message: err.message });
@@ -606,10 +599,8 @@ module.exports = {
         success: true,
         code: 200,
         message: 'White-Label transactions fetched successfully',
-        data: {
-          total: formatted.length,
-          list: formatted
-        }
+        total: formatted.length,
+        data: formatted
       });
     } catch (err) {
       return res.status(500).json({ success: false, code: 500, message: err.message });
