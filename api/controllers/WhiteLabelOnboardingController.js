@@ -451,18 +451,12 @@ module.exports = {
         updatedAt: new Date()
       };
 
-      // Network Path: Tracking Domain setup
-      if (tenant.whitelabel_type === 'network' || tracking_domain) {
-        if (!tracking_domain && tenant.whitelabel_type === 'network') {
-          return res.status(400).json({ success: false, code: 400, message: 'Tracking hostname (e.g. track.clientbrand.com) is required for White-Label Network.' });
-        }
-
-        if (tracking_domain) {
-          const cleanTrackingDomain = tracking_domain.toLowerCase().trim().replace(/^https?:\/\//, '');
-          updateData.tracking_domain = cleanTrackingDomain;
-          updateData.tracking_domain_status = 'pending_dns';
-          updateData.dns_last_checked_at = new Date();
-        }
+      // Tracking Domain setup (optional at signup for all plans - can be configured now or later in dashboard)
+      if (tracking_domain) {
+        const cleanTrackingDomain = tracking_domain.toLowerCase().trim().replace(/^https?:\/\//, '');
+        updateData.tracking_domain = cleanTrackingDomain;
+        updateData.tracking_domain_status = 'pending_dns';
+        updateData.dns_last_checked_at = new Date();
       }
 
       await updateTenantRecord(tenant, updateData, masterDb);
