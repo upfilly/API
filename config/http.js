@@ -24,6 +24,38 @@ module.exports.http = {
 
     /***************************************************************************
     *                                                                          *
+    * Universal CORS preflight & headers handler                               *
+    * Resolves HeaderDisallowedByPreflightResponse for all frontend origins    *
+    *                                                                          *
+    ***************************************************************************/
+    corsHandler: function (req, res, next) {
+      const origin = req.headers.origin;
+      if (origin) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+      } else {
+        res.setHeader('Access-Control-Allow-Origin', '*');
+      }
+      res.setHeader('Access-Control-Allow-Credentials', 'true');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD');
+
+      const requestedHeaders = req.headers['access-control-request-headers'];
+      if (requestedHeaders) {
+        res.setHeader('Access-Control-Allow-Headers', requestedHeaders);
+      } else {
+        res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, access-control-allow-origin, Access-Control-Allow-Credentials, authorization, x-tenant-subdomain, x-tenant-id, subdomain, token, x-access-token, Cache-Control, Pragma, sentry-trace, baggage, *');
+      }
+
+      res.setHeader('Access-Control-Expose-Headers', '*');
+
+      if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+      }
+
+      return next();
+    },
+
+    /***************************************************************************
+    *                                                                          *
     * Custom Multi-Tenant Resolution Middleware                                *
     *                                                                          *
     ***************************************************************************/
@@ -37,6 +69,7 @@ module.exports.http = {
     ***************************************************************************/
 
     order: [
+      'corsHandler',
       'cookieParser',
       'session',
       'bodyParser',

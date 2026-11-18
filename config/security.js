@@ -31,8 +31,8 @@ module.exports.security = {
    cors: {
     allRoutes: true,
     allowOrigins: '*',
-    allowCredentials: false,
-    allowRequestHeaders: 'Origin, X-Requested-With, Content-Type, Accept, Authorization,access-control-allow-origin,Access-Control-Allow-Credentials,authorization',
+    allowCredentials: true,
+    allowRequestHeaders: 'Origin, X-Requested-With, Content-Type, Accept, Authorization, access-control-allow-origin, Access-Control-Allow-Credentials, authorization, x-tenant-subdomain, x-tenant-id, subdomain, token, x-access-token, Cache-Control, Pragma, sentry-trace, baggage, *',
     allowRequestMethods: 'GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD',
     allowAnyOriginWithCredentialsUnsafe: true,
     // crossOriginResourcePolicy : false
