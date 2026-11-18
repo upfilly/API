@@ -294,6 +294,167 @@ module.exports = {
   },
 
   /**
+   * 2b-2. Update Complete Tenant Profile (Business, Identity, Domains & Branding Information)
+   * PUT /admin/whitelabel/tenant/:id
+   */
+  updateTenant: async function (req, res) {
+    try {
+      const tenantId = req.params.id;
+      const masterDb = await multiTenant.getMasterDb();
+
+      let tenant = null;
+      const { ObjectId } = require('mongodb');
+      if (masterDb) {
+        try {
+          tenant = await masterDb.collection('tenants').findOne({ _id: new ObjectId(tenantId) });
+        } catch (e) {
+          tenant = await masterDb.collection('tenants').findOne({ id: tenantId });
+        }
+      }
+      if (!tenant && typeof Tenants !== 'undefined') {
+        tenant = await Tenants.findOne({ id: tenantId });
+      }
+
+      if (!tenant) {
+        return res.status(404).json({ success: false, code: 404, message: 'Tenant not found' });
+      }
+
+      const allowedFields = [
+        'business_name',
+        'first_name',
+        'last_name',
+        'admin_name',
+        'admin_email',
+        'phone',
+        'job_title',
+        'legal_company_name',
+        'trading_name',
+        'company_registration_number',
+        'vat_tax_id',
+        'registered_address',
+        'billing_email',
+        'company_website',
+        'industry',
+        'custom_domain',
+        'tracking_domain',
+        'statement_descriptor',
+        'branding',
+        'status',
+        'plan_status',
+        'whitelabel_type'
+      ];
+
+      const updatePayload = { updatedAt: new Date() };
+
+      for (const field of allowedFields) {
+        if (req.body[field] !== undefined) {
+          updatePayload[field] = req.body[field];
+        }
+      }
+
+      // If first_name or last_name updated and admin_name not explicitly provided, update admin_name
+      if ((req.body.first_name || req.body.last_name) && !req.body.admin_name) {
+        const fn = req.body.first_name || tenant.first_name || '';
+        const ln = req.body.last_name || tenant.last_name || '';
+        updatePayload.admin_name = `${fn} ${ln}`.trim();
+      }
+
+      // If custom_domain is being updated
+      if (req.body.custom_domain !== undefined) {
+        if (req.body.custom_domain) {
+          const cleanCustomDomain = req.body.custom_domain.toLowerCase().trim().replace(/^https?:\/\//, '');
+          updatePayload.custom_domain = cleanCustomDomain;
+          updatePayload.cname_status = 'pending';
+        } else {
+          updatePayload.custom_domain = null;
+          updatePayload.cname_status = 'pending';
+        }
+      }
+
+      // If tracking_domain is being updated
+      if (req.body.tracking_domain !== undefined) {
+        if (req.body.tracking_domain) {
+          const cleanTrackingDomain = req.body.tracking_domain.toLowerCase().trim().replace(/^https?:\/\//, '');
+          updatePayload.tracking_domain = cleanTrackingDomain;
+          updatePayload.tracking_domain_status = 'pending_dns';
+          updatePayload.dns_last_checked_at = new Date();
+        } else {
+          updatePayload.tracking_domain = null;
+          updatePayload.tracking_domain_status = 'not_started';
+        }
+      }
+
+      // If subdomain is being updated, validate uniqueness & reserved words
+      if (req.body.subdomain && req.body.subdomain !== tenant.subdomain) {
+        const cleanSlug = req.body.subdomain.toLowerCase().trim();
+        const slugRegex = /^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$/;
+        if (!slugRegex.test(cleanSlug)) {
+          return res.status(400).json({
+            success: false,
+            code: 400,
+            message: 'Subdomain must be 3-30 alphanumeric characters and cannot start or end with a hyphen.'
+          });
+        }
+        if (tenantHost.isReservedSubdomain(cleanSlug)) {
+          return res.status(400).json({
+            success: false,
+            code: 400,
+            message: `The subdomain '${cleanSlug}' is reserved and cannot be registered.`
+          });
+        }
+        if (masterDb) {
+          const existingSub = await masterDb.collection('tenants').findOne({
+            subdomain: cleanSlug,
+            _id: { $ne: tenant._id || new ObjectId(tenantId) },
+            isDeleted: { $ne: true }
+          });
+          if (existingSub) {
+            return res.status(409).json({
+              success: false,
+              code: 409,
+              message: `The subdomain '${cleanSlug}' is already claimed by another organization.`
+            });
+          }
+        }
+        updatePayload.subdomain = cleanSlug;
+      }
+
+      if (masterDb) {
+        try {
+          await masterDb.collection('tenants').updateOne({ _id: new ObjectId(tenantId) }, { $set: updatePayload });
+        } catch (e) {
+          await masterDb.collection('tenants').updateOne({ id: tenantId }, { $set: updatePayload });
+        }
+      }
+
+      if (typeof Tenants !== 'undefined') {
+        try {
+          await Tenants.updateOne({ id: tenantId }).set(updatePayload);
+        } catch (e) {}
+      }
+
+      // Fetch refreshed tenant
+      let updatedTenant = null;
+      if (masterDb) {
+        try {
+          updatedTenant = await masterDb.collection('tenants').findOne({ _id: new ObjectId(tenantId) });
+        } catch (e) {
+          updatedTenant = await masterDb.collection('tenants').findOne({ id: tenantId });
+        }
+      }
+
+      return res.status(200).json({
+        success: true,
+        code: 200,
+        message: 'Tenant details successfully updated',
+        data: updatedTenant || { tenant_id: tenantId, ...updatePayload }
+      });
+    } catch (err) {
+      return res.status(500).json({ success: false, code: 500, message: err.message });
+    }
+  },
+
+  /**
    * 2c. Update Tenant Status (Suspend / Activate / Cancel Plan)
    * PUT /admin/whitelabel/tenant/:id/status
    */

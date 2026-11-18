@@ -47,6 +47,7 @@ module.exports.routes = {
   "get /admin/whitelabel/dashboard": "WhiteLabelAdminController.getDashboardStats",
   "get /admin/whitelabel/tenants": "WhiteLabelAdminController.listTenants",
   "get /admin/whitelabel/tenant/:id": "WhiteLabelAdminController.getTenantDetails",
+  "put /admin/whitelabel/tenant/:id": "WhiteLabelAdminController.updateTenant",
   "put /admin/whitelabel/tenant/:id/status": "WhiteLabelAdminController.updateTenantStatus",
   "post /admin/whitelabel/tenant/provision": "WhiteLabelAdminController.provisionTenant",
   "put /admin/whitelabel/tenant/:id/complete-call": "WhiteLabelAdminController.completeAssistedCall",
